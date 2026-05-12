@@ -21,16 +21,18 @@ The project is designed for self-study: read a lesson, work through guided probl
 
 ## Quick Start
 
+Prerequisite: [Bun](https://bun.sh/) 1.3.2 or newer.
+
 Install dependencies:
 
 ```bash
-npm install
+bun install
 ```
 
 Run the local dev server:
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 Then open the URL printed by Vite, usually:
@@ -42,27 +44,27 @@ http://127.0.0.1:5173
 Build for production:
 
 ```bash
-npm run build
+bun run build
 ```
 
 Preview the production build:
 
 ```bash
-npm run preview
+bun run preview
 ```
 
 ## Scripts
 
 ```bash
-npm run dev                # Start Vite locally
-npm run build              # Type-check and build
-npm run preview            # Serve the production build locally
-npm run test               # Run unit tests
-npm run test:e2e           # Run Playwright end-to-end tests
-npm run test:a11y          # Run Playwright axe accessibility checks
-npm run test:pwa           # Run production offline/PWA checks
-npm run validate:content   # Validate course and problem metadata
-npm run verify:references  # Run reference solutions against tests
+bun run dev                # Start Vite locally
+bun run build              # Type-check and build
+bun run preview            # Serve the production build locally
+bun run test               # Run unit tests
+bun run test:e2e           # Run Playwright end-to-end tests
+bun run test:a11y          # Run Playwright axe accessibility checks
+bun run test:pwa           # Run production offline/PWA checks
+bun run validate:content   # Validate course and problem metadata
+bun run verify:references  # Run reference solutions against tests
 ```
 
 ## Course Content
@@ -102,13 +104,13 @@ ui-snapshots/          Reference screenshots
 Before publishing a substantial content or UI change, run:
 
 ```bash
-npm run validate:content
-npm run verify:references
-npm run test
-npm run build
-npm run test:e2e
-npm run test:a11y
-npm run test:pwa
+bun run validate:content
+bun run verify:references
+bun run test
+bun run build
+bun run test:e2e
+bun run test:a11y
+bun run test:pwa
 ```
 
 ## License

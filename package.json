@@ -2,6 +2,7 @@
   "name": "dsa-coach",
   "private": true,
   "version": "0.1.0",
+  "packageManager": "bun@1.3.2",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
@@ -11,8 +12,8 @@
     "test:e2e": "playwright test",
     "test:a11y": "playwright test --config=playwright.a11y.config.ts",
     "test:pwa": "playwright test tests/pwa --config=playwright.pwa.config.ts",
-    "validate:content": "node --import tsx scripts/validate-content.ts",
-    "verify:references": "node --import tsx scripts/verify-reference-solutions.ts"
+    "validate:content": "bun scripts/validate-content.ts",
+    "verify:references": "bun scripts/verify-reference-solutions.ts"
   },
   "dependencies": {
     "@codemirror/lang-python": "^6.2.1",
