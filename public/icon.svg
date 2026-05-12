@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="DSA Coach">
+  <rect width="128" height="128" rx="22" fill="#096b72"/>
+  <path d="M30 34h28c8 0 14 6 14 14v46H44c-8 0-14-6-14-14V34Z" fill="#fffdf8"/>
+  <path d="M70 34h28v46c0 8-6 14-14 14H70V34Z" fill="#d7efe8"/>
+  <path d="M43 51h16M43 64h16M43 77h11M79 51h14M79 64h10M79 77h14" stroke="#096b72" stroke-width="6" stroke-linecap="round"/>
+</svg>
