@@ -1,6 +1,8 @@
 import CodeMirror from "@uiw/react-codemirror";
 import { python, pythonLanguage } from "@codemirror/lang-python";
 import { EditorView, keymap } from "@codemirror/view";
+import { indentUnit } from "@codemirror/language";
+import { EditorState } from "@codemirror/state";
 import { pythonJediCompletion, pythonStdlibCompletion } from "../runner/pythonCompletions";
 import {
   CheckCircle2,
@@ -232,6 +234,8 @@ export function ProblemPage() {
   const editorExtensions = useMemo(
     () => [
       python(),
+      indentUnit.of("    "),
+      EditorState.tabSize.of(4),
       pythonLanguage.data.of({ autocomplete: pythonStdlibCompletion }),
       pythonLanguage.data.of({ autocomplete: pythonJediCompletion }),
       EditorView.contentAttributes.of({ "aria-label": `${problem?.title ?? "Problem"} Python code editor` }),
@@ -272,6 +276,8 @@ export function ProblemPage() {
   const scratchpadExtensions = useMemo(
     () => [
       python(),
+      indentUnit.of("    "),
+      EditorState.tabSize.of(4),
       pythonLanguage.data.of({ autocomplete: pythonStdlibCompletion }),
       pythonLanguage.data.of({ autocomplete: pythonJediCompletion }),
       EditorView.contentAttributes.of({ "aria-label": "Python scratchpad editor" }),
