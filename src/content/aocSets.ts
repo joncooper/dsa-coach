@@ -1588,7 +1588,11 @@ const y2d2 = aocProblem({
     { name: "letters only fails", args: ["cargo abcd ok"], expected: 0 },
     { name: "digits only fails", args: ["cargo 1234 ok"], expected: 0 },
     { name: "one letter one digit passes", args: ["text a1 ok"], expected: 1 },
-    { name: "blank lines skipped", args: ["\ntext a1 ok\n\n"], expected: 1 }
+    { name: "blank lines skipped", args: ["\ntext a1 ok\n\n"], expected: 1 },
+    { name: "two-token line rejected", args: ["cargo a1"], expected: 0 },
+    { name: "four-token line rejected", args: ["cargo a1 ok extra"], expected: 0 },
+    { name: "uppercase ok rejected", args: ["cargo a1 OK"], expected: 0 },
+    { name: "mixed valid invalid", args: ["cargo a1 ok\ntext b2 ok\nledger c3 ok\ntext bad bad"], expected: 3 }
   ],
   hints: [
     "Split each line on spaces and check token count before destructuring.",
@@ -1684,6 +1688,31 @@ const y2d2 = aocProblem({
         name: "mixed many lines",
         args: ["cargo 12abc ok\ntext h2llo ok\nledger 9z9 ok"],
         expected: 34
+      },
+      {
+        name: "cargo digit run stops at first non-digit",
+        args: ["cargo 7a8 ok"],
+        expected: 7
+      },
+      {
+        name: "invalid status zero contribution",
+        args: ["cargo 99x bad\nledger a9 ok"],
+        expected: 9
+      },
+      {
+        name: "ledger ignores letters",
+        args: ["ledger abc123 ok"],
+        expected: 6
+      },
+      {
+        name: "text ignores digits",
+        args: ["text a1b2c3 ok"],
+        expected: 3
+      },
+      {
+        name: "unknown type contributes zero",
+        args: ["weird a1 ok"],
+        expected: 0
       }
     ],
     hints: [
