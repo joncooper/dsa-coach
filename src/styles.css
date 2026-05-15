@@ -1084,7 +1084,148 @@ pre {
 }
 
 .beta-workspace.coach-open {
-  grid-template-columns: minmax(300px, var(--prompt-width)) 12px minmax(0, 1fr) 8px minmax(320px, var(--coach-width, 380px));
+  grid-template-columns: minmax(280px, var(--prompt-width)) 12px minmax(0, 1fr) minmax(320px, var(--coach-width, 400px));
+}
+
+.coach-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+  border-left: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.coach-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.coach-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.coach-close {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--row-bg);
+  color: var(--muted);
+}
+
+.coach-close:hover {
+  border-color: var(--teal);
+  color: var(--ink);
+}
+
+.coach-scroll {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+}
+
+.coach-msg {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.coach-msg-user {
+  border-color: rgba(9, 107, 114, 0.3);
+  background: var(--tag-bg);
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.coach-msg-bot {
+  background: var(--paper-soft);
+}
+
+.coach-msg-bot .markdown {
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.coach-msg-bot .markdown pre {
+  font-size: 0.82rem;
+}
+
+.coach-typing {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.coach-offline {
+  display: grid;
+  gap: 8px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--paper-soft);
+  font-size: 0.88rem;
+}
+
+.coach-offline pre {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.coach-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.coach-input textarea {
+  width: 100%;
+  resize: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  background: var(--row-bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.coach-input textarea:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+.coach-send {
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+@media (max-width: 1050px) {
+  .beta-workspace.coach-open {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-panel {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    max-height: 70vh;
+  }
 }
 
 .problem-page .problem-brief,

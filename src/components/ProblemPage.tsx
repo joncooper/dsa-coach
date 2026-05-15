@@ -5,6 +5,7 @@ import { indentUnit } from "@codemirror/language";
 import { EditorState } from "@codemirror/state";
 import { pythonJediCompletion, pythonStdlibCompletion } from "../runner/pythonCompletions";
 import {
+  Bot,
   CheckCircle2,
   Eye,
   EyeOff,
@@ -27,6 +28,8 @@ import { course, findChapter, findProblem, findProblemSet } from "../content/cou
 import { useStore } from "../hooks/courseStoreContext";
 import { runPythonProblem, runPythonScratchpad } from "../runner/pythonRunner";
 import type { Problem, RunResult, SubmissionRecord } from "../types";
+import type { CoachContext } from "../coach/coachPrompts";
+import { CoachPanel } from "./CoachPanel";
 import { DisciplineChecklist } from "./DisciplineChecklist";
 import { MarkdownView } from "./MarkdownView";
 import { NotesPanel } from "./NotesPanel";
@@ -71,6 +74,8 @@ export function ProblemPage() {
   const [showHiddenDiagnostics, setShowHiddenDiagnostics] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [coachOpen, setCoachOpen] = useState(false);
+  const [coachMounted, setCoachMounted] = useState(false);
   const [lastRunIncludedHidden, setLastRunIncludedHidden] = useState(false);
   const [constraintsOpen, setConstraintsOpen] = useState(true);
   const [examplesOpen, setExamplesOpen] = useState(true);
@@ -188,6 +193,55 @@ export function ProblemPage() {
     if (!problem) return [];
     return submissions.filter((submission) => submission.problemId === problem.id).slice(0, 6);
   }, [problem, submissions]);
+
+  const buildCoachContext = useCallback((): CoachContext => {
+    const runState: CoachContext["runState"] =
+      result.status === "passed"
+        ? "passed"
+        : result.status === "failed"
+          ? "failed"
+          : result.status === "error" || result.status === "timeout"
+            ? "error"
+            : "unrun";
+    const failedVisible = visibleResults
+      .filter((test) => !test.passed)
+      .slice(0, 4)
+      .map((test) => ({
+        name: test.name,
+        expected: JSON.stringify(test.expected),
+        actual: JSON.stringify(test.actual),
+        error: test.error
+      }));
+    const attemptCount = problem
+      ? submissions.filter((s) => s.problemId === problem.id).length
+      : 0;
+    return {
+      problemTitle: problem?.title ?? "Problem",
+      partTitle: resolvedParts.length > 1 ? activePart.title : undefined,
+      prompt: activePart.prompt,
+      constraints: problem?.constraints,
+      code,
+      entrypoint: activePart.entrypoint,
+      runState,
+      failedVisible,
+      failedHiddenCount,
+      stdout: result.stdout,
+      errorMessage: result.message || result.stderr || undefined,
+      attemptCount,
+      authored: {
+        hints: activePart.hints,
+        solution: activePart.solution,
+        walkthrough: activePart.walkthrough,
+        referenceCode: activePart.solutionCode ?? activePart.referenceCode,
+        complexity: activePart.complexity ?? problem?.complexity
+      }
+    };
+  }, [activePart, code, failedHiddenCount, problem, resolvedParts.length, result, submissions, visibleResults]);
+
+  function toggleCoach() {
+    setCoachMounted(true);
+    setCoachOpen((v) => !v);
+  }
   const progressRecord = problem ? progress[`problem:${problem.id}`] : undefined;
   const reviewLabel = formatReviewDate(progressRecord?.dueAt);
   const run = useCallback(async (includeHidden: boolean) => {
@@ -471,6 +525,15 @@ export function ProblemPage() {
             {starred ? "Starred" : "Star problem"}
           </button>
           <button
+            className={`secondary-button compact-button ${coachOpen ? "active" : ""}`}
+            type="button"
+            aria-pressed={coachOpen}
+            onClick={toggleCoach}
+          >
+            <Bot size={17} />
+            Coach
+          </button>
+          <button
             className="secondary-button compact-button icon-only-button"
             type="button"
             aria-label={sidebarCollapsed ? "Expand nav" : "Collapse nav"}
@@ -499,7 +562,7 @@ export function ProblemPage() {
         ))}
       </nav>
 
-      <div className="problem-layout beta-workspace" style={splitStyle}>
+      <div className={`problem-layout beta-workspace ${coachOpen ? "coach-open" : ""}`} style={splitStyle}>
         <aside className={`problem-brief mobile-pane ${activeMobileTab === "prompt" ? "active" : ""}`}>
           <div className="prompt-scroll">
             {resolvedParts.length > 1 ? (
@@ -884,6 +947,9 @@ export function ProblemPage() {
           </section>
         </div>
       </section>
+      {coachMounted ? (
+        <CoachPanel buildContext={buildCoachContext} visible={coachOpen} onClose={() => setCoachOpen(false)} />
+      ) : null}
       </div>
     </section>
   );
