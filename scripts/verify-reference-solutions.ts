@@ -149,7 +149,32 @@ export function verifyProblemReference(problem: Problem): string[] {
   }
 }
 
-const failures = course.problems.flatMap(verifyProblemReference);
+const setProblems = (course.problemSets ?? []).flatMap((set) => set.problems);
+const allProblems = [...course.problems, ...setProblems];
+
+function verifyParts(problem: Problem): string[] {
+  if (!problem.parts?.length) return [];
+  const out: string[] = [];
+  for (const part of problem.parts) {
+    const fauxProblem: Problem = {
+      ...problem,
+      id: `${problem.id}#${part.id}`,
+      entrypoint: part.entrypoint,
+      referenceCode: part.referenceCode,
+      visibleTests: part.visibleTests,
+      hiddenTests: part.hiddenTests
+    };
+    out.push(...verifyProblemReference(fauxProblem));
+  }
+  return out;
+}
+
+const failures = [
+  ...allProblems.flatMap(verifyProblemReference),
+  ...allProblems.flatMap(verifyParts)
+];
+
+const partCount = allProblems.reduce((total, problem) => total + (problem.parts?.length ?? 0), 0);
 
 if (failures.length) {
   console.error("Reference verification failed:");
@@ -157,4 +182,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Reference solutions OK: ${course.problems.length} problems verified.`);
+console.log(`Reference solutions OK: ${allProblems.length} problems verified (${setProblems.length} from problem sets, ${partCount} extra parts).`);

@@ -7,6 +7,25 @@ const testSchema = z.object({
   expected: z.unknown()
 });
 
+const problemPartSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  prompt: z.string().min(40),
+  entrypoint: z.string().regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/),
+  starterCode: z.string().min(20),
+  referenceCode: z.string().min(20),
+  solutionCode: z.string().min(20).optional(),
+  visibleTests: z.array(testSchema).min(1),
+  hiddenTests: z.array(testSchema).min(1),
+  hints: z.array(z.string().min(8)).min(2),
+  solution: z.string().min(30),
+  walkthrough: z.string().min(30).optional(),
+  complexity: z.object({
+    time: z.string().min(3),
+    space: z.string().min(3)
+  }).optional()
+});
+
 const problemSchema = z.object({
   id: z.string().min(1),
   chapterId: z.string().min(1),
@@ -28,6 +47,7 @@ const problemSchema = z.object({
   solution: z.string().min(30),
   walkthrough: z.string().min(30).optional(),
   followUps: z.array(z.string().min(5)).optional(),
+  parts: z.array(problemPartSchema).optional(),
   complexity: z.object({
     time: z.string().min(3),
     space: z.string().min(3)
@@ -164,6 +184,37 @@ export function validateCourse(course: CourseData): string[] {
     }
     const allTestNames = [...problem.visibleTests, ...problem.hiddenTests].map((test) => test.name);
     assertUnique(`test for ${problem.id}`, allTestNames, errors);
+  }
+
+  const problemSetIds = new Set((course.problemSets ?? []).map((set) => set.id));
+  assertUnique("problem set", (course.problemSets ?? []).map((set) => set.id), errors);
+  for (const set of course.problemSets ?? []) {
+    if (set.problems.length < 1) errors.push(`Problem set ${set.id} has no problems`);
+    const setProblemIds = set.problems.map((problem) => problem.id);
+    assertUnique(`problem in set ${set.id}`, setProblemIds, errors);
+    for (const problem of set.problems) {
+      const parsed = problemSchema.safeParse(problem);
+      if (!parsed.success) errors.push(`Invalid set problem ${problem.id}: ${parsed.error.issues[0]?.message ?? "schema error"}`);
+      if (problemIds.has(problem.id)) errors.push(`Set problem ${problem.id} collides with a course problem id`);
+      if (problem.chapterId !== set.id) errors.push(`Set problem ${problem.id} chapterId must equal set id ${set.id}`);
+      if (!problem.starterCode.includes(`def ${problem.entrypoint}(`)) {
+        errors.push(`Set problem ${problem.id} starter code does not define ${problem.entrypoint}`);
+      }
+      if (!problem.referenceCode.includes(`def ${problem.entrypoint}(`)) {
+        errors.push(`Set problem ${problem.id} reference code does not define ${problem.entrypoint}`);
+      }
+      if (!problem.solutionCode || !problem.solutionCode.includes(`def ${problem.entrypoint}(`)) {
+        errors.push(`Set problem ${problem.id} missing solution code for ${problem.entrypoint}`);
+      }
+      if (!problem.walkthrough) errors.push(`Set problem ${problem.id} missing walkthrough`);
+      if (!problem.constraints?.length) errors.push(`Set problem ${problem.id} missing constraints`);
+      if (!problem.examples?.length) errors.push(`Set problem ${problem.id} missing examples`);
+      const allTestNames = [...problem.visibleTests, ...problem.hiddenTests].map((test) => test.name);
+      assertUnique(`test for ${problem.id}`, allTestNames, errors);
+    }
+  }
+  if (!problemSetIds.size && course.problemSets) {
+    // empty sets array is fine
   }
 
   for (const quiz of course.quizzes) {

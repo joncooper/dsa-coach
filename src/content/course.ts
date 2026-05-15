@@ -1,5 +1,9 @@
 import { guidedReferenceCode } from "./referenceSolutions";
-import type { BonusProblem, Chapter, CourseData, Difficulty, Lesson, Problem, ProblemTest, Quiz } from "../types";
+import { problemSets as tekmerionSets } from "./problemSets";
+import { aocSets } from "./aocSets";
+import type { BonusProblem, Chapter, CourseData, Difficulty, Lesson, Problem, ProblemSet, ProblemTest, Quiz } from "../types";
+
+const problemSets: ProblemSet[] = [...tekmerionSets, ...aocSets];
 
 interface ChapterSpec {
   id: string;
@@ -2437,7 +2441,8 @@ export const course: CourseData = {
   chapters,
   lessons,
   problems,
-  quizzes
+  quizzes,
+  problemSets
 };
 
 export const contentStats = {
@@ -2446,7 +2451,9 @@ export const contentStats = {
   guidedProblemCount: course.problems.filter((problem) => problem.source === "guided").length,
   bonusProblemCount: course.chapters.reduce((total, chapter) => total + chapter.bonusProblems.length, 0),
   totalProblemCount: course.problems.length,
-  quizCount: course.quizzes.length
+  quizCount: course.quizzes.length,
+  problemSetCount: course.problemSets.length,
+  problemSetProblemCount: course.problemSets.reduce((total, set) => total + set.problems.length, 0)
 };
 
 export function findChapter(id: string): Chapter | undefined {
@@ -2458,7 +2465,17 @@ export function findLesson(id: string): Lesson | undefined {
 }
 
 export function findProblem(id: string): Problem | undefined {
-  return course.problems.find((problem) => problem.id === id);
+  const own = course.problems.find((problem) => problem.id === id);
+  if (own) return own;
+  for (const set of course.problemSets) {
+    const match = set.problems.find((problem) => problem.id === id);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+export function findProblemSet(id: string): ProblemSet | undefined {
+  return course.problemSets.find((set) => set.id === id);
 }
 
 export function findQuiz(id: string): Quiz | undefined {

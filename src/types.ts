@@ -41,6 +41,25 @@ export interface ProblemTest {
   expected: unknown;
 }
 
+export interface ProblemPart {
+  id: string;
+  title: string;
+  prompt: string;
+  entrypoint: string;
+  starterCode: string;
+  referenceCode: string;
+  solutionCode?: string;
+  visibleTests: ProblemTest[];
+  hiddenTests: ProblemTest[];
+  hints: string[];
+  solution: string;
+  walkthrough?: string;
+  complexity?: {
+    time: string;
+    space: string;
+  };
+}
+
 export interface Problem {
   id: string;
   chapterId: string;
@@ -62,6 +81,7 @@ export interface Problem {
   solution: string;
   walkthrough?: string;
   followUps?: string[];
+  parts?: ProblemPart[];
   complexity: {
     time: string;
     space: string;
@@ -88,11 +108,20 @@ export interface Quiz {
   questions: QuizQuestion[];
 }
 
+export interface ProblemSet {
+  id: string;
+  title: string;
+  summary: string;
+  intro: string;
+  problems: Problem[];
+}
+
 export interface CourseData {
   chapters: Chapter[];
   lessons: Lesson[];
   problems: Problem[];
   quizzes: Quiz[];
+  problemSets: ProblemSet[];
 }
 
 export interface ProgressRecord {
