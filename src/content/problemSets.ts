@@ -1704,6 +1704,36 @@ const renderTemplate = setProblem({
       name: "underscore and digits in name",
       args: ["{{first_name_1}}", { first_name_1: "Ada" }],
       expected: "Ada"
+    },
+    {
+      name: "triple braces leave outer brace literal",
+      args: ["{{{a}}}", { a: "X" }],
+      expected: "{X}"
+    },
+    {
+      name: "spaces inside braces invalidate placeholder",
+      args: ["{{ name }}", { name: "Ada" }],
+      expected: "{{ name }}"
+    },
+    {
+      name: "empty string value substitutes empty",
+      args: ["hello {{name}}!", { name: "" }],
+      expected: "hello !"
+    },
+    {
+      name: "list value stringified via str",
+      args: ["items: {{x}}", { x: [1, 2, 3] }],
+      expected: "items: [1, 2, 3]"
+    },
+    {
+      name: "single brace pair is literal",
+      args: ["{a} {b}", { a: "X", b: "Y" }],
+      expected: "{a} {b}"
+    },
+    {
+      name: "unclosed placeholder is literal",
+      args: ["start {{name end", { name: "Ada" }],
+      expected: "start {{name end"
     }
   ],
   hints: [
