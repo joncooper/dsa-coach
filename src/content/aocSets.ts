@@ -408,7 +408,11 @@ const y1d3 = aocProblem({
       expected: 7
     },
     { name: "single row tree at start", args: ["#...."], expected: 1 },
-    { name: "wrap immediately", args: ["#.\n.#\n#."], expected: 3 }
+    { name: "wrap immediately", args: ["#.\n.#\n#."], expected: 3 },
+    { name: "single row no tree at column zero", args: [".###"], expected: 0 },
+    { name: "narrow width wrap hits", args: ["..\n.#"], expected: 1 },
+    { name: "trailing newline filtered", args: ["#...\n...#\n..#.\n"], expected: 3 },
+    { name: "diagonal hits every row", args: ["#...\n...#\n..#.\n.#.."], expected: 4 }
   ],
   hints: [
     "Row `r` lands on column `(r * 3) % width` — no need to simulate the wrap.",
@@ -484,6 +488,16 @@ const y1d3 = aocProblem({
         name: "slopes miss every tree",
         args: ["....\n#...\n....\n#...\n....\n#..."],
         expected: 0
+      },
+      {
+        name: "single row all trees product is one",
+        args: ["####"],
+        expected: 1
+      },
+      {
+        name: "single column all trees",
+        args: ["#\n#\n#\n#\n#"],
+        expected: 1875
       }
     ],
     hints: [
