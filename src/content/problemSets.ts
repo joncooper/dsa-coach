@@ -806,6 +806,30 @@ const rateLimiter = setProblem({
       name: "multiple users interleaved",
       args: [[[0, "a"], [1, "b"], [2, "a"], [3, "b"], [4, "a"]], 2, 10],
       expected: [true, true, true, true, false]
+    },
+    {
+      name: "narrow window allows tight recovery",
+      args: [[[0, "a"], [0, "a"], [1, "a"], [1, "a"]], 1, 1],
+      expected: [true, false, true, false]
+    },
+    {
+      name: "one full one fresh user",
+      args: [[[0, "a"], [0, "a"], [0, "a"], [0, "b"]], 2, 10],
+      expected: [true, true, false, true]
+    },
+    {
+      name: "all events same timestamp same user",
+      args: [[[5, "a"], [5, "a"], [5, "a"], [5, "a"], [5, "a"]], 3, 10],
+      expected: [true, true, true, false, false]
+    },
+    {
+      name: "long stream tight rhythm",
+      args: [
+        [[0, "a"], [1, "a"], [2, "a"], [3, "a"], [4, "a"], [5, "a"], [6, "a"]],
+        2,
+        3
+      ],
+      expected: [true, true, false, true, true, false, true]
     }
   ],
   hints: [
@@ -919,6 +943,21 @@ const rateLimiter = setProblem({
           name: "burst at same timestamp depletes bucket",
           args: [[[5, "a"], [5, "a"], [5, "a"], [5, "a"]], 3, 1],
           expected: [true, true, true, false]
+        },
+        {
+          name: "refill anchor preserves fractional carry",
+          args: [[[0, "a"], [4, "a"], [6, "a"], [7, "a"]], 1, 3],
+          expected: [true, true, true, false]
+        },
+        {
+          name: "refill never exceeds capacity",
+          args: [[[0, "a"], [0, "a"], [100, "a"], [100, "a"], [100, "a"]], 2, 1],
+          expected: [true, true, true, true, false]
+        },
+        {
+          name: "two users independent bucket state",
+          args: [[[0, "a"], [0, "a"], [0, "b"], [0, "b"], [0, "a"], [0, "b"]], 2, 5],
+          expected: [true, true, true, true, false, false]
         }
       ],
       hints: [
