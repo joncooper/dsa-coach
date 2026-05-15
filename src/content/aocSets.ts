@@ -1788,7 +1788,11 @@ const y2d3 = aocProblem({
       name: "many rows",
       args: ["*.*.*\n#####\n*..**\n.*.#*\n*..*."],
       expected: 9
-    }
+    },
+    { name: "row starting with star", args: ["*..*.."], expected: 2 },
+    { name: "trailing wall after relics", args: ["**#"], expected: 2 },
+    { name: "alternating relic wall rows", args: ["*\n#\n*\n#\n*"], expected: 3 },
+    { name: "no relics or walls", args: ["......"], expected: 0 }
   ],
   hints: [
     "For each row, walk left-to-right and break on `#`.",
@@ -1878,6 +1882,21 @@ const y2d3 = aocProblem({
         name: "walls cap counts",
         args: ["**#**\n*****\n*#***\n*****"],
         expected: 2
+      },
+      {
+        name: "all equal rows zero exceedances",
+        args: ["**\n**\n**\n**\n**"],
+        expected: 0
+      },
+      {
+        name: "two rows second equal does not exceed",
+        args: ["**\n**"],
+        expected: 0
+      },
+      {
+        name: "lower median tie-break for even count",
+        args: ["*\n**\n***\n****\n**"],
+        expected: 3
       }
     ],
     hints: [
