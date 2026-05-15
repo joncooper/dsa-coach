@@ -1052,6 +1052,36 @@ const topWords = setProblem({
       name: "numbers excluded",
       args: ["abc123 abc 999", 2],
       expected: [["abc", 2]]
+    },
+    {
+      name: "multi-way tie sorts alphabetically",
+      args: ["zebra apple banana zebra apple banana", 3],
+      expected: [["apple", 2], ["banana", 2], ["zebra", 2]]
+    },
+    {
+      name: "hyphen splits words",
+      args: ["well-known well known", 3],
+      expected: [["known", 2], ["well", 2]]
+    },
+    {
+      name: "apostrophe splits words",
+      args: ["don't do don do", 3],
+      expected: [["do", 2], ["don", 2], ["t", 1]]
+    },
+    {
+      name: "whitespace only input",
+      args: ["   \t  \n  ", 5],
+      expected: []
+    },
+    {
+      name: "tied counts more than k",
+      args: ["a b c d e", 3],
+      expected: [["a", 1], ["b", 1], ["c", 1]]
+    },
+    {
+      name: "mixed case across input",
+      args: ["The THE the tHe", 1],
+      expected: [["the", 4]]
     }
   ],
   hints: [
