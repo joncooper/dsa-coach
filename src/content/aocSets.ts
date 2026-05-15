@@ -2166,7 +2166,11 @@ const y2d5 = aocProblem({
     { name: "only east", args: ["EEEEEEEE"], expected: 4 },
     { name: "mixed", args: ["NNNNEESS\nWWWWEENN"], expected: 2 },
     { name: "blank between", args: ["NNNNNNNN\n\nSSSSSSSS"], expected: 4 },
-    { name: "three codes", args: ["NNEESSWW\nNNNNSSSS\nEEEEEEEE"], expected: 4 }
+    { name: "three codes", args: ["NNEESSWW\nNNNNSSSS\nEEEEEEEE"], expected: 4 },
+    { name: "north then east diagonal", args: ["NNNNEEEE"], expected: 4 },
+    { name: "two codes second wins", args: ["NNSSEEWW\nNNNNEEEE"], expected: 4 },
+    { name: "only south", args: ["SSSSSSSS"], expected: 4 },
+    { name: "only west", args: ["WWWWWWWW"], expected: 4 }
   ],
   hints: [
     "Use a dict that maps each two-character pair to its delta vector.",
@@ -2234,7 +2238,10 @@ const y2d5 = aocProblem({
     hiddenTests: [
       { name: "peak before return", args: ["NNNNNNSS"], expected: 3 },
       { name: "east then west", args: ["EEEEWWWW"], expected: 2 },
-      { name: "out and back peaks at one", args: ["NNSSEEWW"], expected: 1 }
+      { name: "out and back peaks at one", args: ["NNSSEEWW"], expected: 1 },
+      { name: "diagonal climb peaks at end", args: ["NNNNEEEE"], expected: 4 },
+      { name: "two codes second has larger intermediate peak", args: ["NNSSEEWW\nNNNNNNNN"], expected: 4 },
+      { name: "S-shaped path peaks before return", args: ["NNEEEESS"], expected: 3 }
     ],
     hints: [
       "Same loop as Part 1, but update the running max after every pair, not just after the final pair.",
