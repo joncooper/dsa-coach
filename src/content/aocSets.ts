@@ -3751,7 +3751,11 @@ const y3d6 = aocProblem({
       args: ["a\na\na\n\nx\ny\nx,y"],
       expected: 1
     },
-    { name: "blank trailing block", args: ["a,b\n\n\n"], expected: 2 }
+    { name: "blank trailing block", args: ["a,b\n\n\n"], expected: 2 },
+    { name: "tag in exactly two lines counts even", args: ["a\na"], expected: 0 },
+    { name: "tag in three lines counts odd", args: ["a\na\na"], expected: 1 },
+    { name: "duplicates within line dedup before parity", args: ["a,a,a\nb"], expected: 2 },
+    { name: "five-line record mixed parity", args: ["a,b\na\nb\nc\nc,d"], expected: 1 }
   ],
   hints: [
     "Convert each line to a set first to deduplicate within-line tags.",
@@ -3820,7 +3824,10 @@ const y3d6 = aocProblem({
       { name: "four lines threshold two", args: ["a\na\nb\nc"], expected: 1 },
       { name: "five lines threshold three", args: ["a\na\na\nb\nc"], expected: 1 },
       { name: "no majority", args: ["a\nb\nc\nd"], expected: 0 },
-      { name: "blank trailing block", args: ["a\na\nb\n\n\n"], expected: 1 }
+      { name: "blank trailing block", args: ["a\na\nb\n\n\n"], expected: 1 },
+      { name: "even lines threshold equals half", args: ["a,b\na\nb\na"], expected: 2 },
+      { name: "tag in every line is majority", args: ["a,b\na,c\na,d"], expected: 1 },
+      { name: "two records sum thresholds", args: ["a\na\nb\n\nx\nx\ny"], expected: 2 }
     ],
     hints: [
       "Threshold is `ceil(lines / 2)` which equals `(lines + 1) // 2`.",
