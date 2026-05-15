@@ -3567,7 +3567,10 @@ const y3d5 = aocProblem({
     { name: "two codes pick max", args: ["00000a\n00000b"], expected: 11 },
     { name: "all max", args: ["zzzzzz"], expected: 2176782335 },
     { name: "digits and letters", args: ["1a2b3c\n0z0z0z"], expected: 77370024 },
-    { name: "blank lines ignored", args: ["\n00000a\n\n00000b\n"], expected: 11 }
+    { name: "blank lines ignored", args: ["\n00000a\n\n00000b\n"], expected: 11 },
+    { name: "letter weight over digit weight", args: ["000009\n00000a"], expected: 10 },
+    { name: "leading position dominates", args: ["a00000\n9zzzzz"], expected: 604661760 },
+    { name: "duplicate codes do not affect max", args: ["00000a\n00000a\n00000a"], expected: 10 }
   ],
   hints: [
     "Python's `int(s, base)` handles base-36 natively — no manual decoding needed.",
@@ -3643,6 +3646,21 @@ const y3d5 = aocProblem({
         name: "gap larger than two",
         args: ["000001\n000004"],
         expected: -1
+      },
+      {
+        name: "duplicates do not block detection",
+        args: ["000001\n000001\n000003"],
+        expected: 2
+      },
+      {
+        name: "unordered input still finds gap",
+        args: ["000005\n000001\n000003"],
+        expected: 2
+      },
+      {
+        name: "many values one gap",
+        args: ["000001\n000002\n000003\n000005\n000006\n000007"],
+        expected: 4
       }
     ],
     hints: [
