@@ -3362,6 +3362,25 @@ const y3d4 = aocProblem({
       name: "duplicate within roster category",
       args: ["food:taco,taco\ncraft:art\nmusic:drum"],
       expected: 4
+    },
+    {
+      name: "invalid rosters do not contribute",
+      args: [
+        "food:taco\ncraft:art\nmusic:drum\n\nfood:burrito\ncraft:pot"
+      ],
+      expected: 3
+    },
+    {
+      name: "category repeated across lines aggregates items",
+      args: ["food:taco\nfood:burrito\ncraft:art\nmusic:drum"],
+      expected: 4
+    },
+    {
+      name: "leading blank block ignored",
+      args: [
+        "\n\nfood:taco\ncraft:art\nmusic:drum"
+      ],
+      expected: 3
     }
   ],
   hints: [
@@ -3466,6 +3485,18 @@ const y3d4 = aocProblem({
         name: "invalid roster ignored",
         args: ["food:x,y,z\ncraft:w\n\nfood:a\ncraft:b\nmusic:c"],
         expected: "craft"
+      },
+      {
+        name: "three-way tie alphabetical first",
+        args: ["food:a,b\ncraft:c,d\nmusic:e,f"],
+        expected: "craft"
+      },
+      {
+        name: "same category across two valid rosters aggregates",
+        args: [
+          "food:a,b\ncraft:c\nmusic:d\n\nfood:e,f,g\ncraft:h\nmusic:i"
+        ],
+        expected: "food"
       }
     ],
     hints: [
