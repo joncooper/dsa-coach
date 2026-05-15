@@ -1011,7 +1011,11 @@ const y1d6 = aocProblem({
     { name: "duplicates within one line", args: ["aaaa\n\nbbbb"], expected: 2 },
     { name: "multi-line group", args: ["a\nb\nc\n\nab\nac"], expected: 6 },
     { name: "all letters", args: ["abcdefghijklmnopqrstuvwxyz"], expected: 26 },
-    { name: "blank trailing block", args: ["abc\n\n\n"], expected: 3 }
+    { name: "blank trailing block", args: ["abc\n\n\n"], expected: 3 },
+    { name: "duplicates across multiple lines", args: ["ab\nab\nab"], expected: 2 },
+    { name: "leading blank block", args: ["\n\nabc"], expected: 3 },
+    { name: "many groups", args: ["a\n\nb\n\nc\n\nd\n\ne"], expected: 5 },
+    { name: "wide spans", args: ["abcdef\nghijkl\n\nmnopqr"], expected: 18 }
   ],
   hints: [
     "Treat each person's line as a set of letters; the group's anyone-yes count is the set union.",
@@ -1066,7 +1070,11 @@ const y1d6 = aocProblem({
       { name: "all share none", args: ["a\nb\nc"], expected: 0 },
       { name: "all share one", args: ["ab\nac\nad"], expected: 1 },
       { name: "mixed groups", args: ["ab\nac\n\nef\nef\n\nx"], expected: 4 },
-      { name: "blank group skipped", args: ["abc\n\n\n\ndef\nde"], expected: 5 }
+      { name: "blank group skipped", args: ["abc\n\n\n\ndef\nde"], expected: 5 },
+      { name: "identical answers across group", args: ["abc\nabc\nabc"], expected: 3 },
+      { name: "intersection shrinks each step", args: ["abcd\nabc\nab\na"], expected: 1 },
+      { name: "two groups one empty intersection", args: ["a\nb\n\nx\nx"], expected: 1 },
+      { name: "single letter unanimous", args: ["a\na\na"], expected: 1 }
     ],
     hints: [
       "Convert each person's line to a set up-front so intersection is a single `&=`.",
