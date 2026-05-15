@@ -41,8 +41,6 @@ const idleResult: RunResult = {
 
 type MobileTab = "prompt" | "code" | "results" | "scratchpad" | "notes";
 type DesktopPanel = "results" | "stdout" | "errors" | "scratchpad" | "notes" | "history";
-type PromptDensity = "compact" | "full";
-
 const desktopPanels: DesktopPanel[] = ["results", "stdout", "errors", "scratchpad", "notes", "history"];
 const mobileTabs: MobileTab[] = ["prompt", "code", "results", "scratchpad", "notes"];
 
@@ -74,7 +72,6 @@ export function ProblemPage() {
   const [focusMode, setFocusMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [lastRunIncludedHidden, setLastRunIncludedHidden] = useState(false);
-  const [promptDensity, setPromptDensity] = useState<PromptDensity>("compact");
   const [constraintsOpen, setConstraintsOpen] = useState(true);
   const [examplesOpen, setExamplesOpen] = useState(true);
   const [starred, setStarred] = useState(false);
@@ -93,7 +90,6 @@ export function ProblemPage() {
   const storedHiddenDiagnostics = settings["workspace:showHiddenDiagnostics"]?.value;
   const storedFocusMode = settings["workspace:focusMode"]?.value;
   const storedSidebarCollapsed = settings["workspace:sidebarCollapsed"]?.value;
-  const storedPromptDensity = settings["workspace:promptDensity"]?.value;
 
   useEffect(() => {
     if (!problem) return;
@@ -144,10 +140,7 @@ export function ProblemPage() {
     if (typeof storedSidebarCollapsed === "boolean") {
       setSidebarCollapsed(storedSidebarCollapsed);
     }
-    if (storedPromptDensity === "compact" || storedPromptDensity === "full") {
-      setPromptDensity(storedPromptDensity);
-    }
-  }, [storedDockHeight, storedFocusMode, storedHiddenDiagnostics, storedMobileTab, storedPromptDensity, storedSidebarCollapsed, storedSplitRatio]);
+  }, [storedDockHeight, storedFocusMode, storedHiddenDiagnostics, storedMobileTab, storedSidebarCollapsed, storedSplitRatio]);
 
   useEffect(() => {
     document.body.classList.toggle("problem-focus-mode", focusMode);
@@ -197,8 +190,6 @@ export function ProblemPage() {
   }, [problem, submissions]);
   const progressRecord = problem ? progress[`problem:${problem.id}`] : undefined;
   const reviewLabel = formatReviewDate(progressRecord?.dueAt);
-  const constraintsExpanded = promptDensity === "full" || constraintsOpen;
-  const examplesExpanded = promptDensity === "full" || examplesOpen;
   const run = useCallback(async (includeHidden: boolean) => {
     if (!problem || !activePart || !codeStorageKey) return;
     setLastRunIncludedHidden(includeHidden);
@@ -364,17 +355,6 @@ export function ProblemPage() {
     setStarred(next);
   }
 
-  function togglePromptDensity() {
-    setPromptDensity((value) => {
-      const next = value === "compact" ? "full" : "compact";
-      if (next === "full") {
-        setConstraintsOpen(true);
-        setExamplesOpen(true);
-      }
-      void saveSetting("workspace:promptDensity", next);
-      return next;
-    });
-  }
 
   function handleSeparatorPointerDown(event: PointerEvent<HTMLDivElement>) {
     const container = event.currentTarget.parentElement;
@@ -529,7 +509,7 @@ export function ProblemPage() {
             {problemSet ? <DisciplineChecklist problemId={problem.id} /> : null}
 
             {problem.constraints?.length ? (
-              <details className="prompt-detail" open={constraintsExpanded} onToggle={(event) => setConstraintsOpen(event.currentTarget.open)}>
+              <details className="prompt-detail" open={constraintsOpen} onToggle={(event) => setConstraintsOpen(event.currentTarget.open)}>
                 <summary>
                   Constraints
                   <small className="prompt-detail-count">{problem.constraints.length}</small>
@@ -542,7 +522,7 @@ export function ProblemPage() {
               </details>
             ) : null}
 
-            <details className="prompt-detail" open={examplesExpanded} onToggle={(event) => setExamplesOpen(event.currentTarget.open)}>
+            <details className="prompt-detail" open={examplesOpen} onToggle={(event) => setExamplesOpen(event.currentTarget.open)}>
               <summary>Visible examples</summary>
               <div className="test-preview compact-tests">
                 {activePart.visibleTests.map((test) => (
@@ -593,9 +573,6 @@ export function ProblemPage() {
           </div>
 
           <div className="prompt-actions">
-            <button className="secondary-button" type="button" onClick={togglePromptDensity}>
-              {promptDensity === "compact" ? "Full prompt" : "Compact prompt"}
-            </button>
             <button className="tertiary-button" type="button" onClick={() => setHintCount((count) => Math.min(count + 1, activePart.hints.length))}>
               <Lightbulb size={16} />
               Reveal hint
