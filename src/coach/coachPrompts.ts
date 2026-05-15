@@ -92,7 +92,16 @@ function stateBlock(ctx: CoachContext): string {
   lines.push(`The learner has run or submitted this problem ${ctx.attemptCount} time(s).`);
 
   const code = ctx.code.trim();
-  if (!code || /^\s*(#.*\n?)*\s*pass\s*$/.test(code)) {
+  // "Unstarted" = nothing beyond the def signature, comments, and a bare
+  // `pass` — i.e. the untouched starter scaffold.
+  const meaningful = code
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith("#"))
+    .filter((line) => !/^(async\s+)?def\s+[A-Za-z_]\w*\s*\(.*\)\s*:/.test(line));
+  const unstarted = meaningful.every((line) => line === "pass" || line === "...");
+
+  if (!code || unstarted) {
     lines.push(
       "The editor is essentially empty — the learner has not started. Treat this as a Rung 0 'where do I start' ask. Orient them; do not write code."
     );
