@@ -1214,6 +1214,34 @@ const y1d7 = aocProblem({
         "alpha box containers hold 2 bright gold containers, 1 ignored leaf container.\nbeta box containers hold 1 alpha box container.\nignored leaf containers hold no other containers.\nbright gold containers hold no other containers."
       ],
       expected: 2
+    },
+    {
+      name: "gold contains things does not count itself",
+      args: [
+        "bright gold containers hold 2 plain red containers.\nplain red containers hold no other containers."
+      ],
+      expected: 0
+    },
+    {
+      name: "irrelevant island ignored",
+      args: [
+        "lone alpha containers hold 1 lone beta container.\nlone beta containers hold no other containers.\nshiny silver containers hold 1 bright gold container.\nbright gold containers hold no other containers."
+      ],
+      expected: 1
+    },
+    {
+      name: "multiple direct parents",
+      args: [
+        "red one containers hold 1 bright gold container.\nblue two containers hold 1 bright gold container.\ngreen three containers hold 1 bright gold container.\nbright gold containers hold no other containers."
+      ],
+      expected: 3
+    },
+    {
+      name: "cycle-free DAG with shared ancestor",
+      args: [
+        "top root containers hold 1 mid one container, 1 mid two container.\nmid one containers hold 1 bright gold container.\nmid two containers hold 1 mid one container.\nbright gold containers hold no other containers."
+      ],
+      expected: 3
     }
   ],
   hints: [
@@ -1324,6 +1352,27 @@ const y1d7 = aocProblem({
           "bright gold containers hold 1 first chamber container.\nfirst chamber containers hold 1 second chamber container.\nsecond chamber containers hold 1 third chamber container.\nthird chamber containers hold no other containers."
         ],
         expected: 3
+      },
+      {
+        name: "single child count multiplies down",
+        args: [
+          "bright gold containers hold 3 sub one containers.\nsub one containers hold 4 sub two containers.\nsub two containers hold no other containers."
+        ],
+        expected: 15
+      },
+      {
+        name: "branching count multiplies cleanly",
+        args: [
+          "bright gold containers hold 2 alpha box containers, 3 beta box containers.\nalpha box containers hold 1 inner one container.\nbeta box containers hold no other containers.\ninner one containers hold no other containers."
+        ],
+        expected: 7
+      },
+      {
+        name: "diamond pays both paths",
+        args: [
+          "bright gold containers hold 2 mid one containers, 3 mid two containers.\nmid one containers hold 1 leaf alpha container.\nmid two containers hold 1 leaf alpha container.\nleaf alpha containers hold no other containers."
+        ],
+        expected: 10
       }
     ],
     hints: [
