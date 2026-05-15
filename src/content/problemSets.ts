@@ -681,7 +681,12 @@ const minRooms = setProblem({
     { name: "fully nested", args: [[[1, 10], [2, 9], [3, 8]]], expected: 3 },
     { name: "disjoint", args: [[[0, 1], [2, 3], [4, 5]]], expected: 1 },
     { name: "unsorted input", args: [[[10, 20], [0, 30], [5, 15]]], expected: 3 },
-    { name: "shared endpoints chain", args: [[[1, 5], [5, 10], [10, 15], [1, 12]]], expected: 2 }
+    { name: "shared endpoints chain", args: [[[1, 5], [5, 10], [10, 15], [1, 12]]], expected: 2 },
+    { name: "five simultaneous starts", args: [[[0, 30], [0, 20], [0, 10], [0, 5], [0, 1]]], expected: 5 },
+    { name: "non-zero offsets disjoint", args: [[[5, 10], [10, 15], [15, 20]]], expected: 1 },
+    { name: "peak in the middle", args: [[[0, 100], [10, 20], [10, 20], [10, 20], [90, 95]]], expected: 4 },
+    { name: "tight chain of end-equals-start", args: [[[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]], expected: 1 },
+    { name: "two pairs of identical intervals", args: [[[0, 10], [0, 10], [5, 15], [5, 15]]], expected: 4 }
   ],
   hints: [
     "Turn each meeting into a start event (+1) and an end event (-1).",
