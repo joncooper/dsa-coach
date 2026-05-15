@@ -143,6 +143,46 @@ const tradePnl = setProblem({
         { side: "SELL", qty: 40, price: 14 }
       ]],
       expected: 240
+    },
+    {
+      name: "exact lot match clears queue",
+      args: [[
+        { side: "BUY", qty: 10, price: 50 },
+        { side: "BUY", qty: 10, price: 60 },
+        { side: "SELL", qty: 10, price: 70 },
+        { side: "BUY", qty: 5, price: 40 },
+        { side: "SELL", qty: 15, price: 80 }
+      ]],
+      expected: 600
+    },
+    {
+      name: "single sell drains three lots in order",
+      args: [[
+        { side: "BUY", qty: 10, price: 1 },
+        { side: "BUY", qty: 10, price: 2 },
+        { side: "BUY", qty: 10, price: 3 },
+        { side: "SELL", qty: 30, price: 5 }
+      ]],
+      expected: 90
+    },
+    {
+      name: "mixed wins and losses across many trades",
+      args: [[
+        { side: "BUY", qty: 100, price: 50 },
+        { side: "SELL", qty: 40, price: 60 },
+        { side: "BUY", qty: 20, price: 80 },
+        { side: "SELL", qty: 60, price: 55 },
+        { side: "SELL", qty: 20, price: 70 }
+      ]],
+      expected: 500
+    },
+    {
+      name: "sell of one against thousand-lot buy",
+      args: [[
+        { side: "BUY", qty: 1000, price: 100 },
+        { side: "SELL", qty: 1, price: 200 }
+      ]],
+      expected: 100
     }
   ],
   hints: [
