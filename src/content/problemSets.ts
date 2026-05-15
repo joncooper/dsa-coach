@@ -1812,7 +1812,15 @@ const resolvePath = setProblem({
     { name: "pop past root no-op", args: ["/.."], expected: "/" },
     { name: "triple dot is a directory", args: ["/a/.../b"], expected: "/a/.../b" },
     { name: "many mixed", args: ["/a//b/./c/"], expected: "/a/b/c" },
-    { name: "only dots and slashes", args: ["/./../."], expected: "/" }
+    { name: "only dots and slashes", args: ["/./../."], expected: "/" },
+    { name: "pop past root multiple times", args: ["/../../../"], expected: "/" },
+    { name: "single dot dir then pop", args: ["/foo/."], expected: "/foo" },
+    { name: "name starting with double-dot is literal", args: ["/..foo/bar"], expected: "/..foo/bar" },
+    { name: "name ending with double-dot is literal", args: ["/foo../bar"], expected: "/foo../bar" },
+    { name: "every slash collapsed", args: ["//////"], expected: "/" },
+    { name: "alternating climb", args: ["/a/../b/../c/../d"], expected: "/d" },
+    { name: "deep climb then descend", args: ["/a/b/c/d/../../../e"], expected: "/a/e" },
+    { name: "dot files preserved", args: ["/home/.config/app"], expected: "/home/.config/app" }
   ],
   hints: [
     "Split on `/` and treat each non-empty piece as a single segment.",
