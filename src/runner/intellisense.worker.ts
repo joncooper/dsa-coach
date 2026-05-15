@@ -38,11 +38,17 @@ function ensurePyodide() {
   return pyodidePromise;
 }
 
+const PYODIDE_CDN = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full";
+
 function ensureJedi(): Promise<void> {
   jediReadyPromise ??= (async () => {
     const py = await ensurePyodide();
-    await py.loadPackage(["jedi"]);
-    // Pre-import jedi so the first completion request doesn't pay the import cost.
+    // The local pyodide directory only ships the stdlib; pull jedi + parso
+    // wheels from the Pyodide CDN. Versions match Pyodide 0.26.4's lockfile.
+    await py.loadPackage([
+      `${PYODIDE_CDN}/parso-0.8.4-py2.py3-none-any.whl`,
+      `${PYODIDE_CDN}/jedi-0.19.1-py2.py3-none-any.whl`
+    ]);
     await py.runPythonAsync("import jedi");
   })();
   return jediReadyPromise;
