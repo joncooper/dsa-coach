@@ -21,6 +21,7 @@ Most practice tools are either online judges that hide the test cases, or static
 - **4 problem sets (33 problems):** a practical generalist-interview set and three Advent-of-Code-style "years" (parse messy input → answer Part 1 → extend for Part 2). 24 of these carry a runnable Part 2.
 - **In-browser Python** through Pyodide in a Web Worker, with a 45-second execution timeout and separate run / submit flows.
 - **Type-aware autocomplete:** a static stdlib completion source plus a Jedi-in-Pyodide language service running in its own worker, so `cnt = Counter(); cnt.` proposes real `Counter` methods.
+- **Optional local-LLM coach:** an openable side panel that coaches adaptively against a local model — Socratic by default, escalating only as far as you need, and willing to hand over the full solution if you ask for it outright. Fully opt-in and offline; the app works exactly the same without it.
 - **Problem workspace** with prompt, constraints, examples, CodeMirror editor, visible/hidden test results, stdout, errors, a scratchpad, notes, submission history, progressive hints, solutions, and an interview-discipline checklist on the problem sets.
 - **IndexedDB persistence** for progress, notes, submissions, settings, spaced-review state, and per-problem (and per-part) workspace code.
 - **JSON export/import** to move local progress between browsers.
@@ -39,6 +40,30 @@ Most practice tools are either online judges that hide the test cases, or static
 | Year One / Two / Three | 7 Advent-of-Code-style problems each: parse a messy text blob, compute Part 1, then a Part 2 that builds on it |
 
 ![Dashboard](ui-snapshots/dashboard.png)
+
+## The coach (optional)
+
+The coach is a side panel that talks to a local LLM. It is deliberately **not** a brick wall: it defaults to guidance and escalates along a fixed ladder driven by how many attempts you've made *and* what you actually ask for —
+
+0. empty editor → orient: what to notice, which shape fits
+1. first ask → one Socratic nudge
+2. still stuck / a failing test → name the technique, point at the exact failing case, pseudocode skeleton
+3. "show me the approach" → the full algorithm in prose
+4. "just give me the code" / "I give up" / asked twice → the complete solution, plus a short *why it works / what to internalize*
+
+It never refuses the same request twice and never nags. Every request is grounded in the problem's authored hints, walkthrough, and verified reference solution, so even a small local model stays correct and — at the last rung — hands over a vetted-consistent answer rather than an invented one.
+
+It is **opt-in and offline-first**. Nothing about the rest of the app depends on it; when the model isn't reachable the panel just explains how to start it.
+
+```bash
+ollama pull gemma4:latest
+# allow the app's origin, then serve:
+OLLAMA_ORIGINS="*" ollama serve
+```
+
+Open a problem, click **Coach**. If Ollama isn't running the panel degrades gracefully with the exact command to fix it.
+
+![Coach](ui-snapshots/coach.png)
 
 ## Quick Start
 
@@ -76,6 +101,7 @@ bun run verify:references  # Run every reference solution against its tests
 src/components/   React screens and the problem workspace
 src/content/      Course metadata, lessons, problems, quizzes, problem sets
 src/runner/       Pyodide test worker, Jedi intellisense worker, result comparison
+src/coach/        Browser→Ollama client and the adaptive coaching prompts
 src/storage/      Dexie / IndexedDB persistence
 src/hooks/        Course store + React context
 scripts/          Content validation and reference verification
