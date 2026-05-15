@@ -1445,7 +1445,11 @@ const y2d1 = aocProblem({
     { name: "single value", args: ["42"], expected: 0 },
     { name: "two pairs", args: ["1\n1\n2\n2"], expected: 2 },
     { name: "blanks skipped", args: ["\n9\n9\n\n"], expected: 1 },
-    { name: "large group", args: ["3\n3\n3\n3\n3"], expected: 10 }
+    { name: "large group", args: ["3\n3\n3\n3\n3"], expected: 10 },
+    { name: "mixed many groups", args: ["1\n1\n2\n2\n2\n3\n3\n3\n3"], expected: 10 },
+    { name: "negative values count", args: ["-5\n-5\n-5\n5"], expected: 3 },
+    { name: "zero values", args: ["0\n0\n0\n1\n2"], expected: 3 },
+    { name: "two of everything", args: ["1\n1\n2\n2\n3\n3\n4\n4\n5\n5"], expected: 5 }
   ],
   hints: [
     "Group identical weights with a frequency table; each group of size n yields `n*(n-1)/2` pairs.",
@@ -1494,7 +1498,10 @@ const y2d1 = aocProblem({
     hiddenTests: [
       { name: "four equal yield four triples", args: ["7\n7\n7\n7"], expected: 4 },
       { name: "five equal yield ten triples", args: ["3\n3\n3\n3\n3"], expected: 10 },
-      { name: "two groups one with triples", args: ["1\n1\n1\n2\n2\n2\n2"], expected: 5 }
+      { name: "two groups one with triples", args: ["1\n1\n1\n2\n2\n2\n2"], expected: 5 },
+      { name: "exactly two cannot triple", args: ["8\n8"], expected: 0 },
+      { name: "six equal yield twenty triples", args: ["1\n1\n1\n1\n1\n1"], expected: 20 },
+      { name: "scattered groups some too small", args: ["1\n1\n1\n2\n2\n3"], expected: 1 }
     ],
     hints: [
       "Reuse the frequency dict; for a count of `c`, the triple count is `c*(c-1)*(c-2)/6`.",
