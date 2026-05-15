@@ -126,7 +126,7 @@ export function ProblemPage() {
       setSplitRatio(Math.min(48, Math.max(26, storedSplitRatio)));
     }
     if (typeof storedDockHeight === "number") {
-      setDockHeight(Math.min(720, Math.max(190, storedDockHeight)));
+      setDockHeight(Math.min(900, Math.max(150, storedDockHeight)));
     }
     if (storedMobileTab === "prompt" || storedMobileTab === "code" || storedMobileTab === "results" || storedMobileTab === "scratchpad" || storedMobileTab === "notes") {
       setActiveMobileTab(storedMobileTab);
@@ -385,26 +385,41 @@ export function ProblemPage() {
   }
 
   const dockDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+  const workspaceRef = useRef<HTMLElement | null>(null);
 
   function clampDockHeight(value: number): number {
-    return Math.min(720, Math.max(190, Math.round(value)));
+    const MIN = 150;
+    // Cap so the editor keeps a usable minimum and nothing overflows the
+    // viewport-bounded workspace. Fall back to a static cap before mount.
+    const workspaceHeight = workspaceRef.current?.clientHeight ?? 0;
+    const dynamicMax = workspaceHeight > 0 ? workspaceHeight - 240 : 720;
+    const max = Math.max(MIN, dynamicMax);
+    return Math.min(max, Math.max(MIN, Math.round(value)));
   }
 
   function handleDockPointerDown(event: PointerEvent<HTMLDivElement>) {
-    event.currentTarget.setPointerCapture(event.pointerId);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Synthetic or already-released pointers can't be captured; the
+      // drag still works via the ref below.
+    }
     dockDragRef.current = { startY: event.clientY, startHeight: dockHeight };
   }
 
   function handleDockPointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
     const drag = dockDragRef.current;
     if (!drag) return;
     setDockHeight(clampDockHeight(drag.startHeight + (drag.startY - event.clientY)));
   }
 
   function handleDockPointerUp(event: PointerEvent<HTMLDivElement>) {
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    try {
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    } catch {
+      // ignore
     }
     const drag = dockDragRef.current;
     dockDragRef.current = null;
@@ -606,7 +621,7 @@ export function ProblemPage() {
         <GripVertical size={18} />
       </div>
 
-      <section className="workspace">
+      <section className="workspace" ref={workspaceRef}>
         <div className={`workspace-toolbar mobile-pane ${activeMobileTab === "code" || activeMobileTab === "results" ? "active" : ""}`} aria-label="Run controls">
           <div className="toolbar-status-group">
             <span className={`run-status ${result.status}`}>{statusText}</span>
@@ -691,7 +706,8 @@ export function ProblemPage() {
         <div className={`workspace-editor mobile-pane ${activeMobileTab === "code" ? "active" : ""}`}>
           <CodeMirror
             value={code}
-            height={focusMode ? "64vh" : "56vh"}
+            height="100%"
+            style={{ height: "100%" }}
             extensions={editorExtensions}
             basicSetup={{
               lineNumbers: true,
@@ -727,8 +743,7 @@ export function ProblemPage() {
             role="separator"
             aria-label="Resize output dock"
             aria-orientation="horizontal"
-            aria-valuemin={190}
-            aria-valuemax={720}
+            aria-valuemin={150}
             aria-valuenow={dockHeight}
             tabIndex={0}
             onPointerDown={handleDockPointerDown}
@@ -737,7 +752,7 @@ export function ProblemPage() {
             onKeyDown={(event) => {
               if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
               event.preventDefault();
-              const next = Math.min(720, Math.max(190, dockHeight + (event.key === "ArrowUp" ? 20 : -20)));
+              const next = clampDockHeight(dockHeight + (event.key === "ArrowUp" ? 24 : -24));
               setDockHeight(next);
               void saveSetting("workspace:bottomDockHeight", next);
             }}
