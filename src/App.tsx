@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ChapterPage } from "./components/ChapterPage";
 import { Dashboard } from "./components/Dashboard";
@@ -7,8 +8,12 @@ import { ProblemPage } from "./components/ProblemPage";
 import { ProblemSetPage } from "./components/ProblemSetPage";
 import { QuizPage } from "./components/QuizPage";
 import { CourseStoreProvider, useStore } from "./hooks/courseStoreContext";
+import { warmupIntellisense } from "./runner/intellisenseClient";
 
 export function App() {
+  useEffect(() => {
+    void warmupIntellisense();
+  }, []);
   return (
     <CourseStoreProvider>
       <ReadyGate />
