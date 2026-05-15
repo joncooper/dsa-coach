@@ -527,7 +527,7 @@ export function ProblemPage() {
               <div className="test-preview compact-tests">
                 {activePart.visibleTests.map((test) => (
                   <pre key={test.name}>
-                    <code>{`${test.name}\nargs = ${JSON.stringify(test.args)}\nexpected = ${JSON.stringify(test.expected)}`}</code>
+                    <code>{renderExample(activePart, test)}</code>
                   </pre>
                 ))}
               </div>
@@ -978,6 +978,39 @@ function formatDuration(value: number): string {
 function defaultScratchpadCode(title?: string): string {
   const label = title ? ` for ${title}` : "";
   return `# Python scratchpad${label}\n# Use print(...) to inspect quick examples.\n\nprint(\"ready\")\n`;
+}
+
+function extractParamNames(starterCode: string, entrypoint: string): string[] {
+  const escaped = entrypoint.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = starterCode.match(new RegExp(`def\\s+${escaped}\\s*\\(([^)]*)\\)`));
+  if (!match) return [];
+  return match[1]
+    .split(",")
+    .map((token) => token.trim().split(/[:=\s]/)[0])
+    .filter(Boolean);
+}
+
+function formatExampleValue(value: unknown): string {
+  const serialized = JSON.stringify(value);
+  if (serialized === undefined) return "undefined";
+  if (serialized.length <= 60) return serialized;
+  return JSON.stringify(value, null, 2);
+}
+
+interface ExampleSubject {
+  starterCode: string;
+  entrypoint: string;
+}
+
+function renderExample(subject: ExampleSubject, test: { name: string; args: unknown[]; expected: unknown }): string {
+  const params = extractParamNames(subject.starterCode, subject.entrypoint);
+  const lines = [`# ${test.name}`];
+  test.args.forEach((arg, index) => {
+    const name = params[index] ?? `arg${index + 1}`;
+    lines.push(`${name} = ${formatExampleValue(arg)}`);
+  });
+  lines.push(`returns ${formatExampleValue(test.expected)}`);
+  return lines.join("\n");
 }
 
 interface ResolvedPart {
