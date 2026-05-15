@@ -113,4 +113,4 @@ bun run test:pwa
 
 ## License
 
-No license has been selected yet. Until one is added, all rights are reserved by the repository owner.
+Released under the [MIT License](LICENSE).
