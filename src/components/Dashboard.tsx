@@ -1,15 +1,25 @@
-import { ArrowRight, CheckCircle2, Clock3, ListChecks, Star } from "lucide-react";
+import { ArrowRight, Sparkles, Star, TerminalSquare } from "lucide-react";
 import { Link } from "react-router-dom";
-import { course, contentStats } from "../content/course";
+import { course, contentStats, findProblem } from "../content/course";
 import { useStore } from "../hooks/courseStoreContext";
 import { itemKey } from "../storage/db";
 import { ExportImport } from "./ExportImport";
 
 export function Dashboard() {
-  const { progress, progressSummary, settings } = useStore();
+  const { progress, progressSummary, settings, submissions } = useStore();
   const totalTrackable = course.lessons.length + course.problems.length + course.quizzes.length;
   const completePercent = Math.round((progressSummary.complete / totalTrackable) * 100);
   const starredProblems = course.problems.filter((problem) => settings[`problem:starred:${problem.id}`]?.value === true).slice(0, 8);
+  const recentProblem = (() => {
+    const seen = new Set<string>();
+    for (const submission of submissions) {
+      if (seen.has(submission.problemId)) continue;
+      seen.add(submission.problemId);
+      const candidate = findProblem(submission.problemId);
+      if (candidate) return { problem: candidate, passed: submission.passed };
+    }
+    return undefined;
+  })();
 
   return (
     <section className="page stack">
@@ -21,22 +31,29 @@ export function Dashboard() {
         <ExportImport />
       </div>
 
-      <div className="metric-grid">
-        <div className="metric">
-          <CheckCircle2 size={22} />
-          <span>{completePercent}%</span>
-          <p>Complete</p>
+      <div className="dashboard-summary">
+        <div className="dashboard-stat-strip" aria-label="Course overview">
+          <span><strong>{completePercent}%</strong> complete</span>
+          <span aria-hidden="true">·</span>
+          <span><strong>{contentStats.totalProblemCount}</strong> runnable problems</span>
+          <span aria-hidden="true">·</span>
+          <span><strong>{progressSummary.due}</strong> reviews due</span>
         </div>
-        <div className="metric">
-          <ListChecks size={22} />
-          <span>{contentStats.totalProblemCount}</span>
-          <p>Total runnable problems</p>
-        </div>
-        <div className="metric">
-          <Clock3 size={22} />
-          <span>{progressSummary.due}</span>
-          <p>Reviews due</p>
-        </div>
+        {recentProblem ? (
+          <Link className="resume-card" to={`/problem/${recentProblem.problem.id}`}>
+            <div>
+              <p className="eyebrow">Continue working</p>
+              <h2>{recentProblem.problem.title}</h2>
+              <p className="muted">
+                Last run {recentProblem.passed ? "passed" : "did not pass"} · {recentProblem.problem.difficulty}
+              </p>
+            </div>
+            <span className="resume-card-cta" aria-hidden="true">
+              <TerminalSquare size={18} />
+              Resume <ArrowRight size={16} />
+            </span>
+          </Link>
+        ) : null}
       </div>
 
       {starredProblems.length ? (
@@ -56,6 +73,38 @@ export function Dashboard() {
                   <span>{problem.title}</span>
                   <small>{chapter?.title ?? "Problem"}</small>
                   <small>{problem.source}</small>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {course.problemSets.length ? (
+        <section aria-labelledby="problem-sets-heading" className="problem-set-grid">
+          <div className="section-heading">
+            <h2 id="problem-sets-heading">Problem Sets</h2>
+            <p>Focused, interview-calibrated practice outside the core modules</p>
+          </div>
+          <div className="problem-set-cards">
+            {course.problemSets.map((set) => {
+              const done = set.problems.filter((problem) => progress[itemKey("problem", problem.id)]?.status === "complete").length;
+              const percent = set.problems.length ? Math.round((done / set.problems.length) * 100) : 0;
+              return (
+                <Link className="problem-set-card" key={set.id} to={`/set/${set.id}`}>
+                  <p className="eyebrow problem-set-eyebrow">
+                    <Sparkles size={13} />
+                    Featured set
+                  </p>
+                  <h3>{set.title}</h3>
+                  <p className="muted">{set.summary}</p>
+                  <div className="progress-line" aria-label={`${percent}% complete`}>
+                    <span style={{ width: `${percent}%` }} />
+                  </div>
+                  <footer>
+                    <span>{done}/{set.problems.length} done · {percent}%</span>
+                    <ArrowRight size={18} />
+                  </footer>
                 </Link>
               );
             })}

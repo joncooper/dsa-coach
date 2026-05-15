@@ -1,4 +1,4 @@
-import { BookOpen, Search } from "lucide-react";
+import { BookOpen, Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { course } from "../content/course";
@@ -12,7 +12,8 @@ export function Sidebar() {
       .filter((lesson) => `${lesson.title} ${lesson.concepts.join(" ")}`.toLowerCase().includes(normalized))
       .slice(0, 4)
       .map((lesson) => ({ id: lesson.id, title: lesson.title, to: `/lesson/${lesson.id}`, kind: "Lesson" }));
-    const problems = course.problems
+    const allProblems = [...course.problems, ...course.problemSets.flatMap((set) => set.problems)];
+    const problems = allProblems
       .filter((problem) => `${problem.title} ${problem.patterns.join(" ")}`.toLowerCase().includes(normalized))
       .slice(0, 6)
       .map((problem) => ({ id: problem.id, title: problem.title, to: `/problem/${problem.id}`, kind: "Problem" }));
@@ -39,7 +40,21 @@ export function Sidebar() {
           ))}
         </div>
       ) : null}
-      <nav className="chapter-nav">
+      {course.problemSets.length ? (
+        <>
+          <p className="sidebar-eyebrow">Problem sets</p>
+          <nav className="chapter-nav" aria-label="Problem sets">
+            {course.problemSets.map((set) => (
+              <NavLink key={set.id} to={`/set/${set.id}`}>
+                <span aria-hidden="true"><Sparkles size={14} /></span>
+                {set.title}
+              </NavLink>
+            ))}
+          </nav>
+        </>
+      ) : null}
+      <p className="sidebar-eyebrow">Modules</p>
+      <nav className="chapter-nav" aria-label="Modules">
         {course.chapters.map((chapter) => (
           <NavLink key={chapter.id} to={`/chapter/${chapter.id}`}>
             <span>{chapter.order.toString().padStart(2, "0")}</span>

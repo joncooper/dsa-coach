@@ -1,6 +1,7 @@
 import CodeMirror from "@uiw/react-codemirror";
-import { python } from "@codemirror/lang-python";
+import { python, pythonLanguage } from "@codemirror/lang-python";
 import { EditorView, keymap } from "@codemirror/view";
+import { pythonStdlibCompletion } from "../runner/pythonCompletions";
 import {
   CheckCircle2,
   Eye,
@@ -18,12 +19,13 @@ import {
   RotateCcw,
   Star
 } from "lucide-react";
-import { type CSSProperties, type PointerEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, type PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { course, findChapter, findProblem } from "../content/course";
+import { course, findChapter, findProblem, findProblemSet } from "../content/course";
 import { useStore } from "../hooks/courseStoreContext";
 import { runPythonProblem, runPythonScratchpad } from "../runner/pythonRunner";
-import type { RunResult, SubmissionRecord } from "../types";
+import type { Problem, RunResult, SubmissionRecord } from "../types";
+import { DisciplineChecklist } from "./DisciplineChecklist";
 import { MarkdownView } from "./MarkdownView";
 import { NotesPanel } from "./NotesPanel";
 
@@ -46,6 +48,15 @@ export function ProblemPage() {
   const { problemId } = useParams();
   const problem = problemId ? findProblem(problemId) : undefined;
   const chapter = problem ? findChapter(problem.chapterId) : undefined;
+  const problemSet = problem && !chapter ? findProblemSet(problem.chapterId) : undefined;
+  const resolvedParts = useMemo(() => resolveProblemParts(problem), [problem]);
+  const [activePartIndex, setActivePartIndex] = useState(0);
+  const activePart = resolvedParts[activePartIndex] ?? resolvedParts[0];
+  const container = chapter
+    ? { id: chapter.id, title: chapter.title, kind: "chapter" as const, backLink: `/chapter/${chapter.id}`, backLabel: "Back to chapter" }
+    : problemSet
+      ? { id: problemSet.id, title: problemSet.title, kind: "set" as const, backLink: `/set/${problemSet.id}`, backLabel: "Back to set" }
+      : undefined;
   const { progress, submissions, settings, saveSetting, markProgress, recordSubmission } = useStore();
   const [code, setCode] = useState(problem?.starterCode ?? "");
   const [result, setResult] = useState<RunResult>(idleResult);
@@ -62,11 +73,16 @@ export function ProblemPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [lastRunIncludedHidden, setLastRunIncludedHidden] = useState(false);
   const [promptDensity, setPromptDensity] = useState<PromptDensity>("compact");
-  const [constraintsOpen, setConstraintsOpen] = useState(false);
-  const [examplesOpen, setExamplesOpen] = useState(false);
+  const [constraintsOpen, setConstraintsOpen] = useState(true);
+  const [examplesOpen, setExamplesOpen] = useState(true);
   const [starred, setStarred] = useState(false);
 
-  const storedCode = problem ? settings[`code:${problem.id}`]?.value : undefined;
+  const codeStorageKey = problem
+    ? activePartIndex === 0
+      ? `code:${problem.id}`
+      : `code:${problem.id}#${activePart?.id ?? "part"}`
+    : undefined;
+  const storedCode = codeStorageKey ? settings[codeStorageKey]?.value : undefined;
   const storedScratchpad = problem ? settings[`scratchpad:${problem.id}`]?.value : undefined;
   const storedStarred = problem ? settings[`problem:starred:${problem.id}`]?.value : undefined;
   const storedSplitRatio = settings["workspace:splitRatio"]?.value;
@@ -79,7 +95,7 @@ export function ProblemPage() {
 
   useEffect(() => {
     if (!problem) return;
-    setCode(typeof storedCode === "string" ? storedCode : problem.starterCode);
+    setActivePartIndex(0);
     setScratchpadCode(typeof storedScratchpad === "string" ? storedScratchpad : defaultScratchpadCode(problem.title));
     setResult(idleResult);
     setScratchpadResult(idleResult);
@@ -87,11 +103,20 @@ export function ProblemPage() {
     setShowSolution(false);
     setLastRunIncludedHidden(false);
     setActiveDesktopPanel("results");
-    setConstraintsOpen(false);
-    setExamplesOpen(false);
+    setConstraintsOpen(true);
+    setExamplesOpen(true);
     setStarred(storedStarred === true);
     setShowHiddenDiagnostics(typeof storedHiddenDiagnostics === "boolean" ? storedHiddenDiagnostics : false);
   }, [problem?.id]);
+
+  useEffect(() => {
+    if (!problem || !activePart) return;
+    setCode(typeof storedCode === "string" ? storedCode : activePart.starterCode);
+    setResult(idleResult);
+    setHintCount(0);
+    setShowSolution(false);
+    setLastRunIncludedHidden(false);
+  }, [problem?.id, activePartIndex, activePart?.id]);
 
   useEffect(() => {
     if (!problem) return;
@@ -155,8 +180,9 @@ export function ProblemPage() {
   const hasScratchpadOutput = Boolean(scratchpadResult.stdout.trim() || scratchpadResult.stderr.trim() || scratchpadResult.message);
   const chapterProblems = useMemo(() => {
     if (!problem) return undefined;
+    if (problemSet) return problemSet.problems;
     return course.problems.filter((candidate) => candidate.chapterId === problem.chapterId);
-  }, [problem]);
+  }, [problem, problemSet]);
   const currentProblemIndex = useMemo(() => {
     if (!problem || !chapterProblems) return -1;
     return chapterProblems.findIndex((candidate) => candidate.id === problem.id);
@@ -172,18 +198,25 @@ export function ProblemPage() {
   const constraintsExpanded = promptDensity === "full" || constraintsOpen;
   const examplesExpanded = promptDensity === "full" || examplesOpen;
   const run = useCallback(async (includeHidden: boolean) => {
-    if (!problem) return;
+    if (!problem || !activePart || !codeStorageKey) return;
     setLastRunIncludedHidden(includeHidden);
     setResult({ ...idleResult, status: "loading" });
-    await saveSetting(`code:${problem.id}`, code);
-    const next = await runPythonProblem(problem, code, includeHidden);
+    await saveSetting(codeStorageKey, code);
+    const runtimeProblem: Problem = activePartIndex === 0 ? problem : {
+      ...problem,
+      entrypoint: activePart.entrypoint,
+      visibleTests: activePart.visibleTests,
+      hiddenTests: activePart.hiddenTests,
+      referenceCode: activePart.referenceCode
+    };
+    const next = await runPythonProblem(runtimeProblem, code, includeHidden);
     setResult(next);
     setActiveMobileTab("results");
     setActiveDesktopPanel("results");
     await saveSetting("workspace:activeMobileTab", "results");
     await recordSubmission(problem.id, code, next);
     await markProgress("problem", problem.id, next.status === "passed" ? "complete" : "in-progress");
-  }, [code, markProgress, problem, recordSubmission, saveSetting]);
+  }, [activePart, activePartIndex, code, codeStorageKey, markProgress, problem, recordSubmission, saveSetting]);
 
   const runScratchpad = useCallback(async () => {
     if (!problem) return;
@@ -199,6 +232,7 @@ export function ProblemPage() {
   const editorExtensions = useMemo(
     () => [
       python(),
+      pythonLanguage.data.of({ autocomplete: pythonStdlibCompletion }),
       EditorView.contentAttributes.of({ "aria-label": `${problem?.title ?? "Problem"} Python code editor` }),
       keymap.of([
         {
@@ -237,6 +271,7 @@ export function ProblemPage() {
   const scratchpadExtensions = useMemo(
     () => [
       python(),
+      pythonLanguage.data.of({ autocomplete: pythonStdlibCompletion }),
       EditorView.contentAttributes.of({ "aria-label": "Python scratchpad editor" }),
       keymap.of([
         {
@@ -286,7 +321,7 @@ export function ProblemPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [run]);
 
-  if (!problem || !chapter) return <Navigate to="/" replace />;
+  if (!problem || !container) return <Navigate to="/" replace />;
 
   function setMobileTab(tab: MobileTab) {
     setActiveMobileTab(tab);
@@ -361,29 +396,34 @@ export function ProblemPage() {
     void saveSetting("workspace:splitRatio", splitRatio);
   }
 
-  function getDockHeight(event: PointerEvent<HTMLDivElement>) {
-    const container = event.currentTarget.parentElement;
-    if (!container) return dockHeight;
-    const rect = container.getBoundingClientRect();
-    return Math.min(460, Math.max(190, Math.round(rect.bottom - event.clientY)));
+  const dockDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+
+  function clampDockHeight(value: number): number {
+    return Math.min(460, Math.max(190, Math.round(value)));
   }
 
   function handleDockPointerDown(event: PointerEvent<HTMLDivElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
-    setDockHeight(getDockHeight(event));
+    dockDragRef.current = { startY: event.clientY, startHeight: dockHeight };
   }
 
   function handleDockPointerMove(event: PointerEvent<HTMLDivElement>) {
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-    setDockHeight(getDockHeight(event));
+    const drag = dockDragRef.current;
+    if (!drag) return;
+    setDockHeight(clampDockHeight(drag.startHeight + (drag.startY - event.clientY)));
   }
 
   function handleDockPointerUp(event: PointerEvent<HTMLDivElement>) {
-    const next = getDockHeight(event);
-    setDockHeight(next);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    const drag = dockDragRef.current;
+    dockDragRef.current = null;
+    const next = drag
+      ? clampDockHeight(drag.startHeight + (drag.startY - event.clientY))
+      : dockHeight;
+    setDockHeight(next);
     void saveSetting("workspace:bottomDockHeight", next);
   }
 
@@ -394,9 +434,9 @@ export function ProblemPage() {
       <header className="problem-context-bar">
         <div className="problem-context-main">
           <p className="problem-breadcrumb">
-            <Link to={`/chapter/${chapter.id}`}>{chapter.title}</Link>
+            <Link to={container.backLink}>{container.title}</Link>
             <span>/</span>
-            <span>{problem.source === "bonus" ? "Bonus drill" : "Guided problem"}</span>
+            <span>{container.kind === "set" ? "Problem set" : problem.source === "bonus" ? "Bonus drill" : "Guided problem"}</span>
           </p>
           <div className="problem-title-row">
             <h1>{problem.title}</h1>
@@ -410,8 +450,8 @@ export function ProblemPage() {
           </div>
         </div>
         <div className="problem-context-actions">
-          <Link className="secondary-button compact-button" to={`/chapter/${chapter.id}`}>
-            Back to chapter
+          <Link className="secondary-button compact-button" to={container.backLink}>
+            {container.backLabel}
           </Link>
           {previousProblem ? (
             <Link className="secondary-button compact-button problem-nav-link" to={`/problem/${previousProblem.id}`}>
@@ -459,15 +499,34 @@ export function ProblemPage() {
       <div className="problem-layout beta-workspace" style={splitStyle}>
         <aside className={`problem-brief mobile-pane ${activeMobileTab === "prompt" ? "active" : ""}`}>
           <div className="prompt-scroll">
+            {resolvedParts.length > 1 ? (
+              <nav className="part-tabs" aria-label="Problem parts">
+                {resolvedParts.map((part, index) => (
+                  <button
+                    key={part.id}
+                    type="button"
+                    className={index === activePartIndex ? "part-tab active" : "part-tab"}
+                    onClick={() => setActivePartIndex(index)}
+                  >
+                    {part.title}
+                  </button>
+                ))}
+              </nav>
+            ) : null}
             <section className="prompt-primary">
-              <h2>Prompt</h2>
-              <MarkdownView content={problem.prompt} />
+              <h2>{resolvedParts.length > 1 ? activePart.title : "Prompt"}</h2>
+              <MarkdownView content={activePart.prompt} />
             </section>
+
+            {problemSet ? <DisciplineChecklist problemId={problem.id} /> : null}
 
             {problem.constraints?.length ? (
               <details className="prompt-detail" open={constraintsExpanded} onToggle={(event) => setConstraintsOpen(event.currentTarget.open)}>
-                <summary>Constraints</summary>
-                <ul>
+                <summary>
+                  Constraints
+                  <small className="prompt-detail-count">{problem.constraints.length}</small>
+                </summary>
+                <ul className="constraint-chips">
                   {problem.constraints.map((constraint) => (
                     <li key={constraint}>{constraint}</li>
                   ))}
@@ -478,7 +537,7 @@ export function ProblemPage() {
             <details className="prompt-detail" open={examplesExpanded} onToggle={(event) => setExamplesOpen(event.currentTarget.open)}>
               <summary>Visible examples</summary>
               <div className="test-preview compact-tests">
-                {problem.visibleTests.map((test) => (
+                {activePart.visibleTests.map((test) => (
                   <pre key={test.name}>
                     <code>{`${test.name}\nargs = ${JSON.stringify(test.args)}\nexpected = ${JSON.stringify(test.expected)}`}</code>
                   </pre>
@@ -488,7 +547,7 @@ export function ProblemPage() {
 
             {hintCount || showSolution ? (
               <div className="prompt-reveal">
-                {problem.hints.slice(0, hintCount).map((hint, index) => (
+                {activePart.hints.slice(0, hintCount).map((hint, index) => (
                   <p key={hint}>
                     <strong>Hint {index + 1}:</strong> {hint}
                   </p>
@@ -496,17 +555,20 @@ export function ProblemPage() {
                 {showSolution ? (
                   <div className="solution-box">
                     <h2>Solution</h2>
-                    <p>{problem.solution}</p>
-                    {problem.walkthrough ? <p>{problem.walkthrough}</p> : null}
-                    {problem.solutionCode ? (
+                    <p>{activePart.solution}</p>
+                    {activePart.walkthrough ? <p>{activePart.walkthrough}</p> : null}
+                    {activePart.solutionCode ? (
                       <pre>
-                        <code>{problem.solutionCode}</code>
+                        <code>{activePart.solutionCode}</code>
                       </pre>
                     ) : null}
-                    <p>
-                      <strong>Time:</strong> {problem.complexity.time} <strong>Space:</strong> {problem.complexity.space}
-                    </p>
-                    {problem.followUps?.length ? (
+                    {(activePart.complexity ?? problem.complexity) ? (
+                      <p>
+                        <strong>Time:</strong> {(activePart.complexity ?? problem.complexity).time}{" "}
+                        <strong>Space:</strong> {(activePart.complexity ?? problem.complexity).space}
+                      </p>
+                    ) : null}
+                    {activePartIndex === 0 && problem.followUps?.length ? (
                       <>
                         <h3>Follow-ups</h3>
                         <ul>
@@ -526,12 +588,12 @@ export function ProblemPage() {
             <button className="secondary-button" type="button" onClick={togglePromptDensity}>
               {promptDensity === "compact" ? "Full prompt" : "Compact prompt"}
             </button>
-            <button className="secondary-button" type="button" onClick={() => setHintCount((count) => Math.min(count + 1, problem.hints.length))}>
-              <Lightbulb size={18} />
+            <button className="tertiary-button" type="button" onClick={() => setHintCount((count) => Math.min(count + 1, activePart.hints.length))}>
+              <Lightbulb size={16} />
               Reveal hint
             </button>
-            <button className="secondary-button" type="button" onClick={() => setShowSolution((value) => !value)}>
-              {showSolution ? <EyeOff size={18} /> : <Eye size={18} />}
+            <button className="tertiary-button" type="button" onClick={() => setShowSolution((value) => !value)}>
+              {showSolution ? <EyeOff size={16} /> : <Eye size={16} />}
               {showSolution ? "Hide solution" : "Show solution"}
             </button>
           </div>
@@ -572,11 +634,11 @@ export function ProblemPage() {
                 More
               </summary>
               <div className="toolbar-menu-panel">
-                <button type="button" onClick={() => setCode(problem.starterCode)}>
+                <button type="button" onClick={() => setCode(activePart.starterCode)}>
                   <RotateCcw size={16} />
                   Reset to starter
                 </button>
-                {typeof storedCode === "string" && storedCode !== problem.starterCode ? (
+                {typeof storedCode === "string" && storedCode !== activePart.starterCode ? (
                   <button type="button" onClick={() => setCode(storedCode)}>
                     <RotateCcw size={16} />
                     Restore last saved
@@ -722,8 +784,8 @@ export function ProblemPage() {
                       Next problem
                     </Link>
                   ) : (
-                    <Link className="primary-button" to={`/chapter/${chapter.id}`}>
-                      Back to chapter
+                    <Link className="primary-button" to={container.backLink}>
+                      {container.backLabel}
                     </Link>
                   )}
                 </div>
@@ -731,6 +793,12 @@ export function ProblemPage() {
             ) : null}
             {hiddenSummary ? <p className="muted">{hiddenSummary}</p> : null}
             {hasErrors ? <p className="muted">Errors are available in the Errors tab.</p> : null}
+            {hasStdout ? (
+              <details className="stdout-preview" open>
+                <summary>Printed output ({result.stdout.trim().split("\n").length} {result.stdout.trim().split("\n").length === 1 ? "line" : "lines"})</summary>
+                <pre>{result.stdout}</pre>
+              </details>
+            ) : null}
             {result.tests.length ? (
               <div className="result-groups">
                 <div className="result-group-header">
@@ -925,4 +993,41 @@ function formatDuration(value: number): string {
 function defaultScratchpadCode(title?: string): string {
   const label = title ? ` for ${title}` : "";
   return `# Python scratchpad${label}\n# Use print(...) to inspect quick examples.\n\nprint(\"ready\")\n`;
+}
+
+interface ResolvedPart {
+  id: string;
+  title: string;
+  prompt: string;
+  entrypoint: string;
+  starterCode: string;
+  referenceCode: string;
+  solutionCode?: string;
+  visibleTests: Problem["visibleTests"];
+  hiddenTests: Problem["hiddenTests"];
+  hints: string[];
+  solution: string;
+  walkthrough?: string;
+  complexity?: Problem["complexity"];
+}
+
+function resolveProblemParts(problem: Problem | undefined): ResolvedPart[] {
+  if (!problem) return [];
+  const baseTitle = problem.parts?.length ? "Part 1" : problem.title;
+  const base: ResolvedPart = {
+    id: "base",
+    title: baseTitle,
+    prompt: problem.prompt,
+    entrypoint: problem.entrypoint,
+    starterCode: problem.starterCode,
+    referenceCode: problem.referenceCode,
+    solutionCode: problem.solutionCode,
+    visibleTests: problem.visibleTests,
+    hiddenTests: problem.hiddenTests,
+    hints: problem.hints,
+    solution: problem.solution,
+    walkthrough: problem.walkthrough,
+    complexity: problem.complexity
+  };
+  return [base, ...(problem.parts ?? [])];
 }

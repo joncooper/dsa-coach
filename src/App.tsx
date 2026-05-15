@@ -4,6 +4,7 @@ import { Dashboard } from "./components/Dashboard";
 import { Layout } from "./components/Layout";
 import { LessonPage } from "./components/LessonPage";
 import { ProblemPage } from "./components/ProblemPage";
+import { ProblemSetPage } from "./components/ProblemSetPage";
 import { QuizPage } from "./components/QuizPage";
 import { CourseStoreProvider, useStore } from "./hooks/courseStoreContext";
 
@@ -26,6 +27,7 @@ function ReadyGate() {
         <Route path="chapter/:chapterId" element={<ChapterPage />} />
         <Route path="lesson/:lessonId" element={<LessonPage />} />
         <Route path="problem/:problemId" element={<ProblemPage />} />
+        <Route path="set/:setId" element={<ProblemSetPage />} />
         <Route path="quiz/:quizId" element={<QuizPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
