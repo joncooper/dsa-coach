@@ -599,6 +599,31 @@ const y1d4 = aocProblem({
         "id:1 name:A age:20 grade:B cohort:fall\n\nid:2 name:B age:21\n\nid:3 name:C age:22 grade:D cohort:spring"
       ],
       expected: 2
+    },
+    {
+      name: "single record missing each required key",
+      args: ["name:A age:20 grade:B cohort:fall"],
+      expected: 0
+    },
+    {
+      name: "duplicate key still counts once",
+      args: ["id:1 id:2 name:A age:20 grade:B cohort:fall"],
+      expected: 1
+    },
+    {
+      name: "trailing blank lines do not add fake records",
+      args: ["id:1 name:A age:20 grade:B cohort:fall\n\n\n\n"],
+      expected: 1
+    },
+    {
+      name: "leading blank lines tolerated",
+      args: ["\n\nid:1 name:A age:20 grade:B cohort:fall"],
+      expected: 1
+    },
+    {
+      name: "token without colon ignored",
+      args: ["id:1 name:A age:20 grade:B cohort:fall bareword anothertoken"],
+      expected: 1
     }
   ],
   hints: [
@@ -717,6 +742,36 @@ const y1d4 = aocProblem({
         name: "name with digits invalid",
         args: ["id:111222333 name:Ada2 age:30 grade:B cohort:winter"],
         expected: 0
+      },
+      {
+        name: "age at lower bound",
+        args: ["id:111222333 name:B age:16 grade:A cohort:spring"],
+        expected: 1
+      },
+      {
+        name: "age at upper bound",
+        args: ["id:111222333 name:B age:99 grade:A cohort:spring"],
+        expected: 1
+      },
+      {
+        name: "age one over upper bound",
+        args: ["id:111222333 name:B age:100 grade:A cohort:spring"],
+        expected: 0
+      },
+      {
+        name: "id with letter rejected",
+        args: ["id:11122233a name:B age:30 grade:A cohort:spring"],
+        expected: 0
+      },
+      {
+        name: "name longer than 32 rejected",
+        args: ["id:111222333 name:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa age:30 grade:A cohort:spring"],
+        expected: 0
+      },
+      {
+        name: "two records one valid one missing key",
+        args: ["id:111222333 name:A age:30 grade:A cohort:spring\n\nname:B age:30 grade:A cohort:spring"],
+        expected: 1
       }
     ],
     hints: [
