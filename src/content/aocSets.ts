@@ -2801,7 +2801,11 @@ const y3d1 = aocProblem({
     { name: "negative values", args: ["2\n-1\n-2\n-3\n10"], expected: 7 },
     { name: "exact fit", args: ["3\n1\n2\n3"], expected: 6 },
     { name: "zeros around peak", args: ["2\n0\n5\n5\n0"], expected: 10 },
-    { name: "all negative", args: ["2\n-5\n-3\n-9\n-1"], expected: -8 }
+    { name: "all negative", args: ["2\n-5\n-3\n-9\n-1"], expected: -8 },
+    { name: "k equals one returns max element", args: ["1\n3\n7\n2\n9\n4"], expected: 9 },
+    { name: "k equals length", args: ["4\n1\n2\n3\n4"], expected: 10 },
+    { name: "peak in middle of stream", args: ["3\n1\n2\n3\n100\n1\n1\n1"], expected: 105 },
+    { name: "single value below k zero", args: ["3\n5"], expected: 0 }
   ],
   hints: [
     "Compute the first window's sum, then slide: subtract the leaving day and add the entering day.",
@@ -2867,7 +2871,10 @@ const y3d1 = aocProblem({
       { name: "noisy rise", args: ["2\n1\n2\n0\n5"], expected: 1 },
       { name: "always falling", args: ["1\n5\n4\n3\n2"], expected: 0 },
       { name: "all equal", args: ["3\n3\n3\n3\n3\n3"], expected: 0 },
-      { name: "negatives still rise", args: ["2\n-10\n0\n5\n-1"], expected: 1 }
+      { name: "negatives still rise", args: ["2\n-10\n0\n5\n-1"], expected: 1 },
+      { name: "one window after first is just one comparison", args: ["3\n1\n2\n3\n4"], expected: 1 },
+      { name: "tie does not count as rise", args: ["2\n1\n1\n1\n1"], expected: 0 },
+      { name: "long stream alternating rise fall", args: ["1\n1\n2\n1\n2\n1\n2"], expected: 3 }
     ],
     hints: [
       "Slide the window the same way Part 1 does and compare each new sum to the previous one.",
