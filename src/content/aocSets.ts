@@ -261,7 +261,11 @@ const y1d2 = aocProblem({
     { name: "boundary inclusive low", args: ["3-5 q: qqqxx"], expected: 1 },
     { name: "boundary inclusive high", args: ["1-3 z: zzzab"], expected: 1 },
     { name: "ignore blanks", args: ["\n1-1 a: a\n\n"], expected: 1 },
-    { name: "mixed letters", args: ["2-4 t: ttabt\n5-9 m: mmmm"], expected: 1 }
+    { name: "mixed letters", args: ["2-4 t: ttabt\n5-9 m: mmmm"], expected: 1 },
+    { name: "min equals max strict", args: ["3-3 a: aaa\n3-3 a: aaaa"], expected: 1 },
+    { name: "zero min allows missing char", args: ["0-2 a: bcd"], expected: 1 },
+    { name: "count over max invalid", args: ["1-2 a: aaaa"], expected: 0 },
+    { name: "char absent triggers strict min", args: ["1-5 q: abcde"], expected: 0 }
   ],
   hints: [
     "Split once on the space between bounds and the rest, then once on `\": \"` between the char and the word.",
@@ -329,7 +333,10 @@ const y1d2 = aocProblem({
       { name: "first only matches", args: ["1-3 q: qabxy"], expected: 1 },
       { name: "second only matches", args: ["1-3 q: aaqxy"], expected: 1 },
       { name: "position out of range counts as no-match", args: ["1-99 a: a"], expected: 1 },
-      { name: "blank lines ignored", args: ["\n1-2 z: zx\n"], expected: 1 }
+      { name: "blank lines ignored", args: ["\n1-2 z: zx\n"], expected: 1 },
+      { name: "both positions out of range invalid", args: ["10-20 a: abc"], expected: 0 },
+      { name: "same position twice always invalid", args: ["2-2 a: babcd\n2-2 b: babcd"], expected: 0 },
+      { name: "first char index one", args: ["1-3 z: zxz"], expected: 0 }
     ],
     hints: [
       "Compute two booleans (does position a match, does position b match) and combine with XOR.",
