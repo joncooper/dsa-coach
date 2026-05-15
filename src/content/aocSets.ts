@@ -114,7 +114,12 @@ const y1d1 = aocProblem({
     { name: "duplicates count distinctly", args: ["6\n3\n3\n3"], expected: 3 },
     { name: "single reading", args: ["10\n5"], expected: 0 },
     { name: "target zero", args: ["0\n0\n0\n0"], expected: 3 },
-    { name: "mixed with blanks", args: ["8\n1\n\n7\n\n3\n5"], expected: 2 }
+    { name: "mixed with blanks", args: ["8\n1\n\n7\n\n3\n5"], expected: 2 },
+    { name: "target unreachable", args: ["1000\n1\n2\n3\n4"], expected: 0 },
+    { name: "four zeros target zero", args: ["0\n0\n0\n0\n0"], expected: 6 },
+    { name: "pair value matches half target", args: ["10\n5\n5\n5\n5"], expected: 6 },
+    { name: "all negatives sum to negative target", args: ["-7\n-3\n-4\n-2\n-5"], expected: 2 },
+    { name: "value pairs with target-itself only when duplicated", args: ["6\n3"], expected: 0 }
   ],
   hints: [
     "Walk the values once and ask: how many prior values would pair with this one to make target?",
@@ -176,7 +181,11 @@ const y1d1 = aocProblem({
     hiddenTests: [
       { name: "zero target zero values", args: ["0\n0\n0\n0\n0"], expected: 4 },
       { name: "negative mix", args: ["0\n-2\n-1\n1\n2\n3"], expected: 1 },
-      { name: "all same", args: ["9\n3\n3\n3\n3"], expected: 4 }
+      { name: "all same", args: ["9\n3\n3\n3\n3"], expected: 4 },
+      { name: "five zeros target zero", args: ["0\n0\n0\n0\n0\n0"], expected: 10 },
+      { name: "target unreachable for triples", args: ["1000\n1\n2\n3\n4\n5"], expected: 0 },
+      { name: "two readings cannot triple", args: ["6\n2\n2"], expected: 0 },
+      { name: "single reading cannot triple", args: ["6\n2"], expected: 0 }
     ],
     hints: [
       "Fix the smallest index `i`, then count pairs (j, k) with j > i that sum to target - values[i].",
