@@ -3166,7 +3166,11 @@ const y3d3 = aocProblem({
     { name: "non-square wide", args: ["T...\n.T..\n..T."], expected: 3 },
     { name: "non-square tall", args: ["T..\n.T.\n..T\n..."], expected: 3 },
     { name: "barrier at start", args: ["#TT\nTTT\nTTT"], expected: 0 },
-    { name: "first cell stagehand", args: ["T...\n....\n....\n...."], expected: 1 }
+    { name: "first cell stagehand", args: ["T...\n....\n....\n...."], expected: 1 },
+    { name: "barrier on diagonal mid-walk", args: ["T..\nT#.\n..T"], expected: 1 },
+    { name: "single cell start T", args: ["T"], expected: 1 },
+    { name: "single cell start barrier", args: ["#"], expected: 0 },
+    { name: "T off diagonal not counted", args: [".T.\nT.T\n.T."], expected: 0 }
   ],
   hints: [
     "The diagonal step always increments both `r` and `c` by 1 — track a single step counter.",
@@ -3239,7 +3243,10 @@ const y3d3 = aocProblem({
         expected: 6
       },
       { name: "barrier blocks one path", args: ["T..\n.#.\n..T"], expected: 3 },
-      { name: "tall grid", args: ["T.\n.T\nT.\n.T\nT."], expected: 4 }
+      { name: "tall grid", args: ["T.\n.T\nT.\n.T\nT."], expected: 4 },
+      { name: "single cell barrier blocks all paths", args: ["#"], expected: 0 },
+      { name: "single cell T counted three times", args: ["T"], expected: 3 },
+      { name: "two by two all T", args: ["TT\nTT"], expected: 4 }
     ],
     hints: [
       "Pull the single-path walk out and call it three times with different (dr, dc) pairs.",
