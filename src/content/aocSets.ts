@@ -3977,6 +3977,27 @@ const y3d7 = aocProblem({
         "a before b.\nb before c.\nc before d.\nd before e.\ne before nothing."
       ],
       expected: 5
+    },
+    {
+      name: "implicit leaf without rule",
+      args: [
+        "a before b."
+      ],
+      expected: 2
+    },
+    {
+      name: "wide branching but shallow",
+      args: [
+        "root before a, b, c, d, e.\na before nothing.\nb before nothing.\nc before nothing.\nd before nothing.\ne before nothing."
+      ],
+      expected: 2
+    },
+    {
+      name: "asymmetric tree picks deeper branch",
+      args: [
+        "root before a, b.\na before nothing.\nb before x.\nx before y.\ny before nothing."
+      ],
+      expected: 4
     }
   ],
   hints: [
@@ -4103,6 +4124,20 @@ const y3d7 = aocProblem({
           "a before b.\nb before c.\nc before d.\nd before e.\ne before nothing."
         ],
         expected: 5
+      },
+      {
+        name: "wide flat tree",
+        args: [
+          "root before a, b, c.\na before nothing.\nb before nothing.\nc before nothing."
+        ],
+        expected: 2
+      },
+      {
+        name: "deepest chain wins schedule length",
+        args: [
+          "root before a, deep1.\na before nothing.\ndeep1 before deep2.\ndeep2 before deep3.\ndeep3 before nothing."
+        ],
+        expected: 4
       }
     ],
     hints: [
