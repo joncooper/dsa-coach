@@ -1428,6 +1428,31 @@ const sessionize = setProblem({
       name: "multiple sessions per user",
       args: [[[0, "a"], [3, "a"], [20, "a"], [22, "a"], [50, "a"]], 5],
       expected: [["a", 0, 3, 2], ["a", 20, 22, 2], ["a", 50, 50, 1]]
+    },
+    {
+      name: "gap measured from last event not start",
+      args: [[[0, "a"], [4, "a"], [8, "a"], [12, "a"]], 5],
+      expected: [["a", 0, 12, 4]]
+    },
+    {
+      name: "gap exceeded by one second",
+      args: [[[0, "a"], [4, "a"], [10, "a"]], 5],
+      expected: [["a", 0, 4, 2], ["a", 10, 10, 1]]
+    },
+    {
+      name: "two users overlapping sessions",
+      args: [[[0, "a"], [1, "b"], [5, "a"], [6, "b"], [20, "a"]], 5],
+      expected: [["a", 0, 5, 2], ["b", 1, 6, 2], ["a", 20, 20, 1]]
+    },
+    {
+      name: "ties on start sort by user across many",
+      args: [[[5, "c"], [5, "a"], [5, "b"]], 1],
+      expected: [["a", 5, 5, 1], ["b", 5, 5, 1], ["c", 5, 5, 1]]
+    },
+    {
+      name: "ties on start with different ends",
+      args: [[[0, "a"], [0, "b"], [4, "a"], [10, "b"]], 5],
+      expected: [["a", 0, 4, 2], ["b", 0, 0, 1], ["b", 10, 10, 1]]
     }
   ],
   hints: [
