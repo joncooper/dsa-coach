@@ -2968,7 +2968,11 @@ const y3d2 = aocProblem({
     { name: "wrong group length", args: ["main 12-45-6789 2030"], expected: 0 },
     { name: "missing hyphen", args: ["main 123456789 2030"], expected: 0 },
     { name: "expires too short", args: ["main 123-45-6789 999"], expected: 0 },
-    { name: "exact 2025 cutoff", args: ["main 123-45-6789 2025"], expected: 1 }
+    { name: "exact 2025 cutoff", args: ["main 123-45-6789 2025"], expected: 1 },
+    { name: "expires too long", args: ["main 123-45-6789 20250"], expected: 0 },
+    { name: "letter in license", args: ["main 12a-45-6789 2030"], expected: 0 },
+    { name: "expires 2024 rejected", args: ["main 123-45-6789 2024"], expected: 0 },
+    { name: "many lines mixed", args: ["main 123-45-6789 2025\nside 111-22-3333 2024\nlate 999-88-7777 2026\nmain bad-shape 2025"], expected: 2 }
   ],
   hints: [
     "Use a regex to express the license shape — `\\d{3}-\\d{2}-\\d{4}` anchored — or split on `-` and check group lengths.",
@@ -3066,6 +3070,20 @@ const y3d2 = aocProblem({
           "main 111-22-3333 2025\nside 444-55-6666 2026\nlate 777-88-9999 2027"
         ],
         expected: { main: 1, side: 1, late: 1 }
+      },
+      {
+        name: "many main permits one expired",
+        args: [
+          "main 111-22-3333 2025\nmain 222-33-4444 2030\nmain 999-88-7777 2020"
+        ],
+        expected: { main: 2, side: 0, late: 0 }
+      },
+      {
+        name: "two valid two invalid mixed stages",
+        args: [
+          "main 111-22-3333 2025\nside abc 2030\nlate 999-88-7777 2026\nmain 222-33-4444 2024"
+        ],
+        expected: { main: 1, side: 0, late: 1 }
       }
     ],
     hints: [
