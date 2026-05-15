@@ -1993,6 +1993,56 @@ const versionedKv = setProblem({
         ["GET", "a", 2]
       ]],
       expected: ["v1", "v1", "v2"]
+    },
+    {
+      name: "get one tick before set returns none",
+      args: [[
+        ["SET", "a", "x", 10],
+        ["GET", "a", 9]
+      ]],
+      expected: [null]
+    },
+    {
+      name: "get at each writepoint",
+      args: [[
+        ["SET", "a", "v1", 5],
+        ["SET", "a", "v2", 10],
+        ["SET", "a", "v3", 15],
+        ["GET", "a", 5],
+        ["GET", "a", 10],
+        ["GET", "a", 15]
+      ]],
+      expected: ["v1", "v2", "v3"]
+    },
+    {
+      name: "scattered writes scattered reads",
+      args: [[
+        ["SET", "a", "v1", 100],
+        ["SET", "a", "v2", 50],
+        ["SET", "a", "v3", 200],
+        ["GET", "a", 49],
+        ["GET", "a", 50],
+        ["GET", "a", 99],
+        ["GET", "a", 100],
+        ["GET", "a", 150],
+        ["GET", "a", 200],
+        ["GET", "a", 500]
+      ]],
+      expected: [null, "v2", "v2", "v1", "v1", "v3", "v3"]
+    },
+    {
+      name: "many keys stay isolated",
+      args: [[
+        ["SET", "a", "1", 1],
+        ["SET", "b", "2", 2],
+        ["SET", "c", "3", 3],
+        ["SET", "a", "4", 4],
+        ["GET", "a", 2],
+        ["GET", "b", 5],
+        ["GET", "c", 10],
+        ["GET", "a", 100]
+      ]],
+      expected: ["1", "2", "3", "4"]
     }
   ],
   hints: [
@@ -2169,6 +2219,62 @@ const versionedKv = setProblem({
             ["SNAPSHOT", 6]
           ]],
           expected: [null, { a: "3", b: "2" }]
+        },
+        {
+          name: "snapshot just before tombstone is live",
+          args: [[
+            ["SET", "a", "x", 5],
+            ["DELETE", "a", 10],
+            ["SNAPSHOT", 9],
+            ["SNAPSHOT", 10]
+          ]],
+          expected: [{ a: "x" }, {}]
+        },
+        {
+          name: "multiple delete-resurrect cycles",
+          args: [[
+            ["SET", "a", "v1", 5],
+            ["DELETE", "a", 10],
+            ["SET", "a", "v2", 15],
+            ["DELETE", "a", 20],
+            ["SET", "a", "v3", 25],
+            ["GET", "a", 7],
+            ["GET", "a", 12],
+            ["GET", "a", 17],
+            ["GET", "a", 22],
+            ["GET", "a", 30]
+          ]],
+          expected: ["v1", null, "v2", null, "v3"]
+        },
+        {
+          name: "delete at out-of-order timestamp respected",
+          args: [[
+            ["SET", "a", "x", 10],
+            ["DELETE", "a", 5],
+            ["GET", "a", 6],
+            ["GET", "a", 10]
+          ]],
+          expected: [null, "x"]
+        },
+        {
+          name: "snapshot with many keys some deleted",
+          args: [[
+            ["SET", "a", "1", 1],
+            ["SET", "b", "2", 1],
+            ["SET", "c", "3", 1],
+            ["DELETE", "b", 5],
+            ["SNAPSHOT", 10]
+          ]],
+          expected: [{ a: "1", c: "3" }]
+        },
+        {
+          name: "get at exact delete timestamp returns none",
+          args: [[
+            ["SET", "a", "x", 5],
+            ["DELETE", "a", 10],
+            ["GET", "a", 10]
+          ]],
+          expected: [null]
         }
       ],
       hints: [
