@@ -1311,39 +1311,27 @@ const reconcile = setProblem({
   visibleTests: [
     { name: "both empty", args: [{}, {}], expected: [] },
     {
-      name: "exact match omitted",
+      name: "exact match is omitted",
       args: [{ apple: 5 }, { apple: 5 }],
       expected: []
     },
     {
-      name: "single short",
+      name: "single short row",
       args: [{ apple: 10 }, { apple: 7 }],
       expected: [["apple", "short", 10, 7, -3]]
     },
     {
-      name: "single over",
-      args: [{ apple: 5 }, { apple: 8 }],
-      expected: [["apple", "over", 5, 8, 3]]
-    }
-  ],
-  hiddenTests: [
-    {
-      name: "missing sku",
+      name: "missing sku in observed",
       args: [{ apple: 5 }, {}],
       expected: [["apple", "missing", 5, 0, -5]]
     },
     {
-      name: "extra sku",
+      name: "extra sku in observed",
       args: [{}, { apple: 5 }],
       expected: [["apple", "extra", 0, 5, 5]]
     },
     {
-      name: "mixed report sorted",
-      args: [{ a: 5, c: 3 }, { a: 5, b: 1, c: 10 }],
-      expected: [["b", "extra", 0, 1, 1], ["c", "over", 3, 10, 7]]
-    },
-    {
-      name: "all categories",
+      name: "all four statuses sorted",
       args: [
         { a: 1, b: 2, c: 3, d: 4 },
         { a: 1, b: 5, d: 1, e: 9 }
@@ -1354,6 +1342,49 @@ const reconcile = setProblem({
         ["d", "short", 4, 1, -3],
         ["e", "extra", 0, 9, 9]
       ]
+    }
+  ],
+  hiddenTests: [
+    {
+      name: "single over row",
+      args: [{ apple: 5 }, { apple: 8 }],
+      expected: [["apple", "over", 5, 8, 3]]
+    },
+    {
+      name: "delta sign on missing is negative",
+      args: [{ widget: 12 }, {}],
+      expected: [["widget", "missing", 12, 0, -12]]
+    },
+    {
+      name: "input dicts are not mutated",
+      args: [{ a: 5 }, { a: 5 }],
+      expected: []
+    },
+    {
+      name: "mixed report sorted by sku",
+      args: [{ a: 5, c: 3 }, { a: 5, b: 1, c: 10 }],
+      expected: [["b", "extra", 0, 1, 1], ["c", "over", 3, 10, 7]]
+    },
+    {
+      name: "lex sort across long sku names",
+      args: [
+        { zebra: 1, alpha: 5, mango: 3 },
+        { alpha: 6, mango: 3, zebra: 1, banana: 2 }
+      ],
+      expected: [
+        ["alpha", "over", 5, 6, 1],
+        ["banana", "extra", 0, 2, 2]
+      ]
+    },
+    {
+      name: "zero observed treated as short not missing",
+      args: [{ a: 5 }, { a: 0 }],
+      expected: [["a", "short", 5, 0, -5]]
+    },
+    {
+      name: "zero expected treated as over not extra",
+      args: [{ a: 0 }, { a: 5 }],
+      expected: [["a", "over", 0, 5, 5]]
     }
   ],
   hints: [
