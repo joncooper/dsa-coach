@@ -1261,6 +1261,50 @@ const bank = setProblem({
       name: "zero-amount transfer ok",
       args: [{ a: 5, b: 5 }, [{ type: "TRANSFER", from: "a", to: "b", amount: 0 }]],
       expected: [{ a: 5, b: 5 }, []]
+    },
+    {
+      name: "self-transfer leaves balance unchanged",
+      args: [{ a: 100 }, [{ type: "TRANSFER", from: "a", to: "a", amount: 30 }]],
+      expected: [{ a: 100 }, []]
+    },
+    {
+      name: "withdraw that exactly empties account",
+      args: [{ a: 50 }, [{ type: "WITHDRAW", account: "a", amount: 50 }]],
+      expected: [{ a: 0 }, []]
+    },
+    {
+      name: "transfer that exactly empties source",
+      args: [
+        { a: 100, b: 0 },
+        [{ type: "TRANSFER", from: "a", to: "b", amount: 100 }]
+      ],
+      expected: [{ a: 0, b: 100 }, []]
+    },
+    {
+      name: "rejected transfer must not mutate source",
+      args: [
+        { a: 100 },
+        [{ type: "TRANSFER", from: "a", to: "ghost", amount: 10 }]
+      ],
+      expected: [{ a: 100 }, [0]]
+    },
+    {
+      name: "multiple rejections kept in input order",
+      args: [
+        { a: 10 },
+        [
+          { type: "WITHDRAW", account: "a", amount: 100 },
+          { type: "DEPOSIT", account: "ghost", amount: 5 },
+          { type: "WITHDRAW", account: "a", amount: 5 },
+          { type: "TRANSFER", from: "a", to: "ghost", amount: 1 }
+        ]
+      ],
+      expected: [{ a: 5 }, [0, 1, 3]]
+    },
+    {
+      name: "deposit at zero amount leaves balance",
+      args: [{ a: 5 }, [{ type: "DEPOSIT", account: "a", amount: 0 }]],
+      expected: [{ a: 5 }, []]
     }
   ],
   hints: [
