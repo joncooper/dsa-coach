@@ -1,7 +1,7 @@
 import CodeMirror from "@uiw/react-codemirror";
 import { python, pythonLanguage } from "@codemirror/lang-python";
 import { EditorView, keymap } from "@codemirror/view";
-import { pythonStdlibCompletion } from "../runner/pythonCompletions";
+import { pythonJediCompletion, pythonStdlibCompletion } from "../runner/pythonCompletions";
 import {
   CheckCircle2,
   Eye,
@@ -233,6 +233,7 @@ export function ProblemPage() {
     () => [
       python(),
       pythonLanguage.data.of({ autocomplete: pythonStdlibCompletion }),
+      pythonLanguage.data.of({ autocomplete: pythonJediCompletion }),
       EditorView.contentAttributes.of({ "aria-label": `${problem?.title ?? "Problem"} Python code editor` }),
       keymap.of([
         {
@@ -272,6 +273,7 @@ export function ProblemPage() {
     () => [
       python(),
       pythonLanguage.data.of({ autocomplete: pythonStdlibCompletion }),
+      pythonLanguage.data.of({ autocomplete: pythonJediCompletion }),
       EditorView.contentAttributes.of({ "aria-label": "Python scratchpad editor" }),
       keymap.of([
         {

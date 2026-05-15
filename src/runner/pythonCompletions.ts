@@ -1,6 +1,7 @@
 import type { Completion, CompletionContext, CompletionResult, CompletionSource } from "@codemirror/autocomplete";
 import { snippetCompletion } from "@codemirror/autocomplete";
 import { syntaxTree } from "@codemirror/language";
+import { intellisenseReady, requestCompletions, type JediCompletion } from "./intellisenseClient";
 
 const PYTHON_KEYWORDS = [
   "and", "as", "assert", "async", "await", "break", "class", "continue", "def",
@@ -221,6 +222,85 @@ export const pythonStdlibCompletion: CompletionSource = (context: CompletionCont
   return {
     from: word.from,
     options: TOP_LEVEL,
+    validFor: /^[a-zA-Z_][a-zA-Z0-9_]*$/
+  };
+};
+
+function mapJediType(type: string): Completion["type"] {
+  switch (type) {
+    case "class":
+      return "class";
+    case "function":
+      return "function";
+    case "method":
+      return "method";
+    case "property":
+      return "property";
+    case "module":
+      return "namespace";
+    case "keyword":
+      return "keyword";
+    case "instance":
+    case "statement":
+    case "param":
+      return "variable";
+    default:
+      return undefined;
+  }
+}
+
+export const pythonJediCompletion: CompletionSource = async (
+  context: CompletionContext
+): Promise<CompletionResult | null> => {
+  if (!intellisenseReady()) return null;
+
+  const nodeBefore = syntaxTree(context.state).resolveInner(context.pos, -1);
+  if (nodeBefore.name === "String" || nodeBefore.name === "FormatString" || nodeBefore.name === "Comment") {
+    return null;
+  }
+
+  // Trigger on `.` for member completion, or on word characters (length >= 1) for general completion.
+  const dotAccess = context.matchBefore(/\.[a-zA-Z_][a-zA-Z0-9_]*$|\.$/);
+  const word = context.matchBefore(/[a-zA-Z_][a-zA-Z0-9_]*/);
+
+  if (!dotAccess && (!word || word.from === word.to) && !context.explicit) {
+    return null;
+  }
+
+  const from = dotAccess
+    ? dotAccess.from + 1
+    : word
+      ? word.from
+      : context.pos;
+
+  const code = context.state.doc.toString();
+  const lineObj = context.state.doc.lineAt(context.pos);
+  const line = lineObj.number;
+  const column = context.pos - lineObj.from;
+
+  let completions: JediCompletion[];
+  try {
+    completions = await requestCompletions(code, line, column);
+  } catch {
+    return null;
+  }
+
+  if (context.aborted) return null;
+  if (!completions.length) return null;
+
+  const options: Completion[] = completions.map((entry) => {
+    const option: Completion = {
+      label: entry.name,
+      type: mapJediType(entry.type),
+      boost: 5
+    };
+    if (entry.description) option.detail = entry.description;
+    return option;
+  });
+
+  return {
+    from,
+    options,
     validFor: /^[a-zA-Z_][a-zA-Z0-9_]*$/
   };
 };
