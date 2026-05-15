@@ -438,6 +438,48 @@ const logErrors = setProblem({
         "2026-05-15T08:00:02 ERROR z"
       ]],
       expected: { "2026-05-15T08": 3 }
+    },
+    {
+      name: "level match is case sensitive",
+      args: [[
+        "2025-01-15T14:00:00 error lowercase",
+        "2025-01-15T14:00:00 Error mixed",
+        "2025-01-15T14:00:00 ERROR upper"
+      ]],
+      expected: { "2025-01-15T14": 1 }
+    },
+    {
+      name: "ERROR appearing in message text is not a level",
+      args: [[
+        "2025-01-15T14:00:00 INFO request failed ERROR retry",
+        "2025-01-15T15:00:00 ERROR genuine"
+      ]],
+      expected: { "2025-01-15T15": 1 }
+    },
+    {
+      name: "buckets across day boundary stay distinct",
+      args: [[
+        "2025-01-15T23:59:59 ERROR late",
+        "2025-01-16T00:00:00 ERROR early",
+        "2025-01-16T00:30:00 ERROR mid"
+      ]],
+      expected: { "2025-01-15T23": 1, "2025-01-16T00": 2 }
+    },
+    {
+      name: "single-token line is ignored",
+      args: [[
+        "2025-01-15T14:00:00",
+        "2025-01-15T14:01:00 ERROR good"
+      ]],
+      expected: { "2025-01-15T14": 1 }
+    },
+    {
+      name: "non-ISO timestamp ignored",
+      args: [[
+        "15-01-2025 14:00:00 ERROR euro-format",
+        "2025-01-15T14:00:00 ERROR iso"
+      ]],
+      expected: { "2025-01-15T14": 1 }
     }
   ],
   hints: [
