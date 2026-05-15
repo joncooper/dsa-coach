@@ -1988,7 +1988,11 @@ const y2d4 = aocProblem({
       args: ["a=1\n\na=100\nb=50\n\na=2"],
       expected: 150
     },
-    { name: "zero value counted", args: ["a=0\nb=0\nc=3"], expected: 3 }
+    { name: "zero value counted", args: ["a=0\nb=0\nc=3"], expected: 3 },
+    { name: "line without equals ignored", args: ["a=10\nnopeval\nb=5"], expected: 15 },
+    { name: "floats rejected as garbage", args: ["a=1.5\nb=2\nc=3"], expected: 5 },
+    { name: "explicit plus sign rejected", args: ["a=+5\nb=10"], expected: 10 },
+    { name: "whitespace around value tolerated", args: ["a=  7  \nb=3"], expected: 10 }
   ],
   hints: [
     "Split on `\\n\\n` to get blocks, then within each split on `\\n`.",
@@ -2063,6 +2067,21 @@ const y2d4 = aocProblem({
         name: "blocks with garbage",
         args: ["a=foo\n\nb=10\n\nc=garbage\nd=5"],
         expected: 15
+      },
+      {
+        name: "two blocks only",
+        args: ["a=50\n\nb=30"],
+        expected: 80
+      },
+      {
+        name: "ties on top do not drop",
+        args: ["a=10\n\nb=10\n\nc=10\n\nd=10"],
+        expected: 30
+      },
+      {
+        name: "zero-sum blocks contribute zero",
+        args: ["a=0\n\nb=0\n\nc=0\n\nd=5"],
+        expected: 5
       }
     ],
     hints: [
