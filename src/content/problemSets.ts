@@ -598,7 +598,12 @@ const parseCsv = setProblem({
     { name: "two empty fields", args: [","], expected: ["", ""] },
     { name: "mixed quoted and plain", args: ["\"alpha\",beta,\"gamma,delta\""], expected: ["alpha", "beta", "gamma,delta"] },
     { name: "quote not at field start is literal", args: ["a\"b,c"], expected: ["a\"b", "c"] },
-    { name: "empty quoted field", args: ["\"\",x"], expected: ["", "x"] }
+    { name: "empty quoted field", args: ["\"\",x"], expected: ["", "x"] },
+    { name: "adjacent escaped quotes", args: ["\"a\"\"\"\"b\""], expected: ["a\"\"b"] },
+    { name: "three commas yield four empty fields", args: [",,,"], expected: ["", "", "", ""] },
+    { name: "leading comma", args: [",a,b"], expected: ["", "a", "b"] },
+    { name: "quoted field preserves whitespace", args: ["\" hello \",x"], expected: [" hello ", "x"] },
+    { name: "embedded commas across two quoted fields", args: ["\"a,b\",\"c,d,e\""], expected: ["a,b", "c,d,e"] }
   ],
   hints: [
     "Track exactly one boolean: are you currently inside a quoted field?",
