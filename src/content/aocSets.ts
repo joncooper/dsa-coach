@@ -2326,7 +2326,11 @@ const y2d6 = aocProblem({
     { name: "complete overlap three shelves", args: ["1,2\n1,2\n1,2"], expected: 2 },
     { name: "duplicate within shelf", args: ["1,1,2\n1,2,2"], expected: 2 },
     { name: "three records mixed", args: ["1,2,3\n2,3\n\n5\n5\n5\n\n9,8\n7,6"], expected: 3 },
-    { name: "blank trailing block", args: ["1,2\n1,3\n\n\n"], expected: 1 }
+    { name: "blank trailing block", args: ["1,2\n1,3\n\n\n"], expected: 1 },
+    { name: "intersection of three shrinks to one", args: ["1,2,3\n2,3,4\n3,4,5"], expected: 1 },
+    { name: "single shelf with duplicates dedups", args: ["7,7,7,8"], expected: 2 },
+    { name: "many records each contributes", args: ["1,2\n1,3\n\n4,5\n4,6\n\n7\n7"], expected: 3 },
+    { name: "leading blank block ignored", args: ["\n\n1,2\n1,3"], expected: 1 }
   ],
   hints: [
     "Convert each shelf to a set of integers before any intersection.",
@@ -2392,7 +2396,10 @@ const y2d6 = aocProblem({
       { name: "three shelves one unique each", args: ["1,9\n2,9\n3,9"], expected: 3 },
       { name: "duplicate within shelf counts once", args: ["1,1,2\n2,3"], expected: 2 },
       { name: "mixed records", args: ["1,2\n1,3\n\n4,5,6\n4,5"], expected: 3 },
-      { name: "every relic on every shelf", args: ["1,2,3\n1,2,3\n1,2,3"], expected: 0 }
+      { name: "every relic on every shelf", args: ["1,2,3\n1,2,3\n1,2,3"], expected: 0 },
+      { name: "single shelf all unique", args: ["1,2,3,4,5"], expected: 5 },
+      { name: "two shelves with overlap", args: ["1,2,3\n3,4,5"], expected: 4 },
+      { name: "three records summed", args: ["1\n\n1,2\n\n1,2,3"], expected: 6 }
     ],
     hints: [
       "Within each record, count how many distinct shelves each relic appears on.",
