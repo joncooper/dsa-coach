@@ -2536,6 +2536,34 @@ const y2d7 = aocProblem({
         "core requires 1 binding_paste.\nirrelevant requires 1 dust.\ndust requires nothing.\nbinding_paste requires nothing."
       ],
       expected: 1
+    },
+    {
+      name: "binding_paste not referenced anywhere",
+      args: [
+        "alpha requires 1 beta.\nbeta requires 1 gamma.\ngamma requires nothing.\nbinding_paste requires nothing."
+      ],
+      expected: 0
+    },
+    {
+      name: "multiple direct dependents",
+      args: [
+        "alpha requires 1 binding_paste.\nbeta requires 1 binding_paste.\ngamma requires 1 binding_paste.\nbinding_paste requires nothing."
+      ],
+      expected: 3
+    },
+    {
+      name: "deep transitive chain",
+      args: [
+        "a requires 1 b.\nb requires 1 c.\nc requires 1 binding_paste.\nbinding_paste requires nothing."
+      ],
+      expected: 3
+    },
+    {
+      name: "mixed ingredient counts dont matter for reachability",
+      args: [
+        "tonic requires 5 binding_paste, 3 herb.\nherb requires nothing.\nbinding_paste requires nothing."
+      ],
+      expected: 1
     }
   ],
   hints: [
@@ -2652,6 +2680,32 @@ const y2d7 = aocProblem({
           "final_product requires 2 a.\na requires 3 b.\nb requires 5 binding_paste.\nbinding_paste requires nothing."
         ],
         expected: 30
+      },
+      {
+        name: "final_product not defined returns zero",
+        args: ["binding_paste requires nothing."],
+        expected: 0
+      },
+      {
+        name: "diamond with shared deeper subtree",
+        args: [
+          "final_product requires 2 a, 2 b.\na requires 3 base.\nb requires 3 base.\nbase requires 2 binding_paste.\nbinding_paste requires nothing."
+        ],
+        expected: 24
+      },
+      {
+        name: "mixed paste and non-paste ingredients",
+        args: [
+          "final_product requires 2 binding_paste, 1 sleeve.\nsleeve requires 3 binding_paste, 4 leather.\nleather requires nothing.\nbinding_paste requires nothing."
+        ],
+        expected: 5
+      },
+      {
+        name: "final_product directly depends on non-paste leaf",
+        args: [
+          "final_product requires 10 sand.\nsand requires nothing.\nbinding_paste requires nothing."
+        ],
+        expected: 0
       }
     ],
     hints: [
