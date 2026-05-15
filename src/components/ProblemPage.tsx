@@ -128,7 +128,7 @@ export function ProblemPage() {
       setSplitRatio(Math.min(48, Math.max(26, storedSplitRatio)));
     }
     if (typeof storedDockHeight === "number") {
-      setDockHeight(Math.min(460, Math.max(190, storedDockHeight)));
+      setDockHeight(Math.min(720, Math.max(190, storedDockHeight)));
     }
     if (storedMobileTab === "prompt" || storedMobileTab === "code" || storedMobileTab === "results" || storedMobileTab === "scratchpad" || storedMobileTab === "notes") {
       setActiveMobileTab(storedMobileTab);
@@ -401,7 +401,7 @@ export function ProblemPage() {
   const dockDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
 
   function clampDockHeight(value: number): number {
-    return Math.min(460, Math.max(190, Math.round(value)));
+    return Math.min(720, Math.max(190, Math.round(value)));
   }
 
   function handleDockPointerDown(event: PointerEvent<HTMLDivElement>) {
@@ -745,7 +745,7 @@ export function ProblemPage() {
             aria-label="Resize output dock"
             aria-orientation="horizontal"
             aria-valuemin={190}
-            aria-valuemax={460}
+            aria-valuemax={720}
             aria-valuenow={dockHeight}
             tabIndex={0}
             onPointerDown={handleDockPointerDown}
@@ -754,7 +754,7 @@ export function ProblemPage() {
             onKeyDown={(event) => {
               if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
               event.preventDefault();
-              const next = Math.min(460, Math.max(190, dockHeight + (event.key === "ArrowUp" ? 20 : -20)));
+              const next = Math.min(720, Math.max(190, dockHeight + (event.key === "ArrowUp" ? 20 : -20)));
               setDockHeight(next);
               void saveSetting("workspace:bottomDockHeight", next);
             }}
