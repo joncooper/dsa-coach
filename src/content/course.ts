@@ -1,9 +1,9 @@
 import { guidedReferenceCode } from "./referenceSolutions";
-import { problemSets as tekmerionSets } from "./problemSets";
+import { problemSets as interviewSets } from "./problemSets";
 import { aocSets } from "./aocSets";
 import type { BonusProblem, Chapter, CourseData, Difficulty, Lesson, Problem, ProblemSet, ProblemTest, Quiz } from "../types";
 
-const problemSets: ProblemSet[] = [...tekmerionSets, ...aocSets];
+const problemSets: ProblemSet[] = [...interviewSets, ...aocSets];
 
 interface ChapterSpec {
   id: string;

@@ -1,6 +1,6 @@
 import type { Problem, ProblemSet } from "../types";
 
-const setId = "tekmerion-prep";
+const setId = "interview-prep";
 
 function setProblem(problem: Omit<Problem, "chapterId" | "source" | "adapter"> & Partial<Pick<Problem, "adapter">>): Problem {
   return {
@@ -2291,13 +2291,13 @@ const versionedKv = setProblem({
   ]
 });
 
-export const tekmerionPrepSet: ProblemSet = {
+export const interviewPrepSet: ProblemSet = {
   id: setId,
-  title: "Tekmerion Assessment Prep",
-  summary: "Practical, language-agnostic programming problems sized to a coding interview that screens for clear thinking and structure rather than algorithm trivia.",
+  title: "Practical Interview Problems",
+  summary: "Practical, language-agnostic programming problems sized to a generalist coding interview that screens for clear thinking and structure rather than algorithm trivia.",
   intro:
-    "These prompts are calibrated for a baseline-programming-ability interview. Each is solvable cleanly in 30–45 minutes in Python (or any language). They reward decomposition, careful state handling, explicit edge cases, and a fully-tested implementation — not clever tricks. Treat each problem like a small system: name the state, validate inputs at the boundary, and pick the simplest data structure that fits.",
+    "These prompts mirror the generalist coding-interview style: each is solvable cleanly in 30–45 minutes in Python (or any language) and rewards decomposition, careful state handling, explicit edge cases, and a fully-tested implementation — not clever tricks. Treat each problem like a small system: name the state, validate inputs at the boundary, and pick the simplest data structure that fits. Several problems extend into a Part 2 that builds on your Part 1 solution.",
   problems: [tradePnl, logErrors, parseCsv, minRooms, rateLimiter, topWords, bank, sessionize, reconcile, renderTemplate, resolvePath, versionedKv]
 };
 
-export const problemSets: ProblemSet[] = [tekmerionPrepSet];
+export const problemSets: ProblemSet[] = [interviewPrepSet];
