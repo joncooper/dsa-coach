@@ -847,7 +847,10 @@ const y1d5 = aocProblem({
     { name: "single code", args: ["FBFBBFFRLR"], expected: 357 },
     { name: "front-left zero", args: ["FFFFFFFLLL"], expected: 0 },
     { name: "back-right max", args: ["BBBBBBBRRR"], expected: 1023 },
-    { name: "blank lines ignored", args: ["\nFBFBBFFRLR\n\nBFFFBBFRRR\n"], expected: 567 }
+    { name: "blank lines ignored", args: ["\nFBFBBFFRLR\n\nBFFFBBFRRR\n"], expected: 567 },
+    { name: "lowest column wins over higher column same row", args: ["FFFFFFFRLL\nFFFFFFFLLR"], expected: 4 },
+    { name: "row math row 1 col 0 is id 8", args: ["FFFFFFBLLL"], expected: 8 },
+    { name: "all rows same column varies", args: ["FFFFFFFLLL\nBFFFFFFLLL\nFBFFFFFLLL"], expected: 512 }
   ],
   hints: [
     "Each code is a 10-bit binary number once you map F/L to 0 and B/R to 1.",
@@ -924,7 +927,22 @@ const y1d5 = aocProblem({
         args: ["FFFFFFFLLR\nFFFFFFFLRL"],
         expected: -1
       },
-      { name: "single seat", args: ["FBFBBFFRLR"], expected: -1 }
+      { name: "single seat", args: ["FBFBBFFRLR"], expected: -1 },
+      {
+        name: "two distinct gaps return smallest",
+        args: ["FFFFFFFLLL\nFFFFFFFLRL\nFFFFFFFLRR\nFFFFFFFRLR\nFFFFFFFRRR"],
+        expected: 1
+      },
+      {
+        name: "gap of three returns minus one",
+        args: ["FFFFFFFLLL\nFFFFFFFRLR"],
+        expected: -1
+      },
+      {
+        name: "duplicate codes still find gap",
+        args: ["FFFFFFFLLL\nFFFFFFFLLL\nFFFFFFFLRL"],
+        expected: 1
+      }
     ],
     hints: [
       "Decode every code into a set of integer seat IDs.",
