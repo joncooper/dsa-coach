@@ -1069,11 +1069,15 @@ pre {
   align-content: start;
   gap: 10px;
   min-height: 0;
+  min-width: 0;
   overflow: auto;
   padding: 14px;
 }
 
 .coach-msg {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 10px 12px;
@@ -1086,6 +1090,8 @@ pre {
   background: var(--tag-bg);
   color: var(--ink);
   white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .coach-msg-bot {
@@ -1093,12 +1099,21 @@ pre {
 }
 
 .coach-msg-bot .markdown {
+  min-width: 0;
   font-size: 0.9rem;
   line-height: 1.55;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
+/* Long code lines scroll within the block instead of widening the panel. */
 .coach-msg-bot .markdown pre {
+  max-width: 100%;
+  overflow-x: auto;
   font-size: 0.82rem;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 .coach-typing {
