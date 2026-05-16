@@ -16,8 +16,6 @@ import {
   Maximize2,
   Minimize2,
   MoreHorizontal,
-  PanelLeftClose,
-  PanelLeftOpen,
   Play,
   RotateCcw,
   Star
@@ -394,13 +392,6 @@ export function ProblemPage() {
     });
   }
 
-  function toggleSidebarCollapsed() {
-    setSidebarCollapsed((value) => {
-      const next = !value;
-      void saveSetting("workspace:sidebarCollapsed", next);
-      return next;
-    });
-  }
 
   async function toggleStarred() {
     if (!problem) return;
@@ -532,15 +523,6 @@ export function ProblemPage() {
           >
             <Bot size={17} />
             Coach
-          </button>
-          <button
-            className="secondary-button compact-button icon-only-button"
-            type="button"
-            aria-label={sidebarCollapsed ? "Expand nav" : "Collapse nav"}
-            title={sidebarCollapsed ? "Expand nav" : "Collapse nav"}
-            onClick={toggleSidebarCollapsed}
-          >
-            {sidebarCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
           </button>
           <button
             className="secondary-button compact-button icon-only-button"

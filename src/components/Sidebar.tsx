@@ -1,10 +1,15 @@
-import { BookOpen, Search, Sparkles } from "lucide-react";
+import { BookOpen, PanelLeftClose, PanelLeftOpen, Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { course } from "../content/course";
+import { useStore } from "../hooks/courseStoreContext";
 
 export function Sidebar() {
   const [query, setQuery] = useState("");
+  const { settings, saveSetting } = useStore();
+  const location = useLocation();
+  const onProblem = location.pathname.startsWith("/problem/");
+  const collapsed = settings["workspace:sidebarCollapsed"]?.value === true;
   const results = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return [];
@@ -22,10 +27,24 @@ export function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <NavLink className="brand" to="/" aria-label="Dashboard">
-        <BookOpen size={24} />
-        <span>DSA Coach</span>
-      </NavLink>
+      <div className="sidebar-brand-row">
+        <NavLink className="brand" to="/" aria-label="Dashboard">
+          <BookOpen size={24} />
+          <span>DSA Coach</span>
+        </NavLink>
+        {onProblem ? (
+          <button
+            type="button"
+            className="sidebar-collapse-toggle"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-pressed={collapsed}
+            onClick={() => void saveSetting("workspace:sidebarCollapsed", !collapsed)}
+          >
+            {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+          </button>
+        ) : null}
+      </div>
       <label className="search-box">
         <Search size={16} />
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" />
