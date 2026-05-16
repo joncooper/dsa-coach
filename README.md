@@ -20,7 +20,7 @@ Most practice tools are either online judges that hide the test cases, or static
 - **70 guided problems and 140 runnable bonus drills**, 12 quizzes with answer explanations.
 - **4 problem sets (33 problems):** a practical generalist-interview set and three Advent-of-Code-style "years" (parse messy input → answer Part 1 → extend for Part 2). 24 of these carry a runnable Part 2.
 - **In-browser Python** through Pyodide in a Web Worker, with a 45-second execution timeout and separate run / submit flows.
-- **Type-aware autocomplete:** a static stdlib completion source plus a Jedi-in-Pyodide language service running in its own worker, so `cnt = Counter(); cnt.` proposes real `Counter` methods.
+- **Type-aware autocomplete with signatures:** a Jedi-in-Pyodide language service (in its own worker) infers variable types — `position = []; position.` proposes `insert`, `append`, … with full call signatures and docs — backed by an instant builtin-container completer that covers the common case while Jedi warms up.
 - **Optional local-LLM coach:** an openable side panel that coaches adaptively against a local model — Socratic by default, escalating only as far as you need, and willing to hand over the full solution if you ask for it outright. Fully opt-in and offline; the app works exactly the same without it.
 - **Problem workspace** with prompt, constraints, examples, CodeMirror editor, visible/hidden test results, stdout, errors, a scratchpad, notes, submission history, progressive hints, solutions, and an interview-discipline checklist on the problem sets.
 - **IndexedDB persistence** for progress, notes, submissions, settings, spaced-review state, and per-problem (and per-part) workspace code.

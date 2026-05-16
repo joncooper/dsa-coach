@@ -19,6 +19,8 @@ type JediCompletion = {
   complete: string;
   type: string;
   description: string;
+  signature: string;
+  doc: string;
 };
 
 type CompletionResponse = {
@@ -65,16 +67,43 @@ def _run():
         completions = script.complete(INTELLISENSE_LINE, INTELLISENSE_COL)
     except Exception:
         return json.dumps([])
-    for c in completions:
+    for c in completions[:60]:
         try:
             desc = c.description or ""
         except Exception:
             desc = ""
+        sig = ""
+        try:
+            sigs = c.get_signatures()
+            if sigs:
+                sig = sigs[0].to_string()
+        except Exception:
+            sig = ""
+        doc = ""
+        try:
+            full = c.docstring(raw=False, fast=True) or ""
+            full = full.strip()
+            if not sig:
+                # Builtins often expose their signature only via the
+                # first docstring line (e.g. "insert(index, object, /)").
+                first = full.split("\n", 1)[0].strip()
+                if first.startswith(c.name + "(") or first.startswith(c.name + " ("):
+                    sig = first
+            # Keep only the prose part of the docstring for the info panel.
+            body = full
+            nl = full.find("\n")
+            if nl != -1 and (full[:nl].startswith(c.name) or full[:nl] == sig):
+                body = full[nl + 1:].strip()
+            doc = body[:280]
+        except Exception:
+            doc = ""
         out.append({
             "name": c.name,
             "complete": c.complete or "",
             "type": c.type or "",
-            "description": desc[:160]
+            "description": desc[:160],
+            "signature": sig[:200],
+            "doc": doc
         })
     return json.dumps(out)
 

@@ -3,6 +3,8 @@ export interface JediCompletion {
   complete: string;
   type: string;
   description: string;
+  signature: string;
+  doc: string;
 }
 
 type CompletionResponse = {
