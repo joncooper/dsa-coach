@@ -26,7 +26,7 @@ Most practice tools are either online judges that hide the test cases, or static
 - **IndexedDB persistence** for progress, notes, submissions, settings, spaced-review state, and per-problem (and per-part) workspace code.
 - **JSON export/import** to move local progress between browsers.
 - **Offline PWA** via a production service worker — the full app shell works without a network.
-- **OS-respecting dark mode**, responsive down to mobile, and an accessible component layer audited with axe.
+- **Responsive** down to mobile, with an accessible component layer audited with axe.
 
 ## Practice tracks
 
