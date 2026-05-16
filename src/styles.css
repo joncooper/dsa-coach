@@ -22,6 +22,7 @@
   --blue: #2764a3;
   --shadow: 0 16px 36px rgba(29, 37, 40, 0.08);
   --code-bg: #eef3f1;
+  --code-ink: #132326;
   --tag-bg: #f3efe4;
   --tag-ink: #3a484b;
   --row-bg: #ffffff;
@@ -48,14 +49,11 @@
     --blue: #7fb7e8;
     --shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
     --code-bg: #1f2a2d;
+    --code-ink: #d8e4e5;
     --tag-bg: #243033;
     --tag-ink: #c6d3d4;
     --row-bg: #1a2326;
     --resume-bg: #1f2a2d;
-  }
-
-  pre {
-    color: #d8e4e5;
   }
 
   .progress-line {
@@ -840,7 +838,7 @@ pre {
 pre {
   overflow: auto;
   padding: 12px;
-  color: #132326;
+  color: var(--code-ink);
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -1811,8 +1809,8 @@ pre {
   overflow: auto;
   border-radius: 6px;
   padding: 8px;
-  background: rgba(255, 255, 255, 0.65);
-  color: #132326;
+  background: var(--code-bg);
+  color: var(--code-ink);
   white-space: pre-wrap;
 }
 
