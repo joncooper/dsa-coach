@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { NoteRecord, ProgressRecord, ProgressStatus, RunResult, SettingRecord, SubmissionRecord } from "../types";
-import { db, exportBackup, importBackup, itemKey, type BackupPayload } from "../storage/db";
+import type {
+  CoachExchangeRecord,
+  CoachFeedback,
+  NoteRecord,
+  ProgressRecord,
+  ProgressStatus,
+  RunResult,
+  SettingRecord,
+  SubmissionRecord
+} from "../types";
+import { db, exportBackup, exportCoachJsonl, importBackup, itemKey, type BackupPayload } from "../storage/db";
 
 type ProgressType = "lesson" | "problem" | "quiz";
 
@@ -78,6 +87,19 @@ export function useCourseStore() {
     await saveSetting(`code:${problemId}`, code);
   }, [saveSetting]);
 
+  const logCoachExchange = useCallback(
+    async (record: Omit<CoachExchangeRecord, "id">): Promise<number> => {
+      return db.coachLogs.add(record as CoachExchangeRecord);
+    },
+    []
+  );
+
+  const rateCoachExchange = useCallback(async (id: number, feedback: CoachFeedback) => {
+    await db.coachLogs.update(id, { feedback });
+  }, []);
+
+  const exportCoachLog = useCallback(async () => exportCoachJsonl(), []);
+
   const exportJson = useCallback(async () => {
     const payload = await exportBackup();
     return JSON.stringify(payload, null, 2);
@@ -112,6 +134,9 @@ export function useCourseStore() {
     saveNote,
     saveSetting,
     recordSubmission,
+    logCoachExchange,
+    rateCoachExchange,
+    exportCoachLog,
     exportJson,
     importJson
   };

@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildInitialUserPrompt,
+  COACH_PROMPT_VERSION,
+  COACH_SYSTEM_PROMPT,
   looksLikeSolveRequest,
   type CoachContext
 } from "../src/coach/coachPrompts";
@@ -55,6 +57,39 @@ describe("looksLikeSolveRequest", () => {
     ]) {
       expect(looksLikeSolveRequest(t)).toBe(false);
     }
+  });
+});
+
+describe("system prompt steers toward debugging the learner's approach", () => {
+  it("tells the model to find the smallest fix, not redirect to the reference", () => {
+    expect(COACH_SYSTEM_PROMPT).toMatch(/MEET THE LEARNER'S APPROACH/);
+    expect(COACH_SYSTEM_PROMPT).toMatch(/smallest change that makes their approach work/i);
+    expect(COACH_SYSTEM_PROMPT).toMatch(/their strategy is sound and there is a local bug/i);
+    expect(COACH_SYSTEM_PROMPT).toMatch(/not the required one/i);
+  });
+
+  it("reframes the reference as a correctness oracle, not the mandated approach", () => {
+    expect(COACH_SYSTEM_PROMPT).toMatch(/CORRECTNESS ORACLE/);
+    expect(COACH_SYSTEM_PROMPT).toMatch(/one valid solution among several/i);
+  });
+
+  it("has a stable, non-empty prompt version stamp", () => {
+    expect(COACH_PROMPT_VERSION).toMatch(/\S/);
+  });
+});
+
+describe("failed-submission guidance prefers a local fix", () => {
+  it("instructs the model to assume the approach is viable before any rewrite", () => {
+    const out = buildInitialUserPrompt(
+      baseContext({
+        code: "def realized_pnl(trades):\n    return 1\n",
+        runState: "failed",
+        attemptCount: 1,
+        failedVisible: [{ name: "round trip", expected: "200", actual: "1" }]
+      })
+    );
+    expect(out).toMatch(/smallest fix/i);
+    expect(out).toMatch(/Assume their approach is viable/i);
   });
 });
 

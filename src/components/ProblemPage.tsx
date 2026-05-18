@@ -930,7 +930,12 @@ export function ProblemPage() {
         </div>
       </section>
       {coachMounted ? (
-        <CoachPanel buildContext={buildCoachContext} visible={coachOpen} onClose={() => setCoachOpen(false)} />
+        <CoachPanel
+          buildContext={buildCoachContext}
+          problemId={problem?.id ?? "unknown"}
+          visible={coachOpen}
+          onClose={() => setCoachOpen(false)}
+        />
       ) : null}
       </div>
     </section>

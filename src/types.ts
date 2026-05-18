@@ -82,6 +82,8 @@ export interface Problem {
   walkthrough?: string;
   followUps?: string[];
   parts?: ProblemPart[];
+  /** Set-only grouping tag (e.g. "streams", "grid"); stamped at set assembly. */
+  subcategory?: string;
   complexity: {
     time: string;
     space: string;
@@ -153,6 +155,42 @@ export interface SubmissionRecord {
 export interface SettingRecord {
   key: string;
   value: unknown;
+}
+
+/** A single chat message exactly as sent to / received from the model. */
+export interface CoachChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+export interface CoachFeedback {
+  rating: "up" | "down";
+  /** Optional free-text, typically captured on a thumbs-down. */
+  comment?: string;
+  at: string;
+}
+
+/**
+ * One coach reply, captured as a replayable eval record: the exact prompt
+ * sent to the model, the raw response, and the structured context snapshot
+ * that produced it. `conversationId` regroups exchanges from one panel
+ * session; `promptVersion`/`model` make runs comparable across tuning.
+ */
+export interface CoachExchangeRecord {
+  id?: number;
+  conversationId: string;
+  problemId: string;
+  partTitle?: string;
+  model: string;
+  promptVersion: string;
+  /** The user turn that triggered this reply; null for the opening message. */
+  userMessage: string | null;
+  messages: CoachChatMessage[];
+  response: string;
+  /** Structured snapshot of the editor/run state at generation time. */
+  context: unknown;
+  feedback?: CoachFeedback;
+  createdAt: string;
 }
 
 export interface TestResult {
