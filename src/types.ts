@@ -39,6 +39,13 @@ export interface ProblemTest {
   name: string;
   args: unknown[];
   expected: unknown;
+  /**
+   * Optional named checker (see VALIDATORS in the Python harnesses). When set,
+   * the output is accepted if the validator returns true, instead of requiring
+   * exact equality with `expected`. Used for problems with many valid answers
+   * (e.g. any topological order). `expected` stays as an illustrative answer.
+   */
+  validator?: string;
 }
 
 export interface ProblemPart {

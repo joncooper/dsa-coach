@@ -92,6 +92,50 @@ def adapt_args(args, adapter):
         adapted[0] = tree_from_level(adapted[0])
     return adapted
 
+def _topo_valid(args, actual):
+    deps = args[0]
+    nodes = set()
+    for task, prereqs in deps.items():
+        nodes.add(task)
+        for prereq in prereqs:
+            nodes.add(prereq)
+    indeg = {n: 0 for n in nodes}
+    adj = {n: [] for n in nodes}
+    for task, prereqs in deps.items():
+        for prereq in prereqs:
+            adj[prereq].append(task)
+            indeg[task] += 1
+    queue = deque([n for n in nodes if indeg[n] == 0])
+    remaining = dict(indeg)
+    seen = 0
+    while queue:
+        cur = queue.popleft()
+        seen += 1
+        for nxt in adj[cur]:
+            remaining[nxt] -= 1
+            if remaining[nxt] == 0:
+                queue.append(nxt)
+    if seen != len(nodes):
+        return actual is None
+    if not isinstance(actual, list):
+        return False
+    if sorted(map(str, actual)) != sorted(map(str, nodes)):
+        return False
+    pos = {name: i for i, name in enumerate(actual)}
+    for task, prereqs in deps.items():
+        for prereq in prereqs:
+            if pos[prereq] >= pos[task]:
+                return False
+    return True
+
+VALIDATORS = {"topological": _topo_valid}
+
+def check(test, actual, expected):
+    name = test.get("validator")
+    if name:
+        return bool(VALIDATORS[name](test["args"], actual))
+    return actual == expected
+
 def run_all():
     request = json.loads(RUN_REQUEST_JSON)
     namespace = {
@@ -128,7 +172,7 @@ def run_all():
                     expected = normalize(test["expected"])
                     if request["adapter"] == "linked-list" and actual is None and isinstance(expected, list):
                         actual = []
-                    passed = actual == expected
+                    passed = check(test, actual, expected)
                     if not passed:
                         status = "failed"
                     results.append({

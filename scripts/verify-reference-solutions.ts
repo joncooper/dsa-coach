@@ -85,6 +85,50 @@ def adapt_args(args, adapter):
         adapted[0] = tree_from_level(adapted[0])
     return adapted
 
+def _topo_valid(args, actual):
+    deps = args[0]
+    nodes = set()
+    for task, prereqs in deps.items():
+        nodes.add(task)
+        for prereq in prereqs:
+            nodes.add(prereq)
+    indeg = {n: 0 for n in nodes}
+    adj = {n: [] for n in nodes}
+    for task, prereqs in deps.items():
+        for prereq in prereqs:
+            adj[prereq].append(task)
+            indeg[task] += 1
+    queue = deque([n for n in nodes if indeg[n] == 0])
+    remaining = dict(indeg)
+    seen = 0
+    while queue:
+        cur = queue.popleft()
+        seen += 1
+        for nxt in adj[cur]:
+            remaining[nxt] -= 1
+            if remaining[nxt] == 0:
+                queue.append(nxt)
+    if seen != len(nodes):
+        return actual is None
+    if not isinstance(actual, list):
+        return False
+    if sorted(map(str, actual)) != sorted(map(str, nodes)):
+        return False
+    pos = {name: i for i, name in enumerate(actual)}
+    for task, prereqs in deps.items():
+        for prereq in prereqs:
+            if pos[prereq] >= pos[task]:
+                return False
+    return True
+
+VALIDATORS = {"topological": _topo_valid}
+
+def check(test, actual, expected):
+    name = test.get("validator")
+    if name:
+        return bool(VALIDATORS[name](test["args"], actual))
+    return actual == expected
+
 request = json.loads(sys.stdin.read())
 namespace = {
     "ListNode": ListNode,
@@ -103,7 +147,7 @@ namespace = {
 
 try:
     with contextlib.redirect_stdout(io.StringIO()):
-        exec(request["referenceCode"], namespace)
+        exec(request["code"], namespace)
     fn = namespace.get(request["entrypoint"])
     if not callable(fn):
         raise NameError(f"missing callable {request['entrypoint']}")
@@ -114,19 +158,27 @@ try:
         expected = normalize(test["expected"])
         if request["adapter"] == "linked-list" and actual is None and isinstance(expected, list):
             actual = []
-        if actual != expected:
+        if not check(test, actual, expected):
             failures.append({"name": test["name"], "actual": actual, "expected": expected})
     print(json.dumps({"ok": not failures, "failures": failures}))
 except Exception:
     print(json.dumps({"ok": False, "error": traceback.format_exc(limit=8)}))
 `;
 
-export function verifyProblemReference(problem: Problem): string[] {
+interface VerifyTarget {
+  label: string;
+  code: string;
+  entrypoint: string;
+  adapter: Problem["adapter"];
+  tests: Problem["visibleTests"];
+}
+
+function runTarget(target: VerifyTarget): string[] {
   const request = {
-    referenceCode: problem.referenceCode,
-    entrypoint: problem.entrypoint,
-    adapter: problem.adapter,
-    tests: [...problem.visibleTests, ...problem.hiddenTests]
+    code: target.code,
+    entrypoint: target.entrypoint,
+    adapter: target.adapter,
+    tests: target.tests
   };
   const result = spawnSync("python3", ["-c", PYTHON_HARNESS], {
     input: JSON.stringify(request),
@@ -134,37 +186,74 @@ export function verifyProblemReference(problem: Problem): string[] {
     maxBuffer: 1024 * 1024 * 10
   });
 
-  if (result.error) return [`${problem.id}: ${result.error.message}`];
-  if (result.status !== 0) return [`${problem.id}: python exited ${result.status}: ${result.stderr}`];
+  if (result.error) return [`${target.label}: ${result.error.message}`];
+  if (result.status !== 0) return [`${target.label}: python exited ${result.status}: ${result.stderr}`];
 
   try {
     const parsed = JSON.parse(result.stdout) as { ok: boolean; failures?: Array<{ name: string; actual: unknown; expected: unknown }>; error?: string };
     if (parsed.ok) return [];
-    if (parsed.error) return [`${problem.id}: ${parsed.error}`];
+    if (parsed.error) return [`${target.label}: ${parsed.error}`];
     return (parsed.failures ?? []).map(
-      (failure) => `${problem.id} / ${failure.name}: expected ${JSON.stringify(failure.expected)}, got ${JSON.stringify(failure.actual)}`
+      (failure) => `${target.label} / ${failure.name}: expected ${JSON.stringify(failure.expected)}, got ${JSON.stringify(failure.actual)}`
     );
   } catch {
-    return [`${problem.id}: invalid verifier output: ${result.stdout || result.stderr}`];
+    return [`${target.label}: invalid verifier output: ${result.stdout || result.stderr}`];
   }
+}
+
+/** Verify a problem's referenceCode and (if present) its solutionCode. */
+export function verifyProblemReference(problem: Problem): string[] {
+  const tests = [...problem.visibleTests, ...problem.hiddenTests];
+  const out = runTarget({
+    label: `${problem.id} [reference]`,
+    code: problem.referenceCode,
+    entrypoint: problem.entrypoint,
+    adapter: problem.adapter,
+    tests
+  });
+  if (problem.solutionCode) {
+    out.push(
+      ...runTarget({
+        label: `${problem.id} [solution]`,
+        code: problem.solutionCode,
+        entrypoint: problem.entrypoint,
+        adapter: problem.adapter,
+        tests
+      })
+    );
+  }
+  return out;
 }
 
 const setProblems = (course.problemSets ?? []).flatMap((set) => set.problems);
 const allProblems = [...course.problems, ...setProblems];
 
+/** Verify referenceCode and solutionCode for every part of a problem. */
 function verifyParts(problem: Problem): string[] {
   if (!problem.parts?.length) return [];
   const out: string[] = [];
   for (const part of problem.parts) {
-    const fauxProblem: Problem = {
-      ...problem,
-      id: `${problem.id}#${part.id}`,
-      entrypoint: part.entrypoint,
-      referenceCode: part.referenceCode,
-      visibleTests: part.visibleTests,
-      hiddenTests: part.hiddenTests
-    };
-    out.push(...verifyProblemReference(fauxProblem));
+    const tests = [...part.visibleTests, ...part.hiddenTests];
+    out.push(
+      ...runTarget({
+        label: `${problem.id}#${part.id} [reference]`,
+        code: part.referenceCode,
+        entrypoint: part.entrypoint,
+        adapter: problem.adapter,
+        tests
+      })
+    );
+    if (part.solutionCode) {
+      out.push(
+        ...runTarget({
+          label: `${problem.id}#${part.id} [solution]`,
+          code: part.solutionCode,
+          entrypoint: part.entrypoint,
+          adapter: problem.adapter,
+          tests
+        })
+      );
+    }
   }
   return out;
 }
@@ -175,11 +264,16 @@ const failures = [
 ];
 
 const partCount = allProblems.reduce((total, problem) => total + (problem.parts?.length ?? 0), 0);
+const solutionCount =
+  allProblems.filter((problem) => problem.solutionCode).length +
+  allProblems.reduce((total, problem) => total + (problem.parts?.filter((part) => part.solutionCode).length ?? 0), 0);
 
 if (failures.length) {
-  console.error("Reference verification failed:");
+  console.error("Reference/solution verification failed:");
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
 }
 
-console.log(`Reference solutions OK: ${allProblems.length} problems verified (${setProblems.length} from problem sets, ${partCount} extra parts).`);
+console.log(
+  `Reference + solution OK: ${allProblems.length} problems verified (${setProblems.length} from problem sets, ${partCount} parts, ${solutionCount} solutionCode bodies).`
+);

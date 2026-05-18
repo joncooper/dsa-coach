@@ -4,7 +4,8 @@ import type { CourseData } from "../types";
 const testSchema = z.object({
   name: z.string().min(1),
   args: z.array(z.unknown()),
-  expected: z.unknown()
+  expected: z.unknown(),
+  validator: z.string().min(1).optional()
 });
 
 const problemPartSchema = z.object({
@@ -48,6 +49,7 @@ const problemSchema = z.object({
   walkthrough: z.string().min(30).optional(),
   followUps: z.array(z.string().min(5)).optional(),
   parts: z.array(problemPartSchema).optional(),
+  subcategory: z.string().min(1).optional(),
   complexity: z.object({
     time: z.string().min(3),
     space: z.string().min(3)
