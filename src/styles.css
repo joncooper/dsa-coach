@@ -2337,3 +2337,448 @@ pre {
     max-height: none;
   }
 }
+
+/* --------------------------------------------------------------------------
+ * CodeSignal ICF practice mode
+ *
+ * Index, rules screen, workspace (timer + level pills), and report.
+ * Reuses the design tokens (--paper, --teal, --line, --shadow, etc.) and
+ * the .problem-layout grid so the workspace shares its skeleton with the
+ * regular ProblemPage editor.
+ * -------------------------------------------------------------------------- */
+
+.assessment-index-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.assessment-card-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.assessment-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.assessment-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.assessment-card-header h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.assessment-card-header h2 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.assessment-card-blurb {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.assessment-card-archetype {
+  background: var(--tag-bg);
+  color: var(--tag-ink);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.assessment-card-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 0;
+}
+
+.assessment-card-meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.assessment-card-meta dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.assessment-card-meta dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.assessment-card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Dashboard promo */
+
+.assessment-promo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.assessment-promo-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.assessment-promo-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.assessment-promo-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.assessment-promo-card h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.assessment-promo-card footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Rules screen */
+
+.assessment-rules-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 760px;
+}
+
+.rules-block {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+
+.rules-block h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.rules-block ul,
+.rules-block ol {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.55;
+}
+
+.rules-level-plan {
+  list-style: decimal inside;
+  padding-left: 0;
+}
+
+.rules-level-plan li {
+  margin: 4px 0;
+}
+
+.assessment-rules-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+/* Workspace */
+
+.assessment-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.assessment-context-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 8px 0 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.assessment-context-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.assessment-breadcrumb {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.assessment-breadcrumb a {
+  color: var(--teal);
+  text-decoration: none;
+}
+
+.assessment-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.assessment-title-row h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.assessment-mode-pill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  color: var(--tag-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.assessment-mode-pill.exam {
+  background: rgba(180, 35, 24, 0.1);
+  color: var(--red);
+}
+
+.assessment-mode-pill.practice {
+  background: rgba(26, 127, 70, 0.1);
+  color: var(--green);
+}
+
+.assessment-context-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.assessment-countdown,
+.assessment-elapsed {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  background: var(--paper-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.assessment-countdown strong {
+  font-weight: 700;
+}
+
+.assessment-countdown.warning {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: rgba(143, 82, 0, 0.08);
+}
+
+.assessment-countdown.danger {
+  border-color: var(--red);
+  color: var(--red);
+  background: rgba(180, 35, 24, 0.1);
+}
+
+.assessment-level-pills {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.assessment-level-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.assessment-level-pill.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--sidebar-ink);
+}
+
+.assessment-level-pill.locked {
+  color: var(--muted);
+  background: var(--paper-soft);
+  cursor: not-allowed;
+}
+
+.assessment-level-pill.locked:hover {
+  background: var(--paper-soft);
+}
+
+.assessment-level-hint {
+  font-size: 12px;
+  margin: -4px 0 8px;
+}
+
+.assessment-exam-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
+.assessment-workspace {
+  /* Inherits the .workspace grid; here we just ensure the bottom panel grows
+     to fill remaining height since the assessment workspace doesn't use the
+     resizable dock from ProblemPage. */
+  min-height: 0;
+}
+
+.assessment-workspace .workspace-bottom {
+  min-height: 220px;
+}
+
+/* Report / scorecard */
+
+.assessment-report-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 760px;
+}
+
+.scorecard {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.scorecard-headline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+
+.scorecard-band {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.scorecard-total {
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--teal);
+  line-height: 1;
+}
+
+.scorecard-band-floor,
+.scorecard-band-ceiling {
+  font-size: 14px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.scorecard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.scorecard-table th,
+.scorecard-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.scorecard-table thead th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.scorecard-table td,
+.scorecard-table th[scope="row"] {
+  font-variant-numeric: tabular-nums;
+}
+
+.scorecard-band-note {
+  font-size: 12px;
+}
+
+.assessment-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}

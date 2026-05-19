@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { AssessmentIndexPage } from "./components/AssessmentIndexPage";
+import { AssessmentPage } from "./components/AssessmentPage";
 import { ChapterPage } from "./components/ChapterPage";
 import { Dashboard } from "./components/Dashboard";
 import { Layout } from "./components/Layout";
@@ -34,6 +36,8 @@ function ReadyGate() {
         <Route path="problem/:problemId" element={<ProblemPage />} />
         <Route path="set/:setId" element={<ProblemSetPage />} />
         <Route path="quiz/:quizId" element={<QuizPage />} />
+        <Route path="assessments" element={<AssessmentIndexPage />} />
+        <Route path="assessment/:assessmentId" element={<AssessmentPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

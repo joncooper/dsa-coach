@@ -2,6 +2,8 @@ import type { Assessment, Problem, ProblemSet } from "../../types";
 import { ASSESSMENT_SET_ID } from "./_shared";
 import { filesystemAssessment, filesystemProblem } from "./filesystem";
 
+export { ASSESSMENT_SET_ID } from "./_shared";
+
 /**
  * CodeSignal ICF practice assessments.
  *
