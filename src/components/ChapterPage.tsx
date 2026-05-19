@@ -73,9 +73,11 @@ export function ChapterPage() {
           <div className="bonus-list">
             {chapter.bonusProblems.map((bonus) => (
               <Link className="bonus-link" to={`/problem/${bonus.id}`} key={bonus.id}>
-                <strong>{bonus.title}</strong>
+                <span className="bonus-link-head">
+                  <strong>{bonus.title}</strong>
+                  <StatusDot complete={progress[itemKey("problem", bonus.id)]?.status === "complete"} />
+                </span>
                 <p>{bonus.prompt}</p>
-                <StatusDot complete={progress[itemKey("problem", bonus.id)]?.status === "complete"} />
               </Link>
             ))}
           </div>

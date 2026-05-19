@@ -751,8 +751,18 @@ h3 {
 
 .bonus-link {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  gap: 6px;
+}
+
+.bonus-link-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bonus-link-head strong {
+  min-width: 0;
 }
 
 .bonus-link:hover strong {
