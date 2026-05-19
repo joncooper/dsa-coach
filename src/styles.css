@@ -945,7 +945,11 @@ pre {
 
 .problem-page {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  /* Desktop: context bar + workspace. The mobile-workspace-tabs row is
+     display:none here, so it must not claim a track or the workspace
+     auto-places into a content-sized row and the 1fr track goes empty.
+     The mobile media query restores the three-row template. */
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 10px;
   width: 100%;
   max-width: none;
@@ -2022,6 +2026,9 @@ pre {
   }
 
   .problem-page {
+    /* Tabs become a visible grid item below 1050px, so reinstate the
+       middle track for them. */
+    grid-template-rows: auto auto minmax(0, 1fr);
     min-height: auto;
     padding: 14px;
   }
