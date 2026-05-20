@@ -1,5 +1,6 @@
 import type { Assessment, Problem, ProblemSet } from "../../types";
 import { ASSESSMENT_SET_ID } from "./_shared";
+import { bankingAssessment, bankingProblem } from "./banking";
 import { filesystemAssessment, filesystemProblem } from "./filesystem";
 
 export { ASSESSMENT_SET_ID } from "./_shared";
@@ -16,9 +17,9 @@ export { ASSESSMENT_SET_ID } from "./_shared";
  * Ship order: Progressive Filesystem first; Banking and In-Memory DB are
  * appended here as they are authored.
  */
-const ASSESSMENT_PROBLEMS: Problem[] = [filesystemProblem];
+const ASSESSMENT_PROBLEMS: Problem[] = [filesystemProblem, bankingProblem];
 
-export const assessments: Assessment[] = [filesystemAssessment];
+export const assessments: Assessment[] = [filesystemAssessment, bankingAssessment];
 
 export const assessmentProblemSet: ProblemSet = {
   id: ASSESSMENT_SET_ID,
