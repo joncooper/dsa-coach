@@ -1,6 +1,22 @@
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { course } from "../src/content/course";
 import type { Problem } from "../src/types";
+
+/**
+ * Prefer the project-local `.venv/bin/python3` if it exists — that's where
+ * extra packages used by the Libraries section (e.g. `sortedcontainers`) get
+ * installed. Falls back to the first `python3` on PATH for users who haven't
+ * created a venv. Override with the `PYTHON` env var if needed.
+ */
+function resolvePython(): string {
+  if (process.env.PYTHON) return process.env.PYTHON;
+  const localVenv = resolve(process.cwd(), ".venv/bin/python3");
+  if (existsSync(localVenv)) return localVenv;
+  return "python3";
+}
+const PYTHON_BIN = resolvePython();
 
 const PYTHON_HARNESS = String.raw`
 import contextlib
@@ -180,7 +196,7 @@ function runTarget(target: VerifyTarget): string[] {
     adapter: target.adapter,
     tests: target.tests
   };
-  const result = spawnSync("python3", ["-c", PYTHON_HARNESS], {
+  const result = spawnSync(PYTHON_BIN, ["-c", PYTHON_HARNESS], {
     input: JSON.stringify(request),
     encoding: "utf8",
     maxBuffer: 1024 * 1024 * 10

@@ -1,8 +1,9 @@
-import { BookOpen, PanelLeftClose, PanelLeftOpen, Search, Sparkles, Timer } from "lucide-react";
+import { BookOpen, Library, PanelLeftClose, PanelLeftOpen, Search, Sparkles, Timer } from "lucide-react";
 import { useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { course } from "../content/course";
 import { ASSESSMENT_SET_ID, assessments } from "../content/assessments";
+import { LIBRARY_SET_IDS } from "../content/libraries";
 import { useStore } from "../hooks/courseStoreContext";
 
 export function Sidebar() {
@@ -19,7 +20,8 @@ export function Sidebar() {
       .slice(0, 4)
       .map((lesson) => ({ id: lesson.id, title: lesson.title, to: `/lesson/${lesson.id}`, kind: "Lesson" }));
     // Exclude assessment-set problems from search results — they belong to
-    // the dedicated /assessment route, not /problem.
+    // the dedicated /assessment route, not /problem. Library-section
+    // problems use the regular /problem route, so they remain searchable.
     const allProblems = [
       ...course.problems,
       ...course.problemSets.flatMap((set) => (set.id === ASSESSMENT_SET_ID ? [] : set.problems))
@@ -35,7 +37,11 @@ export function Sidebar() {
     return [...lessons, ...problems, ...assessmentHits];
   }, [query]);
 
-  const visibleProblemSets = course.problemSets.filter((set) => set.id !== ASSESSMENT_SET_ID);
+  const librarySetIds = new Set<string>(LIBRARY_SET_IDS);
+  const visibleProblemSets = course.problemSets.filter(
+    (set) => set.id !== ASSESSMENT_SET_ID && !librarySetIds.has(set.id)
+  );
+  const librarySets = course.problemSets.filter((set) => librarySetIds.has(set.id));
 
   return (
     <aside className="sidebar">
@@ -104,6 +110,19 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      {librarySets.length ? (
+        <>
+          <p className="sidebar-eyebrow">Libraries</p>
+          <nav className="chapter-nav" aria-label="Libraries">
+            {librarySets.map((set) => (
+              <NavLink key={set.id} to={`/set/${set.id}`}>
+                <span aria-hidden="true"><Library size={14} /></span>
+                {set.title}
+              </NavLink>
+            ))}
+          </nav>
+        </>
+      ) : null}
     </aside>
   );
 }
