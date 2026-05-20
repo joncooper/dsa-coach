@@ -242,6 +242,20 @@ export function AssessmentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assessmentId, level, slices.length]);
 
+  // Debounced autosave of the in-progress buffer for the current level.
+  // Without this, edits are only persisted on Run/Submit — switching levels
+  // (or closing the tab) would wipe whatever was typed since the last run.
+  // 500ms is short enough to feel safe and long enough that we're not
+  // hammering IndexedDB on every keystroke.
+  useEffect(() => {
+    if (!assessmentId) return;
+    if (!session || session.status !== "in-progress") return;
+    const handle = setTimeout(() => {
+      void saveSetting(codeKey(assessmentId, level), code);
+    }, 500);
+    return () => clearTimeout(handle);
+  }, [assessmentId, code, level, saveSetting, session]);
+
   // 1 Hz tick for the countdown; cheap enough to leave on for the report too.
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -326,8 +340,25 @@ export function AssessmentPage() {
     if (assessmentId) await saveSetting(scorecardKey(assessmentId), card);
   }
 
+  async function selectLevel(target: number) {
+    if (target === level) return;
+    // Flush the current level's buffer BEFORE the level-change effect re-seeds
+    // the editor — otherwise the debounce timer might not have fired yet and
+    // any unsaved keystrokes would be silently overwritten by the carry-forward.
+    if (assessmentId) {
+      await saveSetting(codeKey(assessmentId, level), code);
+    }
+    setLevel(target);
+  }
+
   async function pauseSession() {
     if (!session || session.status !== "in-progress" || session.pausedAt) return;
+    // Snapshot in-progress code before freezing the UI; the editor is hidden
+    // behind the overlay while paused, so this is the last chance to capture
+    // the most recent debounce window.
+    if (assessmentId) {
+      await saveSetting(codeKey(assessmentId, level), code);
+    }
     await persistSession({ ...session, pausedAt: new Date().toISOString() });
   }
 
@@ -550,7 +581,7 @@ export function AssessmentPage() {
         levels={assessment.levels}
         activeLevel={level}
         unlockedLevel={session?.unlockedLevel ?? 1}
-        onSelect={(n) => setLevel(n)}
+        onSelect={(n) => void selectLevel(n)}
       />
 
       <div
@@ -766,7 +797,7 @@ export function AssessmentPage() {
                   </div>
                   <div className="completion-actions">
                     {level < 4 ? (
-                      <button className="primary-button" type="button" onClick={() => setLevel(level + 1)}>
+                      <button className="primary-button" type="button" onClick={() => void selectLevel(level + 1)}>
                         Continue to Level {level + 1}
                       </button>
                     ) : (
