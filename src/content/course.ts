@@ -309,7 +309,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "all positives", args: [[1, 2, 3, 4]], expected: 10 },
-      { name: "empty", args: [[]], expected: 0 }
+      { name: "empty", args: [[]], expected: 0 },
+      { name: "single positive", args: [[42]], expected: 42 },
+      { name: "single negative", args: [[-7]], expected: 0 },
+      { name: "zeros only", args: [[0, 0, 0]], expected: 0 },
+      { name: "large mixed", args: [[10, -10, 20, -20, 30, -30, 40]], expected: 100 },
+      { name: "boundary one", args: [[1, -1, 1, -1]], expected: 2 }
     ],
     hints: ["Track one running total.", "Only add a reading when it is greater than zero."],
     solution: "Scan once and accumulate values that pass the predicate `value > 0`.",
@@ -331,7 +336,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "first pair", args: [[8, 8, 9]], expected: 1 },
-      { name: "late repeat", args: [[3, 1, 2, 4, 3]], expected: 4 }
+      { name: "late repeat", args: [[3, 1, 2, 4, 3]], expected: 4 },
+      { name: "single element", args: [[7]], expected: -1 },
+      { name: "two unique", args: [[5, 9]], expected: -1 },
+      { name: "repeats at end", args: [[1, 2, 3, 4, 2]], expected: 4 },
+      { name: "zeros repeat", args: [[0, 1, 0]], expected: 2 },
+      { name: "negatives repeat", args: [[-3, -1, -3, 4]], expected: 2 }
     ],
     hints: ["You need to remember values, not indexes.", "A set answers whether a value has been seen in expected constant time."],
     solution: "Keep a set of seen values. On each index, return immediately if the value is already present; otherwise add it.",
@@ -353,7 +363,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "whole array", args: [[1, 2, 3], 3, 6], expected: 1 },
-      { name: "k too large", args: [[1, 2], 3, 5], expected: 0 }
+      { name: "k too large", args: [[1, 2], 3, 5], expected: 0 },
+      { name: "k equals one", args: [[3, 7, 2, 8, 1], 1, 5], expected: 3 },
+      { name: "all safe k two", args: [[1, 1, 1, 1], 2, 2], expected: 3 },
+      { name: "limit zero", args: [[0, 0, 0], 2, 0], expected: 2 },
+      { name: "negatives included", args: [[-1, -2, 5, -3, 4], 3, 2], expected: 2 },
+      { name: "first only", args: [[1, 1, 9, 9], 2, 3], expected: 1 }
     ],
     hints: ["Avoid recomputing each window from scratch.", "Subtract the element that leaves before adding or after adding consistently."],
     solution: "Maintain the sum of the current length-k window and update it by one outgoing and one incoming element.",
@@ -375,7 +390,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "all true", args: [[true, true, true]], expected: 3 },
-      { name: "empty", args: [[]], expected: 0 }
+      { name: "empty", args: [[]], expected: 0 },
+      { name: "single true", args: [[true]], expected: 1 },
+      { name: "single false", args: [[false]], expected: 0 },
+      { name: "alternating", args: [[true, false, true, false, true]], expected: 1 },
+      { name: "trailing run", args: [[false, false, true, true, true, true]], expected: 4 },
+      { name: "leading run wins", args: [[true, true, true, true, false, true, true]], expected: 4 }
     ],
     hints: ["Keep current run length and best run length.", "Reset the current length when the flag is false."],
     solution: "Update `current` on each true value, reset it on false, and store the maximum seen.",
@@ -397,7 +417,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "one digit", args: [9], expected: 9 },
-      { name: "many zeros", args: [1000200], expected: 3 }
+      { name: "many zeros", args: [1000200], expected: 3 },
+      { name: "ten boundary", args: [10], expected: 1 },
+      { name: "two digits", args: [99], expected: 18 },
+      { name: "ascending", args: [12345], expected: 15 },
+      { name: "repeating digit", args: [9999], expected: 36 },
+      { name: "trailing zero", args: [120], expected: 3 }
     ],
     hints: ["The last digit is `n % 10`.", "The rest of the number is `n // 10`."],
     solution: "The recurrence is `digit_sum(n) = n % 10 + digit_sum(n // 10)` with a base case below 10.",
@@ -419,7 +444,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "fifteen", args: [15], expected: 4 },
-      { name: "large power", args: [1024], expected: 11 }
+      { name: "large power", args: [1024], expected: 11 },
+      { name: "two", args: [2], expected: 2 },
+      { name: "three", args: [3], expected: 2 },
+      { name: "seven", args: [7], expected: 3 },
+      { name: "power minus one", args: [31], expected: 5 },
+      { name: "odd large", args: [99], expected: 7 }
     ],
     hints: ["This is a loop over shrinking input.", "Count after each division."],
     solution: "Repeated halving takes one step per binary digit, so loop while `n > 0` and count divisions.",
@@ -441,7 +471,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "empty", args: [[], 3], expected: [] },
-      { name: "zero", args: [[4, 5], 0], expected: [4, 5] }
+      { name: "zero", args: [[4, 5], 0], expected: [4, 5] },
+      { name: "single element", args: [[7], 4], expected: [7] },
+      { name: "k equals length", args: [[1, 2, 3, 4], 4], expected: [1, 2, 3, 4] },
+      { name: "k one", args: [[1, 2, 3, 4], 1], expected: [2, 3, 4, 1] },
+      { name: "k equals length minus one", args: [[1, 2, 3, 4], 3], expected: [4, 1, 2, 3] },
+      { name: "duplicates", args: [[5, 5, 5, 5], 2], expected: [5, 5, 5, 5] }
     ],
     hints: ["Reduce `k` modulo the length.", "The answer is the suffix after `k` followed by the prefix before `k`."],
     solution: "Normalize `k` and concatenate `nums[k:] + nums[:k]`.",
@@ -463,7 +498,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "empty", args: [""], expected: "" },
-      { name: "one run", args: ["zzzz"], expected: "z4" }
+      { name: "one run", args: ["zzzz"], expected: "z4" },
+      { name: "single char", args: ["x"], expected: "x1" },
+      { name: "two equal", args: ["aa"], expected: "a2" },
+      { name: "alternating", args: ["ababab"], expected: "a1b1a1b1a1b1" },
+      { name: "long run start", args: ["aaaaabc"], expected: "a5b1c1" },
+      { name: "symbols", args: ["xxyyzz"], expected: "x2y2z2" }
     ],
     hints: ["Flush a group when the character changes.", "Remember to flush the final group after the loop."],
     solution: "Track the active character and count, append to a list when the run ends, then join.",
@@ -485,7 +525,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "both empty", args: [[], []], expected: [] },
-      { name: "duplicates inside", args: [[1, 1, 1], [1, 2, 2]], expected: [1, 2] }
+      { name: "duplicates inside", args: [[1, 1, 1], [1, 2, 2]], expected: [1, 2] },
+      { name: "disjoint ascending", args: [[1, 3, 5], [2, 4, 6]], expected: [1, 2, 3, 4, 5, 6] },
+      { name: "identical", args: [[1, 2, 3], [1, 2, 3]], expected: [1, 2, 3] },
+      { name: "a all dupes", args: [[2, 2, 2], []], expected: [2] },
+      { name: "interleave with dupes", args: [[1, 1, 4], [2, 4, 4, 5]], expected: [1, 2, 4, 5] },
+      { name: "negatives", args: [[-3, -1, 2], [-3, 0, 2]], expected: [-3, -1, 0, 2] }
     ],
     hints: ["This resembles the merge step of merge sort.", "Only append a value if it differs from the last appended value."],
     solution: "Walk both arrays with two indexes and append the smaller next value when it is not already last in the answer.",
@@ -507,7 +552,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "tie earliest", args: [[1, 1, 1]], expected: 0 },
-      { name: "falling", args: [[10, 1, 1, 1]], expected: 2 }
+      { name: "falling", args: [[10, 1, 1, 1]], expected: 2 },
+      { name: "two element", args: [[3, 7]], expected: 0 },
+      { name: "rising", args: [[1, 2, 3, 4]], expected: 0 },
+      { name: "zeros mix", args: [[0, 0, 10, 0]], expected: 3 },
+      { name: "all same", args: [[4, 4, 4, 4]], expected: 0 },
+      { name: "big jump", args: [[1, 100, 1, 1, 1]], expected: 4 }
     ],
     hints: ["Total sum gives the right side once you know the left sum.", "Integer floor division is expected."],
     solution: "Keep a prefix sum, compute both averages at each index, and preserve the earliest index for equal gaps.",
@@ -529,7 +579,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "single", args: [[9]], expected: [1] },
-      { name: "negative", args: [[-1, 2, -3]], expected: [-6, 3, -2] }
+      { name: "negative", args: [[-1, 2, -3]], expected: [-6, 3, -2] },
+      { name: "two values", args: [[3, 5]], expected: [5, 3] },
+      { name: "two zeros", args: [[0, 0, 4]], expected: [0, 0, 0] },
+      { name: "with ones", args: [[1, 1, 1, 1]], expected: [1, 1, 1, 1] },
+      { name: "ascending five", args: [[1, 2, 3, 4, 5]], expected: [120, 60, 40, 30, 24] },
+      { name: "includes negative zero mix", args: [[-2, 0, 3, -4]], expected: [0, 24, 0, 0] }
     ],
     hints: ["A left product and right product meet at each index.", "You can write left products into the answer, then multiply by a running suffix."],
     solution: "Build prefix products in the output array, then scan from right with a suffix product.",
@@ -551,7 +606,13 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "whole string", args: ["ABBA"], expected: 4 },
-      { name: "empty", args: [""], expected: 0 }
+      { name: "empty", args: [""], expected: 0 },
+      { name: "single A", args: ["A"], expected: 0 },
+      { name: "single B", args: ["B"], expected: 0 },
+      { name: "AB pair", args: ["AB"], expected: 2 },
+      { name: "BA pair", args: ["BA"], expected: 2 },
+      { name: "balanced then trail", args: ["ABABAAA"], expected: 4 },
+      { name: "nested balance", args: ["AABBAB"], expected: 6 }
     ],
     hints: ["Treat `A` as +1 and `B` as -1.", "A prefix is balanced when the running score returns to zero."],
     solution: "Scan with a running balance and update the answer each time it is zero.",
@@ -573,7 +634,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "tie smaller", args: [[1, 2, 8, 9], 10], expected: 10 },
-      { name: "negative", args: [[-5, -2, 7, 10], 3], expected: 2 }
+      { name: "negative", args: [[-5, -2, 7, 10], 3], expected: 2 },
+      { name: "two values", args: [[2, 9], 5], expected: 11 },
+      { name: "target below all", args: [[5, 6, 7, 8], 3], expected: 11 },
+      { name: "target above all", args: [[1, 2, 3], 100], expected: 5 },
+      { name: "zeros boundary", args: [[-3, 0, 0, 4], 1], expected: 1 },
+      { name: "symmetric tie", args: [[-4, -1, 1, 4], 0], expected: 0 }
     ],
     hints: ["The array is sorted, so a low plus high pointer gives direction.", "Move the left pointer to increase the sum, right pointer to decrease it."],
     solution: "Evaluate `nums[left] + nums[right]`, track closest, and move the pointer that can improve direction.",
@@ -595,7 +661,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "all removed", args: ["aabb"], expected: "" },
-      { name: "nested", args: ["azxxzy"], expected: "ay" }
+      { name: "nested", args: ["azxxzy"], expected: "ay" },
+      { name: "single char", args: ["a"], expected: "a" },
+      { name: "empty", args: [""], expected: "" },
+      { name: "triple", args: ["aaa"], expected: "a" },
+      { name: "two stack pops", args: ["abccba"], expected: "" },
+      { name: "partial leftover", args: ["aabcddc"], expected: "b" }
     ],
     hints: ["The most recent kept character is the only one that can pair with the new character.", "Use a list as a stack."],
     solution: "Push characters unless they match the stack top; in that case pop the stack top.",
@@ -617,7 +688,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "whole array", args: [[1, 2, 3], 10], expected: 6 },
-      { name: "single best", args: [[4, 8, 1], 8], expected: 8 }
+      { name: "single best", args: [[4, 8, 1], 8], expected: 8 },
+      { name: "single under", args: [[3], 5], expected: 3 },
+      { name: "exactly limit", args: [[1, 2, 3, 4], 10], expected: 10 },
+      { name: "empty", args: [[], 5], expected: 0 },
+      { name: "last is best", args: [[1, 1, 1, 9], 9], expected: 9 },
+      { name: "limit zero", args: [[1, 2, 3], 0], expected: 0 }
     ],
     hints: ["Positive numbers make the window sum monotonic as the right side expands.", "Shrink from the left while the sum is too large."],
     solution: "Use a variable window with a running sum and update the best valid sum after restoring validity.",
@@ -639,7 +715,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "all zero", args: [[0, 0, 0], 1], expected: 1 },
-      { name: "all one", args: [[1, 1, 1], 2], expected: 3 }
+      { name: "all one", args: [[1, 1, 1], 2], expected: 3 },
+      { name: "k larger than zeros", args: [[1, 0, 1, 0], 5], expected: 4 },
+      { name: "empty", args: [[], 3], expected: 0 },
+      { name: "single zero no flip", args: [[0], 0], expected: 0 },
+      { name: "trailing zeros", args: [[1, 1, 0, 0], 1], expected: 3 },
+      { name: "alternating", args: [[0, 1, 0, 1, 0], 2], expected: 4 }
     ],
     hints: ["The broken condition is having more than `k` zeroes.", "Track how many zeroes are currently inside the window."],
     solution: "Expand right, count zeroes, shrink left until zeroes <= k, and track maximum width.",
@@ -661,7 +742,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "none", args: ["road"], expected: 0 },
-      { name: "odd", args: ["level"], expected: 2 }
+      { name: "odd", args: ["level"], expected: 2 },
+      { name: "empty", args: [""], expected: 0 },
+      { name: "single char", args: ["a"], expected: 0 },
+      { name: "two same", args: ["xx"], expected: 1 },
+      { name: "two different", args: ["ab"], expected: 0 },
+      { name: "long palindrome", args: ["racecar"], expected: 3 }
     ],
     hints: ["Start one pointer at each end.", "Stop when pointers cross or the characters differ."],
     solution: "Move inward while `text[left] == text[right]` and count pairs.",
@@ -683,7 +769,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "negative", args: [[-5, -3, -1]], expected: [1, 9, 25] },
-      { name: "empty", args: [[]], expected: [] }
+      { name: "empty", args: [[]], expected: [] },
+      { name: "single negative", args: [[-7]], expected: [49] },
+      { name: "single zero", args: [[0]], expected: [0] },
+      { name: "with zero in middle", args: [[-2, 0, 2]], expected: [0, 4, 4] },
+      { name: "all zeros", args: [[0, 0, 0]], expected: [0, 0, 0] },
+      { name: "duplicates around zero", args: [[-3, -3, 1, 1]], expected: [1, 1, 9, 9] }
     ],
     hints: ["The largest square is at one of the ends.", "Fill the answer from right to left."],
     solution: "Compare absolute values at both ends, write the larger square at the end of the output, and move inward.",
@@ -705,7 +796,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "zero remainder", args: [[2, 4, 6, 8], 2], expected: true },
-      { name: "negative", args: [[-1, 1, 2, 4], 3], expected: true }
+      { name: "negative", args: [[-1, 1, 2, 4], 3], expected: true },
+      { name: "odd length", args: [[1, 2, 3], 4], expected: false },
+      { name: "empty", args: [[], 5], expected: true },
+      { name: "k=1 always pairable even", args: [[7, 11, 13, 17], 1], expected: true },
+      { name: "self-complement odd count", args: [[3, 3, 3, 6], 6], expected: false },
+      { name: "six elements pairable", args: [[1, 2, 4, 5, 7, 8], 3], expected: true }
     ],
     hints: ["A remainder `r` must pair with `k - r`.", "Remainder 0 and, for even k, k/2 need even counts."],
     solution: "Count remainders and verify complement counts, handling self-complement remainders specially.",
@@ -727,7 +823,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "first", args: [["x", "y", "y"]], expected: "x" },
-      { name: "empty", args: [[]], expected: "" }
+      { name: "empty", args: [[]], expected: "" },
+      { name: "single", args: [["only"]], expected: "only" },
+      { name: "all duplicates triple", args: [["a", "b", "a", "b", "a", "b"]], expected: "" },
+      { name: "last unique", args: [["a", "a", "b", "b", "c"]], expected: "c" },
+      { name: "case sensitive", args: [["Foo", "foo", "Foo"]], expected: "foo" },
+      { name: "longer list", args: [["dog", "cat", "dog", "fish", "cat", "owl"]], expected: "fish" }
     ],
     hints: ["Count first, decide second.", "The second pass preserves original order."],
     solution: "Build a frequency dictionary, then scan tokens and return the first with count 1.",
@@ -749,7 +850,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "all unique", args: [["ab", "cd", "ef"]], expected: [1, 1, 1] },
-      { name: "one bucket", args: [["abc", "bca", "cab"]], expected: [3] }
+      { name: "one bucket", args: [["abc", "bca", "cab"]], expected: [3] },
+      { name: "single word", args: [["hello"]], expected: [1] },
+      { name: "two singletons one pair", args: [["ab", "ba", "cd", "ef"]], expected: [1, 1, 2] },
+      { name: "empty strings", args: [["", "", ""]], expected: [3] },
+      { name: "varied lengths", args: [["a", "aa", "aaa"]], expected: [1, 1, 1] },
+      { name: "mixed sizes", args: [["listen", "silent", "enlist", "google", "gooegl", "abc"]], expected: [1, 2, 3] }
     ],
     hints: ["The exact words do not need to be returned.", "A sorted string is a stable anagram key."],
     solution: "Count words per sorted-character key and sort the resulting counts.",
@@ -771,7 +877,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "empty", args: [""], expected: 0 },
-      { name: "all distinct", args: ["abcdef"], expected: 6 }
+      { name: "all distinct", args: ["abcdef"], expected: 6 },
+      { name: "single char", args: ["z"], expected: 1 },
+      { name: "two distinct", args: ["ab"], expected: 2 },
+      { name: "repeat at edges", args: ["abba"], expected: 2 },
+      { name: "digits and letters", args: ["a1b2c3"], expected: 6 },
+      { name: "repeat far apart", args: ["abcabcbb"], expected: 3 }
     ],
     hints: ["Remember the most recent index for each character.", "Move the left boundary past the previous copy."],
     solution: "Keep a last-seen dictionary and a left boundary that never moves backward.",
@@ -793,7 +904,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "negative", args: [[3, -1, -2, 5], 2], expected: 2 },
-      { name: "none", args: [[5, 6], 1], expected: 0 }
+      { name: "none", args: [[5, 6], 1], expected: 0 },
+      { name: "empty array", args: [[], 0], expected: 0 },
+      { name: "single hit", args: [[5], 5], expected: 1 },
+      { name: "single miss", args: [[5], 3], expected: 0 },
+      { name: "all zeros target zero", args: [[0, 0, 0], 0], expected: 6 },
+      { name: "zero target nonzero array", args: [[1, -1, 1, -1], 0], expected: 4 }
     ],
     hints: ["If current prefix is `p`, a previous prefix `p - target` forms a valid subarray.", "Count how often each prefix sum has occurred."],
     solution: "Initialize prefix count `{0: 1}`, scan, and add the count of `prefix - target` before storing the current prefix.",
@@ -815,7 +931,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "duplicates", args: [[5, 5, 5], [5]], expected: 1 },
-      { name: "empty", args: [[], [1, 2]], expected: 0 }
+      { name: "empty", args: [[], [1, 2]], expected: 0 },
+      { name: "both empty", args: [[], []], expected: 0 },
+      { name: "identical", args: [[1, 2, 3], [1, 2, 3]], expected: 3 },
+      { name: "subset", args: [[1, 2], [1, 2, 3, 4]], expected: 2 },
+      { name: "no overlap with dupes", args: [[1, 1, 2, 2], [3, 3, 4, 4]], expected: 0 },
+      { name: "many duplicates overlap one", args: [[7, 7, 7, 8, 9], [9, 9, 10]], expected: 1 }
     ],
     hints: ["Distinct means duplicates do not increase the count.", "Convert both lists to sets."],
     solution: "The answer is the size of the intersection of the two id sets.",
@@ -838,7 +959,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "negative", args: [[-2, 5]], expected: 3 },
-      { name: "single", args: [[9]], expected: 9 }
+      { name: "single", args: [[9]], expected: 9 },
+      { name: "zeros only", args: [[0, 0, 0]], expected: 0 },
+      { name: "mix neg pos", args: [[-5, 3, -8, 10]], expected: 0 },
+      { name: "all negative", args: [[-1, -2, -3]], expected: -6 },
+      { name: "single zero", args: [[0]], expected: 0 },
+      { name: "large values", args: [[100, 200, 300, 400]], expected: 1000 }
     ],
     hints: ["Walk with a `curr` pointer.", "Stop when `curr` is `None`."],
     solution: "Accumulate `curr.val` while advancing `curr = curr.next`.",
@@ -861,7 +987,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "all removed", args: [[5, 5], 5], expected: [] },
-      { name: "empty", args: [[], 1], expected: [] }
+      { name: "empty", args: [[], 1], expected: [] },
+      { name: "remove head only", args: [[7, 1, 2], 7], expected: [1, 2] },
+      { name: "remove tail only", args: [[1, 2, 7], 7], expected: [1, 2] },
+      { name: "remove consecutive", args: [[3, 3, 1, 3, 3, 2, 3, 3], 3], expected: [1, 2] },
+      { name: "single match", args: [[4], 4], expected: null },
+      { name: "single nonmatch", args: [[4], 9], expected: [4] }
     ],
     hints: ["A dummy node avoids special handling when the head is removed.", "Only advance `prev` when you keep the current node."],
     solution: "Use a sentinel before the head and rewire `prev.next` around matching nodes.",
@@ -884,7 +1015,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "single", args: [[8]], expected: 8 },
-      { name: "empty", args: [[]], expected: null }
+      { name: "empty", args: [[]], expected: null },
+      { name: "two nodes", args: [[10, 20]], expected: 20 },
+      { name: "five nodes odd", args: [[1, 2, 3, 4, 5]], expected: 3 },
+      { name: "six nodes even", args: [[1, 2, 3, 4, 5, 6]], expected: 4 },
+      { name: "duplicates", args: [[7, 7, 7, 7]], expected: 7 },
+      { name: "negative values", args: [[-3, -2, -1]], expected: -2 }
     ],
     hints: ["Move one pointer one step and the other two steps.", "When the fast pointer ends, the slow pointer is in the middle."],
     solution: "Advance `slow` by one and `fast` by two until fast cannot move.",
@@ -907,7 +1043,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "duplicates", args: [[1, 1], [1]], expected: [1, 1, 1] },
-      { name: "both empty", args: [[], []], expected: [] }
+      { name: "both empty", args: [[], []], expected: [] },
+      { name: "one empty other singleton", args: [[], [5]], expected: [5] },
+      { name: "disjoint ranges", args: [[1, 2, 3], [10, 11, 12]], expected: [1, 2, 3, 10, 11, 12] },
+      { name: "interleaved equal lengths", args: [[1, 4, 7], [2, 5, 8]], expected: [1, 2, 4, 5, 7, 8] },
+      { name: "negatives mixed", args: [[-5, -1, 4], [-3, 0, 6]], expected: [-5, -3, -1, 0, 4, 6] },
+      { name: "a fully before b", args: [[1, 2], [3, 4, 5]], expected: [1, 2, 3, 4, 5] }
     ],
     hints: ["Use a tail pointer on a result list.", "Append the smaller current value and advance that list."],
     solution: "Use a dummy head, repeatedly attach the smaller node, then attach the remaining suffix.",
@@ -930,7 +1071,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "empty", args: [[]], expected: true },
-      { name: "odd", args: [[1, 2, 1]], expected: true }
+      { name: "odd", args: [[1, 2, 1]], expected: true },
+      { name: "single", args: [[7]], expected: true },
+      { name: "two-equal", args: [[4, 4]], expected: true },
+      { name: "two-different", args: [[4, 5]], expected: false },
+      { name: "even-not-palindrome", args: [[1, 2, 3, 4]], expected: false },
+      { name: "long-palindrome", args: [[1, 2, 3, 4, 5, 4, 3, 2, 1]], expected: true }
     ],
     hints: ["The simplest approach is to copy values into an array.", "Then compare from both ends."],
     solution: "Collect values while traversing the list and compare the list of values with its reverse.",
@@ -952,7 +1098,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "extra opener", args: ["((())"], expected: false },
-      { name: "plain", args: [""], expected: true }
+      { name: "plain", args: [""], expected: true },
+      { name: "only opener", args: ["("], expected: false },
+      { name: "only closer", args: [")"], expected: false },
+      { name: "mismatched types", args: ["(]"], expected: false },
+      { name: "with letters", args: ["a(b[c]d)e"], expected: true },
+      { name: "nested deep", args: ["{[()()]}"], expected: true }
     ],
     hints: ["Push opening brackets.", "A closing bracket must match the most recent opening bracket."],
     solution: "Use a stack of openers and a map from closer to required opener.",
@@ -974,7 +1125,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "equal not warmer", args: [[5, 5, 6]], expected: [2, 1, 0] },
-      { name: "empty", args: [[]], expected: [] }
+      { name: "empty", args: [[]], expected: [] },
+      { name: "single", args: [[50]], expected: [0] },
+      { name: "strictly increasing", args: [[1, 2, 3, 4]], expected: [1, 1, 1, 0] },
+      { name: "all equal", args: [[5, 5, 5, 5]], expected: [0, 0, 0, 0] },
+      { name: "dip then climb", args: [[73, 74, 75, 71, 69, 72, 76, 73]], expected: [1, 1, 4, 2, 1, 1, 0, 0] },
+      { name: "late warmer", args: [[60, 60, 60, 61]], expected: [3, 2, 1, 0] }
     ],
     hints: ["Keep indexes whose answer is not known yet.", "A warmer current day resolves colder previous days."],
     solution: "Maintain a decreasing stack of indexes; pop while current temp is greater and fill distances.",
@@ -996,7 +1152,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "empty", args: [[]], expected: "/" },
-      { name: "all removed", args: [["a", ".."]], expected: "/" }
+      { name: "all removed", args: [["a", ".."]], expected: "/" },
+      { name: "only dots", args: [[".", ".", "."]], expected: "/" },
+      { name: "only up", args: [["..", ".."]], expected: "/" },
+      { name: "nested then up twice", args: [["a", "b", "c", "..", ".."]], expected: "/a" },
+      { name: "dot mixed with up", args: [["a", ".", "b", "..", "c", "."]], expected: "/a/c" },
+      { name: "single name", args: [["home"]], expected: "/home" }
     ],
     hints: ["Folder names push onto a stack.", "`..` pops only if a folder exists."],
     solution: "Simulate the path with a stack, ignore `.`, pop for `..`, and join with slashes.",
@@ -1018,7 +1179,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "empty", args: [[], 10], expected: [] },
-      { name: "wide", args: [[1, 2, 3], 100], expected: [1, 2, 3] }
+      { name: "wide", args: [[1, 2, 3], 100], expected: [1, 2, 3] },
+      { name: "single event", args: [[5], 3], expected: [1] },
+      { name: "all same timestamp", args: [[4, 4, 4, 4], 2], expected: [1, 2, 3, 4] },
+      { name: "window one", args: [[1, 2, 3, 5, 6], 1], expected: [1, 2, 2, 1, 2] },
+      { name: "gap larger than window", args: [[1, 10, 20], 3], expected: [1, 1, 1] },
+      { name: "large window", args: [[2, 4, 6, 8, 10], 1000], expected: [1, 2, 3, 4, 5] }
     ],
     hints: ["A queue stores only timestamps still in range.", "Remove timestamps less than `current - window`."],
     solution: "Append each event and pop from the left while it is too old; record the queue length.",
@@ -1040,7 +1206,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "decreasing", args: [[3, 2, 1]], expected: [-1, -1, -1] },
-      { name: "duplicates", args: [[2, 2, 3]], expected: [3, 3, -1] }
+      { name: "duplicates", args: [[2, 2, 3]], expected: [3, 3, -1] },
+      { name: "single", args: [[5]], expected: [-1] },
+      { name: "two ascending", args: [[1, 9]], expected: [9, -1] },
+      { name: "two descending", args: [[9, 1]], expected: [-1, -1] },
+      { name: "all equal", args: [[3, 3, 3]], expected: [-1, -1, -1] },
+      { name: "zig-zag", args: [[1, 3, 2, 4, 1, 5]], expected: [3, 4, 4, 5, 5, -1] }
     ],
     hints: ["Store indexes waiting for a greater value.", "The current number resolves smaller stack values."],
     solution: "Use a decreasing stack of indexes and fill answers when a greater current value appears.",
@@ -1063,7 +1234,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "single", args: [[1]], expected: 1 },
-      { name: "chain", args: [[1, 2, null, 3]], expected: 3 }
+      { name: "chain", args: [[1, 2, null, 3]], expected: 3 },
+      { name: "only-left-chain", args: [[1, 2, null, 3, null, 4]], expected: 4 },
+      { name: "only-right-chain", args: [[1, null, 2, null, 3]], expected: 3 },
+      { name: "perfect-3-levels", args: [[1, 2, 3, 4, 5, 6, 7]], expected: 3 },
+      { name: "lopsided", args: [[1, 2, 3, 4, null, null, null, 5]], expected: 4 },
+      { name: "two-nodes", args: [[1, 2]], expected: 2 }
     ],
     hints: ["Depth is one plus the deeper child depth.", "The base case for `None` is 0."],
     solution: "Return `0` for no node, otherwise `1 + max(depth(left), depth(right))`.",
@@ -1086,7 +1262,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "single", args: [[7]], expected: [7] },
-      { name: "negative", args: [[1, -2, 3]], expected: [1, 1] }
+      { name: "negative", args: [[1, -2, 3]], expected: [1, 1] },
+      { name: "only-left", args: [[1, 2, null, 3]], expected: [1, 2, 3] },
+      { name: "only-right", args: [[1, null, 2, null, 3]], expected: [1, 2, 3] },
+      { name: "balanced-3-levels", args: [[1, 2, 3, 4, 5, 6, 7]], expected: [1, 5, 22] },
+      { name: "zeros-and-negatives", args: [[0, -1, -2, 3, 4]], expected: [0, -3, 7] },
+      { name: "lopsided", args: [[5, 4, 8, null, null, 6, 7]], expected: [5, 12, 13] }
     ],
     hints: ["Process the queue one level at a time.", "The current queue length tells you how many nodes are in the level."],
     solution: "Use BFS, sum each level, and enqueue children for the next level.",
@@ -1109,7 +1290,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "empty", args: [[], 0], expected: false },
-      { name: "single", args: [[1], 1], expected: true }
+      { name: "single", args: [[1], 1], expected: true },
+      { name: "single-mismatch", args: [[5], 4], expected: false },
+      { name: "single-match", args: [[3], 3], expected: true },
+      { name: "only-left-path", args: [[1, 2, null, 3], 6], expected: true },
+      { name: "internal-node-sum", args: [[1, 2, 3], 3], expected: true },
+      { name: "negative-values", args: [[1, -2, -3, 1, 3, -2], -1], expected: false }
     ],
     hints: ["Subtract the current value as you descend.", "Only accept at a leaf."],
     solution: "DFS with remaining sum; a leaf is valid when `remaining == node.val`.",
@@ -1132,7 +1318,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "one", args: [[[1, 1], [1, 1]]], expected: 1 },
-      { name: "empty", args: [[]], expected: 0 }
+      { name: "empty", args: [[]], expected: 0 },
+      { name: "single-cell-land", args: [[[1]]], expected: 1 },
+      { name: "single-cell-water", args: [[[0]]], expected: 0 },
+      { name: "diagonal-not-connected", args: [[[1, 0], [0, 1]]], expected: 2 },
+      { name: "L-shape", args: [[[1, 0, 0], [1, 1, 0], [0, 1, 0]]], expected: 1 },
+      { name: "checkerboard", args: [[[1, 0, 1], [0, 1, 0], [1, 0, 1]]], expected: 5 }
     ],
     hints: ["When you find unvisited land, that starts one island.", "DFS or BFS should mark the whole island visited."],
     solution: "Scan cells, launch a flood fill from each unvisited land cell, and count launches.",
@@ -1155,7 +1346,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "same", args: [3, [], 1, 1], expected: 0 },
-      { name: "direct", args: [2, [[0, 1]], 1, 0], expected: 1 }
+      { name: "direct", args: [2, [[0, 1]], 1, 0], expected: 1 },
+      { name: "single-node", args: [1, [], 0, 0], expected: 0 },
+      { name: "two-disconnected", args: [4, [[0, 1], [2, 3]], 0, 3], expected: -1 },
+      { name: "triangle", args: [3, [[0, 1], [1, 2], [0, 2]], 0, 2], expected: 1 },
+      { name: "cycle-prefer-short", args: [5, [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0]], 0, 3], expected: 2 },
+      { name: "chain", args: [5, [[0, 1], [1, 2], [2, 3], [3, 4]], 0, 4], expected: 4 }
     ],
     hints: ["BFS explores by distance in an unweighted graph.", "Store distance with the node or track levels."],
     solution: "Build an adjacency list and BFS from start until goal is found.",
@@ -1178,7 +1374,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "none", args: [4, []], expected: true },
-      { name: "diamond", args: [4, [[1, 0], [2, 0], [3, 1], [3, 2]]], expected: true }
+      { name: "diamond", args: [4, [[1, 0], [2, 0], [3, 1], [3, 2]]], expected: true },
+      { name: "single-course-no-prereq", args: [1, []], expected: true },
+      { name: "self-loop", args: [2, [[0, 0]]], expected: false },
+      { name: "chain", args: [4, [[1, 0], [2, 1], [3, 2]]], expected: true },
+      { name: "cycle-among-three", args: [3, [[0, 1], [1, 2], [2, 0]]], expected: false },
+      { name: "two-independent-chains", args: [4, [[1, 0], [3, 2]]], expected: true }
     ],
     hints: ["A cycle blocks completion.", "Kahn's algorithm removes nodes with indegree zero."],
     solution: "Build indegrees and adjacency, process zero-indegree courses, and verify all courses are processed.",
@@ -1201,7 +1402,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "one", args: [4, [[0, 1], [1, 2], [2, 3]]], expected: 1 },
-      { name: "empty graph", args: [0, []], expected: 0 }
+      { name: "empty graph", args: [0, []], expected: 0 },
+      { name: "single-node", args: [1, []], expected: 1 },
+      { name: "two-with-edge", args: [2, [[0, 1]]], expected: 1 },
+      { name: "triangle-and-isolated", args: [4, [[0, 1], [1, 2], [0, 2]]], expected: 2 },
+      { name: "two-pairs", args: [4, [[0, 1], [2, 3]]], expected: 2 },
+      { name: "self-loop-only", args: [3, [[0, 0]]], expected: 3 }
     ],
     hints: ["Each DFS/BFS launch from an unvisited node finds one component.", "Remember isolated nodes."],
     solution: "Build adjacency, scan all nodes, and count traversals that start from unvisited nodes.",
@@ -1224,7 +1430,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "duplicates", args: [[5, 5, 2], 2], expected: [5, 5] },
-      { name: "empty", args: [[], 3], expected: [] }
+      { name: "empty", args: [[], 3], expected: [] },
+      { name: "k zero", args: [[3, 1, 4], 0], expected: [] },
+      { name: "k one", args: [[8, 2, 5, 1], 1], expected: [8] },
+      { name: "all duplicates", args: [[7, 7, 7, 7], 3], expected: [7, 7, 7] },
+      { name: "k equals length", args: [[2, 4, 1, 3], 4], expected: [4, 3, 2, 1] },
+      { name: "negatives", args: [[-1, -5, -3, -2], 2], expected: [-1, -2] }
     ],
     hints: ["Python has `heapq.nlargest`.", "A size-k min heap also works."],
     solution: "Use a heap selection routine or keep a min heap of the best k values, then sort descending.",
@@ -1247,7 +1458,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "none", args: [[]], expected: [] },
-      { name: "duplicates", args: [[[1, 1], [1]]], expected: [1, 1, 1] }
+      { name: "duplicates", args: [[[1, 1], [1]]], expected: [1, 1, 1] },
+      { name: "single batch", args: [[[5, 7, 9]]], expected: [5, 7, 9] },
+      { name: "all empty", args: [[[], [], []]], expected: [] },
+      { name: "interleaved tail", args: [[[1, 5, 9], [2, 3, 4], [6, 7, 8]]], expected: [1, 2, 3, 4, 5, 6, 7, 8, 9] },
+      { name: "negative values", args: [[[-5, -1], [-3, 0, 2]]], expected: [-5, -3, -1, 0, 2] },
+      { name: "varied lengths", args: [[[1], [2, 3, 4, 5], [0]]], expected: [0, 1, 2, 3, 4, 5] }
     ],
     hints: ["The heap should hold the next candidate from each batch.", "When you pop a value, push the next value from the same batch."],
     solution: "Initialize a heap with the first value from each nonempty batch and perform a k-way merge.",
@@ -1270,7 +1486,11 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "tie", args: [[[1, 0], [0, 1], [2, 0]], 2], expected: [[0, 1], [1, 0]] },
-      { name: "all", args: [[[-1, -1]], 5], expected: [[-1, -1]] }
+      { name: "all", args: [[[-1, -1]], 5], expected: [[-1, -1]] },
+      { name: "origin included", args: [[[0, 0], [1, 1], [2, 2]], 1], expected: [[0, 0]] },
+      { name: "tiebreak by x", args: [[[1, 2], [2, 1], [-1, -2]], 2], expected: [[-1, -2], [1, 2]] },
+      { name: "k equals length", args: [[[3, 4], [1, 1], [2, 2]], 3], expected: [[1, 1], [2, 2], [3, 4]] },
+      { name: "negatives mix", args: [[[-2, 0], [0, 2], [1, 1]], 2], expected: [[1, 1], [-2, 0]] }
     ],
     hints: ["Squared distance avoids square roots.", "Sort output deterministically even if you use a heap internally."],
     solution: "Select by `(x*x + y*y, x, y)` and return the first k points in that order.",
@@ -1293,7 +1513,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "duplicates", args: [[1, 1, 1]], expected: [1, 1, 1] },
-      { name: "negative", args: [[-1, -2, -3]], expected: [-1, -1.5, -2] }
+      { name: "negative", args: [[-1, -2, -3]], expected: [-1, -1.5, -2] },
+      { name: "ascending", args: [[1, 2, 3, 4, 5]], expected: [1, 1.5, 2, 2.5, 3] },
+      { name: "descending", args: [[5, 4, 3, 2, 1]], expected: [5, 4.5, 4, 3.5, 3] },
+      { name: "zigzag", args: [[10, 0, 5, 5]], expected: [10, 5.0, 5, 5.0] },
+      { name: "with zero", args: [[0, 0, 0, 0]], expected: [0, 0.0, 0, 0.0] },
+      { name: "mixed signs", args: [[-5, 5, -3, 3]], expected: [-5, 0.0, -3, 0.0] }
     ],
     hints: ["Use a max heap for the lower half and a min heap for the upper half.", "Keep heap sizes balanced by at most one."],
     solution: "Maintain two heaps, rebalance after each insertion, and read the median from heap tops.",
@@ -1316,7 +1541,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "impossible", args: [[1], 10], expected: -1 },
-      { name: "empty", args: [[], 1], expected: -1 }
+      { name: "empty", args: [[], 1], expected: -1 },
+      { name: "already meets", args: [[5, 5, 5], 3], expected: 0 },
+      { name: "one combine", args: [[1, 5], 5], expected: 1 },
+      { name: "two equal small", args: [[2, 2, 2, 2], 6], expected: 2 },
+      { name: "target zero", args: [[0, 0, 0], 0], expected: 0 },
+      { name: "large gap", args: [[1, 1, 1, 1], 10], expected: -1 }
     ],
     hints: ["The next combine should always use the two smallest values.", "A min heap makes the repeated minimum operation efficient."],
     solution: "Heapify values, pop two smallest while the minimum is below target, push the combined value, and count operations.",
@@ -1334,11 +1564,17 @@ const problemSeeds: ProblemSeed[] = [
     prompt: "Given intervals `[start, end]`, return the maximum number of non-overlapping meetings. A meeting ending at time `t` is compatible with one starting at `t`.",
     visibleTests: [
       { name: "choose three", args: [[[1, 3], [2, 4], [3, 5], [5, 6]]], expected: 3 },
-      { name: "empty", args: [[]], expected: 0 }
+      { name: "empty", args: [[]], expected: 0 },
+      { name: "single interval", args: [[[1, 5]]], expected: 1 }
     ],
     hiddenTests: [
       { name: "nested", args: [[[1, 10], [2, 3], [3, 4]]], expected: 2 },
-      { name: "same end", args: [[[1, 2], [0, 2], [2, 3]]], expected: 2 }
+      { name: "same end", args: [[[1, 2], [0, 2], [2, 3]]], expected: 2 },
+      { name: "all overlap heavily", args: [[[1, 5], [2, 6], [3, 7]]], expected: 1 },
+      { name: "touching ends chain", args: [[[1, 2], [2, 3], [3, 4], [4, 5]]], expected: 4 },
+      { name: "long meeting blocks short ones", args: [[[0, 100], [1, 2], [3, 4], [5, 6]]], expected: 3 },
+      { name: "duplicate intervals", args: [[[1, 3], [1, 3], [1, 3]]], expected: 1 },
+      { name: "reverse-sorted input", args: [[[10, 11], [8, 10], [5, 8], [1, 5]]], expected: 4 }
     ],
     hints: ["The meeting that ends earliest leaves the most room.", "Sort by end time."],
     solution: "Sort intervals by end time and greedily take each interval whose start is at least the last selected end.",
@@ -1360,7 +1596,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "all", args: [[1, 2], [2, 3]], expected: 2 },
-      { name: "empty", args: [[], [1]], expected: 0 }
+      { name: "empty", args: [[], [1]], expected: 0 },
+      { name: "empty snacks", args: [[1, 2], []], expected: 0 },
+      { name: "more snacks than kids", args: [[2], [1, 3, 5]], expected: 1 },
+      { name: "exact match", args: [[3, 3, 3], [3, 3, 3]], expected: 3 },
+      { name: "all too small", args: [[10, 20], [1, 2, 3]], expected: 0 },
+      { name: "duplicates", args: [[1, 1, 2], [1, 2, 2]], expected: 3 }
     ],
     hints: ["Sort both lists.", "Give the smallest usable snack to the least hungry remaining child."],
     solution: "Sort appetites and snacks, then greedily match with two pointers.",
@@ -1382,7 +1623,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "duplicate best", args: ["1993"], expected: "9913" },
-      { name: "single", args: ["5"], expected: "5" }
+      { name: "single", args: ["5"], expected: "5" },
+      { name: "zeros tail", args: ["1200"], expected: "2100" },
+      { name: "swap last two", args: ["98368"], expected: "98863" },
+      { name: "ascending", args: ["1234"], expected: "4231" },
+      { name: "descending sorted", args: ["54321"], expected: "54321" },
+      { name: "repeated nines", args: ["9999"], expected: "9999" }
     ],
     hints: ["A better digit should move as far left as possible.", "When multiple equal best digits exist, swap with the rightmost one."],
     solution: "Record last positions of digits, then scan left to right looking for a larger digit available to the right.",
@@ -1404,7 +1650,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "single", args: [[0]], expected: true },
-      { name: "exact", args: [[1, 1, 0]], expected: true }
+      { name: "exact", args: [[1, 1, 0]], expected: true },
+      { name: "zero start no reach", args: [[0, 1, 2]], expected: false },
+      { name: "first stalls early", args: [[3, 2, 1, 0, 4]], expected: false },
+      { name: "big first jump", args: [[5, 0, 0, 0, 0, 0]], expected: true },
+      { name: "two element zero", args: [[0, 0]], expected: false },
+      { name: "barely makes it", args: [[2, 0, 0]], expected: true }
     ],
     hints: ["Track the farthest reachable index.", "If the current index is beyond that, you are stuck."],
     solution: "Scan while maintaining `farthest = max(farthest, i + jumps[i])`.",
@@ -1426,7 +1677,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "all separate", args: ["abc"], expected: [1, 1, 1] },
-      { name: "empty", args: [""], expected: [] }
+      { name: "empty", args: [""], expected: [] },
+      { name: "single char", args: ["a"], expected: [1] },
+      { name: "two parts uneven", args: ["ababcdcd"], expected: [4, 4] },
+      { name: "interleaved", args: ["abcabc"], expected: [6] },
+      { name: "nested envelope", args: ["abccba"], expected: [6] },
+      { name: "classic leetcode", args: ["ababcbacadefegdehijhklij"], expected: [9, 7, 8] }
     ],
     hints: ["A part must extend to the last occurrence of every character inside it.", "Close a part when the current index reaches the farthest required end."],
     solution: "Precompute last positions, scan while extending current end, and close partitions at the end boundary.",
@@ -1448,7 +1704,13 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "start", args: [[2, 4], 1], expected: 0 },
-      { name: "empty", args: [[], 9], expected: 0 }
+      { name: "empty", args: [[], 9], expected: 0 },
+      { name: "present once", args: [[1, 2, 3, 4, 5], 3], expected: 2 },
+      { name: "all equal target", args: [[2, 2, 2], 2], expected: 0 },
+      { name: "between values", args: [[1, 4, 7], 5], expected: 2 },
+      { name: "single match", args: [[7], 7], expected: 0 },
+      { name: "single below", args: [[7], 8], expected: 1 },
+      { name: "negatives", args: [[-5, -3, -1, 1], -2], expected: 2 }
     ],
     hints: ["Search for the first index whose value is at least target.", "Use a half-open range `[left, right)`."],
     solution: "Maintain `[left, right)` and move right to mid when `nums[mid] >= target`, else move left past mid.",
@@ -1470,7 +1732,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "adjacent needed", args: [[1, 10, 3, 10, 2], 1, 3], expected: 10 },
-      { name: "single", args: [[5], 1, 1], expected: 5 }
+      { name: "single", args: [[5], 1, 1], expected: 5 },
+      { name: "size two adjacent", args: [[1, 2, 1, 2], 2, 2], expected: 2 },
+      { name: "all same day", args: [[3, 3, 3, 3], 2, 2], expected: 3 },
+      { name: "must wait for slowest", args: [[7, 7, 7, 13, 11, 12, 7], 2, 3], expected: 12 },
+      { name: "not enough flowers", args: [[1, 1, 1], 2, 2], expected: -1 },
+      { name: "size one many bouquets", args: [[1, 5, 3, 7, 2], 4, 1], expected: 5 }
     ],
     hints: ["The predicate is: can we make enough bouquets by day d?", "That predicate changes from false to true once."],
     solution: "Binary search the day range and count adjacent bloomed groups in the feasibility check.",
@@ -1492,7 +1759,13 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "zero", args: [0], expected: 0 },
-      { name: "one", args: [1], expected: 1 }
+      { name: "one", args: [1], expected: 1 },
+      { name: "two", args: [2], expected: 1 },
+      { name: "three", args: [3], expected: 1 },
+      { name: "four", args: [4], expected: 2 },
+      { name: "hundred", args: [100], expected: 10 },
+      { name: "just under perfect", args: [99], expected: 9 },
+      { name: "large", args: [1000000], expected: 1000 }
     ],
     hints: ["Search the answer, not an array.", "Avoid floating point."],
     solution: "Binary search integers from 0 to n and keep the largest square that does not exceed n.",
@@ -1514,7 +1787,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "not rotated", args: [[1, 2, 3], 1], expected: 0 },
-      { name: "single", args: [[7], 7], expected: 0 }
+      { name: "single", args: [[7], 7], expected: 0 },
+      { name: "pivot at front", args: [[2, 3, 4, 5, 1], 1], expected: 4 },
+      { name: "found at pivot", args: [[6, 7, 0, 1, 2], 0], expected: 2 },
+      { name: "two elements rotated", args: [[3, 1], 3], expected: 0 },
+      { name: "target larger than all", args: [[5, 6, 7, 1, 2], 9], expected: -1 },
+      { name: "rotated middle search left", args: [[4, 5, 6, 7, 0, 1, 2], 5], expected: 1 }
     ],
     hints: ["At least one half around mid is sorted.", "Decide whether target lies inside the sorted half."],
     solution: "Binary search while identifying the sorted half and discarding the half that cannot contain target.",
@@ -1536,7 +1814,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "many days", args: [[5, 1, 1], 5], expected: 5 },
-      { name: "single", args: [[9], 2], expected: 9 }
+      { name: "single", args: [[9], 2], expected: 9 },
+      { name: "equal weights", args: [[3, 3, 3, 3], 2], expected: 6 },
+      { name: "one big one small", args: [[10, 1], 2], expected: 10 },
+      { name: "two days exact", args: [[1, 2, 3, 1, 1], 2], expected: 5 },
+      { name: "days equals packages", args: [[4, 4, 4, 4], 4], expected: 4 },
+      { name: "many small one big", args: [[1, 1, 1, 1, 5], 3], expected: 5 }
     ],
     hints: ["Capacity must be at least max weight and at most total weight.", "Given a capacity, greedily count needed days."],
     solution: "Binary search capacity and use a linear feasibility check that starts a new day when the current package would overflow.",
@@ -1558,7 +1841,11 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "one", args: [[5]], expected: [[], [5]] },
-      { name: "three count shape", args: [[1, 2, 3]], expected: [[], [1], [1, 2], [1, 2, 3], [1, 3], [2], [2, 3], [3]] }
+      { name: "three count shape", args: [[1, 2, 3]], expected: [[], [1], [1, 2], [1, 2, 3], [1, 3], [2], [2, 3], [3]] },
+      { name: "two reversed", args: [[3, 1]], expected: [[], [1], [1, 3], [3]] },
+      { name: "includes negative", args: [[-1, 0, 1]], expected: [[], [-1], [-1, 0], [-1, 0, 1], [-1, 1], [0], [0, 1], [1]] },
+      { name: "single negative", args: [[-5]], expected: [[], [-5]] },
+      { name: "three out of order", args: [[5, 3, 1]], expected: [[], [1], [1, 3], [1, 3, 5], [1, 5], [3], [3, 5], [5]] }
     ],
     hints: ["At each recursive call, append the current subset to the answer.", "Loop choices from `start` to the end."],
     solution: "Sort nums, run DFS(start), append a copy of path, choose each later number, recurse, and pop.",
@@ -1580,7 +1867,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "duplicates only", args: ["AA"], expected: 2 },
-      { name: "empty", args: [""], expected: 0 }
+      { name: "empty", args: [""], expected: 0 },
+      { name: "three distinct", args: ["ABC"], expected: 15 },
+      { name: "all same triple", args: ["AAA"], expected: 3 },
+      { name: "mixed dup", args: ["AABB"], expected: 18 },
+      { name: "two distinct", args: ["AB"], expected: 4 },
+      { name: "trio with dup", args: ["AAB"], expected: 8 }
     ],
     hints: ["Count available letters instead of permuting indexes.", "Every time you place a letter, that creates one non-empty sequence."],
     solution: "DFS over letters with positive counts; decrement, count the sequence, recurse, and restore.",
@@ -1602,7 +1894,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "none", args: [[4, 5], 3], expected: [] },
-      { name: "exact", args: [[1, 2, 2], 4], expected: [[2, 2]] }
+      { name: "exact", args: [[1, 2, 2], 4], expected: [[2, 2]] },
+      { name: "empty list", args: [[], 5], expected: [] },
+      { name: "zero target", args: [[1, 2, 3], 0], expected: [[]] },
+      { name: "multiple dup pairs", args: [[1, 1, 1, 2], 3], expected: [[1, 1, 1], [1, 2]] },
+      { name: "single exact", args: [[5], 5], expected: [[5]] },
+      { name: "all dups one combo", args: [[3, 3, 3, 3], 6], expected: [[3, 3]] }
     ],
     hints: ["Sort first.", "Skip equal values at the same recursion depth."],
     solution: "Sort nums, DFS with a start index and remaining target, skip duplicates, and stop when remaining is zero.",
@@ -1624,7 +1921,9 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "zero", args: [0], expected: [""] },
-      { name: "three", args: [3], expected: ["((()))", "(()())", "(())()", "()(())", "()()()"] }
+      { name: "three", args: [3], expected: ["((()))", "(()())", "(())()", "()(())", "()()()"] },
+      { name: "four", args: [4], expected: ["(((())))", "((()()))", "((())())", "((()))()", "(()(()))", "(()()())", "(()())()", "(())(())", "(())()()", "()((()))", "()(()())", "()(())()", "()()(())", "()()()()"] },
+      { name: "five count", args: [5], expected: ["((((()))))", "(((()())))", "(((())()))", "(((()))())", "(((())))()", "((()(())))", "((()()()))", "((()())())", "((()()))()", "((())(()))", "((())()())", "((())())()", "((()))(())", "((()))()()", "(()((())))", "(()(()()))", "(()(())())", "(()(()))()", "(()()(()))", "(()()()())", "(()()())()", "(()())(())", "(()())()()", "(())((()))", "(())(()())", "(())(())()", "(())()(())", "(())()()()", "()(((())))", "()((()()))", "()((())())", "()((()))()", "()(()(()))", "()(()()())", "()(()())()", "()(())(())", "()(())()()", "()()((()))", "()()(()())", "()()(())()", "()()()(())", "()()()()()"] }
     ],
     hints: ["You may add `(` while open count is below n.", "You may add `)` only while it would not exceed opens."],
     solution: "Backtrack with counts of open and closed parentheses and append completed length `2n` strings.",
@@ -1647,7 +1946,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "single", args: [[["Z"]], "Z"], expected: true },
-      { name: "missing", args: [[["A"]], "B"], expected: false }
+      { name: "missing", args: [[["A"]], "B"], expected: false },
+      { name: "snake path", args: [[["A", "B", "C"], ["F", "E", "D"]], "ABCDE"], expected: true },
+      { name: "longer than board", args: [[["A", "B"]], "ABBA"], expected: false },
+      { name: "starts elsewhere", args: [[["X", "A"], ["B", "C"]], "ABC"], expected: false },
+      { name: "vertical word", args: [[["A"], ["B"], ["C"]], "ABC"], expected: true },
+      { name: "reuse needed fails", args: [[["A", "B"], ["C", "D"]], "ABDCA"], expected: false }
     ],
     hints: ["Try starting from every matching first character.", "Mark a cell visited before exploring neighbors and unmark it when returning."],
     solution: "Run DFS from each cell with index into the word, temporarily marking cells as used along the active path.",
@@ -1669,7 +1973,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "zero", args: [0, [1, 2]], expected: 1 },
-      { name: "unreachable", args: [1, [2]], expected: 0 }
+      { name: "unreachable", args: [1, [2]], expected: 0 },
+      { name: "single-step n5", args: [5, [1]], expected: 1 },
+      { name: "two-and-three n5", args: [5, [2, 3]], expected: 2 },
+      { name: "three-and-five n8", args: [8, [3, 5]], expected: 2 },
+      { name: "n6 mixed", args: [6, [1, 3]], expected: 6 },
+      { name: "blocks larger than n", args: [3, [4, 5]], expected: 0 }
     ],
     hints: ["Let `dp[i]` be ways to reach i.", "Each previous stair `i - block` contributes if non-negative."],
     solution: "Initialize `dp[0] = 1` and for every stair sum `dp[i - block]` for valid blocks.",
@@ -1691,7 +2000,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "empty", args: [[]], expected: 0 },
-      { name: "one", args: [[7]], expected: 0 }
+      { name: "one", args: [[7]], expected: 0 },
+      { name: "two equal", args: [[5, 5]], expected: 5 },
+      { name: "five step", args: [[1, 2, 3, 4, 5]], expected: 6 },
+      { name: "zeros", args: [[0, 0, 0, 0]], expected: 0 },
+      { name: "big then small", args: [[10, 1, 1, 10]], expected: 2 },
+      { name: "alternating", args: [[1, 100, 1, 100, 1]], expected: 3 }
     ],
     hints: ["The top is one position after the last index.", "Cost is paid when you stand on a step."],
     solution: "Use DP where reaching step i costs the min of previous one or two states plus the previous step cost.",
@@ -1713,7 +2027,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "empty", args: [[]], expected: 0 },
-      { name: "single", args: [[8]], expected: 8 }
+      { name: "single", args: [[8]], expected: 8 },
+      { name: "two adj", args: [[5, 1]], expected: 5 },
+      { name: "five spaced", args: [[3, 2, 5, 10, 7]], expected: 15 },
+      { name: "zeroes", args: [[0, 0, 0, 0]], expected: 0 },
+      { name: "mixed signs", args: [[-1, 5, -1, 5, -1]], expected: 10 },
+      { name: "all equal", args: [[4, 4, 4, 4, 4]], expected: 12 }
     ],
     hints: ["At each index, choose it or skip it.", "Keep best through previous and through two previous."],
     solution: "Update `take = prev2 + num` and `skip = prev1`, then keep the maximum.",
@@ -1735,7 +2054,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "zero", args: [[1], 0], expected: 0 },
-      { name: "exact", args: [[7, 3], 6], expected: 2 }
+      { name: "exact", args: [[7, 3], 6], expected: 2 },
+      { name: "amount one impossible", args: [[2, 4], 1], expected: -1 },
+      { name: "large denoms only", args: [[5, 10, 25], 30], expected: 2 },
+      { name: "single coin used many", args: [[1], 7], expected: 7 },
+      { name: "coin equals amount", args: [[3, 5], 5], expected: 1 },
+      { name: "mixed easy", args: [[1, 3, 4], 6], expected: 2 }
     ],
     hints: ["Let `dp[x]` be the fewest coins for amount x.", "Initialize unreachable states to a large sentinel."],
     solution: "For each amount from 1 to target, try every coin and take `1 + dp[amount - coin]` when valid.",
@@ -1757,7 +2081,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "empty", args: [[]], expected: 0 },
-      { name: "duplicates", args: [[2, 2, 2]], expected: 1 }
+      { name: "duplicates", args: [[2, 2, 2]], expected: 1 },
+      { name: "single", args: [[7]], expected: 1 },
+      { name: "strict increase", args: [[1, 2, 3, 4]], expected: 4 },
+      { name: "plateau then climb", args: [[1, 1, 2, 2, 3, 3]], expected: 3 },
+      { name: "zigzag", args: [[3, 1, 4, 1, 5, 9, 2, 6]], expected: 4 },
+      { name: "two equal", args: [[5, 5]], expected: 1 }
     ],
     hints: ["The O(n^2) DP is acceptable, but a tails array is faster.", "For strict increase, replace the first tail >= current number."],
     solution: "Maintain `tails[length-1]` as the smallest possible tail for an increasing subsequence of that length.",
@@ -1780,7 +2109,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "single open", args: [[[0]]], expected: 1 },
-      { name: "empty", args: [[]], expected: 0 }
+      { name: "empty", args: [[]], expected: 0 },
+      { name: "blocked end", args: [[[0, 0], [0, 1]]], expected: 0 },
+      { name: "single row open", args: [[[0, 0, 0, 0]]], expected: 1 },
+      { name: "single col open", args: [[[0], [0], [0]]], expected: 1 },
+      { name: "middle wall", args: [[[0, 0, 0], [1, 1, 0], [0, 0, 0]]], expected: 1 },
+      { name: "fully blocked column", args: [[[0, 1, 0], [0, 1, 0], [0, 0, 0]]], expected: 1 }
     ],
     hints: ["A blocked cell contributes zero paths.", "An open cell receives paths from above and left."],
     solution: "Fill a DP grid or one-dimensional row accumulator while respecting blocked cells.",
@@ -1802,7 +2136,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "constant", args: [[50, 52, 49]], expected: "constant" },
-      { name: "unknown", args: [[10, 100, 105]], expected: "unknown" }
+      { name: "unknown", args: [[10, 100, 105]], expected: "unknown" },
+      { name: "near 2 again", args: [[20, 41, 78]], expected: "linear" },
+      { name: "ratio 3 ambiguous", args: [[10, 30, 90]], expected: "unknown" },
+      { name: "zero early", args: [[0, 50, 200]], expected: "unknown" },
+      { name: "single value", args: [[42]], expected: "unknown" },
+      { name: "near 4 again", args: [[5, 21, 80]], expected: "quadratic" }
     ],
     hints: ["Look at ratios between consecutive measurements.", "Use broad ranges, not exact equality."],
     solution: "Average consecutive ratios and map approximately 1 to constant, 2 to linear, and 4 to quadratic.",
@@ -1824,7 +2163,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "dp", args: [["minimum", "subproblem", "reuse"]], expected: "dp" },
-      { name: "hash", args: [["frequency", "lookup"]], expected: "hashing" }
+      { name: "hash", args: [["frequency", "lookup"]], expected: "hashing" },
+      { name: "binary search", args: [["sorted", "boundary"]], expected: "binary-search" },
+      { name: "graph wins over dp", args: [["nodes", "minimum"]], expected: "graph" },
+      { name: "dp over binary", args: [["subproblem", "sorted"]], expected: "dp" },
+      { name: "plain hashing", args: [["lookup"]], expected: "hashing" },
+      { name: "window via at most", args: [["at most", "contiguous"]], expected: "sliding-window" }
     ],
     hints: ["Normalize feature words to lowercase.", "Priority matters when multiple signals appear."],
     solution: "Check for keyword families in the stated priority order and return the first matching pattern.",
@@ -1846,7 +2190,12 @@ const problemSeeds: ProblemSeed[] = [
     ],
     hiddenTests: [
       { name: "empty", args: [[]], expected: 0 },
-      { name: "all", args: [[[3, true], [3, true]]], expected: 6 }
+      { name: "all", args: [[[3, true], [3, true]]], expected: 6 },
+      { name: "difficulty one passed", args: [[[1, true]]], expected: 1 },
+      { name: "mixed difficulties", args: [[[1, true], [2, false], [3, true], [2, true]]], expected: 6 },
+      { name: "all false", args: [[[1, false], [2, false], [3, false]]], expected: 0 },
+      { name: "only twos pass", args: [[[2, true], [2, true], [2, true]]], expected: 6 },
+      { name: "single fail high", args: [[[3, false]]], expected: 0 }
     ],
     hints: ["Ignore failed rows.", "The first tuple value is the weight."],
     solution: "Scan results and sum `difficulty` whenever `passed` is true.",
