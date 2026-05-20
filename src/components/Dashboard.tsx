@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { course, contentStats, findProblem } from "../content/course";
 import { ASSESSMENT_SET_ID, assessments } from "../content/assessments";
 import { scorecardKey } from "../content/assessments/seeding";
+import { LIBRARY_SET_IDS } from "../content/libraries";
 import { useStore } from "../hooks/courseStoreContext";
 import { itemKey } from "../storage/db";
 import type { AssessmentScorecard } from "../types";
@@ -108,14 +109,14 @@ export function Dashboard() {
         </section>
       ) : null}
 
-      {course.problemSets.filter((set) => set.id !== ASSESSMENT_SET_ID).length ? (
+      {course.problemSets.filter((set) => set.id !== ASSESSMENT_SET_ID && !(LIBRARY_SET_IDS as readonly string[]).includes(set.id)).length ? (
         <section aria-labelledby="problem-sets-heading" className="problem-set-grid">
           <div className="section-heading">
             <h2 id="problem-sets-heading">Problem Sets</h2>
             <p>Focused, interview-calibrated practice outside the core modules</p>
           </div>
           <div className="problem-set-cards">
-            {course.problemSets.filter((set) => set.id !== ASSESSMENT_SET_ID).map((set) => {
+            {course.problemSets.filter((set) => set.id !== ASSESSMENT_SET_ID && !(LIBRARY_SET_IDS as readonly string[]).includes(set.id)).map((set) => {
               const done = set.problems.filter((problem) => progress[itemKey("problem", problem.id)]?.status === "complete").length;
               const percent = set.problems.length ? Math.round((done / set.problems.length) * 100) : 0;
               return (

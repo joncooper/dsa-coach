@@ -3,10 +3,24 @@ import type { RunRequest, RunResult, ScratchpadRunRequest } from "../types";
 
 const workerScope = self as unknown as DedicatedWorkerGlobalScope;
 
-let pyodidePromise: ReturnType<typeof loadPyodide> | undefined;
+let pyodidePromise: Promise<Awaited<ReturnType<typeof loadPyodide>>> | undefined;
 
 function getPyodide() {
-  pyodidePromise ??= loadPyodide({ indexURL: "/pyodide/" });
+  // Preload `sortedcontainers` (used by the Libraries section's SortedList
+  // problems). It is bundled with Pyodide 0.26, so `loadPackage` resolves
+  // from the served `/pyodide/` directory and adds only a few hundred ms to
+  // the first run. `collections.OrderedDict` is stdlib — no extra load.
+  pyodidePromise ??= (async () => {
+    const pyodide = await loadPyodide({ indexURL: "/pyodide/" });
+    try {
+      await pyodide.loadPackage(["sortedcontainers"]);
+    } catch (err) {
+      // Non-fatal: the rest of the catalog still runs. Library-section
+      // problems will surface a clean ImportError if it's missing.
+      console.warn("sortedcontainers preload failed", err);
+    }
+    return pyodide;
+  })();
   return pyodidePromise;
 }
 
