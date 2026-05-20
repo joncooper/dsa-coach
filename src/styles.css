@@ -2536,10 +2536,40 @@ pre {
 /* Workspace */
 
 .assessment-page {
-  display: flex;
-  flex-direction: column;
+  /* Mirrors .problem-page so the inner workspace fills the viewport row.
+     Rows: context bar + level pills + 1fr workspace. */
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  margin: 0;
+  padding: 14px 16px 18px;
+}
+
+/* Two-column layout (no split-handle): prompt + workspace. */
+.assessment-page .problem-layout.beta-workspace {
+  grid-template-columns: minmax(320px, var(--prompt-width)) minmax(0, 1fr);
+}
+
+/* Mirror .problem-page .workspace grid so the editor fills its row. */
+.assessment-page .workspace {
+  display: grid;
+  grid-template-rows: auto minmax(120px, 1fr) var(--dock-height);
+  gap: 12px;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
+  padding: 14px 16px 16px;
+}
+
+.assessment-page .problem-brief {
+  padding: 16px 18px 12px;
+}
+
+.assessment-page .result-panel {
+  box-shadow: none;
 }
 
 .assessment-context-bar {
