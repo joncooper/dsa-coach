@@ -2730,6 +2730,111 @@ pre {
   min-height: 220px;
 }
 
+/* Results-pane summary strip — at-a-glance counts above the test cards. */
+
+.results-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-soft);
+}
+
+.results-summary.all-pass {
+  border-color: rgba(26, 127, 70, 0.35);
+  background: rgba(26, 127, 70, 0.06);
+}
+
+.results-summary.has-failures {
+  border-color: rgba(180, 35, 24, 0.35);
+  background: rgba(180, 35, 24, 0.05);
+}
+
+.results-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.results-summary-chip strong {
+  font-weight: 850;
+}
+
+.results-summary-chip.pass {
+  color: var(--green);
+  border: 1px solid rgba(26, 127, 70, 0.35);
+}
+
+.results-summary-chip.fail {
+  color: var(--red);
+  border: 1px solid rgba(180, 35, 24, 0.35);
+}
+
+.results-summary-chip.fail.strong {
+  background: rgba(180, 35, 24, 0.12);
+}
+
+.results-summary-chip.error {
+  color: var(--amber);
+  border: 1px solid rgba(143, 82, 0, 0.35);
+}
+
+.results-summary-chip.error.link {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.results-summary-chip.error.link:hover,
+.results-summary-chip.error.link:focus-visible {
+  background: rgba(143, 82, 0, 0.1);
+}
+
+.results-summary-note {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Per-test errors inside the Errors tab. */
+
+.per-test-errors {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.per-test-errors h3 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.per-test-errors article {
+  display: grid;
+  gap: 6px;
+}
+
+.per-test-errors article strong {
+  font-size: 13px;
+}
+
+.per-test-errors article pre {
+  margin: 0;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
 /* Autosave indicator (lives in the workspace toolbar's status group). */
 
 .autosave-indicator {

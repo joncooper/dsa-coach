@@ -46,7 +46,8 @@ import type {
   Problem,
   ProblemPart,
   RunResult,
-  SubmissionRecord
+  SubmissionRecord,
+  TestResult
 } from "../types";
 import { MarkdownView } from "./MarkdownView";
 import { TestResultsList } from "./results/TestResultsList";
@@ -147,10 +148,31 @@ export function AssessmentPage() {
     ? (settings[scorecardKey(assessmentId)]?.value as AssessmentScorecard | undefined)
     : undefined;
 
+  // Hidden-diagnostic reveal preference is shared with ProblemPage so the
+  // candidate's "I want to see hidden test details" choice carries between
+  // surfaces. Practice mode reads/writes this; exam mode always locks it.
+  const storedHiddenDiagnostics = settings["workspace:showHiddenDiagnostics"]?.value;
   const [session, setSession] = useState<AssessmentSessionState | undefined>(storedSession);
   const [level, setLevel] = useState<number>(storedSession?.unlockedLevel ?? 1);
   const [code, setCode] = useState<string>(slices[level - 1]?.starterCode ?? "");
   const [result, setResult] = useState<RunResult>(idleResult);
+  const [showHiddenDiagnostics, setShowHiddenDiagnostics] = useState<boolean>(
+    typeof storedHiddenDiagnostics === "boolean" ? storedHiddenDiagnostics : false
+  );
+
+  useEffect(() => {
+    if (typeof storedHiddenDiagnostics === "boolean") {
+      setShowHiddenDiagnostics(storedHiddenDiagnostics);
+    }
+  }, [storedHiddenDiagnostics]);
+
+  const updateHiddenDiagnostics = useCallback(
+    (next: boolean) => {
+      setShowHiddenDiagnostics(next);
+      void saveSetting("workspace:showHiddenDiagnostics", next);
+    },
+    [saveSetting]
+  );
   // Visible feedback that the autosave loop is healthy. Flips to "saving" the
   // moment the candidate edits the buffer and back to "saved" when the
   // debounced write to IndexedDB resolves.
@@ -304,7 +326,12 @@ export function AssessmentPage() {
       : "report";
 
   const hasStdout = result.stdout.trim().length > 0;
-  const hasErrors = Boolean(result.message?.trim() || result.stderr?.trim());
+  // Per-test exceptions count as errors too — a single hidden test that
+  // threw should light up the Errors tab even with no top-level traceback.
+  const erroredTests = result.tests.filter((t) => Boolean(t.error));
+  const hasErrors = Boolean(
+    result.message?.trim() || result.stderr?.trim() || erroredTests.length
+  );
 
   if (!assessment || !problem) return <Navigate to="/assessments" replace />;
   const slice = slices[level - 1];
@@ -801,6 +828,11 @@ export function AssessmentPage() {
               aria-label="Results"
             >
               <h2>Results</h2>
+              <ResultsSummary
+                tests={result.tests}
+                ranWithHidden={lastRunIncludedHidden}
+                onJumpToErrors={hasErrors ? () => setActivePanel("errors") : undefined}
+              />
               {result.status === "passed" && lastRunIncludedHidden ? (
                 <div className="completion-banner">
                   <CheckCircle2 size={20} />
@@ -853,7 +885,8 @@ export function AssessmentPage() {
               ) : null}
               <TestResultsList
                 tests={result.tests}
-                showHiddenDiagnostics={false}
+                showHiddenDiagnostics={showHiddenDiagnostics}
+                onToggleHiddenDiagnostics={isExam ? undefined : updateHiddenDiagnostics}
                 lockHidden={isExam}
               />
             </section>
@@ -879,6 +912,12 @@ export function AssessmentPage() {
               <h2>Errors</h2>
               {result.message ? <pre className="error-output">{result.message}</pre> : null}
               {result.stderr ? <pre className="error-output">{result.stderr}</pre> : null}
+              <PerTestErrors
+                tests={erroredTests}
+                lockHidden={isExam}
+                showHiddenDiagnostics={showHiddenDiagnostics}
+                onRevealHidden={isExam ? undefined : () => updateHiddenDiagnostics(true)}
+              />
               {!hasErrors ? <p className="muted">No runtime or syntax errors.</p> : null}
             </section>
           </div>
@@ -1144,6 +1183,137 @@ function LevelReview({
         <p className="level-review-walkthrough">{slice.walkthrough}</p>
       ) : null}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Results panel bits
+// ---------------------------------------------------------------------------
+
+/**
+ * At-a-glance summary that sits above the per-test cards in the Results
+ * tab. Surfaces the counts a candidate needs after a Submit run without
+ * scrolling: visible pass/total, hidden pass/total, failing total, and
+ * an explicit errored count. Clicking the errored chip jumps to the
+ * Errors tab (when there's anything to show there).
+ */
+function ResultsSummary({
+  tests,
+  ranWithHidden,
+  onJumpToErrors
+}: {
+  tests: TestResult[];
+  ranWithHidden: boolean;
+  onJumpToErrors?: () => void;
+}) {
+  if (!tests.length) return null;
+  const visible = tests.filter((t) => !t.hidden);
+  const hidden = tests.filter((t) => t.hidden);
+  const visiblePass = visible.filter((t) => t.passed).length;
+  const hiddenPass = hidden.filter((t) => t.passed).length;
+  const errored = tests.filter((t) => Boolean(t.error)).length;
+  const failing = tests.filter((t) => !t.passed).length;
+
+  return (
+    <div className={`results-summary ${failing ? "has-failures" : "all-pass"}`}>
+      <span
+        className={`results-summary-chip ${visiblePass === visible.length ? "pass" : "fail"}`}
+      >
+        Visible <strong>{visiblePass}/{visible.length}</strong>
+      </span>
+      {hidden.length ? (
+        <span
+          className={`results-summary-chip ${hiddenPass === hidden.length ? "pass" : "fail"}`}
+        >
+          Hidden <strong>{hiddenPass}/{hidden.length}</strong>
+        </span>
+      ) : (
+        <span className="results-summary-note">
+          {ranWithHidden ? "No hidden tests for this level." : "Submit to include hidden tests."}
+        </span>
+      )}
+      {failing ? (
+        <span className="results-summary-chip strong fail">
+          {failing} failing
+        </span>
+      ) : null}
+      {errored ? (
+        onJumpToErrors ? (
+          <button type="button" className="results-summary-chip error link" onClick={onJumpToErrors}>
+            {errored} errored — view
+          </button>
+        ) : (
+          <span className="results-summary-chip error">
+            {errored} errored
+          </span>
+        )
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Per-test traceback list for the Errors tab. Visible-test errors are
+ * always shown in full. Hidden-test errors are gated by `lockHidden`
+ * (exam) and `showHiddenDiagnostics` (practice opt-in) — a collapsed
+ * row offers a reveal button when allowed.
+ */
+function PerTestErrors({
+  tests,
+  lockHidden,
+  showHiddenDiagnostics,
+  onRevealHidden
+}: {
+  tests: TestResult[];
+  lockHidden: boolean;
+  showHiddenDiagnostics: boolean;
+  onRevealHidden?: () => void;
+}) {
+  const visible = tests.filter((t) => !t.hidden);
+  const hidden = tests.filter((t) => t.hidden);
+  if (!visible.length && !hidden.length) return null;
+
+  return (
+    <>
+      {visible.length ? (
+        <section className="per-test-errors">
+          <h3>Visible test errors</h3>
+          {visible.map((t) => (
+            <article key={`v-${t.name}`}>
+              <strong>{t.name}</strong>
+              <pre className="error-output">{t.error}</pre>
+            </article>
+          ))}
+        </section>
+      ) : null}
+      {hidden.length ? (
+        <section className="per-test-errors">
+          <h3>Hidden test errors ({hidden.length})</h3>
+          {!lockHidden && showHiddenDiagnostics ? (
+            hidden.map((t) => (
+              <article key={`h-${t.name}`}>
+                <strong>Hidden #{t.name}</strong>
+                <pre className="error-output">{t.error}</pre>
+              </article>
+            ))
+          ) : (
+            <p className="muted">
+              {lockHidden
+                ? "Diagnostics hidden during the timed exam."
+                : "Hidden by default to preserve practice integrity."}
+              {!lockHidden && onRevealHidden ? (
+                <>
+                  {" "}
+                  <button type="button" className="link-button" onClick={onRevealHidden}>
+                    Reveal hidden tracebacks
+                  </button>
+                </>
+              ) : null}
+            </p>
+          )}
+        </section>
+      ) : null}
+    </>
   );
 }
 
