@@ -191,18 +191,19 @@ kbd {
 }
 
 /* Sidebar collapsed: fully hide the aside and let the workspace use the
-   full width. A floating Show-sidebar button (see .sidebar-show-toggle)
-   gives the candidate a clean way to bring it back. */
-.problem-sidebar-collapsed .app-shell {
+   full width. Each workspace page renders an inline SidebarShowToggle in
+   its own header chrome so the candidate has a discoverable restore
+   button that lives in real layout space (no overlap with page content). */
+.sidebar-collapsed .app-shell {
   grid-template-columns: 1fr;
 }
 
-.problem-sidebar-collapsed .sidebar {
+.sidebar-collapsed .sidebar {
   display: none;
 }
 
-/* Focus mode is the stronger version: nothing visible except the workspace,
-   including the floating show-sidebar button. */
+/* Focus mode is the stronger version: hides not just the sidebar but also
+   the problem brief and split handle (see problem-page styles below). */
 .problem-focus-mode .app-shell {
   grid-template-columns: 1fr;
 }
@@ -211,32 +212,46 @@ kbd {
   display: none;
 }
 
-.sidebar-show-toggle {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  z-index: 30;
-  width: 36px;
-  height: 36px;
+/* Inline show-sidebar button. Lives at the leading edge of a page's own
+   header bar (problem-context-bar, assessment-context-bar). Small icon
+   button styled to read as workspace chrome, not a floating widget. */
+.sidebar-show-toggle.inline {
   display: inline-grid;
   place-items: center;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
   background: var(--paper);
   border: 1px solid var(--line);
-  color: var(--ink);
-  box-shadow: var(--shadow);
-  transition: background 0.15s ease-out, border-color 0.15s ease-out;
+  color: var(--muted);
+  flex: 0 0 auto;
+  transition: background 0.15s ease-out, border-color 0.15s ease-out, color 0.15s ease-out;
 }
 
-.sidebar-show-toggle:hover {
+.sidebar-show-toggle.inline:hover,
+.sidebar-show-toggle.inline:focus-visible {
   background: var(--paper-soft);
   border-color: var(--teal);
   color: var(--teal);
 }
 
-.problem-focus-mode .sidebar-show-toggle {
-  display: none;
+/* Shrink slightly when nested in a breadcrumb so it doesn't dwarf the
+   small uppercase text it sits next to. */
+.page-breadcrumb .sidebar-show-toggle.inline {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  vertical-align: middle;
 }
+
+.page-breadcrumb .sidebar-show-toggle.inline svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* In focus mode the candidate already opted into a minimal UI; the
+   show-sidebar button stays available in the still-visible context bar
+   so they can restore the sidebar without leaving focus mode. */
 
 .page {
   width: min(1180px, 100%);

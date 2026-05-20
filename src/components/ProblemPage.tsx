@@ -28,6 +28,7 @@ import { CoachPanel } from "./CoachPanel";
 import { DisciplineChecklist } from "./DisciplineChecklist";
 import { MarkdownView } from "./MarkdownView";
 import { NotesPanel } from "./NotesPanel";
+import { SidebarShowToggle } from "./Sidebar";
 
 const idleResult: RunResult = {
   status: "idle",
@@ -143,13 +144,15 @@ export function ProblemPage() {
   }, [storedDockHeight, storedFocusMode, storedHiddenDiagnostics, storedMobileTab, storedSidebarCollapsed, storedSplitRatio]);
 
   useEffect(() => {
+    // Sidebar collapse → `sidebar-collapsed` body class managed by Sidebar
+    // itself so it works on any workspace page. ProblemPage only owns the
+    // focus-mode class because focus also reshapes the problem layout
+    // (brief + split handle), which is problem-page-specific.
     document.body.classList.toggle("problem-focus-mode", focusMode);
-    document.body.classList.toggle("problem-sidebar-collapsed", sidebarCollapsed && !focusMode);
     return () => {
       document.body.classList.remove("problem-focus-mode");
-      document.body.classList.remove("problem-sidebar-collapsed");
     };
-  }, [focusMode, sidebarCollapsed]);
+  }, [focusMode]);
 
   const statusText = useMemo(() => {
     if (result.status === "idle") return "Ready";
@@ -430,6 +433,7 @@ export function ProblemPage() {
   return (
     <section className="page problem-page">
       <header className="problem-context-bar">
+        <SidebarShowToggle />
         <div className="problem-context-main">
           <p className="problem-breadcrumb">
             <Link to={container.backLink}>{container.title}</Link>

@@ -54,6 +54,7 @@ import type {
 } from "../types";
 import { MarkdownView } from "./MarkdownView";
 import { TestResultsList } from "./results/TestResultsList";
+import { SidebarShowToggle } from "./Sidebar";
 import { pythonEditorExtensions } from "./editor/pythonEditorExtensions";
 
 const idleResult: RunResult = {
@@ -653,6 +654,7 @@ export function AssessmentPage() {
   return (
     <section className="page assessment-page">
       <header className="assessment-context-bar">
+        <SidebarShowToggle />
         <div className="assessment-context-main">
           <p className="assessment-breadcrumb">
             <Link to="/assessments">CodeSignal ICF Practice</Link>
@@ -1060,6 +1062,7 @@ function RulesScreen({
     <section className="page assessment-rules-page">
       <header className="page-header">
         <p className="page-breadcrumb">
+          <SidebarShowToggle />
           <Link to="/assessments">CodeSignal ICF Practice</Link> / {assessment.title}
         </p>
         <h1>{assessment.title}</h1>
@@ -1199,6 +1202,7 @@ function ReportScreen({
     <section className="page assessment-report-page wide-report">
       <header className="page-header">
         <p className="page-breadcrumb">
+          <SidebarShowToggle />
           <Link to="/assessments">CodeSignal ICF Practice</Link> / {assessment.title}
         </p>
         <h1>{session.status === "expired" ? "Time expired" : "Assessment complete"}</h1>

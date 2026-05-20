@@ -1,5 +1,5 @@
 import { BookOpen, Library, PanelLeftClose, PanelLeftOpen, Search, Sparkles, Timer } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { course } from "../content/course";
 import { ASSESSMENT_SET_ID, assessments } from "../content/assessments";
@@ -10,8 +10,23 @@ export function Sidebar() {
   const [query, setQuery] = useState("");
   const { settings, saveSetting } = useStore();
   const location = useLocation();
+  // Show the collapse toggle on any focused workspace surface. Assessment
+  // sessions are the same long-form coding context as problems — both
+  // benefit from being able to reclaim the sidebar's width.
   const onProblem = location.pathname.startsWith("/problem/");
+  const onAssessment = location.pathname.startsWith("/assessment/");
+  const onWorkspace = onProblem || onAssessment;
   const collapsed = settings["workspace:sidebarCollapsed"]?.value === true;
+
+  // Mirror the collapsed setting into a body class so the layout CSS can
+  // collapse the app-shell grid regardless of which workspace page is
+  // active. ProblemPage owns the focus-mode body class separately.
+  useEffect(() => {
+    document.body.classList.toggle("sidebar-collapsed", collapsed && onWorkspace);
+    return () => {
+      document.body.classList.remove("sidebar-collapsed");
+    };
+  }, [collapsed, onWorkspace]);
   const results = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return [];
@@ -44,30 +59,13 @@ export function Sidebar() {
   const librarySets = course.problemSets.filter((set) => librarySetIds.has(set.id));
 
   return (
-    <>
-      {/* Floating "Show sidebar" button — appears only when the sidebar is
-          collapsed and we're on a problem workspace. Lets the candidate keep
-          the sidebar fully hidden (cleaner than a 76px icon rail) while still
-          having a discoverable way to bring it back. Suppressed in focus
-          mode, where the candidate wants nothing on screen at all. */}
-      {collapsed && onProblem ? (
-        <button
-          type="button"
-          className="sidebar-show-toggle"
-          aria-label="Show sidebar"
-          title="Show sidebar"
-          onClick={() => void saveSetting("workspace:sidebarCollapsed", false)}
-        >
-          <PanelLeftOpen size={18} />
-        </button>
-      ) : null}
-      <aside className="sidebar">
+    <aside className="sidebar">
       <div className="sidebar-brand-row">
         <NavLink className="brand" to="/" aria-label="Dashboard">
           <BookOpen size={24} />
           <span>DSA Coach</span>
         </NavLink>
-        {onProblem ? (
+        {onWorkspace ? (
           <button
             type="button"
             className="sidebar-collapse-toggle"
@@ -140,7 +138,29 @@ export function Sidebar() {
           </nav>
         </>
       ) : null}
-      </aside>
-    </>
+    </aside>
+  );
+}
+
+/**
+ * Inline "Show sidebar" button. Pages drop this into their own header chrome
+ * (problem and assessment workspaces) so the candidate has a discoverable
+ * way to bring the sidebar back without a floating element overlapping the
+ * page title. Returns null when the sidebar is already visible.
+ */
+export function SidebarShowToggle() {
+  const { settings, saveSetting } = useStore();
+  const collapsed = settings["workspace:sidebarCollapsed"]?.value === true;
+  if (!collapsed) return null;
+  return (
+    <button
+      type="button"
+      className="sidebar-show-toggle inline"
+      aria-label="Show sidebar"
+      title="Show sidebar"
+      onClick={() => void saveSetting("workspace:sidebarCollapsed", false)}
+    >
+      <PanelLeftOpen size={17} />
+    </button>
   );
 }
