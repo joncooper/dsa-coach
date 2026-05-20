@@ -2755,13 +2755,15 @@ pre {
   flex-direction: column;
   gap: 6px;
   text-align: center;
+  align-items: center;
 }
 
-.scorecard-band {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: 14px;
+.scorecard-total-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0;
 }
 
 .scorecard-total {
@@ -2769,13 +2771,134 @@ pre {
   font-weight: 700;
   color: var(--teal);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-.scorecard-band-floor,
-.scorecard-band-ceiling {
-  font-size: 14px;
+.scorecard-track {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--paper-soft);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  margin: 8px 0 4px;
+}
+
+.scorecard-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal-dark), var(--teal));
+  transition: width 0.4s ease-out;
+}
+
+.scorecard-band-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 420px;
+  font-size: 12px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+
+.scorecard-headline-meta {
+  margin-top: 8px;
+}
+
+.scorecard-review-cell {
+  text-align: right;
+}
+
+.scorecard-review-row td {
+  padding: 0 10px 14px;
+  background: var(--paper-soft);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Per-level Review pane (expands beneath a scorecard row). */
+.level-review {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-top: 8px;
+}
+
+.level-review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.level-review-header h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.level-review-complexity {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--tag-bg);
+  border-radius: 999px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+.level-review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.level-review-grid h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.level-review-code {
+  background: var(--code-bg);
+  color: var(--code-ink);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-x: auto;
+  margin: 0;
+  max-height: 360px;
+}
+
+.level-review-walkthrough {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+@media (max-width: 760px) {
+  .level-review-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Screen-reader-only utility (visually hidden, still announced). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .scorecard-table {

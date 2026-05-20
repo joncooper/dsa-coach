@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import {
   type CSSProperties,
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -35,7 +36,8 @@ import type {
   AssessmentSessionState,
   Problem,
   ProblemPart,
-  RunResult
+  RunResult,
+  SubmissionRecord
 } from "../types";
 import { MarkdownView } from "./MarkdownView";
 import { TestResultsList } from "./results/TestResultsList";
@@ -118,7 +120,7 @@ export function AssessmentPage() {
   const assessment = assessmentId ? findAssessment(assessmentId) : undefined;
   const problem = assessment ? findProblem(assessment.problemId) : undefined;
 
-  const { settings, saveSetting, deleteSetting, recordSubmission } = useStore();
+  const { settings, saveSetting, deleteSetting, recordSubmission, submissions } = useStore();
 
   const slices = useMemo(
     () => (assessment && problem ? levelSlices(problem, assessment) : []),
@@ -339,11 +341,26 @@ export function AssessmentPage() {
         ? new Date(session.finishedAt).getTime() - new Date(session.startedAt).getTime()
         : 0;
     const card = storedScorecard ?? summarizeScorecard(assessment, session, elapsedMs);
+    // Index the candidate's latest submission per level for the Review pane.
+    const latestByLevel: Record<number, SubmissionRecord | undefined> = {};
+    if (assessmentId) {
+      for (const submission of submissions) {
+        const prefix = `${assessmentId}#L`;
+        if (!submission.problemId.startsWith(prefix)) continue;
+        const level = Number(submission.problemId.slice(prefix.length));
+        if (Number.isFinite(level) && !(level in latestByLevel)) {
+          // submissions are already ordered newest-first by createdAt DESC.
+          latestByLevel[level] = submission;
+        }
+      }
+    }
     return (
       <ReportScreen
         assessment={assessment}
         session={session}
         card={card}
+        slices={slices}
+        latestByLevel={latestByLevel}
         onReplay={() => void replay()}
       />
     );
@@ -655,14 +672,24 @@ function ReportScreen({
   assessment,
   session,
   card,
+  slices,
+  latestByLevel,
   onReplay
 }: {
   assessment: Assessment;
   session: AssessmentSessionState;
   card: AssessmentScorecard;
+  slices: LevelSlice[];
+  latestByLevel: Record<number, SubmissionRecord | undefined>;
   onReplay: () => void;
 }) {
   const summary = coachingSummary(card);
+  const range = assessment.scoreBand.max - assessment.scoreBand.min;
+  const pct = range > 0
+    ? Math.max(0, Math.min(100, ((card.totalScore - assessment.scoreBand.min) / range) * 100))
+    : 0;
+  const [expandedLevel, setExpandedLevel] = useState<number | null>(null);
+
   return (
     <section className="page assessment-report-page">
       <header className="page-header">
@@ -677,12 +704,23 @@ function ReportScreen({
 
       <section className="scorecard">
         <div className="scorecard-headline">
-          <div className="scorecard-band">
-            <span className="scorecard-band-floor">{assessment.scoreBand.min}</span>
-            <strong className="scorecard-total">{card.totalScore}</strong>
-            <span className="scorecard-band-ceiling">{assessment.scoreBand.max}</span>
+          <p className="scorecard-total-label">Final score</p>
+          <strong className="scorecard-total">{card.totalScore}</strong>
+          <div
+            className="scorecard-track"
+            role="meter"
+            aria-valuemin={assessment.scoreBand.min}
+            aria-valuemax={assessment.scoreBand.max}
+            aria-valuenow={card.totalScore}
+            aria-label={`Score ${card.totalScore} of ${assessment.scoreBand.max} (floor ${assessment.scoreBand.min})`}
+          >
+            <div className="scorecard-fill" style={{ width: `${pct}%` }} />
           </div>
-          <p className="muted">
+          <div className="scorecard-band-row" aria-hidden="true">
+            <span>{assessment.scoreBand.min}</span>
+            <span>{assessment.scoreBand.max}</span>
+          </div>
+          <p className="muted scorecard-headline-meta">
             {card.rawPoints} / {card.maxRawPoints} raw points · {card.completedLevels} of 4 levels fully cleared ·{" "}
             {formatElapsedMs(card.elapsedMs)} used
           </p>
@@ -696,18 +734,47 @@ function ReportScreen({
               <th scope="col">Hidden</th>
               <th scope="col">Attempts</th>
               <th scope="col">Points</th>
+              <th scope="col">
+                <span className="sr-only">Review</span>
+              </th>
             </tr>
           </thead>
           <tbody>
-            {card.perLevel.map((row) => (
-              <tr key={row.level}>
-                <th scope="row">L{row.level}</th>
-                <td>{row.visibleTotal ? `${row.visiblePassed}/${row.visibleTotal}` : "—"}</td>
-                <td>{row.hiddenTotal ? `${row.hiddenPassed}/${row.hiddenTotal}` : "—"}</td>
-                <td>{row.attempts || "—"}</td>
-                <td>{row.points}</td>
-              </tr>
-            ))}
+            {card.perLevel.map((row) => {
+              const slice = slices[row.level - 1];
+              const reviewable = row.attempts > 0 || Boolean(slice);
+              const expanded = expandedLevel === row.level;
+              return (
+                <Fragment key={row.level}>
+                  <tr>
+                    <th scope="row">L{row.level}</th>
+                    <td>{row.visibleTotal ? `${row.visiblePassed}/${row.visibleTotal}` : "—"}</td>
+                    <td>{row.hiddenTotal ? `${row.hiddenPassed}/${row.hiddenTotal}` : "—"}</td>
+                    <td>{row.attempts || "—"}</td>
+                    <td>{row.points}</td>
+                    <td className="scorecard-review-cell">
+                      {reviewable ? (
+                        <button
+                          type="button"
+                          className="tertiary-button"
+                          aria-expanded={expanded}
+                          onClick={() => setExpandedLevel(expanded ? null : row.level)}
+                        >
+                          {expanded ? "Hide" : "Review"}
+                        </button>
+                      ) : null}
+                    </td>
+                  </tr>
+                  {expanded && slice ? (
+                    <tr className="scorecard-review-row">
+                      <td colSpan={6}>
+                        <LevelReview slice={slice} submission={latestByLevel[row.level]} />
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
 
@@ -730,6 +797,49 @@ function ReportScreen({
   );
 }
 
+function LevelReview({
+  slice,
+  submission
+}: {
+  slice: LevelSlice;
+  submission: SubmissionRecord | undefined;
+}) {
+  const yourCode = submission?.code ?? "";
+  const referenceCode = slice.referenceCode;
+  return (
+    <div className="level-review">
+      <header className="level-review-header">
+        <div>
+          <h3>{slice.title}</h3>
+          <p className="muted">{slice.solution}</p>
+        </div>
+        {slice.complexity ? (
+          <span className="level-review-complexity">
+            Time {slice.complexity.time} · Space {slice.complexity.space}
+          </span>
+        ) : null}
+      </header>
+      <div className="level-review-grid">
+        <section>
+          <h4>Your last submission</h4>
+          {yourCode ? (
+            <pre className="level-review-code"><code>{yourCode}</code></pre>
+          ) : (
+            <p className="muted">No submission recorded for this level.</p>
+          )}
+        </section>
+        <section>
+          <h4>Reference solution</h4>
+          <pre className="level-review-code"><code>{referenceCode}</code></pre>
+        </section>
+      </div>
+      {slice.walkthrough ? (
+        <p className="level-review-walkthrough">{slice.walkthrough}</p>
+      ) : null}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Header bits
 // ---------------------------------------------------------------------------
@@ -737,12 +847,35 @@ function ReportScreen({
 function Countdown({ remainingMs }: { remainingMs: number }) {
   const state =
     remainingMs <= 5 * 60_000 ? "danger" : remainingMs <= 15 * 60_000 ? "warning" : "ok";
+
+  // Announce only at meaningful boundaries (avoids per-second screen-reader
+  // spam): when the 15-minute warning crosses, 5-minute, 1-minute, and zero.
+  // Each crossing fires once thanks to `latch`.
+  const announce = announcementFor(remainingMs);
+  const [latch, setLatch] = useState<string | null>(null);
+  useEffect(() => {
+    if (announce && announce !== latch) setLatch(announce);
+  }, [announce, latch]);
+
   return (
-    <span className={`assessment-countdown ${state}`} role="timer" aria-live="off">
-      <Clock size={16} aria-hidden />
-      <strong>{formatRemaining(remainingMs)}</strong>
-    </span>
+    <>
+      <span className={`assessment-countdown ${state}`} role="timer" aria-live="off">
+        <Clock size={16} aria-hidden />
+        <strong>{formatRemaining(remainingMs)}</strong>
+      </span>
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {latch ?? ""}
+      </span>
+    </>
   );
+}
+
+function announcementFor(remainingMs: number): string | null {
+  if (remainingMs <= 0) return "Time has expired.";
+  if (remainingMs <= 60_000) return "One minute remaining.";
+  if (remainingMs <= 5 * 60_000) return "Five minutes remaining.";
+  if (remainingMs <= 15 * 60_000) return "Fifteen minutes remaining.";
+  return null;
 }
 
 function LevelPills({
