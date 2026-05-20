@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveLevelCode } from "../src/content/assessments/seeding";
+import { resolveLevelCode, resumeShift } from "../src/content/assessments/seeding";
 import {
   bandScore,
   coachingSummary,
@@ -72,6 +72,80 @@ describe("resolveLevelCode (carry-forward)", () => {
         levelStarter: STARTER_L2
       })
     ).toBe(STARTER_L2);
+  });
+});
+
+describe("resumeShift (pause/resume timestamps)", () => {
+  const START = "2026-05-19T10:00:00.000Z";
+  const PAUSED = "2026-05-19T10:30:00.000Z"; // 30 min after start
+  const END_90 = "2026-05-19T11:30:00.000Z"; // start + 90 min
+
+  it("shifts startedAt and endsAt forward by the pause duration", () => {
+    // Resume 10 minutes after pausing → both anchors shift by exactly 10 min.
+    const RESUME_NOW = new Date("2026-05-19T10:40:00.000Z").getTime();
+    const out = resumeShift({
+      startedAt: START,
+      endsAt: END_90,
+      pausedAt: PAUSED,
+      resumeNowMs: RESUME_NOW
+    });
+    expect(out.startedAt).toBe("2026-05-19T10:10:00.000Z"); // 10:00 + 10 min
+    expect(out.endsAt).toBe("2026-05-19T11:40:00.000Z"); // 11:30 + 10 min
+  });
+
+  it("preserves elapsed (now - startedAt) across the pause", () => {
+    // Pre-pause: at 10:30, elapsed = 30 min.
+    // Post-resume at 10:40, elapsed should STILL be 30 min — the pause itself
+    // doesn't count as practice time.
+    const RESUME_NOW = new Date("2026-05-19T10:40:00.000Z").getTime();
+    const out = resumeShift({
+      startedAt: START,
+      endsAt: END_90,
+      pausedAt: PAUSED,
+      resumeNowMs: RESUME_NOW
+    });
+    const elapsedAfter = RESUME_NOW - new Date(out.startedAt).getTime();
+    expect(elapsedAfter).toBe(30 * 60_000);
+  });
+
+  it("preserves remaining (endsAt - now) across the pause", () => {
+    // At pause time (10:30), remaining on a 90-min exam = 60 min.
+    // After a 10-min pause and resume, remaining should still be 60 min.
+    const RESUME_NOW = new Date("2026-05-19T10:40:00.000Z").getTime();
+    const out = resumeShift({
+      startedAt: START,
+      endsAt: END_90,
+      pausedAt: PAUSED,
+      resumeNowMs: RESUME_NOW
+    });
+    const remainingAfter = new Date(out.endsAt!).getTime() - RESUME_NOW;
+    expect(remainingAfter).toBe(60 * 60_000);
+  });
+
+  it("leaves endsAt undefined for practice mode (no countdown)", () => {
+    const RESUME_NOW = new Date("2026-05-19T10:40:00.000Z").getTime();
+    const out = resumeShift({
+      startedAt: START,
+      endsAt: undefined,
+      pausedAt: PAUSED,
+      resumeNowMs: RESUME_NOW
+    });
+    expect(out.endsAt).toBeUndefined();
+    expect(out.startedAt).toBe("2026-05-19T10:10:00.000Z");
+  });
+
+  it("treats a negative pause duration as zero (clock drift safety)", () => {
+    // If wall-clock moves backwards between pause and resume (NTP adjust),
+    // never gift the candidate extra time.
+    const BAD_RESUME = new Date("2026-05-19T10:20:00.000Z").getTime(); // before pause
+    const out = resumeShift({
+      startedAt: START,
+      endsAt: END_90,
+      pausedAt: PAUSED,
+      resumeNowMs: BAD_RESUME
+    });
+    expect(out.startedAt).toBe(START);
+    expect(out.endsAt).toBe(END_90);
   });
 });
 

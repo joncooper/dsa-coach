@@ -6,6 +6,7 @@ import {
   Flag,
   Lightbulb,
   Lock,
+  Pause,
   Play,
   RotateCcw
 } from "lucide-react";
@@ -21,7 +22,13 @@ import {
 } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { findAssessment } from "../content/assessments";
-import { codeKey, resolveLevelCode, scorecardKey, sessionKey } from "../content/assessments/seeding";
+import {
+  codeKey,
+  resolveLevelCode,
+  resumeShift,
+  scorecardKey,
+  sessionKey
+} from "../content/assessments/seeding";
 import {
   coachingSummary,
   mergeBestResult,
@@ -241,20 +248,30 @@ export function AssessmentPage() {
     return () => clearInterval(t);
   }, []);
 
+  // When paused, freeze every time-based readout at the pause instant. The
+  // 1Hz `now` tick keeps firing (it's cheap and feeds other UI), but the
+  // anchor we expose to the rest of the component stops advancing.
+  const isPaused = Boolean(session?.pausedAt);
+  const effectiveNow = useMemo(
+    () => (session?.pausedAt ? new Date(session.pausedAt).getTime() : now),
+    [session?.pausedAt, now]
+  );
+
   const remainingMs = useMemo(() => {
     if (!session?.endsAt) return Number.POSITIVE_INFINITY;
-    return Math.max(0, new Date(session.endsAt).getTime() - now);
-  }, [session?.endsAt, now]);
+    return Math.max(0, new Date(session.endsAt).getTime() - effectiveNow);
+  }, [session?.endsAt, effectiveNow]);
 
   // Auto-expire when an in-progress exam's clock hits zero.
   useEffect(() => {
     if (!session || session.mode !== "exam") return;
     if (session.status !== "in-progress") return;
     if (!session.endsAt) return;
+    if (isPaused) return;
     if (remainingMs > 0) return;
     void finish("expired");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remainingMs, session?.status, session?.mode]);
+  }, [remainingMs, session?.status, session?.mode, isPaused]);
 
   const phase: "rules" | "workspace" | "report" = !session
     ? "rules"
@@ -309,6 +326,29 @@ export function AssessmentPage() {
     if (assessmentId) await saveSetting(scorecardKey(assessmentId), card);
   }
 
+  async function pauseSession() {
+    if (!session || session.status !== "in-progress" || session.pausedAt) return;
+    await persistSession({ ...session, pausedAt: new Date().toISOString() });
+  }
+
+  async function resumeSession() {
+    if (!session?.pausedAt) return;
+    const shifted = resumeShift({
+      startedAt: session.startedAt,
+      endsAt: session.endsAt,
+      pausedAt: session.pausedAt,
+      resumeNowMs: Date.now()
+    });
+    await persistSession({
+      ...session,
+      startedAt: shifted.startedAt,
+      endsAt: shifted.endsAt,
+      pausedAt: undefined
+    });
+    // Re-anchor the displayed time immediately so the readout doesn't jump.
+    setNow(Date.now());
+  }
+
   async function replay() {
     if (!assessmentId) return;
     // Clear session, scorecard, and per-level buffers; rules screen will pick
@@ -326,6 +366,9 @@ export function AssessmentPage() {
   const run = useCallback(
     async (includeHidden: boolean) => {
       if (!session || !assessment || !problem || !assessmentId) return;
+      // Hard-stop runs while paused — accepting submissions with the clock
+      // frozen would defeat the integrity of practice/exam timing.
+      if (session.pausedAt) return;
       const active = slices[level - 1];
       if (!active) return;
       setLastRunIncludedHidden(includeHidden);
@@ -467,15 +510,35 @@ export function AssessmentPage() {
         </div>
         <div className="assessment-context-actions">
           {isExam && Number.isFinite(remainingMs) ? (
-            <Countdown remainingMs={remainingMs} />
+            <Countdown remainingMs={remainingMs} paused={isPaused} />
           ) : (
-            <span className="assessment-elapsed">
-              <Clock size={16} aria-hidden /> {formatElapsed(now, session?.startedAt)} elapsed
+            <span className={`assessment-elapsed ${isPaused ? "paused" : ""}`}>
+              <Clock size={16} aria-hidden /> {formatElapsed(effectiveNow, session?.startedAt)} elapsed
+              {isPaused ? <span className="assessment-paused-tag">paused</span> : null}
             </span>
+          )}
+          {isPaused ? (
+            <button
+              className="primary-button compact-button"
+              type="button"
+              onClick={() => void resumeSession()}
+            >
+              <Play size={16} aria-hidden /> Resume
+            </button>
+          ) : (
+            <button
+              className="secondary-button compact-button"
+              type="button"
+              onClick={() => void pauseSession()}
+              title="Pause the clock — step away without burning time."
+            >
+              <Pause size={16} aria-hidden /> Pause
+            </button>
           )}
           <button
             className="primary-button compact-button"
             type="button"
+            disabled={isPaused}
             onClick={() => void finish("submitted")}
           >
             <Flag size={16} aria-hidden /> Finish
@@ -490,7 +553,31 @@ export function AssessmentPage() {
         onSelect={(n) => setLevel(n)}
       />
 
-      <div className="problem-layout beta-workspace" style={splitStyle}>
+      <div
+        className={`problem-layout beta-workspace ${isPaused ? "is-paused" : ""}`}
+        style={splitStyle}
+      >
+        {isPaused ? (
+          <div className="assessment-pause-overlay" role="dialog" aria-modal="true" aria-label="Session paused">
+            <div className="assessment-pause-card">
+              <Pause size={32} aria-hidden />
+              <h2>Paused</h2>
+              <p>
+                The clock is frozen. {isExam
+                  ? "Your remaining exam time is held until you resume."
+                  : "Your elapsed time is held until you resume."}
+              </p>
+              <button
+                className="primary-button"
+                type="button"
+                autoFocus
+                onClick={() => void resumeSession()}
+              >
+                <Play size={18} aria-hidden /> Resume
+              </button>
+            </div>
+          </div>
+        ) : null}
         <aside className="problem-brief">
           <div className="prompt-scroll">
             <section className="prompt-primary">
@@ -577,7 +664,7 @@ export function AssessmentPage() {
               <button
                 className="primary-button run-button"
                 type="button"
-                disabled={result.status === "loading"}
+                disabled={result.status === "loading" || isPaused}
                 onClick={() => void run(false)}
               >
                 <Play size={18} aria-hidden />
@@ -590,7 +677,7 @@ export function AssessmentPage() {
               <button
                 className="primary-button submit-button"
                 type="button"
-                disabled={result.status === "loading"}
+                disabled={result.status === "loading" || isPaused}
                 onClick={() => void run(true)}
               >
                 <CheckCircle2 size={18} aria-hidden />
@@ -1016,14 +1103,15 @@ function LevelReview({
 // Header bits
 // ---------------------------------------------------------------------------
 
-function Countdown({ remainingMs }: { remainingMs: number }) {
+function Countdown({ remainingMs, paused }: { remainingMs: number; paused: boolean }) {
   const state =
     remainingMs <= 5 * 60_000 ? "danger" : remainingMs <= 15 * 60_000 ? "warning" : "ok";
 
   // Announce only at meaningful boundaries (avoids per-second screen-reader
   // spam): when the 15-minute warning crosses, 5-minute, 1-minute, and zero.
-  // Each crossing fires once thanks to `latch`.
-  const announce = announcementFor(remainingMs);
+  // Each crossing fires once thanks to `latch`. Skip while paused — the clock
+  // isn't actually moving so any threshold announcement would be misleading.
+  const announce = paused ? null : announcementFor(remainingMs);
   const [latch, setLatch] = useState<string | null>(null);
   useEffect(() => {
     if (announce && announce !== latch) setLatch(announce);
@@ -1031,12 +1119,17 @@ function Countdown({ remainingMs }: { remainingMs: number }) {
 
   return (
     <>
-      <span className={`assessment-countdown ${state}`} role="timer" aria-live="off">
+      <span
+        className={`assessment-countdown ${state} ${paused ? "paused" : ""}`}
+        role="timer"
+        aria-live="off"
+      >
         <Clock size={16} aria-hidden />
         <strong>{formatRemaining(remainingMs)}</strong>
+        {paused ? <span className="assessment-paused-tag">paused</span> : null}
       </span>
       <span className="sr-only" aria-live="polite" aria-atomic="true">
-        {latch ?? ""}
+        {paused ? "Timer paused." : latch ?? ""}
       </span>
     </>
   );

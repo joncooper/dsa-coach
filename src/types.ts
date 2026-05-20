@@ -186,10 +186,22 @@ export interface AssessmentLevelResult {
 export interface AssessmentSessionState {
   assessmentId: string;
   mode: "exam" | "practice";
-  /** ISO timer anchor. */
+  /**
+   * ISO timer anchor. Shifted forward by the pause duration on each resume so
+   * elapsed = now - startedAt stays correct without bookkeeping a pause total.
+   */
   startedAt: string;
-  /** Exam only: startedAt + totalMinutes. Absent in practice mode. */
+  /**
+   * Exam only: startedAt + totalMinutes. Absent in practice mode. Shifted
+   * forward alongside `startedAt` on resume so remaining = endsAt - now stays
+   * consistent across pauses.
+   */
   endsAt?: string;
+  /**
+   * Set when the candidate paused the session; cleared on resume. While set,
+   * the clock is frozen and Run/Submit/Finish are gated by the UI.
+   */
+  pausedAt?: string;
   /** Highest level the user may open (1..4). */
   unlockedLevel: number;
   /** Best result per level, keyed by level number. */

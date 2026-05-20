@@ -2730,6 +2730,80 @@ pre {
   min-height: 220px;
 }
 
+/* Pause: countdown / elapsed pill state + the workspace overlay. */
+
+.assessment-countdown.paused,
+.assessment-elapsed.paused {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.assessment-paused-tag {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--paper-soft);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.problem-layout.beta-workspace.is-paused {
+  position: relative;
+}
+
+.problem-layout.beta-workspace.is-paused > *:not(.assessment-pause-overlay) {
+  filter: blur(2px) saturate(0.6);
+  pointer-events: none;
+  user-select: none;
+}
+
+.assessment-pause-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  background: rgba(33, 50, 53, 0.42);
+  /* Cover both columns of the split layout. */
+  grid-column: 1 / -1;
+}
+
+.assessment-pause-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 380px;
+  padding: 28px 32px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.assessment-pause-card h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.assessment-pause-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.assessment-pause-card svg {
+  color: var(--teal);
+}
+
+.assessment-pause-card .primary-button {
+  margin-top: 4px;
+}
+
 .assessment-workspace .link-button {
   border: 0;
   background: none;

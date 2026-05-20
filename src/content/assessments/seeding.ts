@@ -49,3 +49,34 @@ export function sessionKey(assessmentId: string): string {
 export function scorecardKey(assessmentId: string): string {
   return `assessment:scorecard:${assessmentId}`;
 }
+
+/**
+ * Compute the resumed `startedAt` / `endsAt` after a pause.
+ *
+ * Both timestamps are shifted forward by the pause duration so that
+ *   elapsed   = nowAfterResume - startedAt'
+ *   remaining = endsAt'        - nowAfterResume
+ * stay equal to their pre-pause values without bookkeeping a running pause
+ * total. Pure, isoformat in / isoformat out, easy to unit-test.
+ */
+export interface ResumeInput {
+  startedAt: string;
+  endsAt?: string;
+  pausedAt: string;
+  /** When the resume happens (epoch ms). Caller passes Date.now() in prod. */
+  resumeNowMs: number;
+}
+
+export interface ResumeOutput {
+  startedAt: string;
+  endsAt?: string;
+}
+
+export function resumeShift(input: ResumeInput): ResumeOutput {
+  const pauseMs = Math.max(0, input.resumeNowMs - new Date(input.pausedAt).getTime());
+  const shifted = (iso: string) => new Date(new Date(iso).getTime() + pauseMs).toISOString();
+  return {
+    startedAt: shifted(input.startedAt),
+    endsAt: input.endsAt ? shifted(input.endsAt) : undefined
+  };
+}
