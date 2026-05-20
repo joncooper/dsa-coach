@@ -20,19 +20,8 @@ const make = libraryProblem(LIBRARY_ORDEREDDICT_SET_ID);
 const LRU_STARTER = `from collections import OrderedDict
 
 def lru_cache(capacity, operations):
-    cache = OrderedDict()
-    out = []
-    for op in operations:
-        kind = op[0]
-        if kind == "get":
-            # If the key is present, mark it most-recently-used and emit its
-            # value. If absent, emit "-1".
-            pass
-        elif kind == "put":
-            # Insert / update. After a successful put, if len > capacity,
-            # evict the oldest (least-recently-used) entry.
-            pass
-    return out
+    # Walk operations and return the list of "get" results in order.
+    pass
 `;
 
 const LRU_REFERENCE = `from collections import OrderedDict
@@ -90,7 +79,7 @@ const lruCache: Problem = make({
   difficulty: "medium",
   patterns: ["LRU", "OrderedDict", "cache"],
   prompt:
-    "Implement a least-recently-used cache. `solution(capacity, operations)` receives an integer `capacity` and a list of operations. Each operation is either `[\"get\", key]` or `[\"put\", key, value]` (keys and values are strings). `get` returns the value if it's present and marks the key as most-recently-used; otherwise it returns `\"-1\"`. `put` inserts or updates the key (also marking it most-recently-used) and evicts the least-recently-used entry whenever the cache exceeds `capacity`. Return only the `get` results, in order. `collections.OrderedDict` is the right tool: `move_to_end(key)` for recency, `popitem(last=False)` for eviction.",
+    "Implement a least-recently-used cache. `lru_cache(capacity, operations)` receives an integer `capacity` and a list of operations. Each operation is either `[\"get\", key]` or `[\"put\", key, value]` (keys and values are strings). `get` looks up the key: if present, it marks the key as most-recently-used and emits the value; if absent, it emits `\"-1\"`. `put` inserts or updates the key (also marking it most-recently-used). Whenever the cache exceeds `capacity` after a `put`, evict the least-recently-used entry. Return only the `get` results, in order.",
   constraints: [
     "1 <= capacity <= 10000.",
     "Each operation is a list of strings; `get` has 2 entries, `put` has 3.",
@@ -237,19 +226,11 @@ const lruCache: Problem = make({
 // First unique in a stream
 // ---------------------------------------------------------------------------
 
-const FIRST_UNIQUE_STARTER = `from collections import Counter, OrderedDict
+const FIRST_UNIQUE_STARTER = `from collections import OrderedDict
 
 def first_unique(stream):
-    counts = Counter()
-    pending = OrderedDict()
-    out = []
-    for value in stream:
-        # Track frequency. If this is the first sighting, append to pending
-        # so its insertion-order tail extends. If a previously-unique value
-        # has become non-unique, remove it from pending. Emit the first
-        # remaining key (or "" if none).
-        pass
-    return out
+    # After each token, emit the oldest still-unique string (or "" if none).
+    pass
 `;
 
 const FIRST_UNIQUE_REFERENCE = `from collections import Counter, OrderedDict
@@ -292,9 +273,9 @@ const firstUnique: Problem = make({
   id: "lib-od-first-unique",
   title: "First Unique String in a Stream",
   difficulty: "medium",
-  patterns: ["streaming", "OrderedDict", "Counter"],
+  patterns: ["streaming", "OrderedDict"],
   prompt:
-    "Given a stream of strings, after each string is appended return the first string in insertion order that has so far appeared exactly once. If no such string exists, return `\"\"` for that step. Output length equals input length. The natural pairing is `collections.Counter` (frequency) plus `collections.OrderedDict` (insertion-ordered set of still-unique tokens) so each step is O(1) — including the `del` that fires when a previously-unique token becomes non-unique.",
+    "Given a stream of strings, after each string is appended return the first string in insertion order that has so far appeared exactly once. If no such string exists, return `\"\"` for that step. The output length equals the input length.",
   constraints: [
     "0 <= len(stream) <= 10000.",
     "Each token is a non-empty string.",

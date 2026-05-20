@@ -18,14 +18,8 @@ const make = libraryProblem(LIBRARY_SORTEDCONTAINERS_SET_ID);
 const RUNNING_MEDIAN_STARTER = `from sortedcontainers import SortedList
 
 def running_median(stream):
-    sl = SortedList()
-    medians = []
-    for value in stream:
-        # Maintain sl in sorted order, then read the middle (or average the
-        # two middle values when the count is even). Return a list of one
-        # median per element appended, in input order.
-        pass
-    return medians
+    # After each appended value, record the median of everything seen so far.
+    pass
 `;
 
 const RUNNING_MEDIAN_REFERENCE = `from sortedcontainers import SortedList
@@ -65,7 +59,7 @@ const runningMedian: Problem = make({
   difficulty: "medium",
   patterns: ["sorted container", "online median", "SortedList"],
   prompt:
-    "Given a stream of integers, return a list of medians — after each element is appended, record the median of all values seen so far. The output length equals the input length. For an odd count, the median is the middle value; for an even count, it is the mean of the two middle values (as a float). Use `sortedcontainers.SortedList` so each insert is O(log n) and the middle lookup is O(1) via indexing.",
+    "Given a stream of integers, return a list of medians — after each element is appended, record the median of all values seen so far. The output length equals the input length. For an odd count, the median is the middle value; for an even count, it is the mean of the two middle values (as a float).",
   constraints: [
     "0 <= len(stream) <= 10000.",
     "Each value fits in a Python int (positive, negative, or zero).",
@@ -145,14 +139,8 @@ const runningMedian: Problem = make({
 const SLIDING_WINDOW_STARTER = `from sortedcontainers import SortedList
 
 def sliding_window_median(nums, k):
-    if not nums or k <= 0:
-        return []
-    window = SortedList(nums[:k])
-    medians = []
-    # Emit the median of nums[0:k], then slide the window one step at a time:
-    # remove the value leaving the window, add the new one entering, emit the
-    # next median. Use SortedList so both the remove and the add are O(log k).
-    return medians
+    # Emit the median of nums[i:i+k] for i = 0, 1, ..., len(nums) - k.
+    pass
 `;
 
 const SLIDING_WINDOW_REFERENCE = `from sortedcontainers import SortedList
@@ -201,7 +189,7 @@ const slidingWindowMedian: Problem = make({
   difficulty: "medium",
   patterns: ["sliding window", "sorted container", "SortedList"],
   prompt:
-    "Given an integer array `nums` and a window size `k`, return the median of every length-`k` window as the window slides from left to right by one position at a time. The output length is `len(nums) - k + 1`. For odd `k` the median is the middle value of the sorted window; for even `k` it is the mean of the two middle values (as a float). `SortedList` gives you O(log k) add/remove and O(1) indexed access — exactly the operations a sliding median needs.",
+    "Given an integer array `nums` and a window size `k`, return the median of every length-`k` window as the window slides from left to right by one position at a time. The output length is `len(nums) - k + 1`. For odd `k` the median is the middle value of the sorted window; for even `k` it is the mean of the two middle values (as a float).",
   constraints: [
     "1 <= k <= len(nums) <= 10000.",
     "Values may be negative, zero, or positive integers.",
