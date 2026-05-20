@@ -24,6 +24,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { findAssessment } from "../content/assessments";
 import {
   codeKey,
+  finishCodeKey,
   resolveLevelCode,
   resumeShift,
   scorecardKey,
@@ -308,16 +309,18 @@ export function AssessmentPage() {
     return Math.max(0, new Date(session.endsAt).getTime() - effectiveNow);
   }, [session?.endsAt, effectiveNow]);
 
-  // Auto-expire when an in-progress exam's clock hits zero.
+  // Auto-expire when an in-progress exam's clock hits zero. Review mode is
+  // exempt: the original session already expired, the clock is just a relic.
   useEffect(() => {
     if (!session || session.mode !== "exam") return;
     if (session.status !== "in-progress") return;
     if (!session.endsAt) return;
+    if (session.reviewMode) return;
     if (isPaused) return;
     if (remainingMs > 0) return;
     void finish("expired");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remainingMs, session?.status, session?.mode, isPaused]);
+  }, [remainingMs, session?.status, session?.mode, session?.reviewMode, isPaused]);
 
   const phase: "rules" | "workspace" | "report" = !session
     ? "rules"
@@ -368,13 +371,73 @@ export function AssessmentPage() {
   }
 
   async function finish(reason: "submitted" | "expired") {
-    if (!session || !assessment) return;
+    if (!session || !assessment || !assessmentId) return;
+    // Flush the current level's buffer one last time so the snapshot below
+    // includes anything typed in the last debounce window.
+    await saveSetting(codeKey(assessmentId, level), code);
     const finishedAt = new Date().toISOString();
-    const next: AssessmentSessionState = { ...session, status: reason, finishedAt };
+    const next: AssessmentSessionState = {
+      ...session,
+      status: reason,
+      finishedAt,
+      reviewMode: false,
+      preReviewStatus: undefined
+    };
     await persistSession(next);
+    // Snapshot every level's code into a finish-only slot. These survive any
+    // post-finish edits in review mode so the report row can always show
+    // what the candidate had when the clock stopped.
+    for (let l = 1; l <= 4; l += 1) {
+      const value = l === level ? code : (settings[codeKey(assessmentId, l)]?.value as string | undefined);
+      if (typeof value === "string") {
+        await saveSetting(finishCodeKey(assessmentId, l), value);
+      }
+    }
     const elapsedMs = new Date(finishedAt).getTime() - new Date(session.startedAt).getTime();
     const card = summarizeScorecard(assessment, next, elapsedMs);
-    if (assessmentId) await saveSetting(scorecardKey(assessmentId), card);
+    await saveSetting(scorecardKey(assessmentId), card);
+  }
+
+  /**
+   * Re-open a finished session in sandbox mode. The frozen scorecard stays
+   * at scorecardKey; the workspace runs without a timer or auto-expire,
+   * Finish becomes Back-to-report, and Run/Submit still work normally.
+   */
+  async function enterReview(targetLevel?: number) {
+    if (!session || !session.finishedAt) return;
+    const preReviewStatus: "submitted" | "expired" =
+      session.status === "submitted" || session.status === "expired"
+        ? session.status
+        : "submitted";
+    if (typeof targetLevel === "number" && targetLevel !== level) {
+      setLevel(targetLevel);
+    }
+    await persistSession({
+      ...session,
+      preReviewStatus,
+      status: "in-progress",
+      reviewMode: true
+    });
+  }
+
+  /**
+   * Return from review mode to the report. Restores the original finish
+   * status — the scorecard at scorecardKey was never overwritten.
+   */
+  async function exitReview() {
+    if (!session?.reviewMode) return;
+    const restored: "submitted" | "expired" = session.preReviewStatus ?? "submitted";
+    // Capture the current buffer so the next visit picks up wherever the
+    // candidate left off iterating.
+    if (assessmentId) {
+      await saveSetting(codeKey(assessmentId, level), code);
+    }
+    await persistSession({
+      ...session,
+      status: restored,
+      reviewMode: false,
+      preReviewStatus: undefined
+    });
   }
 
   async function selectLevel(target: number) {
@@ -543,6 +606,15 @@ export function AssessmentPage() {
         }
       }
     }
+    // Per-level snapshots taken at finish time. Survive any post-finish edits
+    // in review mode so the report row always shows "what you had then."
+    const finishSnapshots: Record<number, string | undefined> = {};
+    if (assessmentId) {
+      for (let l = 1; l <= 4; l += 1) {
+        const v = settings[finishCodeKey(assessmentId, l)]?.value;
+        finishSnapshots[l] = typeof v === "string" ? v : undefined;
+      }
+    }
     return (
       <ReportScreen
         assessment={assessment}
@@ -550,7 +622,9 @@ export function AssessmentPage() {
         card={card}
         slices={slices}
         latestByLevel={latestByLevel}
+        finishSnapshots={finishSnapshots}
         onReplay={() => void replay()}
+        onContinue={(targetLevel) => void enterReview(targetLevel)}
       />
     );
   }
@@ -571,13 +645,21 @@ export function AssessmentPage() {
           </p>
           <div className="assessment-title-row">
             <h1>{assessment.title}</h1>
-            <span className={`assessment-mode-pill ${isExam ? "exam" : "practice"}`}>
-              {isExam ? "Timed exam" : "Practice"}
+            <span
+              className={`assessment-mode-pill ${
+                session?.reviewMode ? "review" : isExam ? "exam" : "practice"
+              }`}
+            >
+              {session?.reviewMode ? "Review mode" : isExam ? "Timed exam" : "Practice"}
             </span>
           </div>
         </div>
         <div className="assessment-context-actions">
-          {isExam && Number.isFinite(remainingMs) ? (
+          {session?.reviewMode ? (
+            <span className="assessment-elapsed review">
+              Score locked — iterate freely
+            </span>
+          ) : isExam && Number.isFinite(remainingMs) ? (
             <Countdown remainingMs={remainingMs} paused={isPaused} />
           ) : (
             <span className={`assessment-elapsed ${isPaused ? "paused" : ""}`}>
@@ -585,32 +667,44 @@ export function AssessmentPage() {
               {isPaused ? <span className="assessment-paused-tag">paused</span> : null}
             </span>
           )}
-          {isPaused ? (
+          {!session?.reviewMode ? (
+            isPaused ? (
+              <button
+                className="primary-button compact-button"
+                type="button"
+                onClick={() => void resumeSession()}
+              >
+                <Play size={16} aria-hidden /> Resume
+              </button>
+            ) : (
+              <button
+                className="secondary-button compact-button"
+                type="button"
+                onClick={() => void pauseSession()}
+                title="Pause the clock — step away without burning time."
+              >
+                <Pause size={16} aria-hidden /> Pause
+              </button>
+            )
+          ) : null}
+          {session?.reviewMode ? (
             <button
               className="primary-button compact-button"
               type="button"
-              onClick={() => void resumeSession()}
+              onClick={() => void exitReview()}
             >
-              <Play size={16} aria-hidden /> Resume
+              <Flag size={16} aria-hidden /> Back to report
             </button>
           ) : (
             <button
-              className="secondary-button compact-button"
+              className="primary-button compact-button"
               type="button"
-              onClick={() => void pauseSession()}
-              title="Pause the clock — step away without burning time."
+              disabled={isPaused}
+              onClick={() => void finish("submitted")}
             >
-              <Pause size={16} aria-hidden /> Pause
+              <Flag size={16} aria-hidden /> Finish
             </button>
           )}
-          <button
-            className="primary-button compact-button"
-            type="button"
-            disabled={isPaused}
-            onClick={() => void finish("submitted")}
-          >
-            <Flag size={16} aria-hidden /> Finish
-          </button>
         </div>
       </header>
 
@@ -1020,14 +1114,18 @@ function ReportScreen({
   card,
   slices,
   latestByLevel,
-  onReplay
+  finishSnapshots,
+  onReplay,
+  onContinue
 }: {
   assessment: Assessment;
   session: AssessmentSessionState;
   card: AssessmentScorecard;
   slices: LevelSlice[];
   latestByLevel: Record<number, SubmissionRecord | undefined>;
+  finishSnapshots: Record<number, string | undefined>;
   onReplay: () => void;
+  onContinue: (targetLevel?: number) => void;
 }) {
   const summary = coachingSummary(card);
   const range = assessment.scoreBand.max - assessment.scoreBand.min;
@@ -1114,7 +1212,12 @@ function ReportScreen({
                   {expanded && slice ? (
                     <tr className="scorecard-review-row">
                       <td colSpan={6}>
-                        <LevelReview slice={slice} submission={latestByLevel[row.level]} />
+                        <LevelReview
+                          slice={slice}
+                          submission={latestByLevel[row.level]}
+                          finishSnapshot={finishSnapshots[row.level]}
+                          onPracticeLevel={() => onContinue(row.level)}
+                        />
                       </td>
                     </tr>
                   ) : null}
@@ -1132,25 +1235,41 @@ function ReportScreen({
       </section>
 
       <div className="assessment-report-actions">
-        <button className="primary-button" type="button" onClick={onReplay}>
+        <button className="primary-button" type="button" onClick={() => onContinue()}>
+          Continue practicing
+        </button>
+        <button className="secondary-button" type="button" onClick={onReplay}>
           Replay assessment
         </button>
         <Link className="secondary-button" to="/assessments">
           Back to assessments
         </Link>
       </div>
+      <p className="muted assessment-report-note">
+        Continue practicing re-opens the workspace with the timer disabled and your final score
+        locked at <strong>{card.totalScore}</strong>. Edit, run, and submit any level to keep
+        learning without overwriting the result above.
+      </p>
     </section>
   );
 }
 
 function LevelReview({
   slice,
-  submission
+  submission,
+  finishSnapshot,
+  onPracticeLevel
 }: {
   slice: LevelSlice;
   submission: SubmissionRecord | undefined;
+  finishSnapshot: string | undefined;
+  onPracticeLevel: () => void;
 }) {
-  const yourCode = submission?.code ?? "";
+  // Prefer the finish-time snapshot (captures the buffer at the exact moment
+  // the clock stopped, including unsubmitted edits). Fall back to the latest
+  // submitted code if no snapshot exists (e.g. older sessions from before
+  // this feature shipped).
+  const snapshotCode = finishSnapshot ?? submission?.code ?? "";
   const referenceCode = slice.referenceCode;
   return (
     <div className="level-review">
@@ -1164,14 +1283,17 @@ function LevelReview({
             Time {slice.complexity.time} · Space {slice.complexity.space}
           </span>
         ) : null}
+        <button type="button" className="secondary-button compact-button" onClick={onPracticeLevel}>
+          <Play size={14} aria-hidden /> Practice this level
+        </button>
       </header>
       <div className="level-review-grid">
         <section>
-          <h4>Your last submission</h4>
-          {yourCode ? (
-            <pre className="level-review-code"><code>{yourCode}</code></pre>
+          <h4>Code at time of finish</h4>
+          {snapshotCode ? (
+            <pre className="level-review-code"><code>{snapshotCode}</code></pre>
           ) : (
-            <p className="muted">No submission recorded for this level.</p>
+            <p className="muted">No code captured for this level.</p>
           )}
         </section>
         <section>

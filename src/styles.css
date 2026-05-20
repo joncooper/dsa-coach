@@ -2634,6 +2634,31 @@ pre {
   color: var(--green);
 }
 
+.assessment-mode-pill.review {
+  background: rgba(143, 82, 0, 0.12);
+  color: var(--amber);
+}
+
+.assessment-elapsed.review {
+  border-style: dashed;
+  border-color: var(--amber);
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.assessment-report-note {
+  margin: 4px 0 0;
+  max-width: 760px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.level-review-header {
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .assessment-context-actions {
   display: flex;
   align-items: center;

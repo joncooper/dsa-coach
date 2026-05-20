@@ -208,6 +208,16 @@ export interface AssessmentSessionState {
   levelResults: Record<number, AssessmentLevelResult>;
   status: "in-progress" | "submitted" | "expired";
   finishedAt?: string;
+  /**
+   * Set when the candidate re-opens a finished session via "Continue
+   * practicing." The original scorecard stays frozen at scorecardKey; the
+   * workspace runs without a timer and Back-to-report restores `status` to
+   * `preReviewStatus`. Lets the candidate iterate on each level after the
+   * clock ran out without losing the time-of-expire benchmark.
+   */
+  reviewMode?: boolean;
+  /** Status to restore when leaving review mode. */
+  preReviewStatus?: "submitted" | "expired";
 }
 
 export interface AssessmentScorecard {

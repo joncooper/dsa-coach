@@ -40,6 +40,16 @@ export function codeKey(assessmentId: string, level: number): string {
   return `assessment:code:${assessmentId}#L${level}`;
 }
 
+/**
+ * Snapshot of a per-level code buffer captured at the moment the session
+ * finished (submitted or expired). Survives any post-finish edits in
+ * review mode so the report screen can always show "what you had when the
+ * clock stopped" as a benchmark.
+ */
+export function finishCodeKey(assessmentId: string, level: number): string {
+  return `assessment:finish-code:${assessmentId}#L${level}`;
+}
+
 /** Settings key for the session state. */
 export function sessionKey(assessmentId: string): string {
   return `assessment:session:${assessmentId}`;
