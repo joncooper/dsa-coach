@@ -125,11 +125,6 @@ kbd {
   background: rgba(255, 255, 255, 0.14);
 }
 
-.problem-sidebar-collapsed .sidebar-brand-row {
-  flex-direction: column;
-  gap: 12px;
-}
-
 .search-box {
   display: flex;
   align-items: center;
@@ -195,40 +190,51 @@ kbd {
   min-width: 0;
 }
 
+/* Sidebar collapsed: fully hide the aside and let the workspace use the
+   full width. A floating Show-sidebar button (see .sidebar-show-toggle)
+   gives the candidate a clean way to bring it back. */
 .problem-sidebar-collapsed .app-shell {
-  grid-template-columns: 76px minmax(0, 1fr);
+  grid-template-columns: 1fr;
 }
 
 .problem-sidebar-collapsed .sidebar {
-  padding: 18px 10px;
-}
-
-.problem-sidebar-collapsed .brand {
-  justify-content: center;
-}
-
-.problem-sidebar-collapsed .brand span,
-.problem-sidebar-collapsed .search-box {
   display: none;
 }
 
-.problem-sidebar-collapsed .chapter-nav a {
-  grid-template-columns: 1fr;
-  justify-items: center;
-  gap: 0;
-  padding: 10px 6px;
-  font-size: 0;
-}
-
-.problem-sidebar-collapsed .chapter-nav a span {
-  font-size: 0.78rem;
-}
-
+/* Focus mode is the stronger version: nothing visible except the workspace,
+   including the floating show-sidebar button. */
 .problem-focus-mode .app-shell {
   grid-template-columns: 1fr;
 }
 
 .problem-focus-mode .sidebar {
+  display: none;
+}
+
+.sidebar-show-toggle {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 30;
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  transition: background 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+.sidebar-show-toggle:hover {
+  background: var(--paper-soft);
+  border-color: var(--teal);
+  color: var(--teal);
+}
+
+.problem-focus-mode .sidebar-show-toggle {
   display: none;
 }
 

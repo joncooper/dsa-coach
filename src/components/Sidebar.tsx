@@ -44,7 +44,24 @@ export function Sidebar() {
   const librarySets = course.problemSets.filter((set) => librarySetIds.has(set.id));
 
   return (
-    <aside className="sidebar">
+    <>
+      {/* Floating "Show sidebar" button — appears only when the sidebar is
+          collapsed and we're on a problem workspace. Lets the candidate keep
+          the sidebar fully hidden (cleaner than a 76px icon rail) while still
+          having a discoverable way to bring it back. Suppressed in focus
+          mode, where the candidate wants nothing on screen at all. */}
+      {collapsed && onProblem ? (
+        <button
+          type="button"
+          className="sidebar-show-toggle"
+          aria-label="Show sidebar"
+          title="Show sidebar"
+          onClick={() => void saveSetting("workspace:sidebarCollapsed", false)}
+        >
+          <PanelLeftOpen size={18} />
+        </button>
+      ) : null}
+      <aside className="sidebar">
       <div className="sidebar-brand-row">
         <NavLink className="brand" to="/" aria-label="Dashboard">
           <BookOpen size={24} />
@@ -123,6 +140,7 @@ export function Sidebar() {
           </nav>
         </>
       ) : null}
-    </aside>
+      </aside>
+    </>
   );
 }
