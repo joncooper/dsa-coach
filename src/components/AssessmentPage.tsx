@@ -12,9 +12,11 @@ import {
 import {
   type CSSProperties,
   Fragment,
+  type PointerEvent,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState
 } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
@@ -50,6 +52,9 @@ const idleResult: RunResult = {
   durationMs: 0,
   tests: []
 };
+
+type AssessmentPanel = "results" | "output" | "errors";
+const assessmentPanels: AssessmentPanel[] = ["results", "output", "errors"];
 
 /**
  * Level slice the workspace renders against — uniform across the base
@@ -142,7 +147,66 @@ export function AssessmentPage() {
   const [hintCount, setHintCount] = useState(0);
   const [showSolution, setShowSolution] = useState(false);
   const [lastRunIncludedHidden, setLastRunIncludedHidden] = useState(false);
+  const [activePanel, setActivePanel] = useState<AssessmentPanel>("results");
+  // Output-dock height shares ProblemPage's stored preference so the user's
+  // "how tall do I want the dock" choice carries across the whole app.
+  const storedDockHeight = settings["workspace:bottomDockHeight"]?.value;
+  const [dockHeight, setDockHeight] = useState<number>(
+    typeof storedDockHeight === "number" ? Math.min(900, Math.max(150, storedDockHeight)) : 260
+  );
   const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (typeof storedDockHeight === "number") {
+      setDockHeight(Math.min(900, Math.max(150, storedDockHeight)));
+    }
+  }, [storedDockHeight]);
+
+  const workspaceRef = useRef<HTMLElement | null>(null);
+  const dockDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+
+  const clampDockHeight = useCallback((value: number): number => {
+    const MIN = 150;
+    const workspaceHeight = workspaceRef.current?.clientHeight ?? 0;
+    // Leave at least ~240px for the editor + toolbar; fall back to a static
+    // ceiling before the workspace has measured itself.
+    const dynamicMax = workspaceHeight > 0 ? workspaceHeight - 240 : 720;
+    const max = Math.max(MIN, dynamicMax);
+    return Math.min(max, Math.max(MIN, Math.round(value)));
+  }, []);
+
+  function handleDockPointerDown(event: PointerEvent<HTMLDivElement>) {
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Synthetic or already-released pointers can't be captured; the drag
+      // still works via the ref below.
+    }
+    dockDragRef.current = { startY: event.clientY, startHeight: dockHeight };
+  }
+
+  function handleDockPointerMove(event: PointerEvent<HTMLDivElement>) {
+    const drag = dockDragRef.current;
+    if (!drag) return;
+    setDockHeight(clampDockHeight(drag.startHeight + (drag.startY - event.clientY)));
+  }
+
+  function handleDockPointerUp(event: PointerEvent<HTMLDivElement>) {
+    try {
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    } catch {
+      // ignore
+    }
+    const drag = dockDragRef.current;
+    dockDragRef.current = null;
+    const next = drag
+      ? clampDockHeight(drag.startHeight + (drag.startY - event.clientY))
+      : dockHeight;
+    setDockHeight(next);
+    void saveSetting("workspace:bottomDockHeight", next);
+  }
 
   // Re-seed the editor whenever the active level changes (mount, level switch,
   // or session start/replay). Reads the carry-forward rule from the pure
@@ -165,6 +229,7 @@ export function AssessmentPage() {
     setHintCount(0);
     setShowSolution(false);
     setLastRunIncludedHidden(false);
+    setActivePanel("results");
     // Intentional: only re-seed on level / assessment change; per-keystroke
     // settings updates must not clobber an in-progress edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,6 +261,9 @@ export function AssessmentPage() {
     : session.status === "in-progress"
       ? "workspace"
       : "report";
+
+  const hasStdout = result.stdout.trim().length > 0;
+  const hasErrors = Boolean(result.message?.trim() || result.stderr?.trim());
 
   if (!assessment || !problem) return <Navigate to="/assessments" replace />;
   const slice = slices[level - 1];
@@ -276,6 +344,16 @@ export function AssessmentPage() {
             };
       const out = await runPythonProblem(runtime, code, includeHidden);
       setResult(out);
+      // If the run blew up before any tests ran, the diagnostic lives in
+      // `message`/`stderr` — jump the candidate to Errors so they aren't
+      // staring at "No run results yet". Per-test runtime errors stay on
+      // Results, where each test card already shows its own traceback.
+      const topLevelError = Boolean(out.message?.trim() || out.stderr?.trim());
+      if (topLevelError || out.status === "timeout") {
+        setActivePanel("errors");
+      } else {
+        setActivePanel("results");
+      }
       await recordSubmission(`${assessmentId}#L${level}`, code, out);
 
       const visiblePassed = out.tests.filter((t) => !t.hidden && t.passed).length;
@@ -369,7 +447,7 @@ export function AssessmentPage() {
   // ---- Workspace phase ----------------------------------------------------
   const isExam = session?.mode === "exam";
   const remainingLabel = formatRemaining(remainingMs);
-  const splitStyle = { "--prompt-width": "38%", "--dock-height": "260px" } as CSSProperties;
+  const splitStyle = { "--prompt-width": "38%", "--dock-height": `${dockHeight}px` } as CSSProperties;
 
   return (
     <section className="page assessment-page">
@@ -482,7 +560,7 @@ export function AssessmentPage() {
           )}
         </aside>
 
-        <section className="workspace assessment-workspace">
+        <section className="workspace assessment-workspace" ref={workspaceRef}>
           <div className="workspace-toolbar" aria-label="Run controls">
             <div className="toolbar-status-group">
               <span className={`run-status ${result.status}`}>{statusLabel(result.status)}</span>
@@ -542,7 +620,51 @@ export function AssessmentPage() {
           </div>
 
           <div className="workspace-bottom">
-            <section className="workspace-panel result-panel active">
+            <div
+              className="desktop-workspace-tabs"
+              role="tablist"
+              aria-label="Workspace output panels"
+            >
+              {assessmentPanels.map((panel) => (
+                <button
+                  key={panel}
+                  type="button"
+                  role="tab"
+                  aria-selected={activePanel === panel}
+                  className={activePanel === panel ? "active" : ""}
+                  onClick={() => setActivePanel(panel)}
+                >
+                  {panel}
+                  {panel === "output" && hasStdout ? <span className="tab-dot" /> : null}
+                  {panel === "errors" && hasErrors ? <span className="tab-dot error" /> : null}
+                </button>
+              ))}
+            </div>
+            <div
+              className="dock-resize-handle"
+              role="separator"
+              aria-label="Resize output dock"
+              aria-orientation="horizontal"
+              aria-valuemin={150}
+              aria-valuenow={dockHeight}
+              tabIndex={0}
+              onPointerDown={handleDockPointerDown}
+              onPointerMove={handleDockPointerMove}
+              onPointerUp={handleDockPointerUp}
+              onKeyDown={(event) => {
+                if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+                event.preventDefault();
+                const next = clampDockHeight(dockHeight + (event.key === "ArrowUp" ? 24 : -24));
+                setDockHeight(next);
+                void saveSetting("workspace:bottomDockHeight", next);
+              }}
+            />
+
+            <section
+              className={`workspace-panel result-panel ${activePanel === "results" ? "active" : ""}`}
+              role="tabpanel"
+              aria-label="Results"
+            >
               <h2>Results</h2>
               {result.status === "passed" && lastRunIncludedHidden ? (
                 <div className="completion-banner">
@@ -568,11 +690,61 @@ export function AssessmentPage() {
                   </div>
                 </div>
               ) : null}
+              {result.status === "error" && !result.tests.length && hasErrors ? (
+                <p className="muted">
+                  Your code raised an error before any tests could run — see the{" "}
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => setActivePanel("errors")}
+                  >
+                    Errors
+                  </button>{" "}
+                  tab for the traceback.
+                </p>
+              ) : null}
+              {result.status === "timeout" ? (
+                <p className="muted">
+                  Execution timed out. See the{" "}
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => setActivePanel("errors")}
+                  >
+                    Errors
+                  </button>{" "}
+                  tab for details.
+                </p>
+              ) : null}
               <TestResultsList
                 tests={result.tests}
                 showHiddenDiagnostics={false}
                 lockHidden={isExam}
               />
+            </section>
+
+            <section
+              className={`workspace-panel result-panel ${activePanel === "output" ? "active" : ""}`}
+              role="tabpanel"
+              aria-label="Output"
+            >
+              <h2>Output</h2>
+              {hasStdout ? (
+                <pre>{result.stdout}</pre>
+              ) : (
+                <p className="muted">Nothing printed yet. Use <code>print(...)</code> to inspect values.</p>
+              )}
+            </section>
+
+            <section
+              className={`workspace-panel result-panel ${activePanel === "errors" ? "active" : ""}`}
+              role="tabpanel"
+              aria-label="Errors"
+            >
+              <h2>Errors</h2>
+              {result.message ? <pre className="error-output">{result.message}</pre> : null}
+              {result.stderr ? <pre className="error-output">{result.stderr}</pre> : null}
+              {!hasErrors ? <p className="muted">No runtime or syntax errors.</p> : null}
             </section>
           </div>
         </section>

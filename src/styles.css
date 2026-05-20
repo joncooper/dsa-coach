@@ -2730,6 +2730,21 @@ pre {
   min-height: 220px;
 }
 
+.assessment-workspace .link-button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--teal);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.assessment-workspace .link-button:hover,
+.assessment-workspace .link-button:focus-visible {
+  color: var(--teal-dark);
+}
+
 /* Report / scorecard */
 
 .assessment-report-page {
