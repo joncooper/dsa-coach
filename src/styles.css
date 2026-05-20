@@ -3143,6 +3143,193 @@ pre {
   font-weight: 700;
 }
 
+/* ── Run history (across attempts) ───────────────────────────────── */
+
+.run-history-trend {
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  padding: 0 6px;
+  border-radius: 999px;
+}
+
+.run-history-trend.up {
+  color: var(--green);
+  background: rgba(26, 127, 70, 0.1);
+}
+
+.run-history-trend.down {
+  color: var(--red);
+  background: rgba(180, 35, 24, 0.08);
+}
+
+.run-history-trend.flat {
+  color: var(--muted);
+}
+
+.run-history-details {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  padding: 0 16px;
+}
+
+.run-history-details summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--muted);
+  list-style: none;
+}
+
+.run-history-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.run-history-details summary::before {
+  content: "▸ ";
+  display: inline-block;
+  margin-right: 4px;
+  transition: transform 0.15s ease-out;
+}
+
+.run-history-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.run-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.run-history-item {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--paper-soft);
+  border: 1px solid transparent;
+  font-variant-numeric: tabular-nums;
+}
+
+.run-history-item.current {
+  background: rgba(9, 107, 114, 0.06);
+  border-color: rgba(9, 107, 114, 0.3);
+}
+
+.run-history-item.best {
+  background: rgba(26, 127, 70, 0.06);
+  border-color: rgba(26, 127, 70, 0.3);
+}
+
+.run-history-score {
+  font-size: 20px;
+  font-weight: 850;
+  color: var(--ink);
+}
+
+.run-history-item.best .run-history-score {
+  color: var(--green);
+}
+
+.run-history-meta {
+  font-size: 13px;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.run-history-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.run-history-tag.current {
+  background: rgba(9, 107, 114, 0.15);
+  color: var(--teal);
+}
+
+.run-history-tag.best {
+  background: rgba(26, 127, 70, 0.15);
+  color: var(--green);
+}
+
+.run-history-step {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.run-history-step.up {
+  color: var(--green);
+  background: rgba(26, 127, 70, 0.1);
+}
+
+.run-history-step.down {
+  color: var(--red);
+  background: rgba(180, 35, 24, 0.08);
+}
+
+.run-history-step.flat {
+  color: var(--muted);
+}
+
+/* Rules-screen "Your runs" block (compact summary + recent list) */
+
+.rules-history-summary {
+  margin: 0;
+  font-size: 15px;
+}
+
+.rules-history-summary strong {
+  color: var(--teal);
+  font-variant-numeric: tabular-nums;
+}
+
+.rules-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: grid;
+  gap: 6px;
+}
+
+.rules-history-list li {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+
+.rules-history-score {
+  font-weight: 850;
+  color: var(--ink);
+  min-width: 48px;
+}
+
+.rules-history-meta {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rules-history-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
 /* ── Level breakdown ─────────────────────────────────────────────── */
 
 .report-section {

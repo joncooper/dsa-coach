@@ -23,10 +23,12 @@ import {
 import { Link, Navigate, useParams } from "react-router-dom";
 import { findAssessment } from "../content/assessments";
 import {
+  appendScorecardHistory,
   codeKey,
   finishCodeKey,
   resolveLevelCode,
   resumeShift,
+  scorecardHistoryKey,
   scorecardKey,
   sessionKey
 } from "../content/assessments/seeding";
@@ -148,6 +150,9 @@ export function AssessmentPage() {
   const storedScorecard = assessmentId
     ? (settings[scorecardKey(assessmentId)]?.value as AssessmentScorecard | undefined)
     : undefined;
+  const scorecardHistory = assessmentId
+    ? ((settings[scorecardHistoryKey(assessmentId)]?.value as AssessmentScorecard[] | undefined) ?? [])
+    : [];
 
   // Hidden-diagnostic reveal preference is shared with ProblemPage so the
   // candidate's "I want to see hidden test details" choice carries between
@@ -396,6 +401,15 @@ export function AssessmentPage() {
     const elapsedMs = new Date(finishedAt).getTime() - new Date(session.startedAt).getTime();
     const card = summarizeScorecard(assessment, next, elapsedMs);
     await saveSetting(scorecardKey(assessmentId), card);
+    // Append to the per-assessment history so the rules + report screens
+    // can show the candidate's run-by-run progression. Survives Replay.
+    const priorHistory = settings[scorecardHistoryKey(assessmentId)]?.value as
+      | AssessmentScorecard[]
+      | undefined;
+    await saveSetting(
+      scorecardHistoryKey(assessmentId),
+      appendScorecardHistory(priorHistory, card)
+    );
   }
 
   /**
@@ -581,6 +595,7 @@ export function AssessmentPage() {
       <RulesScreen
         assessment={assessment}
         lastScorecard={storedScorecard}
+        history={scorecardHistory}
         onStart={(mode) => void startSession(mode)}
       />
     );
@@ -623,6 +638,7 @@ export function AssessmentPage() {
         slices={slices}
         latestByLevel={latestByLevel}
         finishSnapshots={finishSnapshots}
+        history={scorecardHistory}
         onReplay={() => void replay()}
         onContinue={(targetLevel) => void enterReview(targetLevel)}
       />
@@ -1028,12 +1044,18 @@ export function AssessmentPage() {
 function RulesScreen({
   assessment,
   lastScorecard,
+  history,
   onStart
 }: {
   assessment: Assessment;
   lastScorecard?: AssessmentScorecard;
+  history: AssessmentScorecard[];
   onStart: (mode: "exam" | "practice") => void;
 }) {
+  const best = history.reduce<AssessmentScorecard | undefined>(
+    (acc, card) => (acc && acc.totalScore >= card.totalScore ? acc : card),
+    undefined
+  );
   return (
     <section className="page assessment-rules-page">
       <header className="page-header">
@@ -1082,13 +1104,38 @@ function RulesScreen({
         </ol>
       </section>
 
-      {lastScorecard ? (
+      {history.length ? (
         <section className="rules-block">
-          <h2>Last attempt</h2>
-          <p>
-            <strong>{lastScorecard.totalScore}</strong> ({lastScorecard.mode}) ·{" "}
-            {lastScorecard.completedLevels} of 4 levels cleared
+          <h2>Your runs</h2>
+          <p className="rules-history-summary">
+            <strong>{history.length}</strong> attempt{history.length === 1 ? "" : "s"} ·{" "}
+            best <strong>{best?.totalScore ?? history[0]?.totalScore}</strong>
+            {history[0] ? (
+              <>
+                {" "}
+                · latest <strong>{history[0].totalScore}</strong> ({history[0].mode})
+              </>
+            ) : null}
           </p>
+          {history.length > 1 ? (
+            <ol className="rules-history-list">
+              {history.slice(0, 10).map((card, idx) => (
+                <li key={`${card.generatedAt}-${idx}`}>
+                  <span className="rules-history-score">{card.totalScore}</span>
+                  <span className="rules-history-meta">
+                    {card.completedLevels}/4 cleared · {card.mode} ·{" "}
+                    {formatRunWhen(card.generatedAt)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="muted rules-history-hint">
+              {history[0]?.completedLevels === 4
+                ? "Try again for a fresh attempt — your history is saved across runs."
+                : "Take another shot — your history is saved across runs so you can watch your score climb."}
+            </p>
+          )}
         </section>
       ) : null}
 
@@ -1115,6 +1162,7 @@ function ReportScreen({
   slices,
   latestByLevel,
   finishSnapshots,
+  history,
   onReplay,
   onContinue
 }: {
@@ -1124,6 +1172,7 @@ function ReportScreen({
   slices: LevelSlice[];
   latestByLevel: Record<number, SubmissionRecord | undefined>;
   finishSnapshots: Record<number, string | undefined>;
+  history: AssessmentScorecard[];
   onReplay: () => void;
   onContinue: (targetLevel?: number) => void;
 }) {
@@ -1231,6 +1280,11 @@ function ReportScreen({
             <Play size={16} aria-hidden /> Practice Level {suggestion.level}
           </button>
         </section>
+      ) : null}
+
+      {/* ── Run history ─────────────────────────────────────────────── */}
+      {history.length > 1 ? (
+        <RunHistory history={history} currentGeneratedAt={card.generatedAt} />
       ) : null}
 
       {/* ── Level breakdown ─────────────────────────────────────────── */}
@@ -1415,6 +1469,97 @@ function formatShortTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(d);
+}
+
+/** Relative-ish run timestamp — "just now", "today", "yesterday", or a date. */
+function formatRunWhen(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const now = Date.now();
+  const diff = now - d.getTime();
+  if (diff < 60_000) return "just now";
+  if (diff < 60 * 60_000) return `${Math.floor(diff / 60_000)}m ago`;
+  if (diff < 24 * 60 * 60_000) return `${Math.floor(diff / (60 * 60_000))}h ago`;
+  if (diff < 7 * 24 * 60 * 60_000) return `${Math.floor(diff / (24 * 60 * 60_000))}d ago`;
+  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(d);
+}
+
+function RunHistory({
+  history,
+  currentGeneratedAt
+}: {
+  history: AssessmentScorecard[];
+  currentGeneratedAt: string;
+}) {
+  const best = history.reduce<AssessmentScorecard | undefined>(
+    (acc, card) => (acc && acc.totalScore >= card.totalScore ? acc : card),
+    undefined
+  );
+  const latest = history[0];
+  const prior = history[1];
+  // Trend line vs the immediately prior attempt (the most actionable signal).
+  const delta = prior ? latest.totalScore - prior.totalScore : 0;
+  const trend = !prior ? "first" : delta > 0 ? "up" : delta < 0 ? "down" : "flat";
+  return (
+    <section className="report-section run-history">
+      <header className="report-section-header">
+        <h2>Run history</h2>
+        <p className="muted">
+          {history.length} attempt{history.length === 1 ? "" : "s"} ·{" "}
+          best <strong>{best?.totalScore}</strong>
+          {prior ? (
+            <>
+              {" "}
+              · vs prior <span className={`run-history-trend ${trend}`}>
+                {delta > 0 ? `+${delta}` : delta}
+              </span>
+            </>
+          ) : null}
+        </p>
+      </header>
+      <details className="run-history-details" open={history.length <= 4}>
+        <summary>
+          {history.length <= 4 ? "Hide" : "Show"} all attempts
+        </summary>
+        <ol className="run-history-list">
+          {history.map((entry, idx) => {
+            const isCurrent = entry.generatedAt === currentGeneratedAt;
+            const prev = history[idx + 1];
+            const stepDelta = prev ? entry.totalScore - prev.totalScore : 0;
+            return (
+              <li
+                key={`${entry.generatedAt}-${idx}`}
+                className={`run-history-item ${isCurrent ? "current" : ""} ${
+                  best && entry.totalScore === best.totalScore ? "best" : ""
+                }`}
+              >
+                <span className="run-history-score">{entry.totalScore}</span>
+                <span className="run-history-meta">
+                  {entry.completedLevels}/4 cleared · {entry.mode} ·{" "}
+                  {formatRunWhen(entry.generatedAt)}
+                  {isCurrent ? <span className="run-history-tag current">this run</span> : null}
+                  {best && entry.totalScore === best.totalScore && !isCurrent ? (
+                    <span className="run-history-tag best">best</span>
+                  ) : null}
+                </span>
+                {prev ? (
+                  <span
+                    className={`run-history-step ${
+                      stepDelta > 0 ? "up" : stepDelta < 0 ? "down" : "flat"
+                    }`}
+                  >
+                    {stepDelta > 0 ? `+${stepDelta}` : stepDelta}
+                  </span>
+                ) : (
+                  <span className="run-history-step flat">—</span>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </details>
+    </section>
+  );
 }
 
 interface PracticeSuggestion {

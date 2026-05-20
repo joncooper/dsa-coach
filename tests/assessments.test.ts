@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { resolveLevelCode, resumeShift } from "../src/content/assessments/seeding";
+import {
+  appendScorecardHistory,
+  resolveLevelCode,
+  resumeShift
+} from "../src/content/assessments/seeding";
 import {
   bandScore,
   coachingSummary,
@@ -146,6 +150,34 @@ describe("resumeShift (pause/resume timestamps)", () => {
     });
     expect(out.startedAt).toBe(START);
     expect(out.endsAt).toBe(END_90);
+  });
+});
+
+describe("appendScorecardHistory", () => {
+  it("returns a single-entry array when there is no prior history", () => {
+    const out = appendScorecardHistory(undefined, "a");
+    expect(out).toEqual(["a"]);
+  });
+
+  it("prepends the new entry (newest first)", () => {
+    const out = appendScorecardHistory(["b", "c"], "a");
+    expect(out).toEqual(["a", "b", "c"]);
+  });
+
+  it("caps growth so unbounded attempts don't bloat settings", () => {
+    const seed = Array.from({ length: 20 }, (_, i) => `e${i}`);
+    const out = appendScorecardHistory(seed, "new", 20);
+    expect(out).toHaveLength(20);
+    expect(out[0]).toBe("new");
+    // Oldest entry (e19) gets dropped.
+    expect(out).not.toContain("e19");
+    expect(out).toContain("e18");
+  });
+
+  it("treats a non-array prior value as empty (defensive against bad storage)", () => {
+    // Cast-as-any-shape simulates a settings record that lost its array.
+    const out = appendScorecardHistory(undefined as unknown as string[], "a");
+    expect(out).toEqual(["a"]);
   });
 });
 

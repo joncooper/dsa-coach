@@ -61,6 +61,29 @@ export function scorecardKey(assessmentId: string): string {
 }
 
 /**
+ * Settings key for the per-assessment list of past scorecards.
+ *
+ * Newest first; capped (see {@link appendScorecardHistory}) so a candidate
+ * can iterate hundreds of times without unbounded growth. Survives Replay
+ * — losing your improvement timeline to a single button click defeats the
+ * point of keeping it. The single-key `scorecardKey` still tracks the
+ * latest result for the rules-screen "last attempt" shortcut.
+ */
+export function scorecardHistoryKey(assessmentId: string): string {
+  return `assessment:scorecard-history:${assessmentId}`;
+}
+
+/**
+ * Pure history-update helper. Takes the prior history (or undefined for the
+ * first attempt) and the new card, returns the updated array newest-first
+ * with the oldest entries dropped past `cap`. Trivially unit-testable.
+ */
+export function appendScorecardHistory<T>(history: T[] | undefined, next: T, cap = 20): T[] {
+  const arr = Array.isArray(history) ? history : [];
+  return [next, ...arr].slice(0, cap);
+}
+
+/**
  * Compute the resumed `startedAt` / `endsAt` after a pause.
  *
  * Both timestamps are shifted forward by the pause duration so that
