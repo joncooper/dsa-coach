@@ -133,6 +133,84 @@ export interface CourseData {
   problemSets: ProblemSet[];
 }
 
+/**
+ * CodeSignal Industry Coding Framework (ICF) practice mode.
+ *
+ * Each assessment is ONE evolving problem with four progressive levels. The
+ * underlying content is a single `Problem` whose `parts[]` are levels 2-4
+ * (the base problem is level 1); every level shares one entrypoint
+ * (`solution(queries)`) so the candidate's code carries forward level→level,
+ * mirroring the real ICF. `Assessment` holds the exam-only metadata (timing,
+ * scoring weights, level→part mapping) and is NOT part of `CourseData`.
+ */
+export interface AssessmentLevel {
+  /** 1..4 */
+  level: number;
+  /** Which Problem part this maps to. "base" = the Problem itself; else ProblemPart.id. */
+  partId: string;
+  /** Raw point weight for this level (later levels are weighted heavier). */
+  maxPoints: number;
+  /** Advisory time-box shown in the UI (minutes). */
+  recommendedMinutes: number;
+}
+
+export interface Assessment {
+  id: string;
+  title: string;
+  archetype: "filesystem" | "banking" | "in-memory-db";
+  /** One-line description for the index card. */
+  blurb: string;
+  /** Rules-screen body (markdown). */
+  intro: string;
+  /** Total exam budget in minutes (e.g. 90). */
+  totalMinutes: number;
+  /** The Problem that holds all four levels in base + parts[]. */
+  problemId: string;
+  levels: AssessmentLevel[];
+  /** Banded score range; CodeSignal is 200–600. */
+  scoreBand: { min: number; max: number };
+}
+
+export interface AssessmentLevelResult {
+  level: number;
+  visiblePassed: number;
+  visibleTotal: number;
+  hiddenPassed: number;
+  hiddenTotal: number;
+  attempts: number;
+  /** Best-of-submissions raw points earned at this level. */
+  points: number;
+  lastRunAt: string;
+}
+
+export interface AssessmentSessionState {
+  assessmentId: string;
+  mode: "exam" | "practice";
+  /** ISO timer anchor. */
+  startedAt: string;
+  /** Exam only: startedAt + totalMinutes. Absent in practice mode. */
+  endsAt?: string;
+  /** Highest level the user may open (1..4). */
+  unlockedLevel: number;
+  /** Best result per level, keyed by level number. */
+  levelResults: Record<number, AssessmentLevelResult>;
+  status: "in-progress" | "submitted" | "expired";
+  finishedAt?: string;
+}
+
+export interface AssessmentScorecard {
+  assessmentId: string;
+  mode: "exam" | "practice";
+  /** Mapped into scoreBand (e.g. 200–600). */
+  totalScore: number;
+  rawPoints: number;
+  maxRawPoints: number;
+  perLevel: AssessmentLevelResult[];
+  elapsedMs: number;
+  completedLevels: number;
+  generatedAt: string;
+}
+
 export interface ProgressRecord {
   key: string;
   type: "lesson" | "problem" | "quiz";

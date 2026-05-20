@@ -74,6 +74,16 @@ export function useCourseStore() {
     setSettings((current) => ({ ...current, [key]: record }));
   }, []);
 
+  const deleteSetting = useCallback(async (key: string) => {
+    await db.settings.delete(key);
+    setSettings((current) => {
+      if (!(key in current)) return current;
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  }, []);
+
   const recordSubmission = useCallback(async (problemId: string, code: string, result: RunResult) => {
     const submission: SubmissionRecord = {
       problemId,
@@ -133,6 +143,7 @@ export function useCourseStore() {
     markProgress,
     saveNote,
     saveSetting,
+    deleteSetting,
     recordSubmission,
     logCoachExchange,
     rateCoachExchange,

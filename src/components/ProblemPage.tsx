@@ -1,9 +1,6 @@
 import CodeMirror from "@uiw/react-codemirror";
-import { python, pythonLanguage } from "@codemirror/lang-python";
-import { EditorView, keymap } from "@codemirror/view";
-import { indentUnit } from "@codemirror/language";
-import { EditorState } from "@codemirror/state";
-import { pythonJediCompletion, pythonStdlibCompletion } from "../runner/pythonCompletions";
+import { pythonEditorExtensions } from "./editor/pythonEditorExtensions";
+import { TestResultsList } from "./results/TestResultsList";
 import {
   Bot,
   CheckCircle2,
@@ -169,10 +166,7 @@ export function ProblemPage() {
     return `${passed}/${hidden.length} hidden tests passed`;
   }, [result.tests]);
   const visibleResults = result.tests.filter((test) => !test.hidden);
-  const hiddenResults = result.tests.filter((test) => test.hidden);
-  const failedHiddenCount = hiddenResults.filter((test) => !test.passed).length;
-  const failedVisibleCount = visibleResults.filter((test) => !test.passed).length;
-  const passedVisibleCount = visibleResults.filter((test) => test.passed).length;
+  const failedHiddenCount = result.tests.filter((test) => test.hidden && !test.passed).length;
   const hasStdout = result.stdout.trim().length > 0;
   const hasErrors = Boolean(result.message || result.stderr);
   const hasScratchpadOutput = Boolean(scratchpadResult.stdout.trim() || scratchpadResult.stderr.trim() || scratchpadResult.message);
@@ -275,72 +269,28 @@ export function ProblemPage() {
   }, [problem, saveSetting, scratchpadCode]);
 
   const editorExtensions = useMemo(
-    () => [
-      python(),
-      indentUnit.of("    "),
-      EditorState.tabSize.of(4),
-      pythonLanguage.data.of({ autocomplete: pythonStdlibCompletion }),
-      pythonLanguage.data.of({ autocomplete: pythonJediCompletion }),
-      EditorView.contentAttributes.of({ "aria-label": `${problem?.title ?? "Problem"} Python code editor` }),
-      keymap.of([
-        {
-          key: "Mod-Enter",
-          run: () => {
-            void run(false);
-            return true;
-          }
-        },
-        {
-          key: "Ctrl-Enter",
-          run: () => {
-            void run(false);
-            return true;
-          }
-        },
-        {
-          key: "Mod-Shift-Enter",
-          run: () => {
-            void run(true);
-            return true;
-          }
-        },
-        {
-          key: "Ctrl-Shift-Enter",
-          run: () => {
-            void run(true);
-            return true;
-          }
-        }
-      ])
-    ],
+    () =>
+      pythonEditorExtensions({
+        ariaLabel: `${problem?.title ?? "Problem"} Python code editor`,
+        keys: [
+          { key: "Mod-Enter", run: () => { void run(false); return true; } },
+          { key: "Ctrl-Enter", run: () => { void run(false); return true; } },
+          { key: "Mod-Shift-Enter", run: () => { void run(true); return true; } },
+          { key: "Ctrl-Shift-Enter", run: () => { void run(true); return true; } }
+        ]
+      }),
     [problem?.title, run]
   );
 
   const scratchpadExtensions = useMemo(
-    () => [
-      python(),
-      indentUnit.of("    "),
-      EditorState.tabSize.of(4),
-      pythonLanguage.data.of({ autocomplete: pythonStdlibCompletion }),
-      pythonLanguage.data.of({ autocomplete: pythonJediCompletion }),
-      EditorView.contentAttributes.of({ "aria-label": "Python scratchpad editor" }),
-      keymap.of([
-        {
-          key: "Mod-Enter",
-          run: () => {
-            void runScratchpad();
-            return true;
-          }
-        },
-        {
-          key: "Ctrl-Enter",
-          run: () => {
-            void runScratchpad();
-            return true;
-          }
-        }
-      ])
-    ],
+    () =>
+      pythonEditorExtensions({
+        ariaLabel: "Python scratchpad editor",
+        keys: [
+          { key: "Mod-Enter", run: () => { void runScratchpad(); return true; } },
+          { key: "Ctrl-Enter", run: () => { void runScratchpad(); return true; } }
+        ]
+      }),
     [runScratchpad]
   );
 
@@ -844,30 +794,12 @@ export function ProblemPage() {
                 <pre>{result.stdout}</pre>
               </details>
             ) : null}
-            {result.tests.length ? (
-              <div className="result-groups">
-                <div className="result-group-header">
-                  <h3>Visible Tests</h3>
-                  <span>{failedVisibleCount ? `${failedVisibleCount} failing` : `${passedVisibleCount}/${visibleResults.length} passing`}</span>
-                </div>
-                <TestGroup title="" tests={visibleResults} reveal />
-                {hiddenResults.length ? (
-                  <section className="result-group">
-                    <div className="result-group-header">
-                      <h3>Hidden Tests</h3>
-                      <span>{failedHiddenCount ? `${failedHiddenCount} failing` : "All passing"}</span>
-                    </div>
-                    <button className="secondary-button" type="button" onClick={() => updateHiddenDiagnostics(!showHiddenDiagnostics)}>
-                      {showHiddenDiagnostics ? <EyeOff size={18} /> : <Eye size={18} />}
-                      {showHiddenDiagnostics ? "Hide hidden diagnostics" : "Reveal hidden diagnostics"}
-                    </button>
-                    <TestGroup title="" tests={hiddenResults} reveal={showHiddenDiagnostics} hidden />
-                  </section>
-                ) : null}
-              </div>
-            ) : (
-              <p className="muted">No run results yet.</p>
-            )}
+            <TestResultsList
+              tests={result.tests}
+              showHiddenDiagnostics={showHiddenDiagnostics}
+              onToggleHiddenDiagnostics={updateHiddenDiagnostics}
+            />
+
           </section>
 
           <section className={`workspace-panel result-panel ${activeDesktopPanel === "stdout" ? "active" : ""}`}>
@@ -942,48 +874,6 @@ export function ProblemPage() {
   );
 }
 
-function TestGroup({ title, tests, reveal, hidden = false }: { title: string; tests: RunResult["tests"]; reveal: boolean; hidden?: boolean }) {
-  if (!tests.length) return null;
-  return (
-    <section className="result-group">
-      {title ? <h3>{title}</h3> : null}
-      <div className="test-results">
-        {tests.map((test) => (
-          <article className={test.passed ? "test-pass" : "test-fail"} key={`${test.name}-${hidden ? "hidden" : "visible"}`}>
-            <strong>
-              {test.passed ? "Pass" : "Fail"}: {hidden ? "Hidden" : test.name}
-            </strong>
-            {reveal ? (
-              <div className="result-diff">
-                <div>
-                  <span>Args</span>
-                  <code>{formatValue(test.args)}</code>
-                </div>
-                <div>
-                  <span>Expected</span>
-                  <code>{formatValue(test.expected)}</code>
-                </div>
-                <div>
-                  <span>Actual</span>
-                  <code>{formatValue(test.actual)}</code>
-                </div>
-                {test.error ? (
-                  <div className="result-error-detail">
-                    <span>Error</span>
-                    <code>{test.error}</code>
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <p className="muted">Diagnostics hidden for practice integrity.</p>
-            )}
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function SubmissionHistory({ submissions }: { submissions: SubmissionRecord[] }) {
   if (!submissions.length) {
     return <p className="muted">No runs yet. Visible and submitted runs appear here.</p>;
@@ -1011,10 +901,6 @@ function SubmissionHistory({ submissions }: { submissions: SubmissionRecord[] })
       })}
     </div>
   );
-}
-
-function formatValue(value: unknown): string {
-  return JSON.stringify(value, null, 2);
 }
 
 function summarizeStatus(status: RunResult["status"]): string {

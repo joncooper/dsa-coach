@@ -71,10 +71,14 @@ function renderMarkdown(content: string): ReactNode[] {
 }
 
 function renderInline(line: string): ReactNode[] {
-  const parts = line.split(/(`[^`]+`)/g);
+  // Split into inline-code spans, **bold** spans, and plain text.
+  const parts = line.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
   return parts.map((part, index) => {
     if (part.startsWith("`") && part.endsWith("`")) {
       return <code key={`${part}-${index}`}>{part.slice(1, -1)}</code>;
+    }
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>;
     }
     return part;
   });
