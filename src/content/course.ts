@@ -356,7 +356,7 @@ const problemSeeds: ProblemSeed[] = [
     patterns: ["fixed window", "running sum"],
     entrypoint: "count_safe_windows",
     signature: "nums, k, limit",
-    prompt: "Count how many contiguous windows of length `k` have a sum less than or equal to `limit`.",
+    prompt: "Count how many contiguous windows of length `k` have a sum less than or equal to `limit`. Values in `nums` may be negative; return `0` if `k` is non-positive or larger than `len(nums)`.",
     visibleTests: [
       { name: "three safe", args: [[2, 1, 5, 1, 1], 2, 6], expected: 4 },
       { name: "none", args: [[9, 9, 9], 2, 10], expected: 0 }
@@ -789,7 +789,7 @@ const problemSeeds: ProblemSeed[] = [
     patterns: ["hash counts", "modulo"],
     entrypoint: "pairable_remainders",
     signature: "nums, k",
-    prompt: "Return true if the numbers can be split into pairs where each pair sum is divisible by `k`.",
+    prompt: "Return true if the numbers can be split into pairs where each pair sum is divisible by `k`. Every number must be used exactly once, so an odd-length list returns false. An empty list returns true (trivially split into zero pairs).",
     visibleTests: [
       { name: "pairable", args: [[1, 5, 9, 3], 6], expected: true },
       { name: "not pairable", args: [[1, 2, 3], 3], expected: false }
@@ -1091,7 +1091,7 @@ const problemSeeds: ProblemSeed[] = [
     patterns: ["stack", "parsing"],
     entrypoint: "balanced_brackets_local",
     signature: "text",
-    prompt: "Return true if every bracket in the string is balanced and correctly nested. Bracket types are `()`, `[]`, and `{}`.",
+    prompt: "Return true if every bracket in the string is balanced and correctly nested. Bracket types are `()`, `[]`, and `{}`. Any non-bracket characters are ignored. An empty string is considered balanced.",
     visibleTests: [
       { name: "balanced", args: ["([]{})"], expected: true },
       { name: "wrong order", args: ["([)]"], expected: false }
@@ -1367,7 +1367,7 @@ const problemSeeds: ProblemSeed[] = [
     entrypoint: "can_finish_local",
     signature: "n, prerequisites",
     adapter: "graph",
-    prompt: "There are `n` courses. Each pair `[course, before]` means `before` must be taken first. Return true if all courses can be completed.",
+    prompt: "There are `n` courses numbered `0..n-1`. Each pair `[course, before]` means `before` must be taken first. Return true if every course can be completed — i.e., the prerequisite relation has no cycle (including a self-prerequisite like `[a, a]`).",
     visibleTests: [
       { name: "acyclic", args: [3, [[1, 0], [2, 1]]], expected: true },
       { name: "cycle", args: [2, [[0, 1], [1, 0]]], expected: false }
@@ -1395,7 +1395,7 @@ const problemSeeds: ProblemSeed[] = [
     entrypoint: "connected_component_count",
     signature: "n, edges",
     adapter: "graph",
-    prompt: "Return the number of connected components in an undirected graph with nodes `0..n-1`.",
+    prompt: "Return the number of connected components in an undirected graph with nodes `0..n-1`. Each edge is `[u, v]`. Self-loops (an edge `[a, a]`) do not connect `a` to any other node. Return `0` when `n == 0`.",
     visibleTests: [
       { name: "two", args: [5, [[0, 1], [1, 2], [3, 4]]], expected: 2 },
       { name: "isolated", args: [3, []], expected: 3 }
@@ -1423,7 +1423,7 @@ const problemSeeds: ProblemSeed[] = [
     entrypoint: "top_k_scores",
     signature: "scores, k",
     adapter: "heap",
-    prompt: "Return the `k` largest scores in descending order. If `k` exceeds the number of scores, return all scores descending.",
+    prompt: "Return the `k` largest scores in descending order. If `k` exceeds the number of scores, return all scores descending. If `k` is `0` or the input is empty, return an empty list.",
     visibleTests: [
       { name: "three", args: [[4, 9, 1, 7], 2], expected: [9, 7] },
       { name: "k large", args: [[3, 1], 5], expected: [3, 1] }
@@ -1506,7 +1506,7 @@ const problemSeeds: ProblemSeed[] = [
     entrypoint: "running_medians_local",
     signature: "nums",
     adapter: "heap",
-    prompt: "After each inserted number, return the median of all numbers seen so far. Use floats for even counts.",
+    prompt: "After each inserted number, return the median of all numbers seen so far. For an odd count the median is the middle value (returned as the integer itself); for an even count it is the average of the two middle values (returned as a float, even when the values are equal — e.g. `[0, 0]` yields `0.0`).",
     visibleTests: [
       { name: "stream", args: [[2, 1, 5, 7]], expected: [2, 1.5, 2, 3.5] },
       { name: "single", args: [[4]], expected: [4] }
@@ -1887,7 +1887,7 @@ const problemSeeds: ProblemSeed[] = [
     patterns: ["backtracking", "combinations"],
     entrypoint: "combination_sum_exact_local",
     signature: "nums, target",
-    prompt: "Return combinations of numbers that sum to `target`. Each number can be used at most once. Input may contain duplicates; output must not contain duplicate combinations.",
+    prompt: "Return combinations of numbers that sum to `target`. Each number can be used at most once. Input may contain duplicates; output must not contain duplicate combinations. When `target` is `0`, the only combination is the empty one — return `[[]]`. When no combination reaches `target`, return `[]`.",
     visibleTests: [
       { name: "duplicates", args: [[1, 1, 2, 5], 3], expected: [[1, 2]] },
       { name: "two answers", args: [[2, 3, 6, 7], 9], expected: [[2, 7], [3, 6]] }
