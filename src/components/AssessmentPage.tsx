@@ -151,6 +151,10 @@ export function AssessmentPage() {
   const [level, setLevel] = useState<number>(storedSession?.unlockedLevel ?? 1);
   const [code, setCode] = useState<string>(slices[level - 1]?.starterCode ?? "");
   const [result, setResult] = useState<RunResult>(idleResult);
+  // Visible feedback that the autosave loop is healthy. Flips to "saving" the
+  // moment the candidate edits the buffer and back to "saved" when the
+  // debounced write to IndexedDB resolves.
+  const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
   const [hintCount, setHintCount] = useState(0);
   const [showSolution, setShowSolution] = useState(false);
   const [lastRunIncludedHidden, setLastRunIncludedHidden] = useState(false);
@@ -237,6 +241,10 @@ export function AssessmentPage() {
     setShowSolution(false);
     setLastRunIncludedHidden(false);
     setActivePanel("results");
+    // The seeded buffer either came straight from settings or from the
+    // carry-forward (which selectLevel flushed before the switch), so the
+    // newly-active level is by definition already persisted.
+    setSaveState("saved");
     // Intentional: only re-seed on level / assessment change; per-keystroke
     // settings updates must not clobber an in-progress edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -245,14 +253,16 @@ export function AssessmentPage() {
   // Debounced autosave of the in-progress buffer for the current level.
   // Without this, edits are only persisted on Run/Submit — switching levels
   // (or closing the tab) would wipe whatever was typed since the last run.
-  // 500ms is short enough to feel safe and long enough that we're not
-  // hammering IndexedDB on every keystroke.
+  // 300ms is short enough that the candidate sees the indicator settle back
+  // to "Saved" almost as fast as they pause typing, but long enough that we
+  // aren't hammering IndexedDB on every keystroke.
   useEffect(() => {
     if (!assessmentId) return;
     if (!session || session.status !== "in-progress") return;
-    const handle = setTimeout(() => {
-      void saveSetting(codeKey(assessmentId, level), code);
-    }, 500);
+    const handle = setTimeout(async () => {
+      await saveSetting(codeKey(assessmentId, level), code);
+      setSaveState("saved");
+    }, 300);
     return () => clearTimeout(handle);
   }, [assessmentId, code, level, saveSetting, session]);
 
@@ -683,6 +693,10 @@ export function AssessmentPage() {
             <div className="toolbar-status-group">
               <span className={`run-status ${result.status}`}>{statusLabel(result.status)}</span>
               {result.durationMs ? <small>{result.durationMs} ms</small> : <small>Local Python</small>}
+              <span className={`autosave-indicator ${saveState}`} title="Your work is saved automatically.">
+                <span className="autosave-dot" aria-hidden />
+                {saveState === "saving" ? "Saving…" : "Saved"}
+              </span>
             </div>
             <div className="toolbar-actions">
               <button
@@ -733,7 +747,10 @@ export function AssessmentPage() {
                 autocompletion: true,
                 bracketMatching: true
               }}
-              onChange={setCode}
+              onChange={(value) => {
+                setCode(value);
+                setSaveState("saving");
+              }}
             />
           </div>
 

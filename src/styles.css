@@ -2730,6 +2730,41 @@ pre {
   min-height: 220px;
 }
 
+/* Autosave indicator (lives in the workspace toolbar's status group). */
+
+.autosave-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.autosave-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--green);
+}
+
+.autosave-indicator.saving .autosave-dot {
+  background: var(--amber);
+  animation: autosave-pulse 1s ease-in-out infinite;
+}
+
+.autosave-indicator.saving {
+  color: var(--amber);
+}
+
+@keyframes autosave-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50%      { opacity: 1;   transform: scale(1.1); }
+}
+
 /* Pause: countdown / elapsed pill state + the workspace overlay. */
 
 .assessment-countdown.paused,
