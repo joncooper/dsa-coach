@@ -2993,6 +2993,389 @@ pre {
   max-width: 760px;
 }
 
+.assessment-report-page.wide-report {
+  /* Two-column hero + level cards benefit from more horizontal space than
+     the legacy 760px column. Stay readable, just stretch. */
+  max-width: 1100px;
+}
+
+/* ── Hero (How you did) ──────────────────────────────────────────── */
+
+.report-hero {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 1.4fr);
+  gap: 24px;
+  align-items: stretch;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+@media (max-width: 880px) {
+  .report-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+.report-hero-score {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+  align-items: center;
+  padding-right: 24px;
+  border-right: 1px solid var(--line);
+}
+
+@media (max-width: 880px) {
+  .report-hero-score {
+    padding-right: 0;
+    padding-bottom: 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+.report-hero-headroom {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.report-hero-headroom strong {
+  color: var(--amber);
+  font-weight: 850;
+}
+
+.report-hero-headroom.strong {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.report-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .report-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.report-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.report-stat dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.report-stat dd {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.report-stat dd strong {
+  font-size: 22px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.report-stat dd .muted {
+  font-size: 12px;
+}
+
+.report-stat.pass dd strong {
+  color: var(--green);
+}
+
+.report-stat.fail dd strong {
+  color: var(--red);
+}
+
+/* ── Suggested practice callout ──────────────────────────────────── */
+
+.report-suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 22px;
+  border: 1px solid rgba(143, 82, 0, 0.35);
+  background: rgba(143, 82, 0, 0.06);
+  border-radius: 12px;
+}
+
+.report-suggestion-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.report-suggestion-eyebrow {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 850;
+  color: var(--amber);
+}
+
+.report-suggestion-headline {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ── Level breakdown ─────────────────────────────────────────────── */
+
+.report-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.report-section-header h2 {
+  margin: 0 0 2px;
+}
+
+.report-section-header p {
+  margin: 0;
+}
+
+.report-level-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.report-level-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 12px;
+}
+
+.report-level-card.cleared {
+  border-left-color: var(--green);
+}
+
+.report-level-card.partial {
+  border-left-color: var(--amber);
+}
+
+.report-level-card.untouched {
+  border-left-color: var(--muted);
+  opacity: 0.92;
+}
+
+.report-level-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.report-level-eyebrow {
+  margin: 0 0 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.report-level-status {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.report-level-card.cleared .report-level-status {
+  color: var(--green);
+}
+
+.report-level-card.partial .report-level-status {
+  color: var(--amber);
+}
+
+.report-level-card.untouched .report-level-status {
+  color: var(--muted);
+}
+
+.report-level-points {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-level-points strong {
+  font-weight: 850;
+  color: var(--ink);
+}
+
+.report-level-bars {
+  display: grid;
+  gap: 6px;
+}
+
+.progress-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 56px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.progress-row-label {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.progress-row-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--paper-soft);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.progress-row-fill {
+  height: 100%;
+  background: var(--teal);
+  transition: width 0.3s ease-out;
+}
+
+.progress-row.pass .progress-row-fill {
+  background: var(--green);
+}
+
+.progress-row.partial .progress-row-fill {
+  background: var(--amber);
+}
+
+.progress-row.empty .progress-row-fill {
+  background: var(--red);
+}
+
+.progress-row-count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.progress-row.pass .progress-row-count {
+  color: var(--green);
+}
+
+.progress-row.partial .progress-row-count {
+  color: var(--amber);
+}
+
+.progress-row.empty .progress-row-count {
+  color: var(--red);
+}
+
+.report-level-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.report-level-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.report-level-review {
+  margin-top: 4px;
+}
+
+.level-review-yours {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.level-review-yours h4,
+.level-review-walkthrough-block h4 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.level-review-walkthrough-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.level-review-reference {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-soft);
+  padding: 0 12px;
+}
+
+.level-review-reference summary {
+  cursor: pointer;
+  padding: 10px 0;
+  font-weight: 700;
+  font-size: 13px;
+  list-style: none;
+}
+
+.level-review-reference summary::-webkit-details-marker {
+  display: none;
+}
+
+.level-review-reference summary::before {
+  content: "▸ ";
+  display: inline-block;
+  margin-right: 4px;
+  transition: transform 0.15s ease-out;
+}
+
+.level-review-reference[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.level-review-reference[open] {
+  padding-bottom: 12px;
+}
+
 .scorecard {
   background: var(--paper);
   border: 1px solid var(--line);

@@ -1134,20 +1134,31 @@ function ReportScreen({
     : 0;
   const [expandedLevel, setExpandedLevel] = useState<number | null>(null);
 
+  // Aggregate totals for the stats grid.
+  const totalVisiblePassed = card.perLevel.reduce((sum, r) => sum + r.visiblePassed, 0);
+  const totalVisible = card.perLevel.reduce((sum, r) => sum + r.visibleTotal, 0);
+  const totalHiddenPassed = card.perLevel.reduce((sum, r) => sum + r.hiddenPassed, 0);
+  const totalHidden = card.perLevel.reduce((sum, r) => sum + r.hiddenTotal, 0);
+  const totalAttempts = card.perLevel.reduce((sum, r) => sum + r.attempts, 0);
+  const totalMs = assessment.totalMinutes * 60_000;
+
+  // Suggested next step: pick the level with the most lost raw points (or
+  // skip if the candidate already cleared everything).
+  const suggestion = pickPracticeSuggestion(card, assessment);
+
   return (
-    <section className="page assessment-report-page">
+    <section className="page assessment-report-page wide-report">
       <header className="page-header">
         <p className="page-breadcrumb">
           <Link to="/assessments">CodeSignal ICF Practice</Link> / {assessment.title}
         </p>
-        <h1>
-          {session.status === "expired" ? "Time expired" : "Assessment complete"}
-        </h1>
+        <h1>{session.status === "expired" ? "Time expired" : "Assessment complete"}</h1>
         <p className="page-intro">{summary}</p>
       </header>
 
-      <section className="scorecard">
-        <div className="scorecard-headline">
+      {/* ── How you did ─────────────────────────────────────────────── */}
+      <section className="report-hero">
+        <div className="report-hero-score">
           <p className="scorecard-total-label">Final score</p>
           <strong className="scorecard-total">{card.totalScore}</strong>
           <div
@@ -1164,69 +1175,140 @@ function ReportScreen({
             <span>{assessment.scoreBand.min}</span>
             <span>{assessment.scoreBand.max}</span>
           </div>
-          <p className="muted scorecard-headline-meta">
-            {card.rawPoints} / {card.maxRawPoints} raw points · {card.completedLevels} of 4 levels fully cleared ·{" "}
-            {formatElapsedMs(card.elapsedMs)} used
-          </p>
+          {card.totalScore < assessment.scoreBand.max ? (
+            <p className="report-hero-headroom">
+              <strong>+{assessment.scoreBand.max - card.totalScore}</strong> points on the
+              table if you clean up the remaining tests in review.
+            </p>
+          ) : (
+            <p className="report-hero-headroom strong">Top of the band — clean sweep.</p>
+          )}
         </div>
+        <dl className="report-stats">
+          <Stat label="Raw points" value={`${card.rawPoints} / ${card.maxRawPoints}`} sub={pctLabel(card.rawPoints, card.maxRawPoints)} />
+          <Stat label="Levels cleared" value={`${card.completedLevels} of 4`} sub={card.completedLevels === 4 ? "Every level perfect" : `${4 - card.completedLevels} partial`} />
+          <Stat
+            label="Hidden tests"
+            value={totalHidden ? `${totalHiddenPassed} / ${totalHidden}` : "—"}
+            sub={totalHidden ? pctLabel(totalHiddenPassed, totalHidden) : ""}
+            tone={totalHidden && totalHiddenPassed < totalHidden ? "fail" : "pass"}
+          />
+          <Stat
+            label="Visible tests"
+            value={totalVisible ? `${totalVisiblePassed} / ${totalVisible}` : "—"}
+            sub={totalVisible ? pctLabel(totalVisiblePassed, totalVisible) : ""}
+            tone={totalVisible && totalVisiblePassed < totalVisible ? "fail" : "pass"}
+          />
+          <Stat
+            label="Time used"
+            value={formatElapsedMs(card.elapsedMs)}
+            sub={
+              card.mode === "exam" && totalMs > 0
+                ? `of ${formatElapsedMs(totalMs)} budget`
+                : "untimed practice"
+            }
+          />
+          <Stat label="Total attempts" value={String(totalAttempts || 0)} sub={attemptsHint(totalAttempts, card.maxRawPoints)} />
+        </dl>
+      </section>
 
-        <table className="scorecard-table">
-          <thead>
-            <tr>
-              <th scope="col">Level</th>
-              <th scope="col">Visible</th>
-              <th scope="col">Hidden</th>
-              <th scope="col">Attempts</th>
-              <th scope="col">Points</th>
-              <th scope="col">
-                <span className="sr-only">Review</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {card.perLevel.map((row) => {
-              const slice = slices[row.level - 1];
-              const reviewable = row.attempts > 0 || Boolean(slice);
-              const expanded = expandedLevel === row.level;
-              return (
-                <Fragment key={row.level}>
-                  <tr>
-                    <th scope="row">L{row.level}</th>
-                    <td>{row.visibleTotal ? `${row.visiblePassed}/${row.visibleTotal}` : "—"}</td>
-                    <td>{row.hiddenTotal ? `${row.hiddenPassed}/${row.hiddenTotal}` : "—"}</td>
-                    <td>{row.attempts || "—"}</td>
-                    <td>{row.points}</td>
-                    <td className="scorecard-review-cell">
-                      {reviewable ? (
-                        <button
-                          type="button"
-                          className="tertiary-button"
-                          aria-expanded={expanded}
-                          onClick={() => setExpandedLevel(expanded ? null : row.level)}
-                        >
-                          {expanded ? "Hide" : "Review"}
-                        </button>
-                      ) : null}
-                    </td>
-                  </tr>
-                  {expanded && slice ? (
-                    <tr className="scorecard-review-row">
-                      <td colSpan={6}>
-                        <LevelReview
-                          slice={slice}
-                          submission={latestByLevel[row.level]}
-                          finishSnapshot={finishSnapshots[row.level]}
-                          onPracticeLevel={() => onContinue(row.level)}
-                        />
-                      </td>
-                    </tr>
+      {/* ── Suggested next step ─────────────────────────────────────── */}
+      {suggestion ? (
+        <section className="report-suggestion">
+          <div className="report-suggestion-body">
+            <p className="report-suggestion-eyebrow">Suggested practice</p>
+            <p className="report-suggestion-headline">{suggestion.headline}</p>
+            <p className="muted">{suggestion.detail}</p>
+          </div>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => {
+              setExpandedLevel(suggestion.level);
+              onContinue(suggestion.level);
+            }}
+          >
+            <Play size={16} aria-hidden /> Practice Level {suggestion.level}
+          </button>
+        </section>
+      ) : null}
+
+      {/* ── Level breakdown ─────────────────────────────────────────── */}
+      <section className="report-section">
+        <header className="report-section-header">
+          <h2>Level breakdown</h2>
+          <p className="muted">
+            Each level is weighted; later levels are worth more. Click Review to see your
+            code at the moment time stopped versus the reference approach.
+          </p>
+        </header>
+        <ul className="report-level-list">
+          {card.perLevel.map((row) => {
+            const slice = slices[row.level - 1];
+            const reviewable = row.attempts > 0 || Boolean(slice);
+            const expanded = expandedLevel === row.level;
+            const cleared =
+              row.attempts > 0 &&
+              row.visibleTotal > 0 &&
+              row.visiblePassed === row.visibleTotal &&
+              (row.hiddenTotal === 0 || row.hiddenPassed === row.hiddenTotal);
+            const partial = row.attempts > 0 && !cleared;
+            const status: "cleared" | "partial" | "untouched" = cleared ? "cleared" : partial ? "partial" : "untouched";
+            const maxPoints = assessment.levels[row.level - 1]?.maxPoints ?? 0;
+            return (
+              <li key={row.level} className={`report-level-card ${status}`}>
+                <div className="report-level-card-head">
+                  <div>
+                    <p className="report-level-eyebrow">Level {row.level}{slice ? ` · ${shortLevelTitle(slice)}` : ""}</p>
+                    <p className="report-level-status">{statusLabelFor(status)}</p>
+                  </div>
+                  <div className="report-level-points">
+                    <strong>{row.points}</strong>
+                    <span className="muted"> / {maxPoints} pts</span>
+                  </div>
+                </div>
+                <div className="report-level-bars">
+                  <ProgressRow label="Visible" passed={row.visiblePassed} total={row.visibleTotal} />
+                  <ProgressRow label="Hidden" passed={row.hiddenPassed} total={row.hiddenTotal} />
+                </div>
+                <div className="report-level-meta">
+                  <span>{row.attempts || 0} attempt{row.attempts === 1 ? "" : "s"}</span>
+                  {row.lastRunAt ? <span>Last run {formatShortTime(row.lastRunAt)}</span> : null}
+                </div>
+                <div className="report-level-actions">
+                  {reviewable ? (
+                    <button
+                      type="button"
+                      className="tertiary-button"
+                      aria-expanded={expanded}
+                      onClick={() => setExpandedLevel(expanded ? null : row.level)}
+                    >
+                      {expanded ? "Hide review" : "Review code"}
+                    </button>
                   ) : null}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-
+                  <button
+                    type="button"
+                    className="secondary-button compact-button"
+                    onClick={() => onContinue(row.level)}
+                  >
+                    <Play size={14} aria-hidden /> Practice this level
+                  </button>
+                </div>
+                {expanded && slice ? (
+                  <div className="report-level-review">
+                    <LevelReview
+                      slice={slice}
+                      submission={latestByLevel[row.level]}
+                      finishSnapshot={finishSnapshots[row.level]}
+                      status={status}
+                      onPracticeLevel={() => onContinue(row.level)}
+                    />
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
         <p className="muted scorecard-band-note">
           Score band {assessment.scoreBand.min}–{assessment.scoreBand.max}; raw points map
           linearly into the band (floor = no attempts, ceiling = every test passed across
@@ -1234,6 +1316,7 @@ function ReportScreen({
         </p>
       </section>
 
+      {/* ── Actions ─────────────────────────────────────────────────── */}
       <div className="assessment-report-actions">
         <button className="primary-button" type="button" onClick={() => onContinue()}>
           Continue practicing
@@ -1254,15 +1337,138 @@ function ReportScreen({
   );
 }
 
+function Stat({
+  label,
+  value,
+  sub,
+  tone
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  tone?: "pass" | "fail";
+}) {
+  return (
+    <div className={`report-stat ${tone ?? ""}`}>
+      <dt>{label}</dt>
+      <dd>
+        <strong>{value}</strong>
+        {sub ? <span className="muted">{sub}</span> : null}
+      </dd>
+    </div>
+  );
+}
+
+function ProgressRow({ label, passed, total }: { label: string; passed: number; total: number }) {
+  if (!total) {
+    return (
+      <div className="progress-row" aria-label={`${label} tests: none for this level`}>
+        <span className="progress-row-label">{label}</span>
+        <div className="progress-row-bar" aria-hidden="true" />
+        <span className="progress-row-count muted">—</span>
+      </div>
+    );
+  }
+  const pct = Math.round((passed / total) * 100);
+  const tone = passed === total ? "pass" : passed === 0 ? "empty" : "partial";
+  return (
+    <div
+      className={`progress-row ${tone}`}
+      aria-label={`${label} tests: ${passed} of ${total} passing`}
+    >
+      <span className="progress-row-label">{label}</span>
+      <div className="progress-row-bar" aria-hidden="true">
+        <div className="progress-row-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="progress-row-count">{passed}/{total}</span>
+    </div>
+  );
+}
+
+function statusLabelFor(status: "cleared" | "partial" | "untouched"): string {
+  if (status === "cleared") return "Fully cleared";
+  if (status === "partial") return "Partial — points on the table";
+  return "Not attempted";
+}
+
+function shortLevelTitle(slice: LevelSlice): string {
+  // The base slice title looks like "Level 1: Progressive Filesystem" — strip
+  // the "Level N: " prefix for the eyebrow since the level number is already
+  // shown separately. Part titles for L2+ pass through as-is.
+  return slice.title.replace(/^Level \d+:\s*/, "");
+}
+
+function pctLabel(passed: number, total: number): string {
+  if (!total) return "";
+  return `${Math.round((passed / total) * 100)}%`;
+}
+
+function attemptsHint(attempts: number, maxRaw: number): string {
+  if (!attempts) return "no runs";
+  if (!maxRaw) return "";
+  if (attempts < 10) return "lean — confident edits";
+  if (attempts < 25) return "steady iteration";
+  return "lots of trial and error";
+}
+
+function formatShortTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(d);
+}
+
+interface PracticeSuggestion {
+  level: number;
+  headline: string;
+  detail: string;
+}
+
+function pickPracticeSuggestion(
+  card: AssessmentScorecard,
+  assessment: Assessment
+): PracticeSuggestion | undefined {
+  // Rank by lost points (descending), then by level (descending) so later
+  // levels — which carry more weight per missed test — win ties.
+  const candidates = card.perLevel.map((row) => {
+    const maxPoints = assessment.levels[row.level - 1]?.maxPoints ?? 0;
+    return { row, maxPoints, lost: Math.max(0, maxPoints - row.points) };
+  });
+  const partial = candidates
+    .filter((c) => c.lost > 0)
+    .sort((a, b) => b.lost - a.lost || b.row.level - a.row.level);
+  if (!partial.length) return undefined;
+  const top = partial[0];
+  const r = top.row;
+  const missedVisible = Math.max(0, r.visibleTotal - r.visiblePassed);
+  const missedHidden = Math.max(0, r.hiddenTotal - r.hiddenPassed);
+  let detail: string;
+  if (!r.attempts) {
+    detail = `You never ran Level ${r.level}. Even partial credit there is worth ${top.lost} points.`;
+  } else if (missedVisible > 0 && missedHidden > 0) {
+    detail = `${missedVisible} visible and ${missedHidden} hidden tests still fail — the approach needs work.`;
+  } else if (missedVisible > 0) {
+    detail = `${missedVisible} visible test${missedVisible === 1 ? "" : "s"} still fail — likely a logic gap in the main path.`;
+  } else {
+    detail = `${missedHidden} hidden edge case${missedHidden === 1 ? "" : "s"} slipped — common pattern is empty inputs, ordering, or off-by-one.`;
+  }
+  return {
+    level: r.level,
+    headline: `Level ${r.level} has ${top.lost} points on the table.`,
+    detail
+  };
+}
+
 function LevelReview({
   slice,
   submission,
   finishSnapshot,
+  status,
   onPracticeLevel
 }: {
   slice: LevelSlice;
   submission: SubmissionRecord | undefined;
   finishSnapshot: string | undefined;
+  status: "cleared" | "partial" | "untouched";
   onPracticeLevel: () => void;
 }) {
   // Prefer the finish-time snapshot (captures the buffer at the exact moment
@@ -1287,23 +1493,37 @@ function LevelReview({
           <Play size={14} aria-hidden /> Practice this level
         </button>
       </header>
-      <div className="level-review-grid">
-        <section>
-          <h4>Code at time of finish</h4>
-          {snapshotCode ? (
-            <pre className="level-review-code"><code>{snapshotCode}</code></pre>
-          ) : (
-            <p className="muted">No code captured for this level.</p>
-          )}
-        </section>
-        <section>
-          <h4>Reference solution</h4>
-          <pre className="level-review-code"><code>{referenceCode}</code></pre>
-        </section>
-      </div>
+
+      {/* Lead with your code — that's what the candidate wants to see first. */}
+      <section className="level-review-yours">
+        <h4>Code at time of finish</h4>
+        {snapshotCode ? (
+          <pre className="level-review-code"><code>{snapshotCode}</code></pre>
+        ) : (
+          <p className="muted">No code captured for this level.</p>
+        )}
+      </section>
+
+      {/* Design rationale as the learning content; reference solution stays
+          tucked behind a disclosure so the candidate doesn't accidentally
+          spoil themselves before they've thought about the problem. */}
       {slice.walkthrough ? (
-        <p className="level-review-walkthrough">{slice.walkthrough}</p>
+        <section className="level-review-walkthrough-block">
+          <h4>Design rationale</h4>
+          <p className="level-review-walkthrough">{slice.walkthrough}</p>
+        </section>
       ) : null}
+
+      <details className="level-review-reference">
+        <summary>
+          Show reference solution
+          {status === "cleared" ? <span className="muted"> — compare your approach</span> : null}
+          {status === "partial" || status === "untouched" ? (
+            <span className="muted"> — when you're ready</span>
+          ) : null}
+        </summary>
+        <pre className="level-review-code"><code>{referenceCode}</code></pre>
+      </details>
     </div>
   );
 }
