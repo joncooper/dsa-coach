@@ -1,6 +1,6 @@
-import { Check, FileQuestion, FileText, TerminalSquare } from "lucide-react";
+import { Check, FileQuestion, FileText, Sparkles, TerminalSquare } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { course, findChapter, findLesson, findProblem, findQuiz } from "../content/course";
+import { findChapter, findLesson, findProblem, findQuiz } from "../content/course";
 import { useStore } from "../hooks/courseStoreContext";
 import { itemKey } from "../storage/db";
 
@@ -21,11 +21,11 @@ export function ChapterPage() {
         </div>
       </div>
 
-      <div className="content-columns">
-        <div className="stack">
-          <div className="section-heading">
-            <h2>Lessons</h2>
-          </div>
+      <section className="chapter-group" aria-label="Lessons">
+        <div className="section-heading">
+          <h2>Lessons</h2>
+        </div>
+        <div className="chapter-rows">
           {chapter.lessons.map((lessonId) => {
             const lesson = findLesson(lessonId);
             if (!lesson) return null;
@@ -37,11 +37,15 @@ export function ChapterPage() {
               </Link>
             );
           })}
+        </div>
+      </section>
 
-          <div className="section-heading">
-            <h2>Guided Problems</h2>
-            <p>{chapter.problems.length} original prompts</p>
-          </div>
+      <section className="chapter-group" aria-label="Guided problems">
+        <div className="section-heading">
+          <h2>Guided Problems</h2>
+          <p>{chapter.problems.length} core problems that build the module</p>
+        </div>
+        <div className="chapter-rows">
           {chapter.problems.map((problemId) => {
             const problem = findProblem(problemId);
             if (!problem) return null;
@@ -54,36 +58,48 @@ export function ChapterPage() {
               </Link>
             );
           })}
-
-          {chapter.quizzes.map((quizId) => {
-            const quiz = findQuiz(quizId);
-            if (!quiz) return null;
-            return (
-              <Link className="row-link" to={`/quiz/${quiz.id}`} key={quiz.id}>
-                <FileQuestion size={18} />
-                <span>{quiz.title}</span>
-                <StatusDot complete={progress[itemKey("quiz", quiz.id)]?.status === "complete"} />
-              </Link>
-            );
-          })}
         </div>
+      </section>
 
-        <aside className="bonus-panel">
-          <h2>Runnable Bonus Drills</h2>
-          <div className="bonus-list">
+      {chapter.bonusProblems.length ? (
+        <section className="chapter-group" aria-label="Bonus problems">
+          <div className="section-heading">
+            <h2>Bonus Problems</h2>
+            <p>{chapter.bonusProblems.length} extra problems — same patterns, more reps</p>
+          </div>
+          <div className="chapter-rows">
             {chapter.bonusProblems.map((bonus) => (
-              <Link className="bonus-link" to={`/problem/${bonus.id}`} key={bonus.id}>
-                <span className="bonus-link-head">
-                  <strong>{bonus.title}</strong>
-                  <StatusDot complete={progress[itemKey("problem", bonus.id)]?.status === "complete"} />
-                </span>
-                <p>{bonus.prompt}</p>
+              <Link className="row-link" to={`/problem/${bonus.id}`} key={bonus.id}>
+                <Sparkles size={18} />
+                <span>{bonus.title}</span>
+                <small>{bonus.difficulty}</small>
+                <StatusDot complete={progress[itemKey("problem", bonus.id)]?.status === "complete"} />
               </Link>
             ))}
           </div>
-          <p className="muted">Total course modules: {course.chapters.length}</p>
-        </aside>
-      </div>
+        </section>
+      ) : null}
+
+      {chapter.quizzes.length ? (
+        <section className="chapter-group" aria-label="Quiz">
+          <div className="section-heading">
+            <h2>Quiz</h2>
+          </div>
+          <div className="chapter-rows">
+            {chapter.quizzes.map((quizId) => {
+              const quiz = findQuiz(quizId);
+              if (!quiz) return null;
+              return (
+                <Link className="row-link" to={`/quiz/${quiz.id}`} key={quiz.id}>
+                  <FileQuestion size={18} />
+                  <span>{quiz.title}</span>
+                  <StatusDot complete={progress[itemKey("quiz", quiz.id)]?.status === "complete"} />
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
     </section>
   );
 }

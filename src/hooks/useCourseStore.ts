@@ -39,15 +39,21 @@ export function useCourseStore() {
   }, [load]);
 
   const markProgress = useCallback(
-    async (type: ProgressType, id: string, status: ProgressStatus) => {
+    async (type: ProgressType, id: string, status: ProgressStatus, score?: { correct: number; total: number }) => {
       const key = itemKey(type, id);
+      // A lesson with missed checkpoints is due for review immediately; a clean
+      // pass follows the normal spaced interval.
+      const missed = score ? score.correct < score.total : false;
+      const dueAt =
+        status === "complete" ? (missed ? new Date().toISOString() : nextReviewDate()) : undefined;
       const record: ProgressRecord = {
         key,
         type,
         id,
         status,
-        dueAt: status === "complete" ? nextReviewDate() : undefined,
-        updatedAt: new Date().toISOString()
+        dueAt,
+        updatedAt: new Date().toISOString(),
+        ...(score ? { score } : {})
       };
       await db.progress.put(record);
       setProgress((current) => ({ ...current, [key]: record }));

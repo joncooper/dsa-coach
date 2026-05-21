@@ -3,6 +3,9 @@ import { problemSets as interviewSets } from "./problemSets";
 import { aocSets } from "./aocSets";
 import { assessmentSets } from "./assessments";
 import { librarySets } from "./libraries";
+import { lessonBodies, lessonMeta } from "./lessonBodies";
+import { bonusSeeds } from "./bonusProblems";
+import type { BonusSeed } from "./bonus/types";
 import type { BonusProblem, Chapter, CourseData, Difficulty, Lesson, Problem, ProblemSet, ProblemTest, Quiz } from "../types";
 
 const problemSets: ProblemSet[] = [...interviewSets, ...aocSets, ...assessmentSets, ...librarySets];
@@ -32,22 +35,6 @@ interface ProblemSeed {
   space: string;
 }
 
-interface LessonDetail {
-  objectiveNouns: string[];
-  signals: string[];
-  mentalModel: string;
-  exampleA: string;
-  exampleB: string;
-  traceA: string[];
-  traceB: string[];
-  pitfalls: string[];
-  complexity: string;
-}
-
-interface BonusFamilyInfo {
-  title: string;
-  pattern: string;
-}
 
 const chaptersBase: ChapterSpec[] = [
   {
@@ -128,169 +115,6 @@ const chaptersBase: ChapterSpec[] = [
     summary: "Practice synthesis: choosing patterns, communicating complexity, and reviewing mixed prompts.",
     concepts: ["pattern choice", "complexity narration", "tradeoffs", "mock review", "mixed practice"]
   }
-];
-
-const lessonDetails: Record<string, LessonDetail> = {
-  "foundations": {
-    objectiveNouns: ["runtime vocabulary", "edge-case discipline", "recursive base cases", "loop invariants"],
-    signals: ["The prompt asks for a direct aggregate, a first occurrence, or a small simulation.", "The constraints are small enough to reason about by hand but large enough to punish accidental quadratic scans.", "The examples hide an empty input, a singleton input, or a value that should not contribute."],
-    mentalModel: "Treat the first pass through any interview problem as an evidence-gathering pass. You are not trying to guess the clever trick; you are naming the state that would let a simple loop, recursion, or helper structure stay honest. Foundations problems reward precise definitions: what does the counter count, when is the answer final, and what is the smallest input that should not break the code?",
-    exampleA: "For `Sum Positive Readings`, the input `[3, -2, 7, 0, -5]` should produce `10`. The invariant is: after processing index i, `total` is the sum of positive values in the prefix ending at i.",
-    exampleB: "For `First Repeated Index`, the input `[5, 1, 4, 1, 9]` should produce `3`. The invariant is: before checking index i, the set contains exactly the values from indexes before i.",
-    traceA: ["Start total at 0.", "See 3, add it because it is positive: total is 3.", "Ignore -2 and 0 because they do not satisfy the predicate.", "See 7, total becomes 10, and later negative values leave it unchanged."],
-    traceB: ["Before index 0, seen is empty, then add 5.", "Before index 1, seen is {5}, then add 1.", "Before index 3, seen is {5, 1, 4}; value 1 already exists, so index 3 is final."],
-    pitfalls: ["Counting values before defining whether zero contributes.", "Returning the repeated value when the prompt asks for the repeated index.", "Writing recursion without a base case that handles zero or a single digit.", "Calling an O(log n) loop O(n) because it is still a loop."],
-    complexity: "Most foundation loops are O(n) time and O(1) space unless they store seen values. A set changes the memory cost to O(n) but keeps lookup expected O(1). Repeated halving is O(log n) because the input size shrinks by a constant factor each step."
-  },
-  "arrays-strings": {
-    objectiveNouns: ["index safety", "prefix state", "stable output construction", "string scan discipline"],
-    signals: ["The problem asks for a transformed array or compressed string.", "A split, prefix, suffix, or window summary can answer many positions.", "The input order matters and sorting would destroy the required relationship."],
-    mentalModel: "Arrays and strings are about respecting position. The strongest solutions usually keep one piece of state that summarizes the prefix already consumed, then write output in a deliberate direction. If the answer for every index depends on information from both sides, build one side first and combine it with the other side during a second pass.",
-    exampleA: "For `Product Except Self Local`, `[1, 2, 3, 4]` should produce `[24, 12, 8, 6]`. The answer at each index is the product of values strictly left of it times values strictly right of it.",
-    exampleB: "For `Compress Runs`, `aaabb` becomes `a3b2`. The active state is the current character and the run length that has not yet been flushed to output.",
-    traceA: ["Left pass writes prefix products `[1, 1, 2, 6]`.", "Right pass starts suffix at 1 and walks backward.", "At index 3, multiply by suffix 1, then suffix becomes 4.", "At index 0, multiply prefix 1 by suffix 24."],
-    traceB: ["Start with `a`, count 1.", "Second and third `a` increase the count.", "Seeing `b` flushes `a3` and starts `b1`.", "End of input flushes `b2`."],
-    pitfalls: ["Using division when zero values make it invalid.", "Forgetting to normalize rotation counts with modulo.", "Appending characters directly in a loop when a list and join is clearer.", "Off-by-one errors around empty suffixes."],
-    complexity: "A single scan or pair of scans is O(n). Output arrays and compressed strings are O(n) space because the result must be stored. Prefix/suffix product can be O(1) extra space if the output array is not counted."
-  },
-  "two-pointers-sliding-window": {
-    objectiveNouns: ["monotonic pointer movement", "window validity", "opposite-end reasoning", "bounded shrink loops"],
-    signals: ["The prompt asks about contiguous subarrays or substrings.", "All numbers are positive, making sums grow when the right edge expands.", "A sorted input allows one pointer move to increase or decrease a candidate value."],
-    mentalModel: "Two-pointer solutions work when movement is irreversible. Each pointer should have a reason to move that never requires it to backtrack. Sliding windows add one rule: define what makes the window valid, expand until it breaks, then shrink until it is valid again. The proof is that each element enters and leaves at most once.",
-    exampleA: "For `Longest With Flips`, `[1, 0, 1, 0, 1, 1, 0]` with k = 2 produces 6. The valid condition is at most two zeroes in the current window.",
-    exampleB: "For `Closest Pair Sum`, a sorted array lets you compare the low and high values. If the sum is too small, only moving the low pointer can increase it.",
-    traceA: ["Expand right while counting zeroes.", "When zeroes becomes 3, move left until one zero leaves.", "After each repair, the window is valid and its length can update the best answer.", "No index is moved left twice."],
-    traceB: ["Start at both ends.", "Record the current sum if it is closer than the best.", "Move left to raise small sums and right to lower large sums.", "Preserve the smaller sum on exact distance ties."],
-    pitfalls: ["Shrinking before adding the new right value, then mixing invariants.", "Using sliding window when negative numbers break monotonic sums.", "Counting replacements instead of counting broken characters or zeroes.", "Stopping a palindrome scan after pointers cross but accidentally counting the center."],
-    complexity: "When pointer movement is monotonic, time is O(n) because each pointer moves across the input once. Space is usually O(1), except when the output must store transformed values."
-  },
-  "hashing": {
-    objectiveNouns: ["constant-time lookup", "frequency tables", "canonical grouping keys", "prefix state counts"],
-    signals: ["The prompt asks whether something has been seen before.", "You need counts, membership, or groups keyed by normalized values.", "A subarray sum problem includes negative values, preventing sliding-window monotonicity."],
-    mentalModel: "Hashing buys fast answers to questions about the past. The design step is choosing the key. Sometimes the key is the value itself, sometimes it is a remainder, a sorted string, or a prefix sum. Good hash solutions make the second occurrence easy to identify without rescanning earlier data.",
-    exampleA: "For `Count Target Sum Subarrays`, prefix sums turn a range sum into `current_prefix - previous_prefix`. If that difference equals target, the previous prefix is what you need to count.",
-    exampleB: "For `Anagram Bucket Sizes`, sorting the letters in each word creates a canonical key so `tea`, `eat`, and `ate` land in the same bucket.",
-    traceA: ["Initialize prefix count with 0 because a subarray may start at index 0.", "At each value, update the prefix.", "Add the number of previous prefixes equal to `prefix - target`.", "Only then store the current prefix for later ranges."],
-    traceB: ["Normalize each word to a sorted-letter signature.", "Increment that signature's bucket count.", "After scanning, sort the bucket sizes for deterministic output."],
-    pitfalls: ["Updating prefix counts before asking how many previous prefixes match.", "Forgetting modulo complement edge cases like remainder 0.", "Using a mutable object as a key.", "Returning groups when the prompt only asks for group sizes."],
-    complexity: "Hash-table scans are usually O(n) expected time, with O(n) memory for counts or seen values. Canonicalizing strings adds the cost of building the key, often O(m log m) per word when sorting letters."
-  },
-  "linked-lists": {
-    objectiveNouns: ["node identity", "sentinel nodes", "fast and slow pointers", "safe rewiring"],
-    signals: ["The prompt gives a `head` node instead of an array.", "The answer requires removing, merging, or finding a node without random access.", "The head itself may change."],
-    mentalModel: "Linked lists are reference problems. You do not own indexes; you own arrows. A sentinel node turns head changes into ordinary rewiring, and a fast pointer lets you measure structure without first computing length. Before changing `next`, save the reference you still need.",
-    exampleA: "For `Remove List Value`, `[2, 1, 2, 3]` with target 2 should return `[1, 3]`. A dummy node before the head means removing the first real node is the same operation as removing a middle node.",
-    exampleB: "For `Middle List Value`, slow moves one step while fast moves two. When fast finishes, slow points at the second middle for even-length lists.",
-    traceA: ["Dummy points to head.", "If `prev.next.val` is target, bypass it with `prev.next = prev.next.next`.", "If it is kept, advance prev.", "Return `dummy.next`, not the original head."],
-    traceB: ["Start both pointers at head.", "After one loop on `[1,2,3,4]`, slow is 2 and fast is 3.", "After the next loop, slow is 3 and fast is null.", "Return slow's value."],
-    pitfalls: ["Advancing `prev` after deleting a node, which skips the new next node.", "Returning the old head after it was removed.", "Comparing node objects instead of node values.", "Forgetting that an empty list returns `None` or an empty serialized list depending on the problem."],
-    complexity: "Most linked-list operations are O(n) time because random access is unavailable. Pointer rewiring is O(1) extra space; copying values for palindrome checks costs O(n) memory but is often the clearest first solution."
-  },
-  "stacks-queues": {
-    objectiveNouns: ["pending work", "last-in-first-out structure", "first-in-first-out streams", "monotonic stacks"],
-    signals: ["The prompt involves nesting, undoing, nearest greater values, or unresolved previous items.", "Events arrive over time and old events expire.", "You need to match a closing token with the most recent opening token."],
-    mentalModel: "Stacks and queues externalize time. A stack remembers the most recent unresolved item; a queue remembers the oldest item that might still matter. Monotonic stacks are especially powerful because each new value resolves some earlier values and leaves the rest in useful order.",
-    exampleA: "For `Warmer Day Waits`, a decreasing stack stores indexes whose warmer day is unknown. A warmer current temperature resolves all colder indexes on top.",
-    exampleB: "For `Recent Event Counts`, timestamps arrive sorted. A queue contains exactly the events within the current inclusive time range.",
-    traceA: ["Push day 0.", "Day 1 is warmer, so pop day 0 and write distance 1.", "Cooler days wait on the stack.", "Each index is pushed and popped at most once."],
-    traceB: ["Append the current timestamp.", "Pop from the left while it is older than `current - window`.", "The queue length is the answer for that timestamp.", "Equal timestamps remain because the range is inclusive."],
-    pitfalls: ["Using a stack when the oldest item must expire first.", "Treating equal temperature as warmer.", "Forgetting to flush the last active stack state with default answers.", "Popping above the root path when simplifying folders."],
-    complexity: "Stack and queue simulations are usually O(n) time. Even nested while loops stay linear when every item can be pushed once and popped once. Space is O(n) in the worst case for unresolved or active items."
-  },
-  "trees-graphs": {
-    objectiveNouns: ["recursive tree state", "BFS frontier", "visited sets", "graph modeling"],
-    signals: ["Inputs describe parent-child relationships, grids, edges, or reachability.", "The problem asks for shortest paths in an unweighted graph.", "You need to count connected regions or detect dependency cycles."],
-    mentalModel: "Trees and graphs are traversal problems first and data-shape problems second. Choose DFS when the state follows a path or component; choose BFS when distance by edge count matters. In graphs, the visited set is part of the algorithm, not an optimization.",
-    exampleA: "For `Tree Has Path Sum Local`, subtract the current node from the remaining target and only accept a match at a leaf.",
-    exampleB: "For `Shortest Edge Path`, BFS starts from the source and explores all nodes at distance d before distance d + 1.",
-    traceA: ["At root 5 and target 22, recurse with target 17.", "At child 4, recurse with target 13.", "Only when a leaf value equals the remaining target is the path valid.", "A non-leaf partial match is not enough."],
-    traceB: ["Build adjacency from undirected edges.", "Queue starts with `(start, 0)`.", "When a neighbor equals goal, return distance + 1.", "Visited prevents cycles from re-entering the queue."],
-    pitfalls: ["Accepting path sums before reaching a leaf.", "Forgetting isolated nodes when counting components.", "Using DFS for shortest unweighted paths and accidentally returning a longer path.", "Mutating grids without tracking whether the caller expects the grid unchanged."],
-    complexity: "Tree traversals are O(n). Graph traversals are O(vertices + edges). Grid flood fill is O(rows * columns). Recursion or queue space is bounded by tree height, graph frontier, or component size."
-  },
-  "heaps": {
-    objectiveNouns: ["priority selection", "streaming order", "k-way merge", "repeated minimum work"],
-    signals: ["The prompt repeatedly asks for the smallest or largest available item.", "You only need the top k values rather than a fully sorted list.", "Several sorted streams must be merged without flattening first."],
-    mentalModel: "A heap is a disciplined compromise between a scan and a sort. It lets the next priority item be retrieved cheaply while postponing all other ordering decisions. Use it when repeated selection drives the algorithm.",
-    exampleA: "For `Merge Sorted Batches`, the heap holds one candidate from each batch. Popping a candidate reveals the next candidate from the same batch.",
-    exampleB: "For `Running Medians Local`, two heaps split the stream into lower and upper halves. The median lives at the heap tops.",
-    traceA: ["Push the first value of each non-empty batch with its batch index.", "Pop the smallest value into output.", "Push the next value from that same batch.", "Repeat until the heap is empty."],
-    traceB: ["Push into the lower half as a max heap using negative values.", "Move the largest lower value into the upper heap.", "Rebalance sizes so the lower half is never smaller.", "Read one top or average two tops."],
-    pitfalls: ["Sorting the full input when k is small.", "Forgetting tie-breakers for deterministic point ordering.", "Letting two heaps drift by more than one element.", "Mutating caller-owned arrays with heapify when the caller expects preservation."],
-    complexity: "Heap operations are O(log k) or O(log n), depending on heap size. K-way merge is O(total_items log number_of_batches). Two-heap streaming median is O(log n) per insertion."
-  },
-  "greedy": {
-    objectiveNouns: ["local choice", "exchange argument", "sorted intervals", "reachability frontiers"],
-    signals: ["A sorted order seems to make future choices easier.", "The problem asks for maximum count, minimum removals, or feasibility with one pass.", "Choosing the earliest finish, smallest sufficient resource, or farthest reach can be justified."],
-    mentalModel: "Greedy algorithms are not just fast choices; they are choices with a proof. The proof usually says any optimal solution can be transformed to include your local choice without getting worse. Sorting often creates the order where that proof is visible.",
-    exampleA: "For `Max Compatible Meetings`, choosing the meeting that ends earliest leaves the most room for all future meetings.",
-    exampleB: "For `Can Reach End Local`, the only state that matters is the farthest index reachable so far.",
-    traceA: ["Sort meetings by end time.", "Take the first compatible meeting.", "Ignore overlapping meetings because they end no earlier.", "Every accepted meeting advances the boundary."],
-    traceB: ["Start farthest at 0.", "At each reachable index, update `farthest`.", "If the current index is greater than farthest, no earlier jump can reach it.", "If the scan finishes, the end is reachable."],
-    pitfalls: ["Choosing the shortest interval instead of earliest ending interval.", "Sorting by start time when the proof needs end time.", "Updating reach after checking a blocked index.", "Calling a choice greedy without an exchange argument."],
-    complexity: "Greedy interval and matching problems often spend O(n log n) on sorting and O(n) on the pass. Reachability scans can be O(n) time and O(1) space."
-  },
-  "binary-search": {
-    objectiveNouns: ["predicate boundaries", "lower bounds", "answer-space search", "integer-safe midpoints"],
-    signals: ["The input is sorted, rotated sorted, or monotonic by condition.", "The question asks for the first, last, minimum feasible, or maximum feasible value.", "A candidate answer can be checked faster than it can be constructed directly."],
-    mentalModel: "Binary search is boundary maintenance. At every step, you must know which side still contains the first true, last false, or exact target. For answer search, write the predicate before writing the loop.",
-    exampleA: "For `Lower Bound Local`, the boundary is the first index whose value is at least target.",
-    exampleB: "For `Ship Capacity Local`, the predicate is whether a given capacity can ship all packages within the allowed days.",
-    traceA: ["Use a half-open range `[left, right)`.", "If mid value is at least target, mid could be the answer, so move right.", "Otherwise move left past mid.", "Return left when the range collapses."],
-    traceB: ["Capacity below max weight is impossible.", "Capacity at total weight is always possible.", "Binary search between those bounds.", "The greedy day counter evaluates each candidate."],
-    pitfalls: ["Searching for a value when the prompt asks for an insertion boundary.", "Using `while left <= right` with boundary semantics that require half-open ranges.", "Forgetting impossible cases before answer search.", "Overflow is rare in Python but midpoint discipline still prevents logic bugs."],
-    complexity: "Plain binary search is O(log n). Answer-space search is O(check_cost * log range). Space is usually O(1), with the predicate doing a linear scan when needed."
-  },
-  "backtracking": {
-    objectiveNouns: ["decision trees", "path mutation", "duplicate skipping", "constraint pruning"],
-    signals: ["The prompt asks for all combinations, permutations, subsets, or valid configurations.", "A partial choice can be extended, rejected, or undone.", "The input size is small enough for exponential exploration with pruning."],
-    mentalModel: "Backtracking is controlled recursion over choices. The path is the current partial answer. Each recursive call owns a decision point, and every mutation must be undone before the next choice. Good pruning turns impossible branches into constant-time exits.",
-    exampleA: "For `Generate Parentheses Local`, a left parenthesis is allowed while open count is below n; a right parenthesis is allowed only while it will not exceed opens.",
-    exampleB: "For `Combination Sum Exact Local`, sorting lets you stop when a candidate exceeds the remaining target and skip duplicates at the same depth.",
-    traceA: ["Start with empty path.", "Choose `(` until opens reaches n.", "Choose `)` only if closed is less than opened.", "Append the path when length is `2n`."],
-    traceB: ["Sort candidates.", "At a depth, remember the previous value to skip duplicate siblings.", "Subtract the chosen value from remaining target.", "Pop the value before trying the next candidate."],
-    pitfalls: ["Appending the live path object instead of a copy.", "Skipping duplicates across different depths instead of only sibling choices.", "Forgetting to unmark a grid cell after DFS.", "Generating invalid states then filtering instead of enforcing constraints during generation."],
-    complexity: "Backtracking is usually exponential in the number of choices. Space is O(depth) for recursion plus output size. Pruning improves constants and sometimes avoids large impossible subtrees, but it does not make enumeration polynomial."
-  },
-  "dynamic-programming": {
-    objectiveNouns: ["state definitions", "recurrences", "memoization", "tabulation"],
-    signals: ["The prompt asks for optimal value or count of ways.", "The same suffix, prefix, amount, or grid cell is solved repeatedly.", "A choice at one position depends on best answers to smaller positions."],
-    mentalModel: "Dynamic programming starts with a sentence: `dp[state] means ...`. If that sentence is vague, the code will be vague. Once state is clear, the transition says how smaller solved states combine to solve the current one.",
-    exampleA: "For `Coin Change Min Local`, `dp[x]` is the fewest coins needed to make amount x. Every coin contributes `1 + dp[x - coin]` if the smaller amount is reachable.",
-    exampleB: "For `Grid Paths With Blocks`, each open cell receives paths from above and left; blocked cells reset the count to zero.",
-    traceA: ["Initialize `dp[0] = 0`.", "Fill amounts from 1 to target.", "Ignore coins larger than the amount or unreachable subamounts.", "Return -1 when the target remains sentinel."],
-    traceB: ["Start top-left as 1 if open.", "Scan rows left to right.", "A blocked cell sets `dp[c] = 0`.", "An open non-first-column cell adds paths from the left."],
-    pitfalls: ["Defining state after writing loops.", "Using zero as both a valid answer and an unreachable sentinel.", "Updating a one-dimensional DP in the wrong direction.", "Forgetting that choosing no values may be allowed in max-sum problems."],
-    complexity: "DP time is usually number_of_states times transition_cost. Space can often be reduced when each state depends only on nearby previous states, such as rolling variables or a single grid row."
-  },
-  "interview-tools": {
-    objectiveNouns: ["pattern selection", "complexity narration", "mixed review", "self-debugging"],
-    signals: ["The prompt combines multiple familiar shapes.", "The interviewer asks for tradeoffs, not just code.", "Your first idea works but has avoidable repeated work."],
-    mentalModel: "Mixed review is about diagnosis. Instead of memorizing problem names, ask which property unlocks the solution: sortedness, contiguity, repeated subproblems, graph reachability, or fast lookup. Then explain the proof of why the chosen pattern is enough.",
-    exampleA: "For `Choose Pattern Label`, feature words such as nodes, edges, and shortest path should push you toward graph traversal before considering DP or hashing.",
-    exampleB: "For `Growth Label`, doubling input size and comparing operation ratios trains you to separate constant, linear, and quadratic behavior.",
-    traceA: ["Normalize feature words.", "Check high-priority structures first, such as graph signals.", "Return the first matching pattern family.", "Use the answer as a prompt for the implementation approach."],
-    traceB: ["Compute ratios between measurements.", "Average the ratios roughly rather than demanding exact equality.", "Map near 1 to constant, near 2 to linear, near 4 to quadratic.", "Return unknown when the evidence is inconsistent."],
-    pitfalls: ["Choosing the most recently studied pattern instead of the prompt's strongest signal.", "Overstating complexity without naming input dimensions.", "Skipping the brute-force baseline, which makes the optimization harder to explain.", "Treating a passed sample as proof of correctness."],
-    complexity: "Interview-tool problems are usually small, but the habit matters: name the dimensions, justify the data structure, and explain why repeated work is bounded or cached."
-  }
-};
-
-const bonusFamilies: BonusFamilyInfo[] = [
-  { title: "Count Scores At Least Threshold", pattern: "single pass predicate" },
-  { title: "Longest Target Run", pattern: "contiguous run" },
-  { title: "First Prefix Over Limit", pattern: "prefix sum" },
-  { title: "Adjacent Change Count", pattern: "string scan" },
-  { title: "Minimum Neighbor Gap", pattern: "sorted scan" },
-  { title: "Maximum Affordable Tasks", pattern: "greedy sorting" },
-  { title: "All Frequencies Even", pattern: "frequency table" },
-  { title: "Rows Containing One", pattern: "grid scan" },
-  { title: "Running Maximums", pattern: "streaming state" },
-  { title: "Merged Coverage Length", pattern: "interval merge" },
-  { title: "Lower Bound Value", pattern: "binary search" },
-  { title: "Two-Item Combinations", pattern: "combination generation" },
-  { title: "Non-Adjacent Max Sum", pattern: "dynamic programming" },
-  { title: "Forward Dependency Check", pattern: "dependency order" }
 ];
 
 const problemSeeds: ProblemSeed[] = [
@@ -2208,94 +2032,6 @@ function starterCode(entrypoint: string, signature: string): string {
   return `def ${entrypoint}(${signature}):\n    # Write your solution here.\n    pass\n`;
 }
 
-function lessonBody(chapter: ChapterSpec): string {
-  const detail = lessonDetails[chapter.id];
-  const [firstProblem, secondProblem] = problemSeeds.filter((problem) => problem.chapterId === chapter.id);
-  const objectiveText = detail.objectiveNouns.map((objective) => `- ${objective}`).join("\n");
-  const signalText = detail.signals.map((signal) => `- ${signal}`).join("\n");
-  const pitfallsText = detail.pitfalls.map((pitfall) => `- ${pitfall}`).join("\n");
-  const traceA = detail.traceA.map((step, index) => `${index + 1}. ${step}`).join("\n");
-  const traceB = detail.traceB.map((step, index) => `${index + 1}. ${step}`).join("\n");
-  return `# ${chapter.title}
-
-${chapter.summary}
-
-## Learning Goals
-
-${objectiveText}
-
-By the end of this module, you should be able to read a prompt, name the state that matters, choose the right traversal or data structure, and explain why the code avoids unnecessary repeated work.
-
-## Pattern Recognition Signals
-
-${signalText}
-
-When two signals compete, prefer the one that is structural. Sortedness, contiguity, graph edges, and repeated subproblems usually matter more than the names of variables in the prompt. Before coding, say which signal you are acting on and which signal you are intentionally ignoring.
-
-## Mental Model
-
-${detail.mentalModel}
-
-The practical workflow is to write the brute-force idea in one sentence, then ask what information would let you avoid its repeated work. That information becomes the state. If the state can be updated cheaply and remains correct after every step, the algorithm is usually close.
-
-## Worked Example 1
-
-${detail.exampleA}
-
-Trace:
-
-${traceA}
-
-The important habit is not memorizing this exact prompt. It is naming what the state means after every processed element. Once that sentence is precise, the implementation becomes a direct translation.
-
-## Worked Example 2
-
-${detail.exampleB}
-
-Trace:
-
-${traceB}
-
-Notice how the second example uses the same chapter-level idea but a different surface shape. This is why the module includes both guided problems and bonus drills: you are practicing the recognition step, not just a finished snippet.
-
-## Implementation Checklist
-
-- Restate the result in terms of the input dimensions and edge cases.
-- Write the invariant before the loop, recursion, heap, queue, or DP table.
-- Decide exactly when the answer becomes final.
-- Preserve deterministic output order when multiple answers are valid.
-- Run one empty or singleton case, one representative case, and one stress-shaped case.
-
-## Common Mistakes
-
-${pitfallsText}
-
-## Complexity Notes
-
-${detail.complexity}
-
-## Practice Path
-
-Start with ${firstProblem?.title ?? "the first guided problem"} to verify the core pattern, then move to ${secondProblem?.title ?? "the next guided problem"} to see a variation. After that, use the runnable bonus drills for this chapter as spaced repetition. For every bonus prompt, write down the signal that triggered your pattern choice before opening the editor.
-
-## Study Routine
-
-Use a three-pass routine for this chapter. On the first pass, read the prompt and write only the state definition: what variables, frontier, table, or helper structure must mean after each step. On the second pass, implement the simplest correct version, even if it is not the cleverest version you can imagine. On the third pass, compare the final code against the invariant and remove only the complexity that is not earning its keep.
-
-For ${chapter.title}, the most useful review question is: "What information from the past, boundary, or smaller subproblem do I need right now?" If the answer is one scalar, keep the solution small. If the answer is a collection, name exactly what belongs in it and when an item leaves. If the answer is a recurrence, define the state in words before choosing indexes.
-
-## Self Check
-
-Before marking a lesson complete, solve one guided problem and one bonus drill without opening the solution. Then explain the difference between their pattern signals. If your explanation uses only the chapter name, it is too vague. A stronger explanation names the input shape, the invariant, the update rule, and the condition that makes the answer final.
-
-Write that explanation in your notes when the pattern still feels uncomfortable.
-
-## Interview Narrative
-
-Before coding, lead with the pattern signal: "${chapter.concepts[0]} is relevant because ..." Then describe the invariant, not every line of code. After coding, walk through the smallest edge case and one normal case. Close with time and space complexity and explain the term that dominates.
-`;
-}
-
 function extractSolutionCode(entrypoint: string): string {
   const lines = guidedReferenceCode.split("\n");
   const start = lines.findIndex((line) => line.startsWith(`def ${entrypoint}(`));
@@ -2339,375 +2075,31 @@ function makeProblem(seed: ProblemSeed): Problem {
   };
 }
 
-function makeBonusProblems(chapterId: string, chapterTitle: string, count: number): BonusProblem[] {
-  const slug = chapterId.replace(/-/g, "_");
-  const chapter = chaptersBase.find((candidate) => candidate.id === chapterId);
-  return Array.from({ length: count }, (_, index) => {
-    const ordinal = index + 1;
-    const entrypoint = `${slug}_bonus_${String(ordinal).padStart(2, "0")}`;
-    const family = index % bonusFamilies.length;
-    const familyInfo = bonusFamilies[family];
-    const difficulty: Difficulty = index % 5 === 4 ? "medium" : index % 3 === 0 ? "easy" : "warmup";
-    const conceptTag = chapter?.concepts[index % (chapter.concepts.length || 1)]?.toLowerCase() ?? chapterId;
-    const base = {
-      id: `${chapterId}-bonus-${String(ordinal).padStart(2, "0")}`,
-      chapterId,
-      title: `${familyInfo.title}: ${chapterTitle}`,
-      difficulty,
-      source: "bonus" as const,
-      adapter: "default" as const,
-      patterns: [chapterId, familyInfo.pattern, conceptTag, "bonus drill"],
-      entrypoint
-    };
 
-    if (family === 0) {
-      return {
-        ...base,
-        prompt: `In a practice score list for ${chapterTitle}, each attempt has an integer score. Given the scores and a threshold, return how many scores are greater than or equal to the threshold.`,
-        starterCode: starterCode(entrypoint, "nums, threshold"),
-        referenceCode: `def ${entrypoint}(nums, threshold):\n    return sum(1 for value in nums if value >= threshold)\n`,
-        solutionCode: `def ${entrypoint}(nums, threshold):\n    return sum(1 for value in nums if value >= threshold)\n`,
-        constraints: ["Scores may be empty.", "Threshold can be negative.", "Do not sort the input."],
-        examples: [{ name: "mixed threshold", args: [[1, 4, 7, 2], 4], expected: 2 }],
-        visibleTests: [
-          { name: "mixed threshold", args: [[1, 4, 7, 2], 4], expected: 2 },
-          { name: "none", args: [[-2, -1, 0], 3], expected: 0 }
-        ],
-        hiddenTests: [
-          { name: "empty", args: [[], 1], expected: 0 },
-          { name: "all match", args: [[5, 5, 6], 5], expected: 3 }
-        ],
-        hints: ["A boolean comparison can feed a counter.", "No sorting is needed; every value is independent."],
-        solution: "Scan the array once and increment the answer whenever the value satisfies the threshold predicate.",
-        walkthrough: "The invariant is the count of qualifying scores in the prefix already scanned.",
-        followUps: ["How would the answer change if the threshold were strict?", "Can you stream the input without storing it?"],
-        complexity: { time: "O(n)", space: "O(1)" }
-      };
-    }
-
-    if (family === 1) {
-      return {
-        ...base,
-        prompt: `Given a sequence of topic markers for ${chapterTitle} practice and a target marker, return the length of the longest contiguous run equal to the target.`,
-        starterCode: starterCode(entrypoint, "values, target"),
-        referenceCode: `def ${entrypoint}(values, target):\n    best = current = 0\n    for value in values:\n        if value == target:\n            current += 1\n            best = max(best, current)\n        else:\n            current = 0\n    return best\n`,
-        solutionCode: `def ${entrypoint}(values, target):\n    best = current = 0\n    for value in values:\n        if value == target:\n            current += 1\n            best = max(best, current)\n        else:\n            current = 0\n    return best\n`,
-        constraints: ["Values can be empty.", "Only contiguous runs count.", "Return 0 when the target never appears."],
-        examples: [{ name: "middle run", args: [[2, 2, 3, 2, 2, 2], 2], expected: 3 }],
-        visibleTests: [
-          { name: "middle run", args: [[2, 2, 3, 2, 2, 2], 2], expected: 3 },
-          { name: "missing", args: [[1, 3, 4], 2], expected: 0 }
-        ],
-        hiddenTests: [
-          { name: "all target", args: [[7, 7, 7], 7], expected: 3 },
-          { name: "empty", args: [[], 9], expected: 0 }
-        ],
-        hints: ["Track the active run separately from the best run.", "Reset the active run when the value changes away from the target."],
-        solution: "Maintain `current` for the run ending at the current index and `best` for the maximum run seen.",
-        walkthrough: "Each value either extends the current run or closes it. The best run is updated only after extension.",
-        followUps: ["How would you return the start index too?", "What changes if there are multiple acceptable targets?"],
-        complexity: { time: "O(n)", space: "O(1)" }
-      };
-    }
-
-    if (family === 2) {
-      return {
-        ...base,
-        prompt: `Given checkpoint weights from the ${chapterTitle} practice plan and a limit, return the first index where the running prefix total becomes strictly greater than the limit. Return -1 if it never crosses.`,
-        starterCode: starterCode(entrypoint, "nums, limit"),
-        referenceCode: `def ${entrypoint}(nums, limit):\n    total = 0\n    for index, value in enumerate(nums):\n        total += value\n        if total > limit:\n            return index\n    return -1\n`,
-        solutionCode: `def ${entrypoint}(nums, limit):\n    total = 0\n    for index, value in enumerate(nums):\n        total += value\n        if total > limit:\n            return index\n    return -1\n`,
-        constraints: ["Numbers may be negative.", "Return the earliest crossing index.", "An exact match to the limit is not a crossing."],
-        examples: [{ name: "crosses", args: [[2, 3, 5], 4], expected: 1 }],
-        visibleTests: [
-          { name: "crosses", args: [[2, 3, 5], 4], expected: 1 },
-          { name: "never crosses", args: [[1, 1, 1], 5], expected: -1 }
-        ],
-        hiddenTests: [
-          { name: "first element", args: [[9, 1], 3], expected: 0 },
-          { name: "empty", args: [[], 0], expected: -1 }
-        ],
-        hints: ["Prefix state changes by one value per step.", "Return as soon as the invariant changes from within limit to over limit."],
-        solution: "Accumulate the prefix sum while scanning and return the first index where the sum exceeds the limit.",
-        walkthrough: "The running total is the full state. Because the prompt asks for the first crossing, the first valid index is final.",
-        followUps: ["Would binary search work if all values were positive?", "How do negative values affect monotonicity?"],
-        complexity: { time: "O(n)", space: "O(1)" }
-      };
-    }
-
-    if (family === 3) {
-      return {
-        ...base,
-        prompt: `Given a string of status codes from the ${chapterTitle} exercise, return the number of adjacent character changes. A change occurs at index i when text[i] differs from text[i - 1].`,
-        starterCode: starterCode(entrypoint, "text"),
-        referenceCode: `def ${entrypoint}(text):\n    changes = 0\n    for i in range(1, len(text)):\n        if text[i] != text[i - 1]:\n            changes += 1\n    return changes\n`,
-        solutionCode: `def ${entrypoint}(text):\n    changes = 0\n    for i in range(1, len(text)):\n        if text[i] != text[i - 1]:\n            changes += 1\n    return changes\n`,
-        constraints: ["The string may be empty.", "Only adjacent positions are compared.", "Case-sensitive comparison is intended."],
-        examples: [{ name: "alternating", args: ["aabcca"], expected: 3 }],
-        visibleTests: [
-          { name: "alternating", args: ["aabcca"], expected: 3 },
-          { name: "stable", args: ["xxxx"], expected: 0 }
-        ],
-        hiddenTests: [
-          { name: "empty", args: [""], expected: 0 },
-          { name: "all changes", args: ["abcd"], expected: 3 }
-        ],
-        hints: ["Start comparing at index 1.", "Only the previous character is needed."],
-        solution: "Scan adjacent pairs and count positions where the current character differs from the previous character.",
-        walkthrough: "The invariant is the number of boundaries found before the current index.",
-        followUps: ["How would you return the boundary indexes?", "What if comparisons were case-insensitive?"],
-        complexity: { time: "O(n)", space: "O(1)" }
-      };
-    }
-
-    if (family === 4) {
-      return {
-        ...base,
-        prompt: `Given sorted checkpoint values from the ${chapterTitle} practice set, return the smallest absolute gap between neighboring checkpoints. Return 0 for fewer than two checkpoints.`,
-        starterCode: starterCode(entrypoint, "values"),
-        referenceCode: `def ${entrypoint}(values):\n    if len(values) < 2:\n        return 0\n    best = abs(values[1] - values[0])\n    for i in range(2, len(values)):\n        best = min(best, abs(values[i] - values[i - 1]))\n    return best\n`,
-        solutionCode: `def ${entrypoint}(values):\n    if len(values) < 2:\n        return 0\n    best = abs(values[1] - values[0])\n    for i in range(2, len(values)):\n        best = min(best, abs(values[i] - values[i - 1]))\n    return best\n`,
-        constraints: ["Input is already sorted.", "Negative values are allowed.", "Return 0 when no pair exists."],
-        examples: [{ name: "smallest middle", args: [[1, 5, 6, 12]], expected: 1 }],
-        visibleTests: [
-          { name: "smallest middle", args: [[1, 5, 6, 12]], expected: 1 },
-          { name: "one value", args: [[4]], expected: 0 }
-        ],
-        hiddenTests: [
-          { name: "negative", args: [[-8, -3, 2]], expected: 5 },
-          { name: "duplicates", args: [[2, 2, 9]], expected: 0 }
-        ],
-        hints: ["Sorted order means the closest pair must be adjacent.", "Track the minimum neighboring gap."],
-        solution: "Compare every adjacent pair and keep the smallest absolute difference.",
-        walkthrough: "Sortedness is the pattern signal: non-neighboring values cannot have a smaller gap than every value between them.",
-        followUps: ["What if the input were unsorted?", "How would you return the pair as well as the gap?"],
-        complexity: { time: "O(n)", space: "O(1)" }
-      };
-    }
-
-    if (family === 5) {
-      return {
-        ...base,
-        prompt: `Given task costs for the ${chapterTitle} practice session and a budget, return the maximum number of tasks that can be completed if tasks may be done in any order.`,
-        starterCode: starterCode(entrypoint, "costs, budget"),
-        referenceCode: `def ${entrypoint}(costs, budget):\n    done = 0\n    for cost in sorted(costs):\n        if cost > budget:\n            break\n        budget -= cost\n        done += 1\n    return done\n`,
-        solutionCode: `def ${entrypoint}(costs, budget):\n    done = 0\n    for cost in sorted(costs):\n        if cost > budget:\n            break\n        budget -= cost\n        done += 1\n    return done\n`,
-        constraints: ["Costs are non-negative.", "Tasks can be reordered.", "Return the count, not the chosen tasks."],
-        examples: [{ name: "choose cheap", args: [[5, 1, 2, 4], 7], expected: 3 }],
-        visibleTests: [
-          { name: "choose cheap", args: [[5, 1, 2, 4], 7], expected: 3 },
-          { name: "none", args: [[7, 8], 3], expected: 0 }
-        ],
-        hiddenTests: [
-          { name: "exact", args: [[3, 3, 3], 6], expected: 2 },
-          { name: "empty", args: [[], 9], expected: 0 }
-        ],
-        hints: ["Doing cheaper tasks first cannot reduce the count.", "Sort the costs before spending the budget."],
-        solution: "Sort costs ascending and greedily take each affordable task until the next task exceeds the remaining budget.",
-        walkthrough: "This is a greedy selection: replacing a chosen expensive task with a cheaper available task never hurts the number completed.",
-        followUps: ["How would you return selected indexes?", "What if tasks had values as well as costs?"],
-        complexity: { time: "O(n log n)", space: "O(n)" }
-      };
-    }
-
-    if (family === 6) {
-      return {
-        ...base,
-        prompt: `Given integer labels from the ${chapterTitle} practice set, return true if every label appears an even number of times.`,
-        starterCode: starterCode(entrypoint, "values"),
-        referenceCode: `from collections import Counter\n\ndef ${entrypoint}(values):\n    return all(count % 2 == 0 for count in Counter(values).values())\n`,
-        solutionCode: `from collections import Counter\n\ndef ${entrypoint}(values):\n    return all(count % 2 == 0 for count in Counter(values).values())\n`,
-        constraints: ["Empty input returns true.", "Values may be negative.", "Only parity of frequencies matters."],
-        examples: [{ name: "paired", args: [[1, 2, 1, 2]], expected: true }],
-        visibleTests: [
-          { name: "paired", args: [[1, 2, 1, 2]], expected: true },
-          { name: "odd count", args: [[3, 3, 3]], expected: false }
-        ],
-        hiddenTests: [
-          { name: "empty", args: [[]], expected: true },
-          { name: "negative", args: [[-1, -1, 2, 2, 2, 2]], expected: true }
-        ],
-        hints: ["A frequency table is enough.", "Every count must be divisible by two."],
-        solution: "Count values and verify that each count has even parity.",
-        walkthrough: "The hash table compresses arbitrary positions into value frequencies.",
-        followUps: ["How would you find the odd-count values?", "Can XOR solve a restricted version?"],
-        complexity: { time: "O(n)", space: "O(n)" }
-      };
-    }
-
-    if (family === 7) {
-      return {
-        ...base,
-        prompt: `Given a binary grid used in ${chapterTitle} practice, return how many rows contain at least one 1.`,
-        starterCode: starterCode(entrypoint, "grid"),
-        referenceCode: `def ${entrypoint}(grid):\n    return sum(1 for row in grid if any(value == 1 for value in row))\n`,
-        solutionCode: `def ${entrypoint}(grid):\n    return sum(1 for row in grid if any(value == 1 for value in row))\n`,
-        constraints: ["The grid may be empty.", "Rows may be empty.", "Only row-level existence matters."],
-        examples: [{ name: "two rows", args: [[[0, 1], [0, 0], [1, 1]]], expected: 2 }],
-        visibleTests: [
-          { name: "two rows", args: [[[0, 1], [0, 0], [1, 1]]], expected: 2 },
-          { name: "none", args: [[[0], []]], expected: 0 }
-        ],
-        hiddenTests: [
-          { name: "empty", args: [[]], expected: 0 },
-          { name: "all rows", args: [[[1], [1, 0]]], expected: 2 }
-        ],
-        hints: ["Use `any` for a row.", "Count rows, not cells."],
-        solution: "Scan rows and count each row whose values include at least one 1 marker.",
-        walkthrough: "The state is a row count; each row can be summarized independently.",
-        followUps: ["How would you count columns instead?", "How does this differ from island counting?"],
-        complexity: { time: "O(r * c)", space: "O(1)" }
-      };
-    }
-
-    if (family === 8) {
-      return {
-        ...base,
-        prompt: `Given a stream of ${chapterTitle} practice scores, return the running maximum after each score arrives.`,
-        starterCode: starterCode(entrypoint, "scores"),
-        referenceCode: `def ${entrypoint}(scores):\n    out = []\n    best = None\n    for score in scores:\n        best = score if best is None else max(best, score)\n        out.append(best)\n    return out\n`,
-        solutionCode: `def ${entrypoint}(scores):\n    out = []\n    best = None\n    for score in scores:\n        best = score if best is None else max(best, score)\n        out.append(best)\n    return out\n`,
-        constraints: ["Scores may be empty.", "Negative scores are allowed.", "Output length equals input length."],
-        examples: [{ name: "rises", args: [[2, 1, 5, 3]], expected: [2, 2, 5, 5] }],
-        visibleTests: [
-          { name: "rises", args: [[2, 1, 5, 3]], expected: [2, 2, 5, 5] },
-          { name: "falling", args: [[4, 3, 1]], expected: [4, 4, 4] }
-        ],
-        hiddenTests: [
-          { name: "empty", args: [[]], expected: [] },
-          { name: "negative", args: [[-5, -2, -9]], expected: [-5, -2, -2] }
-        ],
-        hints: ["Keep the best value seen so far.", "Append the best after processing each score."],
-        solution: "Scan once, update the maximum so far, and append it to the output after each item.",
-        walkthrough: "The output exposes the invariant after every prefix.",
-        followUps: ["How would you produce running minimum too?", "What if the stream supported deletions?"],
-        complexity: { time: "O(n)", space: "O(n)" }
-      };
-    }
-
-    if (family === 9) {
-      return {
-        ...base,
-        prompt: `Given time intervals from the ${chapterTitle} study schedule, return the total covered length after merging overlaps. Intervals are [start, end] and may touch.`,
-        starterCode: starterCode(entrypoint, "intervals"),
-        referenceCode: `def ${entrypoint}(intervals):\n    if not intervals:\n        return 0\n    intervals = sorted(intervals)\n    total = 0\n    start, end = intervals[0]\n    for next_start, next_end in intervals[1:]:\n        if next_start <= end:\n            end = max(end, next_end)\n        else:\n            total += end - start\n            start, end = next_start, next_end\n    total += end - start\n    return total\n`,
-        solutionCode: `def ${entrypoint}(intervals):\n    if not intervals:\n        return 0\n    intervals = sorted(intervals)\n    total = 0\n    start, end = intervals[0]\n    for next_start, next_end in intervals[1:]:\n        if next_start <= end:\n            end = max(end, next_end)\n        else:\n            total += end - start\n            start, end = next_start, next_end\n    total += end - start\n    return total\n`,
-        constraints: ["Intervals may be unsorted.", "Touching intervals merge.", "Return total length, not merged intervals."],
-        examples: [{ name: "overlap", args: [[[1, 4], [2, 6], [8, 9]]], expected: 6 }],
-        visibleTests: [
-          { name: "overlap", args: [[[1, 4], [2, 6], [8, 9]]], expected: 6 },
-          { name: "empty", args: [[]], expected: 0 }
-        ],
-        hiddenTests: [
-          { name: "touching", args: [[[1, 2], [2, 5]]], expected: 4 },
-          { name: "separate", args: [[[0, 1], [3, 5]]], expected: 3 }
-        ],
-        hints: ["Sort by start time.", "Flush a merged interval only when the next interval starts after it ends."],
-        solution: "Sort intervals, merge overlaps, and accumulate the length of each completed merged interval.",
-        walkthrough: "Sorting creates a local invariant: the active interval only needs to compare with the next interval.",
-        followUps: ["How would you return merged intervals?", "What changes if touching intervals do not merge?"],
-        complexity: { time: "O(n log n)", space: "O(n)" }
-      };
-    }
-
-    if (family === 10) {
-      return {
-        ...base,
-        prompt: `Given a target and sorted ${chapterTitle} checkpoint scores, return the first score greater than or equal to target, or -1 if none exists.`,
-        starterCode: starterCode(entrypoint, "checkpoints, target"),
-        referenceCode: `def ${entrypoint}(checkpoints, target):\n    left, right = 0, len(checkpoints)\n    while left < right:\n        mid = (left + right) // 2\n        if checkpoints[mid] >= target:\n            right = mid\n        else:\n            left = mid + 1\n    return -1 if left == len(checkpoints) else checkpoints[left]\n`,
-        solutionCode: `def ${entrypoint}(checkpoints, target):\n    left, right = 0, len(checkpoints)\n    while left < right:\n        mid = (left + right) // 2\n        if checkpoints[mid] >= target:\n            right = mid\n        else:\n            left = mid + 1\n    return -1 if left == len(checkpoints) else checkpoints[left]\n`,
-        constraints: ["Input is sorted ascending.", "Return the value, not the index.", "Return -1 when target is larger than every checkpoint."],
-        examples: [{ name: "inside", args: [[1, 4, 7], 5], expected: 7 }],
-        visibleTests: [
-          { name: "inside", args: [[1, 4, 7], 5], expected: 7 },
-          { name: "exact", args: [[1, 4, 7], 4], expected: 4 }
-        ],
-        hiddenTests: [
-          { name: "too high", args: [[2, 3], 5], expected: -1 },
-          { name: "empty", args: [[], 1], expected: -1 }
-        ],
-        hints: ["This is a lower-bound search.", "The answer position is the first value that satisfies `>= target`."],
-        solution: "Use half-open binary search to find the lower-bound index, then convert the index to a value or -1.",
-        walkthrough: "The maintained boundary separates values known to be too small from possible answers.",
-        followUps: ["How would you return insertion index?", "What if duplicates are present?"],
-        complexity: { time: "O(log n)", space: "O(1)" }
-      };
-    }
-
-    if (family === 11) {
-      return {
-        ...base,
-        prompt: `Given candidate labels for the ${chapterTitle} practice set, return all two-item combinations in input order.`,
-        starterCode: starterCode(entrypoint, "choices"),
-        referenceCode: `def ${entrypoint}(choices):\n    out = []\n    for i in range(len(choices)):\n        for j in range(i + 1, len(choices)):\n            out.append([choices[i], choices[j]])\n    return out\n`,
-        solutionCode: `def ${entrypoint}(choices):\n    out = []\n    for i in range(len(choices)):\n        for j in range(i + 1, len(choices)):\n            out.append([choices[i], choices[j]])\n    return out\n`,
-        constraints: ["Input order must be preserved.", "Do not include self-pairs.", "Return an empty list for fewer than two choices."],
-        examples: [{ name: "three choices", args: [["A", "B", "C"]], expected: [["A", "B"], ["A", "C"], ["B", "C"]] }],
-        visibleTests: [
-          { name: "three choices", args: [["A", "B", "C"]], expected: [["A", "B"], ["A", "C"], ["B", "C"]] },
-          { name: "one", args: [["A"]], expected: [] }
-        ],
-        hiddenTests: [
-          { name: "empty", args: [[]], expected: [] },
-          { name: "two", args: [["x", "y"]], expected: [["x", "y"]] }
-        ],
-        hints: ["The second index always starts after the first.", "Copy each pair into a new list."],
-        solution: "Use nested loops with `j > i` to enumerate every unordered pair once in stable order.",
-        walkthrough: "This is a small decision-tree drill: choose the first item, then choose only later items.",
-        followUps: ["How would you generate size-k combinations?", "What if duplicate values should be deduplicated?"],
-        complexity: { time: "O(n^2)", space: "O(n^2)" }
-      };
-    }
-
-    if (family === 12) {
-      return {
-        ...base,
-        prompt: `Given daily ${chapterTitle} practice gains, return the maximum total from choosing non-adjacent days. Choosing no days is allowed.`,
-        starterCode: starterCode(entrypoint, "gains"),
-        referenceCode: `def ${entrypoint}(gains):\n    prev2 = prev1 = 0\n    for gain in gains:\n        prev2, prev1 = prev1, max(prev1, prev2 + gain)\n    return prev1\n`,
-        solutionCode: `def ${entrypoint}(gains):\n    prev2 = prev1 = 0\n    for gain in gains:\n        prev2, prev1 = prev1, max(prev1, prev2 + gain)\n    return prev1\n`,
-        constraints: ["Gains may be negative.", "No adjacent indexes may both be chosen.", "Choosing nothing is valid."],
-        examples: [{ name: "skip adjacent", args: [[2, 7, 9, 3]], expected: 11 }],
-        visibleTests: [
-          { name: "skip adjacent", args: [[2, 7, 9, 3]], expected: 11 },
-          { name: "negative", args: [[-1, -2]], expected: 0 }
-        ],
-        hiddenTests: [
-          { name: "empty", args: [[]], expected: 0 },
-          { name: "single", args: [[5]], expected: 5 }
-        ],
-        hints: ["At each day, either take it with the best two days back or skip it.", "Two rolling values are enough."],
-        solution: "Use rolling dynamic programming where `prev1` is best so far and `prev2` is best before the previous day.",
-        walkthrough: "The recurrence compares taking the current value against skipping it.",
-        followUps: ["How would you recover chosen indexes?", "What if the days formed a circle?"],
-        complexity: { time: "O(n)", space: "O(1)" }
-      };
-    }
-
-    return {
-      ...base,
-      prompt: `Given prerequisite pairs for the ${chapterTitle} practice plan, return true if every dependency points from a smaller numbered item to a larger numbered item. This checks whether the listed order is already topologically consistent.`,
-      starterCode: starterCode(entrypoint, "pairs"),
-      referenceCode: `def ${entrypoint}(pairs):\n    return all(before < after for before, after in pairs)\n`,
-      solutionCode: `def ${entrypoint}(pairs):\n    return all(before < after for before, after in pairs)\n`,
-      constraints: ["Pairs are two-item integer lists.", "Empty pairs are valid.", "Return a boolean."],
-      examples: [{ name: "ordered", args: [[[0, 1], [2, 4]]], expected: true }],
-      visibleTests: [
-        { name: "ordered", args: [[[0, 1], [2, 4]]], expected: true },
-        { name: "bad edge", args: [[[2, 1]]], expected: false }
-      ],
-      hiddenTests: [
-        { name: "empty", args: [[]], expected: true },
-        { name: "equal", args: [[[1, 1]]], expected: false }
-      ],
-      hints: ["Check every pair independently.", "Equality is not a valid forward dependency."],
-      solution: "Return true only when every pair has the first item strictly smaller than the second.",
-      walkthrough: "The prompt gives a preordered dependency claim; the algorithm verifies the local condition for each edge.",
-      followUps: ["How would you validate arbitrary topological order?", "What if item labels were strings?"],
-      complexity: { time: "O(n)", space: "O(1)" }
-    };
-  });
+function makeBonusProblem(seed: BonusSeed): BonusProblem {
+  return {
+    id: seed.id,
+    chapterId: seed.chapterId,
+    title: seed.title,
+    difficulty: seed.difficulty,
+    source: "bonus",
+    patterns: seed.patterns,
+    prompt: seed.prompt,
+    constraints: seed.constraints,
+    examples: seed.visibleTests,
+    starterCode: starterCode(seed.entrypoint, seed.signature),
+    referenceCode: seed.code,
+    solutionCode: seed.code,
+    entrypoint: seed.entrypoint,
+    adapter: seed.adapter ?? "default",
+    visibleTests: seed.visibleTests,
+    hiddenTests: seed.hiddenTests,
+    hints: seed.hints,
+    solution: seed.solution,
+    walkthrough: seed.walkthrough,
+    followUps: seed.followUps,
+    complexity: { time: seed.time, space: seed.space }
+  };
 }
 
 function makeQuiz(chapter: ChapterSpec, order: number): Quiz {
@@ -2756,20 +2148,17 @@ const lessons: Lesson[] = chaptersBase.map((chapter, index) => ({
   title: `${chapter.title} Playbook`,
   concepts: chapter.concepts,
   minutes: index === 0 ? 18 : 24,
-  objectives: lessonDetails[chapter.id].objectiveNouns,
-  workedExamples: [lessonDetails[chapter.id].exampleA, lessonDetails[chapter.id].exampleB],
-  pitfalls: lessonDetails[chapter.id].pitfalls,
+  objectives: lessonMeta[chapter.id].objectives,
+  workedExamples: lessonMeta[chapter.id].workedExamples,
+  pitfalls: lessonMeta[chapter.id].pitfalls,
   linkedProblemIds: problemSeeds.filter((problem) => problem.chapterId === chapter.id).slice(0, 4).map((problem) => problem.id),
-  body: lessonBody(chapter)
+  body: lessonBodies[chapter.id]
 }));
 
 const guidedProblems = problemSeeds.map(makeProblem);
 const quizzes = chaptersBase.slice(0, 12).map(makeQuiz);
 
-const bonusProblems = chaptersBase.flatMap((chapter) => {
-  const chapterProblems = guidedProblems.filter((problem) => problem.chapterId === chapter.id);
-  return makeBonusProblems(chapter.id, chapter.title, chapterProblems.length * 2);
-});
+const bonusProblems = bonusSeeds.map(makeBonusProblem);
 
 const problems = [...guidedProblems, ...bonusProblems];
 

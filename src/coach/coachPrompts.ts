@@ -167,6 +167,83 @@ ${authoredBlock(ctx)}
 Give your opening coaching message now. Start at the lowest ladder rung that fits the situation above.`;
 }
 
+// ---------------------------------------------------------------------------
+// Lesson coach. A separate, lighter surface from the problem coach: the learner
+// is reading a lesson (not debugging code), so there is no escalation ladder —
+// just clear, patient explanation. Reuses streamChat / checkOllama.
+// ---------------------------------------------------------------------------
+
+export const LESSON_COACH_SYSTEM_PROMPT = `You are a patient tutor inside DSA Coach, a tool where someone is learning data structures and algorithms. The learner is reading a lesson and has asked for help understanding something. You are talking directly to the learner.
+
+HOW TO EXPLAIN
+- Assume no prior knowledge of the term being asked about. Define it plainly before using it.
+- Be concrete. Prefer a small, specific worked example over an abstract description.
+- Do not use analogies unless they are exact. A loose analogy that breaks down is worse than none.
+- Give a genuinely different angle from the lesson text — do not just reword the same sentences. If the lesson explained it structurally, try a concrete trace; if it gave an example, try the underlying rule.
+- Be brief: 2-4 short paragraphs. Stop when the point is made.
+
+WHEN THE LEARNER GOT A QUIZ QUESTION WRONG
+- Address THEIR specific wrong choice. Name why that choice is tempting — what reasonable-but-incomplete idea leads someone to pick it.
+- Then explain why it is wrong and why the correct answer is correct, concretely.
+- Be encouraging. Never say "wrong" harshly; say what the choice gets right and where it falls short.
+
+FORMAT
+- Markdown. Short paragraphs, one idea each. Bullet lists for multiple points.
+- Wrap identifiers, keywords, and code in backticks.
+- You may use a short fenced code block when a few lines of Python make it concrete.`;
+
+/** Strip the `:::` interactive-block fence lines from a lesson body. */
+function stripLessonMarkup(body: string): string {
+  return body
+    .split("\n")
+    .filter((line) => !line.trim().startsWith(":::"))
+    .join("\n")
+    .replace(/\{\{([^}|]+)(?:\|[^}]*)?\}\}/g, "$1")
+    .trim();
+}
+
+/** First message when the learner asks the coach a free-form lesson question. */
+export function buildLessonQuestionPrompt(lessonTitle: string, lessonBody: string, question: string): string {
+  return `LESSON: ${lessonTitle}
+
+The learner is reading this lesson:
+
+${stripLessonMarkup(lessonBody)}
+
+---
+
+The learner asks: ${question.trim()}
+
+Answer their question, grounded in this lesson. If they are pointing at a specific section, focus there.`;
+}
+
+/** First message when the learner wants a quiz question they missed re-explained. */
+export function buildQuizCoachPrompt(args: {
+  lessonTitle: string;
+  question: string;
+  choices: string[];
+  pickedIndex: number;
+  correctIndex: number;
+  explanation: string;
+}): string {
+  const letter = (i: number) => String.fromCharCode(65 + i);
+  const choiceList = args.choices.map((choice, i) => `${letter(i)}. ${choice}`).join("\n");
+  return `LESSON: ${args.lessonTitle}
+
+The learner answered a check-yourself quiz question incorrectly.
+
+QUESTION: ${args.question}
+
+CHOICES:
+${choiceList}
+
+The learner picked ${letter(args.pickedIndex)}. The correct answer is ${letter(args.correctIndex)}.
+
+Authored explanation (for your grounding — do not just repeat it): ${args.explanation}
+
+Explain to the learner why choice ${letter(args.pickedIndex)} is tempting, why it is not correct, and why ${letter(args.correctIndex)} is. Address the specific misconception behind picking ${letter(args.pickedIndex)}.`;
+}
+
 /**
  * Heuristic: does this learner message read as an explicit request for the
  * full solution? Used to tell the model to jump to Rung 4 without nagging.
