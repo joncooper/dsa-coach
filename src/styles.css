@@ -1826,6 +1826,10 @@ pre {
 }
 
 .problem-context-main {
+  /* Grow to fill the bar so the title stays pinned to the left, right
+     after the SidebarShowToggle. Without this, the bar's space-between
+     centers the title once the toggle appears (collapsed sidebar). */
+  flex: 1;
   min-width: 0;
 }
 
@@ -3442,6 +3446,10 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  /* Grow to fill the bar so the title stays left-aligned next to the
+     SidebarShowToggle, instead of being centered by space-between when
+     the toggle appears (collapsed sidebar). */
+  flex: 1;
   min-width: 0;
 }
 
