@@ -3,6 +3,7 @@ import { problemSets as interviewSets } from "./problemSets";
 import { aocSets } from "./aocSets";
 import { assessmentSets } from "./assessments";
 import { librarySets } from "./libraries";
+import { lessonBodies, lessonMeta } from "./lessonBodies";
 import type { BonusProblem, Chapter, CourseData, Difficulty, Lesson, Problem, ProblemSet, ProblemTest, Quiz } from "../types";
 
 const problemSets: ProblemSet[] = [...interviewSets, ...aocSets, ...assessmentSets, ...librarySets];
@@ -30,18 +31,6 @@ interface ProblemSeed {
   solution: string;
   time: string;
   space: string;
-}
-
-interface LessonDetail {
-  objectiveNouns: string[];
-  signals: string[];
-  mentalModel: string;
-  exampleA: string;
-  exampleB: string;
-  traceA: string[];
-  traceB: string[];
-  pitfalls: string[];
-  complexity: string;
 }
 
 interface BonusFamilyInfo {
@@ -129,152 +118,6 @@ const chaptersBase: ChapterSpec[] = [
     concepts: ["pattern choice", "complexity narration", "tradeoffs", "mock review", "mixed practice"]
   }
 ];
-
-const lessonDetails: Record<string, LessonDetail> = {
-  "foundations": {
-    objectiveNouns: ["runtime vocabulary", "edge-case discipline", "recursive base cases", "loop invariants"],
-    signals: ["The prompt asks for a direct aggregate, a first occurrence, or a small simulation.", "The constraints are small enough to reason about by hand but large enough to punish accidental quadratic scans.", "The examples hide an empty input, a singleton input, or a value that should not contribute."],
-    mentalModel: "Treat the first pass through any interview problem as an evidence-gathering pass. You are not trying to guess the clever trick; you are naming the state that would let a simple loop, recursion, or helper structure stay honest. Foundations problems reward precise definitions: what does the counter count, when is the answer final, and what is the smallest input that should not break the code?",
-    exampleA: "For `Sum Positive Readings`, the input `[3, -2, 7, 0, -5]` should produce `10`. The invariant is: after processing index i, `total` is the sum of positive values in the prefix ending at i.",
-    exampleB: "For `First Repeated Index`, the input `[5, 1, 4, 1, 9]` should produce `3`. The invariant is: before checking index i, the set contains exactly the values from indexes before i.",
-    traceA: ["Start total at 0.", "See 3, add it because it is positive: total is 3.", "Ignore -2 and 0 because they do not satisfy the predicate.", "See 7, total becomes 10, and later negative values leave it unchanged."],
-    traceB: ["Before index 0, seen is empty, then add 5.", "Before index 1, seen is {5}, then add 1.", "Before index 3, seen is {5, 1, 4}; value 1 already exists, so index 3 is final."],
-    pitfalls: ["Counting values before defining whether zero contributes.", "Returning the repeated value when the prompt asks for the repeated index.", "Writing recursion without a base case that handles zero or a single digit.", "Calling an O(log n) loop O(n) because it is still a loop."],
-    complexity: "Most foundation loops are O(n) time and O(1) space unless they store seen values. A set changes the memory cost to O(n) but keeps lookup expected O(1). Repeated halving is O(log n) because the input size shrinks by a constant factor each step."
-  },
-  "arrays-strings": {
-    objectiveNouns: ["index safety", "prefix state", "stable output construction", "string scan discipline"],
-    signals: ["The problem asks for a transformed array or compressed string.", "A split, prefix, suffix, or window summary can answer many positions.", "The input order matters and sorting would destroy the required relationship."],
-    mentalModel: "Arrays and strings are about respecting position. The strongest solutions usually keep one piece of state that summarizes the prefix already consumed, then write output in a deliberate direction. If the answer for every index depends on information from both sides, build one side first and combine it with the other side during a second pass.",
-    exampleA: "For `Product Except Self Local`, `[1, 2, 3, 4]` should produce `[24, 12, 8, 6]`. The answer at each index is the product of values strictly left of it times values strictly right of it.",
-    exampleB: "For `Compress Runs`, `aaabb` becomes `a3b2`. The active state is the current character and the run length that has not yet been flushed to output.",
-    traceA: ["Left pass writes prefix products `[1, 1, 2, 6]`.", "Right pass starts suffix at 1 and walks backward.", "At index 3, multiply by suffix 1, then suffix becomes 4.", "At index 0, multiply prefix 1 by suffix 24."],
-    traceB: ["Start with `a`, count 1.", "Second and third `a` increase the count.", "Seeing `b` flushes `a3` and starts `b1`.", "End of input flushes `b2`."],
-    pitfalls: ["Using division when zero values make it invalid.", "Forgetting to normalize rotation counts with modulo.", "Appending characters directly in a loop when a list and join is clearer.", "Off-by-one errors around empty suffixes."],
-    complexity: "A single scan or pair of scans is O(n). Output arrays and compressed strings are O(n) space because the result must be stored. Prefix/suffix product can be O(1) extra space if the output array is not counted."
-  },
-  "two-pointers-sliding-window": {
-    objectiveNouns: ["monotonic pointer movement", "window validity", "opposite-end reasoning", "bounded shrink loops"],
-    signals: ["The prompt asks about contiguous subarrays or substrings.", "All numbers are positive, making sums grow when the right edge expands.", "A sorted input allows one pointer move to increase or decrease a candidate value."],
-    mentalModel: "Two-pointer solutions work when movement is irreversible. Each pointer should have a reason to move that never requires it to backtrack. Sliding windows add one rule: define what makes the window valid, expand until it breaks, then shrink until it is valid again. The proof is that each element enters and leaves at most once.",
-    exampleA: "For `Longest With Flips`, `[1, 0, 1, 0, 1, 1, 0]` with k = 2 produces 6. The valid condition is at most two zeroes in the current window.",
-    exampleB: "For `Closest Pair Sum`, a sorted array lets you compare the low and high values. If the sum is too small, only moving the low pointer can increase it.",
-    traceA: ["Expand right while counting zeroes.", "When zeroes becomes 3, move left until one zero leaves.", "After each repair, the window is valid and its length can update the best answer.", "No index is moved left twice."],
-    traceB: ["Start at both ends.", "Record the current sum if it is closer than the best.", "Move left to raise small sums and right to lower large sums.", "Preserve the smaller sum on exact distance ties."],
-    pitfalls: ["Shrinking before adding the new right value, then mixing invariants.", "Using sliding window when negative numbers break monotonic sums.", "Counting replacements instead of counting broken characters or zeroes.", "Stopping a palindrome scan after pointers cross but accidentally counting the center."],
-    complexity: "When pointer movement is monotonic, time is O(n) because each pointer moves across the input once. Space is usually O(1), except when the output must store transformed values."
-  },
-  "hashing": {
-    objectiveNouns: ["constant-time lookup", "frequency tables", "canonical grouping keys", "prefix state counts"],
-    signals: ["The prompt asks whether something has been seen before.", "You need counts, membership, or groups keyed by normalized values.", "A subarray sum problem includes negative values, preventing sliding-window monotonicity."],
-    mentalModel: "Hashing buys fast answers to questions about the past. The design step is choosing the key. Sometimes the key is the value itself, sometimes it is a remainder, a sorted string, or a prefix sum. Good hash solutions make the second occurrence easy to identify without rescanning earlier data.",
-    exampleA: "For `Count Target Sum Subarrays`, prefix sums turn a range sum into `current_prefix - previous_prefix`. If that difference equals target, the previous prefix is what you need to count.",
-    exampleB: "For `Anagram Bucket Sizes`, sorting the letters in each word creates a canonical key so `tea`, `eat`, and `ate` land in the same bucket.",
-    traceA: ["Initialize prefix count with 0 because a subarray may start at index 0.", "At each value, update the prefix.", "Add the number of previous prefixes equal to `prefix - target`.", "Only then store the current prefix for later ranges."],
-    traceB: ["Normalize each word to a sorted-letter signature.", "Increment that signature's bucket count.", "After scanning, sort the bucket sizes for deterministic output."],
-    pitfalls: ["Updating prefix counts before asking how many previous prefixes match.", "Forgetting modulo complement edge cases like remainder 0.", "Using a mutable object as a key.", "Returning groups when the prompt only asks for group sizes."],
-    complexity: "Hash-table scans are usually O(n) expected time, with O(n) memory for counts or seen values. Canonicalizing strings adds the cost of building the key, often O(m log m) per word when sorting letters."
-  },
-  "linked-lists": {
-    objectiveNouns: ["node identity", "sentinel nodes", "fast and slow pointers", "safe rewiring"],
-    signals: ["The prompt gives a `head` node instead of an array.", "The answer requires removing, merging, or finding a node without random access.", "The head itself may change."],
-    mentalModel: "Linked lists are reference problems. You do not own indexes; you own arrows. A sentinel node turns head changes into ordinary rewiring, and a fast pointer lets you measure structure without first computing length. Before changing `next`, save the reference you still need.",
-    exampleA: "For `Remove List Value`, `[2, 1, 2, 3]` with target 2 should return `[1, 3]`. A dummy node before the head means removing the first real node is the same operation as removing a middle node.",
-    exampleB: "For `Middle List Value`, slow moves one step while fast moves two. When fast finishes, slow points at the second middle for even-length lists.",
-    traceA: ["Dummy points to head.", "If `prev.next.val` is target, bypass it with `prev.next = prev.next.next`.", "If it is kept, advance prev.", "Return `dummy.next`, not the original head."],
-    traceB: ["Start both pointers at head.", "After one loop on `[1,2,3,4]`, slow is 2 and fast is 3.", "After the next loop, slow is 3 and fast is null.", "Return slow's value."],
-    pitfalls: ["Advancing `prev` after deleting a node, which skips the new next node.", "Returning the old head after it was removed.", "Comparing node objects instead of node values.", "Forgetting that an empty list returns `None` or an empty serialized list depending on the problem."],
-    complexity: "Most linked-list operations are O(n) time because random access is unavailable. Pointer rewiring is O(1) extra space; copying values for palindrome checks costs O(n) memory but is often the clearest first solution."
-  },
-  "stacks-queues": {
-    objectiveNouns: ["pending work", "last-in-first-out structure", "first-in-first-out streams", "monotonic stacks"],
-    signals: ["The prompt involves nesting, undoing, nearest greater values, or unresolved previous items.", "Events arrive over time and old events expire.", "You need to match a closing token with the most recent opening token."],
-    mentalModel: "Stacks and queues externalize time. A stack remembers the most recent unresolved item; a queue remembers the oldest item that might still matter. Monotonic stacks are especially powerful because each new value resolves some earlier values and leaves the rest in useful order.",
-    exampleA: "For `Warmer Day Waits`, a decreasing stack stores indexes whose warmer day is unknown. A warmer current temperature resolves all colder indexes on top.",
-    exampleB: "For `Recent Event Counts`, timestamps arrive sorted. A queue contains exactly the events within the current inclusive time range.",
-    traceA: ["Push day 0.", "Day 1 is warmer, so pop day 0 and write distance 1.", "Cooler days wait on the stack.", "Each index is pushed and popped at most once."],
-    traceB: ["Append the current timestamp.", "Pop from the left while it is older than `current - window`.", "The queue length is the answer for that timestamp.", "Equal timestamps remain because the range is inclusive."],
-    pitfalls: ["Using a stack when the oldest item must expire first.", "Treating equal temperature as warmer.", "Forgetting to flush the last active stack state with default answers.", "Popping above the root path when simplifying folders."],
-    complexity: "Stack and queue simulations are usually O(n) time. Even nested while loops stay linear when every item can be pushed once and popped once. Space is O(n) in the worst case for unresolved or active items."
-  },
-  "trees-graphs": {
-    objectiveNouns: ["recursive tree state", "BFS frontier", "visited sets", "graph modeling"],
-    signals: ["Inputs describe parent-child relationships, grids, edges, or reachability.", "The problem asks for shortest paths in an unweighted graph.", "You need to count connected regions or detect dependency cycles."],
-    mentalModel: "Trees and graphs are traversal problems first and data-shape problems second. Choose DFS when the state follows a path or component; choose BFS when distance by edge count matters. In graphs, the visited set is part of the algorithm, not an optimization.",
-    exampleA: "For `Tree Has Path Sum Local`, subtract the current node from the remaining target and only accept a match at a leaf.",
-    exampleB: "For `Shortest Edge Path`, BFS starts from the source and explores all nodes at distance d before distance d + 1.",
-    traceA: ["At root 5 and target 22, recurse with target 17.", "At child 4, recurse with target 13.", "Only when a leaf value equals the remaining target is the path valid.", "A non-leaf partial match is not enough."],
-    traceB: ["Build adjacency from undirected edges.", "Queue starts with `(start, 0)`.", "When a neighbor equals goal, return distance + 1.", "Visited prevents cycles from re-entering the queue."],
-    pitfalls: ["Accepting path sums before reaching a leaf.", "Forgetting isolated nodes when counting components.", "Using DFS for shortest unweighted paths and accidentally returning a longer path.", "Mutating grids without tracking whether the caller expects the grid unchanged."],
-    complexity: "Tree traversals are O(n). Graph traversals are O(vertices + edges). Grid flood fill is O(rows * columns). Recursion or queue space is bounded by tree height, graph frontier, or component size."
-  },
-  "heaps": {
-    objectiveNouns: ["priority selection", "streaming order", "k-way merge", "repeated minimum work"],
-    signals: ["The prompt repeatedly asks for the smallest or largest available item.", "You only need the top k values rather than a fully sorted list.", "Several sorted streams must be merged without flattening first."],
-    mentalModel: "A heap is a disciplined compromise between a scan and a sort. It lets the next priority item be retrieved cheaply while postponing all other ordering decisions. Use it when repeated selection drives the algorithm.",
-    exampleA: "For `Merge Sorted Batches`, the heap holds one candidate from each batch. Popping a candidate reveals the next candidate from the same batch.",
-    exampleB: "For `Running Medians Local`, two heaps split the stream into lower and upper halves. The median lives at the heap tops.",
-    traceA: ["Push the first value of each non-empty batch with its batch index.", "Pop the smallest value into output.", "Push the next value from that same batch.", "Repeat until the heap is empty."],
-    traceB: ["Push into the lower half as a max heap using negative values.", "Move the largest lower value into the upper heap.", "Rebalance sizes so the lower half is never smaller.", "Read one top or average two tops."],
-    pitfalls: ["Sorting the full input when k is small.", "Forgetting tie-breakers for deterministic point ordering.", "Letting two heaps drift by more than one element.", "Mutating caller-owned arrays with heapify when the caller expects preservation."],
-    complexity: "Heap operations are O(log k) or O(log n), depending on heap size. K-way merge is O(total_items log number_of_batches). Two-heap streaming median is O(log n) per insertion."
-  },
-  "greedy": {
-    objectiveNouns: ["local choice", "exchange argument", "sorted intervals", "reachability frontiers"],
-    signals: ["A sorted order seems to make future choices easier.", "The problem asks for maximum count, minimum removals, or feasibility with one pass.", "Choosing the earliest finish, smallest sufficient resource, or farthest reach can be justified."],
-    mentalModel: "Greedy algorithms are not just fast choices; they are choices with a proof. The proof usually says any optimal solution can be transformed to include your local choice without getting worse. Sorting often creates the order where that proof is visible.",
-    exampleA: "For `Max Compatible Meetings`, choosing the meeting that ends earliest leaves the most room for all future meetings.",
-    exampleB: "For `Can Reach End Local`, the only state that matters is the farthest index reachable so far.",
-    traceA: ["Sort meetings by end time.", "Take the first compatible meeting.", "Ignore overlapping meetings because they end no earlier.", "Every accepted meeting advances the boundary."],
-    traceB: ["Start farthest at 0.", "At each reachable index, update `farthest`.", "If the current index is greater than farthest, no earlier jump can reach it.", "If the scan finishes, the end is reachable."],
-    pitfalls: ["Choosing the shortest interval instead of earliest ending interval.", "Sorting by start time when the proof needs end time.", "Updating reach after checking a blocked index.", "Calling a choice greedy without an exchange argument."],
-    complexity: "Greedy interval and matching problems often spend O(n log n) on sorting and O(n) on the pass. Reachability scans can be O(n) time and O(1) space."
-  },
-  "binary-search": {
-    objectiveNouns: ["predicate boundaries", "lower bounds", "answer-space search", "integer-safe midpoints"],
-    signals: ["The input is sorted, rotated sorted, or monotonic by condition.", "The question asks for the first, last, minimum feasible, or maximum feasible value.", "A candidate answer can be checked faster than it can be constructed directly."],
-    mentalModel: "Binary search is boundary maintenance. At every step, you must know which side still contains the first true, last false, or exact target. For answer search, write the predicate before writing the loop.",
-    exampleA: "For `Lower Bound Local`, the boundary is the first index whose value is at least target.",
-    exampleB: "For `Ship Capacity Local`, the predicate is whether a given capacity can ship all packages within the allowed days.",
-    traceA: ["Use a half-open range `[left, right)`.", "If mid value is at least target, mid could be the answer, so move right.", "Otherwise move left past mid.", "Return left when the range collapses."],
-    traceB: ["Capacity below max weight is impossible.", "Capacity at total weight is always possible.", "Binary search between those bounds.", "The greedy day counter evaluates each candidate."],
-    pitfalls: ["Searching for a value when the prompt asks for an insertion boundary.", "Using `while left <= right` with boundary semantics that require half-open ranges.", "Forgetting impossible cases before answer search.", "Overflow is rare in Python but midpoint discipline still prevents logic bugs."],
-    complexity: "Plain binary search is O(log n). Answer-space search is O(check_cost * log range). Space is usually O(1), with the predicate doing a linear scan when needed."
-  },
-  "backtracking": {
-    objectiveNouns: ["decision trees", "path mutation", "duplicate skipping", "constraint pruning"],
-    signals: ["The prompt asks for all combinations, permutations, subsets, or valid configurations.", "A partial choice can be extended, rejected, or undone.", "The input size is small enough for exponential exploration with pruning."],
-    mentalModel: "Backtracking is controlled recursion over choices. The path is the current partial answer. Each recursive call owns a decision point, and every mutation must be undone before the next choice. Good pruning turns impossible branches into constant-time exits.",
-    exampleA: "For `Generate Parentheses Local`, a left parenthesis is allowed while open count is below n; a right parenthesis is allowed only while it will not exceed opens.",
-    exampleB: "For `Combination Sum Exact Local`, sorting lets you stop when a candidate exceeds the remaining target and skip duplicates at the same depth.",
-    traceA: ["Start with empty path.", "Choose `(` until opens reaches n.", "Choose `)` only if closed is less than opened.", "Append the path when length is `2n`."],
-    traceB: ["Sort candidates.", "At a depth, remember the previous value to skip duplicate siblings.", "Subtract the chosen value from remaining target.", "Pop the value before trying the next candidate."],
-    pitfalls: ["Appending the live path object instead of a copy.", "Skipping duplicates across different depths instead of only sibling choices.", "Forgetting to unmark a grid cell after DFS.", "Generating invalid states then filtering instead of enforcing constraints during generation."],
-    complexity: "Backtracking is usually exponential in the number of choices. Space is O(depth) for recursion plus output size. Pruning improves constants and sometimes avoids large impossible subtrees, but it does not make enumeration polynomial."
-  },
-  "dynamic-programming": {
-    objectiveNouns: ["state definitions", "recurrences", "memoization", "tabulation"],
-    signals: ["The prompt asks for optimal value or count of ways.", "The same suffix, prefix, amount, or grid cell is solved repeatedly.", "A choice at one position depends on best answers to smaller positions."],
-    mentalModel: "Dynamic programming starts with a sentence: `dp[state] means ...`. If that sentence is vague, the code will be vague. Once state is clear, the transition says how smaller solved states combine to solve the current one.",
-    exampleA: "For `Coin Change Min Local`, `dp[x]` is the fewest coins needed to make amount x. Every coin contributes `1 + dp[x - coin]` if the smaller amount is reachable.",
-    exampleB: "For `Grid Paths With Blocks`, each open cell receives paths from above and left; blocked cells reset the count to zero.",
-    traceA: ["Initialize `dp[0] = 0`.", "Fill amounts from 1 to target.", "Ignore coins larger than the amount or unreachable subamounts.", "Return -1 when the target remains sentinel."],
-    traceB: ["Start top-left as 1 if open.", "Scan rows left to right.", "A blocked cell sets `dp[c] = 0`.", "An open non-first-column cell adds paths from the left."],
-    pitfalls: ["Defining state after writing loops.", "Using zero as both a valid answer and an unreachable sentinel.", "Updating a one-dimensional DP in the wrong direction.", "Forgetting that choosing no values may be allowed in max-sum problems."],
-    complexity: "DP time is usually number_of_states times transition_cost. Space can often be reduced when each state depends only on nearby previous states, such as rolling variables or a single grid row."
-  },
-  "interview-tools": {
-    objectiveNouns: ["pattern selection", "complexity narration", "mixed review", "self-debugging"],
-    signals: ["The prompt combines multiple familiar shapes.", "The interviewer asks for tradeoffs, not just code.", "Your first idea works but has avoidable repeated work."],
-    mentalModel: "Mixed review is about diagnosis. Instead of memorizing problem names, ask which property unlocks the solution: sortedness, contiguity, repeated subproblems, graph reachability, or fast lookup. Then explain the proof of why the chosen pattern is enough.",
-    exampleA: "For `Choose Pattern Label`, feature words such as nodes, edges, and shortest path should push you toward graph traversal before considering DP or hashing.",
-    exampleB: "For `Growth Label`, doubling input size and comparing operation ratios trains you to separate constant, linear, and quadratic behavior.",
-    traceA: ["Normalize feature words.", "Check high-priority structures first, such as graph signals.", "Return the first matching pattern family.", "Use the answer as a prompt for the implementation approach."],
-    traceB: ["Compute ratios between measurements.", "Average the ratios roughly rather than demanding exact equality.", "Map near 1 to constant, near 2 to linear, near 4 to quadratic.", "Return unknown when the evidence is inconsistent."],
-    pitfalls: ["Choosing the most recently studied pattern instead of the prompt's strongest signal.", "Overstating complexity without naming input dimensions.", "Skipping the brute-force baseline, which makes the optimization harder to explain.", "Treating a passed sample as proof of correctness."],
-    complexity: "Interview-tool problems are usually small, but the habit matters: name the dimensions, justify the data structure, and explain why repeated work is bounded or cached."
-  }
-};
 
 const bonusFamilies: BonusFamilyInfo[] = [
   { title: "Count Scores At Least Threshold", pattern: "single pass predicate" },
@@ -2208,94 +2051,6 @@ function starterCode(entrypoint: string, signature: string): string {
   return `def ${entrypoint}(${signature}):\n    # Write your solution here.\n    pass\n`;
 }
 
-function lessonBody(chapter: ChapterSpec): string {
-  const detail = lessonDetails[chapter.id];
-  const [firstProblem, secondProblem] = problemSeeds.filter((problem) => problem.chapterId === chapter.id);
-  const objectiveText = detail.objectiveNouns.map((objective) => `- ${objective}`).join("\n");
-  const signalText = detail.signals.map((signal) => `- ${signal}`).join("\n");
-  const pitfallsText = detail.pitfalls.map((pitfall) => `- ${pitfall}`).join("\n");
-  const traceA = detail.traceA.map((step, index) => `${index + 1}. ${step}`).join("\n");
-  const traceB = detail.traceB.map((step, index) => `${index + 1}. ${step}`).join("\n");
-  return `# ${chapter.title}
-
-${chapter.summary}
-
-## Learning Goals
-
-${objectiveText}
-
-By the end of this module, you should be able to read a prompt, name the state that matters, choose the right traversal or data structure, and explain why the code avoids unnecessary repeated work.
-
-## Pattern Recognition Signals
-
-${signalText}
-
-When two signals compete, prefer the one that is structural. Sortedness, contiguity, graph edges, and repeated subproblems usually matter more than the names of variables in the prompt. Before coding, say which signal you are acting on and which signal you are intentionally ignoring.
-
-## Mental Model
-
-${detail.mentalModel}
-
-The practical workflow is to write the brute-force idea in one sentence, then ask what information would let you avoid its repeated work. That information becomes the state. If the state can be updated cheaply and remains correct after every step, the algorithm is usually close.
-
-## Worked Example 1
-
-${detail.exampleA}
-
-Trace:
-
-${traceA}
-
-The important habit is not memorizing this exact prompt. It is naming what the state means after every processed element. Once that sentence is precise, the implementation becomes a direct translation.
-
-## Worked Example 2
-
-${detail.exampleB}
-
-Trace:
-
-${traceB}
-
-Notice how the second example uses the same chapter-level idea but a different surface shape. This is why the module includes both guided problems and bonus drills: you are practicing the recognition step, not just a finished snippet.
-
-## Implementation Checklist
-
-- Restate the result in terms of the input dimensions and edge cases.
-- Write the invariant before the loop, recursion, heap, queue, or DP table.
-- Decide exactly when the answer becomes final.
-- Preserve deterministic output order when multiple answers are valid.
-- Run one empty or singleton case, one representative case, and one stress-shaped case.
-
-## Common Mistakes
-
-${pitfallsText}
-
-## Complexity Notes
-
-${detail.complexity}
-
-## Practice Path
-
-Start with ${firstProblem?.title ?? "the first guided problem"} to verify the core pattern, then move to ${secondProblem?.title ?? "the next guided problem"} to see a variation. After that, use the runnable bonus drills for this chapter as spaced repetition. For every bonus prompt, write down the signal that triggered your pattern choice before opening the editor.
-
-## Study Routine
-
-Use a three-pass routine for this chapter. On the first pass, read the prompt and write only the state definition: what variables, frontier, table, or helper structure must mean after each step. On the second pass, implement the simplest correct version, even if it is not the cleverest version you can imagine. On the third pass, compare the final code against the invariant and remove only the complexity that is not earning its keep.
-
-For ${chapter.title}, the most useful review question is: "What information from the past, boundary, or smaller subproblem do I need right now?" If the answer is one scalar, keep the solution small. If the answer is a collection, name exactly what belongs in it and when an item leaves. If the answer is a recurrence, define the state in words before choosing indexes.
-
-## Self Check
-
-Before marking a lesson complete, solve one guided problem and one bonus drill without opening the solution. Then explain the difference between their pattern signals. If your explanation uses only the chapter name, it is too vague. A stronger explanation names the input shape, the invariant, the update rule, and the condition that makes the answer final.
-
-Write that explanation in your notes when the pattern still feels uncomfortable.
-
-## Interview Narrative
-
-Before coding, lead with the pattern signal: "${chapter.concepts[0]} is relevant because ..." Then describe the invariant, not every line of code. After coding, walk through the smallest edge case and one normal case. Close with time and space complexity and explain the term that dominates.
-`;
-}
-
 function extractSolutionCode(entrypoint: string): string {
   const lines = guidedReferenceCode.split("\n");
   const start = lines.findIndex((line) => line.startsWith(`def ${entrypoint}(`));
@@ -2756,11 +2511,11 @@ const lessons: Lesson[] = chaptersBase.map((chapter, index) => ({
   title: `${chapter.title} Playbook`,
   concepts: chapter.concepts,
   minutes: index === 0 ? 18 : 24,
-  objectives: lessonDetails[chapter.id].objectiveNouns,
-  workedExamples: [lessonDetails[chapter.id].exampleA, lessonDetails[chapter.id].exampleB],
-  pitfalls: lessonDetails[chapter.id].pitfalls,
+  objectives: lessonMeta[chapter.id].objectives,
+  workedExamples: lessonMeta[chapter.id].workedExamples,
+  pitfalls: lessonMeta[chapter.id].pitfalls,
   linkedProblemIds: problemSeeds.filter((problem) => problem.chapterId === chapter.id).slice(0, 4).map((problem) => problem.id),
-  body: lessonBody(chapter)
+  body: lessonBodies[chapter.id]
 }));
 
 const guidedProblems = problemSeeds.map(makeProblem);

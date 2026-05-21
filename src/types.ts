@@ -240,6 +240,12 @@ export interface ProgressRecord {
   status: ProgressStatus;
   dueAt?: string;
   updatedAt: string;
+  /**
+   * For lessons: the learner's first-attempt score on the lesson's inline
+   * checkpoints (quizzes + fill-in-the-blanks). A score with misses pulls the
+   * spaced-repetition `dueAt` forward so the lesson resurfaces for review.
+   */
+  score?: { correct: number; total: number };
 }
 
 export interface NoteRecord {

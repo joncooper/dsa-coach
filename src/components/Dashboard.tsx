@@ -1,6 +1,6 @@
-import { ArrowRight, Sparkles, Star, TerminalSquare, Timer } from "lucide-react";
+import { ArrowRight, RotateCcw, Sparkles, Star, TerminalSquare, Timer } from "lucide-react";
 import { Link } from "react-router-dom";
-import { course, contentStats, findProblem } from "../content/course";
+import { course, contentStats, findLesson, findProblem, findQuiz } from "../content/course";
 import { ASSESSMENT_SET_ID, assessments } from "../content/assessments";
 import { scorecardKey } from "../content/assessments/seeding";
 import { LIBRARY_SET_IDS } from "../content/libraries";
@@ -24,6 +24,21 @@ export function Dashboard() {
     }
     return undefined;
   })();
+
+  const now = Date.now();
+  const dueReviews = Object.values(progress)
+    .filter((record) => record.dueAt && new Date(record.dueAt).getTime() <= now)
+    .map((record) => {
+      const item =
+        record.type === "lesson" ? findLesson(record.id) :
+        record.type === "quiz" ? findQuiz(record.id) :
+        findProblem(record.id);
+      if (!item) return null;
+      return { record, title: item.title, route: `/${record.type}/${record.id}` };
+    })
+    .filter((entry): entry is { record: typeof progress[string]; title: string; route: string } => entry !== null)
+    .sort((a, b) => (a.record.dueAt ?? "").localeCompare(b.record.dueAt ?? ""))
+    .slice(0, 8);
 
   return (
     <section className="page stack">
@@ -59,6 +74,34 @@ export function Dashboard() {
           </Link>
         ) : null}
       </div>
+
+      {dueReviews.length ? (
+        <section className="review-panel" aria-labelledby="review-due-heading">
+          <div className="section-heading">
+            <h2 id="review-due-heading">Review Due</h2>
+            <p>Concepts to revisit — missed checkpoints resurface here</p>
+          </div>
+          <div className="review-list">
+            {dueReviews.map(({ record, title, route }) => {
+              const missed = record.score ? record.score.total - record.score.correct : 0;
+              return (
+                <Link className="row-link review-link" key={record.key} to={route}>
+                  <span className="status-dot review-dot" aria-hidden="true">
+                    <RotateCcw size={14} />
+                  </span>
+                  <span>{title}</span>
+                  <small>{record.type}</small>
+                  {missed > 0 ? (
+                    <small className="review-missed">
+                      missed {missed} of {record.score?.total}
+                    </small>
+                  ) : null}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
       {starredProblems.length ? (
         <section className="starred-panel" aria-labelledby="starred-problems-heading">
