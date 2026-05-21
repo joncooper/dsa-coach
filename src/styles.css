@@ -1750,6 +1750,18 @@ pre {
   background: var(--paper-soft);
 }
 
+/* Stop button — pairs with .primary-button / .secondary-button / .runnable-run
+   for layout, and overrides their colour while a run is in flight. */
+.stop-button {
+  border: 1px solid #8a1b12;
+  background: var(--red);
+  color: #ffffff;
+}
+
+.stop-button:hover {
+  background: #c8291b;
+}
+
 .hidden-input {
   display: none;
 }
@@ -2362,6 +2374,10 @@ pre {
 .run-status.error,
 .run-status.timeout {
   color: var(--red);
+}
+
+.run-status.stopped {
+  color: var(--amber);
 }
 
 .toolbar-actions {

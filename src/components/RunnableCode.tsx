@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
-import { Play, RotateCcw } from "lucide-react";
+import { Play, RotateCcw, Square } from "lucide-react";
 import { pythonEditorExtensions } from "./editor/pythonEditorExtensions";
 import { runPythonScratchpad } from "../runner/pythonRunner";
 import type { RunResult } from "../types";
@@ -15,6 +15,7 @@ export function RunnableCode({ initialCode }: { initialCode: string }) {
   const [code, setCode] = useState(initialCode);
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
   // Wrap long lines so the editor never becomes a horizontally scrollable
   // region (keeps the snippet keyboard-accessible without a focusable scroller).
   const extensions = useMemo(
@@ -23,17 +24,24 @@ export function RunnableCode({ initialCode }: { initialCode: string }) {
   );
 
   const failed = result?.status === "error" || result?.status === "timeout";
+  const stopped = result?.status === "stopped";
   const dirty = code !== initialCode;
 
   const run = async () => {
+    if (abortRef.current) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
     setRunning(true);
     setResult(null);
     try {
-      setResult(await runPythonScratchpad(code));
+      setResult(await runPythonScratchpad(code, controller.signal));
     } finally {
       setRunning(false);
+      abortRef.current = null;
     }
   };
+
+  const stop = () => abortRef.current?.abort();
 
   return (
     <div className="runnable-code">
@@ -52,10 +60,17 @@ export function RunnableCode({ initialCode }: { initialCode: string }) {
         />
       </div>
       <div className="runnable-code-bar">
-        <button type="button" className="runnable-run" onClick={() => void run()} disabled={running}>
-          <Play size={14} />
-          {running ? "Running…" : "Run"}
-        </button>
+        {running ? (
+          <button type="button" className="runnable-run stop-button" onClick={stop}>
+            <Square size={14} fill="currentColor" />
+            Stop
+          </button>
+        ) : (
+          <button type="button" className="runnable-run" onClick={() => void run()}>
+            <Play size={14} />
+            Run
+          </button>
+        )}
         {dirty ? (
           <button
             type="button"
@@ -76,7 +91,8 @@ export function RunnableCode({ initialCode }: { initialCode: string }) {
         <div className={`runnable-output${failed ? " is-error" : ""}`}>
           {result.stdout ? <pre className="runnable-stream">{result.stdout.replace(/\n+$/, "")}</pre> : null}
           {failed && result.message ? <pre className="runnable-stream is-error">{result.message.replace(/\n+$/, "")}</pre> : null}
-          {!failed && !result.stdout ? (
+          {stopped ? <p className="runnable-empty">Run stopped before it finished.</p> : null}
+          {!failed && !stopped && !result.stdout ? (
             <p className="runnable-empty">
               Ran cleanly with no output. Add a <code>print(...)</code> line to see a value.
             </p>
