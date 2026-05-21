@@ -84,6 +84,10 @@ export function useCourseStore() {
     });
   }, []);
 
+  // Records a run in history only. The editor buffer is persisted separately
+  // by the page (ProblemPage / AssessmentPage), which owns the part/level-aware
+  // storage key. Saving it here under a bare `code:${problemId}` key would
+  // clobber sibling parts of a multi-part problem with each other's code.
   const recordSubmission = useCallback(async (problemId: string, code: string, result: RunResult) => {
     const submission: SubmissionRecord = {
       problemId,
@@ -94,8 +98,7 @@ export function useCourseStore() {
     };
     const id = await db.submissions.add(submission);
     setSubmissions((current) => [{ ...submission, id }, ...current]);
-    await saveSetting(`code:${problemId}`, code);
-  }, [saveSetting]);
+  }, []);
 
   const logCoachExchange = useCallback(
     async (record: Omit<CoachExchangeRecord, "id">): Promise<number> => {
