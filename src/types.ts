@@ -311,7 +311,7 @@ export interface TestResult {
 }
 
 export interface RunResult {
-  status: "idle" | "loading" | "passed" | "failed" | "error" | "timeout";
+  status: "idle" | "loading" | "passed" | "failed" | "error" | "timeout" | "stopped";
   stdout: string;
   stderr: string;
   durationMs: number;

@@ -8,7 +8,8 @@ import {
   Lock,
   Pause,
   Play,
-  RotateCcw
+  RotateCcw,
+  Square
 } from "lucide-react";
 import {
   type CSSProperties,
@@ -204,6 +205,9 @@ export function AssessmentPage() {
 
   const workspaceRef = useRef<HTMLElement | null>(null);
   const dockDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+  // Abort handle for an in-flight run, so the Stop button can terminate a
+  // runaway worker (e.g. an infinite loop).
+  const runAbortRef = useRef<AbortController | null>(null);
 
   const clampDockHeight = useCallback((value: number): number => {
     const MIN = 150;
@@ -515,66 +519,81 @@ export function AssessmentPage() {
       // Hard-stop runs while paused — accepting submissions with the clock
       // frozen would defeat the integrity of practice/exam timing.
       if (session.pausedAt) return;
+      // One run at a time — ignore Run/Submit while a worker is in flight.
+      if (runAbortRef.current) return;
       const active = slices[level - 1];
       if (!active) return;
+      const controller = new AbortController();
+      runAbortRef.current = controller;
       setLastRunIncludedHidden(includeHidden);
       setResult({ ...idleResult, status: "loading" });
-      await saveSetting(codeKey(assessmentId, level), code);
+      try {
+        await saveSetting(codeKey(assessmentId, level), code);
 
-      const runtime: Problem =
-        level === 1
-          ? problem
-          : {
-              ...problem,
-              entrypoint: active.entrypoint,
-              visibleTests: active.visibleTests,
-              hiddenTests: active.hiddenTests,
-              referenceCode: active.referenceCode
-            };
-      const out = await runPythonProblem(runtime, code, includeHidden);
-      setResult(out);
-      // If the run blew up before any tests ran, the diagnostic lives in
-      // `message`/`stderr` — jump the candidate to Errors so they aren't
-      // staring at "No run results yet". Per-test runtime errors stay on
-      // Results, where each test card already shows its own traceback.
-      const topLevelError = Boolean(out.message?.trim() || out.stderr?.trim());
-      if (topLevelError || out.status === "timeout") {
-        setActivePanel("errors");
-      } else {
-        setActivePanel("results");
+        const runtime: Problem =
+          level === 1
+            ? problem
+            : {
+                ...problem,
+                entrypoint: active.entrypoint,
+                visibleTests: active.visibleTests,
+                hiddenTests: active.hiddenTests,
+                referenceCode: active.referenceCode
+              };
+        const out = await runPythonProblem(runtime, code, includeHidden, controller.signal);
+        setResult(out);
+        // A stopped run is the candidate bailing out — don't score it, switch
+        // panels, or count it as an attempt.
+        if (out.status === "stopped") return;
+        // If the run blew up before any tests ran, the diagnostic lives in
+        // `message`/`stderr` — jump the candidate to Errors so they aren't
+        // staring at "No run results yet". Per-test runtime errors stay on
+        // Results, where each test card already shows its own traceback.
+        const topLevelError = Boolean(out.message?.trim() || out.stderr?.trim());
+        if (topLevelError || out.status === "timeout") {
+          setActivePanel("errors");
+        } else {
+          setActivePanel("results");
+        }
+        await recordSubmission(`${assessmentId}#L${level}`, code, out);
+
+        const visiblePassed = out.tests.filter((t) => !t.hidden && t.passed).length;
+        const hiddenPassed = out.tests.filter((t) => t.hidden && t.passed).length;
+        const fresh: AssessmentLevelResult = {
+          level,
+          visiblePassed,
+          visibleTotal: active.visibleTests.length,
+          // Always score against the full hidden suite — a visible-only run
+          // shouldn't earn unearned credit by counting only 4/4 visible.
+          hiddenPassed: includeHidden ? hiddenPassed : 0,
+          hiddenTotal: active.hiddenTests.length,
+          attempts: 1,
+          points: 0,
+          lastRunAt: new Date().toISOString()
+        };
+        const prev = session.levelResults[level];
+        const merged = mergeBestResult(prev, fresh);
+        merged.attempts = (prev?.attempts ?? 0) + 1;
+        const nextUnlocked = Math.min(4, Math.max(session.unlockedLevel, level + 1));
+        const nextSession: AssessmentSessionState = {
+          ...session,
+          levelResults: { ...session.levelResults, [level]: merged },
+          unlockedLevel: nextUnlocked
+        };
+        await persistSession(nextSession);
+      } finally {
+        runAbortRef.current = null;
       }
-      await recordSubmission(`${assessmentId}#L${level}`, code, out);
-
-      const visiblePassed = out.tests.filter((t) => !t.hidden && t.passed).length;
-      const hiddenPassed = out.tests.filter((t) => t.hidden && t.passed).length;
-      const fresh: AssessmentLevelResult = {
-        level,
-        visiblePassed,
-        visibleTotal: active.visibleTests.length,
-        // Always score against the full hidden suite — a visible-only run
-        // shouldn't earn unearned credit by counting only 4/4 visible.
-        hiddenPassed: includeHidden ? hiddenPassed : 0,
-        hiddenTotal: active.hiddenTests.length,
-        attempts: 1,
-        points: 0,
-        lastRunAt: new Date().toISOString()
-      };
-      const prev = session.levelResults[level];
-      const merged = mergeBestResult(prev, fresh);
-      merged.attempts = (prev?.attempts ?? 0) + 1;
-      const nextUnlocked = Math.min(4, Math.max(session.unlockedLevel, level + 1));
-      const nextSession: AssessmentSessionState = {
-        ...session,
-        levelResults: { ...session.levelResults, [level]: merged },
-        unlockedLevel: nextUnlocked
-      };
-      await persistSession(nextSession);
     },
     // persistSession / replay / finish close over session+assessmentId; we
     // deliberately depend on the values they read so callbacks stay fresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [assessmentId, assessment, code, level, problem, session, slices]
   );
+
+  const stopRun = useCallback(() => {
+    runAbortRef.current?.abort();
+  }, []);
 
   const editorExtensions = useMemo(
     () =>
@@ -845,32 +864,48 @@ export function AssessmentPage() {
               >
                 <RotateCcw size={16} aria-hidden /> Reset starter
               </button>
-              <button
-                className="primary-button run-button"
-                type="button"
-                disabled={result.status === "loading" || isPaused}
-                onClick={() => void run(false)}
-              >
-                <Play size={18} aria-hidden />
-                <span className="button-copy">
-                  <strong>Run</strong>
-                  <small>visible tests</small>
-                </span>
-                <kbd>⌘↵</kbd>
-              </button>
-              <button
-                className="primary-button submit-button"
-                type="button"
-                disabled={result.status === "loading" || isPaused}
-                onClick={() => void run(true)}
-              >
-                <CheckCircle2 size={18} aria-hidden />
-                <span className="button-copy">
-                  <strong>Submit</strong>
-                  <small>all tests</small>
-                </span>
-                <kbd>⇧⌘↵</kbd>
-              </button>
+              {result.status === "loading" ? (
+                <button
+                  className="primary-button stop-button"
+                  type="button"
+                  onClick={stopRun}
+                >
+                  <Square size={18} fill="currentColor" aria-hidden />
+                  <span className="button-copy">
+                    <strong>Stop</strong>
+                    <small>end this run</small>
+                  </span>
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="primary-button run-button"
+                    type="button"
+                    disabled={isPaused}
+                    onClick={() => void run(false)}
+                  >
+                    <Play size={18} aria-hidden />
+                    <span className="button-copy">
+                      <strong>Run</strong>
+                      <small>visible tests</small>
+                    </span>
+                    <kbd>⌘↵</kbd>
+                  </button>
+                  <button
+                    className="primary-button submit-button"
+                    type="button"
+                    disabled={isPaused}
+                    onClick={() => void run(true)}
+                  >
+                    <CheckCircle2 size={18} aria-hidden />
+                    <span className="button-copy">
+                      <strong>Submit</strong>
+                      <small>all tests</small>
+                    </span>
+                    <kbd>⇧⌘↵</kbd>
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -994,6 +1029,9 @@ export function AssessmentPage() {
                   </button>{" "}
                   tab for details.
                 </p>
+              ) : null}
+              {result.status === "stopped" ? (
+                <p className="muted">Run stopped before it finished.</p>
               ) : null}
               <TestResultsList
                 tests={result.tests}
@@ -1919,6 +1957,7 @@ function statusLabel(status: RunResult["status"]): string {
   if (status === "passed") return "Passed";
   if (status === "failed") return "Failed tests";
   if (status === "timeout") return "Timed out";
+  if (status === "stopped") return "Stopped";
   return "Error";
 }
 

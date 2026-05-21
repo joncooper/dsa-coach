@@ -15,6 +15,7 @@ import {
   MoreHorizontal,
   Play,
   RotateCcw,
+  Square,
   Star
 } from "lucide-react";
 import { type CSSProperties, type PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -76,6 +77,10 @@ export function ProblemPage() {
   const [constraintsOpen, setConstraintsOpen] = useState(true);
   const [examplesOpen, setExamplesOpen] = useState(true);
   const [starred, setStarred] = useState(false);
+  // Abort handles for in-flight runs — populated while a run is loading so the
+  // Stop button can terminate a runaway worker (e.g. an infinite loop).
+  const runAbortRef = useRef<AbortController | null>(null);
+  const scratchpadAbortRef = useRef<AbortController | null>(null);
 
   const codeStorageKey = problem
     ? activePartIndex === 0
@@ -160,6 +165,7 @@ export function ProblemPage() {
     if (result.status === "passed") return "Passed";
     if (result.status === "failed") return "Failed tests";
     if (result.status === "timeout") return "Timed out";
+    if (result.status === "stopped") return "Stopped";
     return "Error";
   }, [result.status]);
   const hiddenSummary = useMemo(() => {
@@ -241,35 +247,63 @@ export function ProblemPage() {
   const reviewLabel = formatReviewDate(progressRecord?.dueAt);
   const run = useCallback(async (includeHidden: boolean) => {
     if (!problem || !activePart || !codeStorageKey) return;
+    // Ignore Run/Submit (and their keyboard shortcuts) while a run is already
+    // in flight — one worker at a time keeps the Stop button unambiguous.
+    if (runAbortRef.current) return;
+    const controller = new AbortController();
+    runAbortRef.current = controller;
     setLastRunIncludedHidden(includeHidden);
     setResult({ ...idleResult, status: "loading" });
-    await saveSetting(codeStorageKey, code);
-    const runtimeProblem: Problem = activePartIndex === 0 ? problem : {
-      ...problem,
-      entrypoint: activePart.entrypoint,
-      visibleTests: activePart.visibleTests,
-      hiddenTests: activePart.hiddenTests,
-      referenceCode: activePart.referenceCode
-    };
-    const next = await runPythonProblem(runtimeProblem, code, includeHidden);
-    setResult(next);
-    setActiveMobileTab("results");
-    setActiveDesktopPanel("results");
-    await saveSetting("workspace:activeMobileTab", "results");
-    await recordSubmission(problem.id, code, next);
-    await markProgress("problem", problem.id, next.status === "passed" ? "complete" : "in-progress");
+    try {
+      await saveSetting(codeStorageKey, code);
+      const runtimeProblem: Problem = activePartIndex === 0 ? problem : {
+        ...problem,
+        entrypoint: activePart.entrypoint,
+        visibleTests: activePart.visibleTests,
+        hiddenTests: activePart.hiddenTests,
+        referenceCode: activePart.referenceCode
+      };
+      const next = await runPythonProblem(runtimeProblem, code, includeHidden, controller.signal);
+      setResult(next);
+      // A stopped run is the user bailing out, not a graded attempt — leave
+      // history and progress untouched.
+      if (next.status === "stopped") return;
+      setActiveMobileTab("results");
+      setActiveDesktopPanel("results");
+      await saveSetting("workspace:activeMobileTab", "results");
+      await recordSubmission(problem.id, code, next);
+      await markProgress("problem", problem.id, next.status === "passed" ? "complete" : "in-progress");
+    } finally {
+      runAbortRef.current = null;
+    }
   }, [activePart, activePartIndex, code, codeStorageKey, markProgress, problem, recordSubmission, saveSetting]);
+
+  const stopRun = useCallback(() => {
+    runAbortRef.current?.abort();
+  }, []);
 
   const runScratchpad = useCallback(async () => {
     if (!problem) return;
+    if (scratchpadAbortRef.current) return;
+    const controller = new AbortController();
+    scratchpadAbortRef.current = controller;
     setScratchpadResult({ ...idleResult, status: "loading" });
-    await saveSetting(`scratchpad:${problem.id}`, scratchpadCode);
-    const next = await runPythonScratchpad(scratchpadCode);
-    setScratchpadResult(next);
-    setActiveDesktopPanel("scratchpad");
-    setActiveMobileTab("scratchpad");
-    await saveSetting("workspace:activeMobileTab", "scratchpad");
+    try {
+      await saveSetting(`scratchpad:${problem.id}`, scratchpadCode);
+      const next = await runPythonScratchpad(scratchpadCode, controller.signal);
+      setScratchpadResult(next);
+      if (next.status === "stopped") return;
+      setActiveDesktopPanel("scratchpad");
+      setActiveMobileTab("scratchpad");
+      await saveSetting("workspace:activeMobileTab", "scratchpad");
+    } finally {
+      scratchpadAbortRef.current = null;
+    }
   }, [problem, saveSetting, scratchpadCode]);
+
+  const stopScratchpad = useCallback(() => {
+    scratchpadAbortRef.current?.abort();
+  }, []);
 
   const editorExtensions = useMemo(
     () =>
@@ -683,22 +717,34 @@ export function ProblemPage() {
                 </div>
               </div>
             </details>
-            <button className="primary-button run-button" type="button" disabled={result.status === "loading"} onClick={() => void run(false)}>
-              <Play size={18} />
-              <span className="button-copy">
-                <strong>Run</strong>
-                <small>visible tests</small>
-              </span>
-              <kbd>⌘↵</kbd>
-            </button>
-            <button className="primary-button submit-button" type="button" disabled={result.status === "loading"} onClick={() => void run(true)}>
-              <CheckCircle2 size={18} />
-              <span className="button-copy">
-                <strong>Submit</strong>
-                <small>all tests</small>
-              </span>
-              <kbd>⇧⌘↵</kbd>
-            </button>
+            {result.status === "loading" ? (
+              <button className="primary-button stop-button" type="button" onClick={stopRun}>
+                <Square size={18} fill="currentColor" />
+                <span className="button-copy">
+                  <strong>Stop</strong>
+                  <small>end this run</small>
+                </span>
+              </button>
+            ) : (
+              <>
+                <button className="primary-button run-button" type="button" onClick={() => void run(false)}>
+                  <Play size={18} />
+                  <span className="button-copy">
+                    <strong>Run</strong>
+                    <small>visible tests</small>
+                  </span>
+                  <kbd>⌘↵</kbd>
+                </button>
+                <button className="primary-button submit-button" type="button" onClick={() => void run(true)}>
+                  <CheckCircle2 size={18} />
+                  <span className="button-copy">
+                    <strong>Submit</strong>
+                    <small>all tests</small>
+                  </span>
+                  <kbd>⇧⌘↵</kbd>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -791,6 +837,7 @@ export function ProblemPage() {
               </div>
             ) : null}
             {hiddenSummary ? <p className="muted">{hiddenSummary}</p> : null}
+            {result.status === "stopped" ? <p className="muted">Run stopped before it finished.</p> : null}
             {hasErrors ? <p className="muted">Errors are available in the Errors tab.</p> : null}
             {hasStdout ? (
               <details className="stdout-preview" open>
@@ -824,10 +871,17 @@ export function ProblemPage() {
                 <h2>Python scratchpad</h2>
                 <p className="muted">Run quick experiments without changing your submitted solution.</p>
               </div>
-              <button className="secondary-button" type="button" disabled={scratchpadResult.status === "loading"} onClick={() => void runScratchpad()}>
-                <Play size={17} />
-                Run scratchpad
-              </button>
+              {scratchpadResult.status === "loading" ? (
+                <button className="secondary-button stop-button" type="button" onClick={stopScratchpad}>
+                  <Square size={17} fill="currentColor" />
+                  Stop
+                </button>
+              ) : (
+                <button className="secondary-button" type="button" onClick={() => void runScratchpad()}>
+                  <Play size={17} />
+                  Run scratchpad
+                </button>
+              )}
             </div>
             <CodeMirror
               value={scratchpadCode}
@@ -845,6 +899,7 @@ export function ProblemPage() {
               <h3>Output</h3>
               {scratchpadResult.status === "idle" ? <p className="muted">No scratchpad run yet.</p> : null}
               {scratchpadResult.status === "loading" ? <p className="muted">Running scratchpad...</p> : null}
+              {scratchpadResult.status === "stopped" ? <p className="muted">Run stopped before it finished.</p> : null}
               {scratchpadResult.stdout ? <pre>{scratchpadResult.stdout}</pre> : null}
               {scratchpadResult.stderr ? <pre className="error-output">{scratchpadResult.stderr}</pre> : null}
               {scratchpadResult.message ? <pre className="error-output">{scratchpadResult.message}</pre> : null}
@@ -912,6 +967,7 @@ function summarizeStatus(status: RunResult["status"]): string {
   if (status === "timeout") return "Timed out";
   if (status === "error") return "Runtime error";
   if (status === "loading") return "Running";
+  if (status === "stopped") return "Stopped";
   return "Run";
 }
 
