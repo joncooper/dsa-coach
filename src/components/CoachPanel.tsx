@@ -1,5 +1,6 @@
 import { Bot, SendHorizontal, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { groupCoachConversations, type CoachConversation } from "../coach/coachHistory";
 import {
   buildInitialUserPrompt,
   COACH_PROMPT_VERSION,
@@ -10,6 +11,7 @@ import {
 import { checkOllama, COACH_MODEL, streamChat, type ChatMessage, type OllamaStatus } from "../coach/ollamaClient";
 import { useStore } from "../hooks/courseStoreContext";
 import type { CoachFeedback } from "../types";
+import { CoachHistoryMenu } from "./CoachHistoryMenu";
 import { MarkdownView } from "./MarkdownView";
 
 interface CoachPanelProps {
@@ -35,7 +37,7 @@ function newConversationId(): string {
 }
 
 export function CoachPanel({ buildContext, problemId, visible, onClose }: CoachPanelProps) {
-  const { logCoachExchange, rateCoachExchange } = useStore();
+  const { logCoachExchange, rateCoachExchange, loadCoachExchanges } = useStore();
   const [status, setStatus] = useState<OllamaStatus | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [streaming, setStreaming] = useState(false);
@@ -44,14 +46,36 @@ export function CoachPanel({ buildContext, problemId, visible, onClose }: CoachP
   // Index of the assistant turn whose thumbs-down comment box is open.
   const [commentFor, setCommentFor] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
+  // Past conversations for this problem, surfaced through the history menu.
+  const [conversations, setConversations] = useState<CoachConversation[]>([]);
   const startedRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
   const conversationIdRef = useRef<string>(newConversationId());
+  // Mirrors conversationIdRef purely so the history menu can re-render its
+  // "current" marker — the ref stays the synchronous source of truth.
+  const [activeConversationId, setActiveConversationId] = useState(conversationIdRef.current);
+  // The in-flight run() promise. Awaited before starting another run so a new
+  // request never overlaps one that Ollama is still tearing down.
+  const runPromiseRef = useRef<Promise<void> | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [turns, partial]);
+
+  const setConversationId = useCallback((id: string) => {
+    conversationIdRef.current = id;
+    setActiveConversationId(id);
+  }, []);
+
+  const refreshHistory = useCallback(async () => {
+    try {
+      const records = await loadCoachExchanges(problemId);
+      setConversations(groupCoachConversations(records));
+    } catch {
+      // History is best-effort — a read failure just leaves the menu stale.
+    }
+  }, [loadCoachExchanges, problemId]);
 
   const run = useCallback(
     async (history: Turn[]) => {
@@ -107,6 +131,8 @@ export function CoachPanel({ buildContext, problemId, visible, onClose }: CoachP
           } catch {
             // Logging is best-effort — never block the conversation on it.
           }
+          // Surface the just-saved exchange in the history menu.
+          void refreshHistory();
         }
         setTurns((prev) => [...prev, { role: "assistant", content: response, exchangeId }]);
       } catch (err) {
@@ -122,23 +148,41 @@ export function CoachPanel({ buildContext, problemId, visible, onClose }: CoachP
       } finally {
         setStreaming(false);
         setPartial("");
-        abortRef.current = null;
+        // Only release the handle if this run still owns it — a newer run
+        // may have already taken over.
+        if (abortRef.current === controller) abortRef.current = null;
       }
     },
-    [buildContext, logCoachExchange, problemId]
+    [buildContext, logCoachExchange, problemId, refreshHistory]
   );
 
-  // First time the panel becomes visible: probe Ollama, then open with
-  // an initial coaching message. Conversation persists afterwards.
+  // Start a run and remember its promise, so callers can await an in-flight
+  // run finishing before they kick off the next one.
+  const startRun = useCallback(
+    (history: Turn[]): Promise<void> => {
+      const promise = run(history);
+      runPromiseRef.current = promise;
+      return promise;
+    },
+    [run]
+  );
+
+  // First time the panel becomes visible: probe Ollama. The coach does not
+  // open unprompted — the conversation starts when the learner asks.
   useEffect(() => {
     if (!visible || startedRef.current) return;
     startedRef.current = true;
     void (async () => {
       const s = await checkOllama();
       setStatus(s);
-      if (s.available) void run([]);
     })();
-  }, [visible, run]);
+  }, [visible]);
+
+  // Load this problem's saved conversations whenever the panel is shown.
+  useEffect(() => {
+    if (!visible) return;
+    void refreshHistory();
+  }, [visible, refreshHistory]);
 
   const send = useCallback(() => {
     const text = input.trim();
@@ -146,29 +190,49 @@ export function CoachPanel({ buildContext, problemId, visible, onClose }: CoachP
     const next: Turn[] = [...turns, { role: "user", content: text }];
     setTurns(next);
     setInput("");
-    void run(next);
-  }, [input, streaming, status, turns, run]);
+    void startRun(next);
+  }, [input, streaming, status, turns, startRun]);
 
-  const clearConversation = useCallback(() => {
+  const clearConversation = useCallback(async () => {
+    // Cancel any in-flight reply and let it unwind before resetting, so a
+    // lingering request can't deliver into the fresh conversation.
     abortRef.current?.abort();
-    abortRef.current = null;
+    await runPromiseRef.current?.catch(() => {});
     setStreaming(false);
     setPartial("");
     setTurns([]);
     setCommentFor(null);
     setCommentText("");
-    // A fresh conversation gets its own id so eval records stay grouped.
-    conversationIdRef.current = newConversationId();
-    if (status?.available) void run([]);
-  }, [status, run]);
+    // A fresh conversation gets its own id so eval records stay grouped; it
+    // waits for the learner's first message rather than opening itself.
+    setConversationId(newConversationId());
+  }, [setConversationId]);
 
   function retryConnection() {
     void (async () => {
       const s = await checkOllama();
       setStatus(s);
-      if (s.available && turns.length === 0) void run([]);
     })();
   }
+
+  // Load a past conversation back into the panel. New replies append under
+  // its id, so a saved conversation can be picked up where it left off.
+  const selectConversation = useCallback(
+    async (conversationId: string) => {
+      if (conversationId === conversationIdRef.current) return;
+      const convo = conversations.find((c) => c.id === conversationId);
+      if (!convo) return;
+      abortRef.current?.abort();
+      await runPromiseRef.current?.catch(() => {});
+      setStreaming(false);
+      setPartial("");
+      setCommentFor(null);
+      setCommentText("");
+      setTurns(convo.turns);
+      setConversationId(conversationId);
+    },
+    [conversations, setConversationId]
+  );
 
   const rate = useCallback(
     (index: number, rating: "up" | "down", comment?: string) => {
@@ -180,11 +244,13 @@ export function CoachPanel({ buildContext, problemId, visible, onClose }: CoachP
         at: new Date().toISOString()
       };
       setTurns((prev) => prev.map((t, i) => (i === index ? { ...t, feedback } : t)));
-      void rateCoachExchange(turn.exchangeId, feedback).catch(() => {
-        // Best-effort; the in-memory state still reflects the user's intent.
-      });
+      void rateCoachExchange(turn.exchangeId, feedback)
+        .then(() => refreshHistory())
+        .catch(() => {
+          // Best-effort; the in-memory state still reflects the user's intent.
+        });
     },
-    [turns, rateCoachExchange]
+    [turns, rateCoachExchange, refreshHistory]
   );
 
   function onThumbDown(index: number) {
@@ -197,18 +263,25 @@ export function CoachPanel({ buildContext, problemId, visible, onClose }: CoachP
   return (
     <aside className="coach-panel" aria-label="AI coach">
       <header className="coach-header">
-        <span className="coach-title">
-          <Bot size={16} aria-hidden="true" />
-          Coach
-        </span>
+        <div className="coach-header-left">
+          <span className="coach-title">
+            <Bot size={16} aria-hidden="true" />
+            Coach
+          </span>
+          <CoachHistoryMenu
+            conversations={conversations}
+            activeId={activeConversationId}
+            onSelect={selectConversation}
+          />
+        </div>
         <div className="coach-actions">
           <button
             type="button"
             className="coach-icon-button"
             onClick={clearConversation}
             disabled={!status?.available || (turns.length === 0 && !streaming)}
-            aria-label="Clear conversation"
-            title="Clear conversation"
+            aria-label="New conversation"
+            title="New conversation"
           >
             <Trash2 size={16} />
           </button>
@@ -241,6 +314,13 @@ export function CoachPanel({ buildContext, problemId, visible, onClose }: CoachP
             <button type="button" className="secondary-button" onClick={retryConnection}>
               Retry
             </button>
+          </div>
+        ) : null}
+
+        {status?.available && turns.length === 0 && !streaming ? (
+          <div className="coach-msg coach-msg-bot">
+            How can I help? Ask for a hint, a read on your approach, or a plain-English
+            clarification of the problem — whatever you're stuck on.
           </div>
         ) : null}
 
@@ -326,7 +406,7 @@ export function CoachPanel({ buildContext, problemId, visible, onClose }: CoachP
               send();
             }
           }}
-          placeholder={status?.available ? "Ask for a hint, or say 'show me the code'…" : "Coach unavailable"}
+          placeholder={status?.available ? "Ask a question — a hint, a clarification, 'show me the code'…" : "Coach unavailable"}
           disabled={!status?.available || streaming}
           rows={2}
         />

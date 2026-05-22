@@ -41,7 +41,7 @@ export interface CoachContext {
  * builders below. Stamped onto every logged exchange so eval runs stay
  * comparable across tuning.
  */
-export const COACH_PROMPT_VERSION = "2026-05-18.2";
+export const COACH_PROMPT_VERSION = "2026-05-22.1";
 
 export const COACH_SYSTEM_PROMPT = `You are an interactive coding coach inside DSA Coach, a practice tool where a learner solves Python problems in an in-browser editor. You are talking directly to the learner.
 
@@ -120,18 +120,14 @@ function stateBlock(ctx: CoachContext): string {
   const unstarted = meaningful.every((line) => line === "pass" || line === "...");
 
   if (!code || unstarted) {
-    lines.push(
-      "The editor is essentially empty — the learner has not started. Treat this as a Rung 0 'where do I start' ask. Orient them; do not write code."
-    );
+    lines.push("The editor is essentially empty — the learner has not started writing code yet.");
     return lines.join("\n\n");
   }
 
   lines.push("LEARNER'S CURRENT CODE:\n" + fence(code));
 
   if (ctx.runState === "passed") {
-    lines.push(
-      "Their last run PASSED. If they are asking a follow-up, answer it. Otherwise affirm what they did well and optionally pose a sharpening question (edge cases, complexity)."
-    );
+    lines.push("Their last run PASSED.");
   } else if (ctx.runState === "failed" || ctx.runState === "error") {
     const ft = ctx.failedVisible
       .slice(0, 3)
@@ -147,24 +143,26 @@ function stateBlock(ctx: CoachContext): string {
         (ctx.stdout?.trim() ? `\nTheir printed output:\n${ctx.stdout.trim()}` : "")
     );
     lines.push(
-      "Diagnose the specific mistake in THEIR code from the failing case. Assume their approach is viable and look for the smallest fix (a bug, a boundary, a missing case) before considering any rewrite. Do not redirect them to the reference's approach unless theirs genuinely cannot work — if so, say concretely why. Pick the ladder rung from the attempt count and what they ask for."
+      "If the learner asks about the failure, diagnose the specific mistake in THEIR code from the failing case: assume their approach is viable and look for the smallest fix (a bug, a boundary, a missing case) before considering any rewrite. Do not redirect them to the reference's approach unless theirs genuinely cannot work — if so, say concretely why."
     );
   } else {
-    lines.push(
-      "They have written code but have not run it yet — they want a proactive tip. Give ONE targeted observation about the next step or a pitfall you see. Do not rewrite their code."
-    );
+    lines.push("They have written code but have not run it yet.");
   }
   return lines.join("\n\n");
 }
 
-/** The first message sent when the coach panel is opened for a problem. */
+/**
+ * The context message prepended to every coach request: the problem, the
+ * learner's code and run state, and the authored reference. The learner's
+ * own message follows it — the coach answers them; it never opens unprompted.
+ */
 export function buildInitialUserPrompt(ctx: CoachContext): string {
   return `${stateBlock(ctx)}
 
 COACH REFERENCE (for your guidance only):
 ${authoredBlock(ctx)}
 
-Give your opening coaching message now. Start at the lowest ladder rung that fits the situation above.`;
+The learner's message follows. Answer exactly what they ask, at the lowest ladder rung that satisfies it — if they only want the problem clarified, clarify it plainly and stop. Do not volunteer code coaching they did not ask for.`;
 }
 
 // ---------------------------------------------------------------------------
