@@ -843,6 +843,17 @@ pre {
   padding: 2px 5px;
 }
 
+/* KaTeX display math can be wider than the panel — let it scroll, and keep
+   the inline `$...$` math from inheriting the code-span background. */
+.markdown .math-block {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.markdown .math-inline {
+  white-space: nowrap;
+}
+
 pre {
   overflow: auto;
   padding: 12px;
