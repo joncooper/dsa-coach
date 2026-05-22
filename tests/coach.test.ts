@@ -7,6 +7,8 @@ import {
   type CoachContext
 } from "../src/coach/coachPrompts";
 import { checkOllama, streamChat } from "../src/coach/ollamaClient";
+import { formatRelativeTime, groupCoachConversations } from "../src/coach/coachHistory";
+import type { CoachExchangeRecord } from "../src/types";
 
 function baseContext(overrides: Partial<CoachContext> = {}): CoachContext {
   return {
@@ -94,17 +96,16 @@ describe("failed-submission guidance prefers a local fix", () => {
 });
 
 describe("buildInitialUserPrompt", () => {
-  it("treats a starter-only editor as Rung 0", () => {
+  it("flags a starter-only editor as not started", () => {
     const out = buildInitialUserPrompt(baseContext());
-    expect(out).toMatch(/Rung 0/);
-    expect(out).toMatch(/has not started|do not write code/i);
+    expect(out).toMatch(/has not started writing code/i);
   });
 
-  it("asks for one proactive tip when there is WIP code but no run", () => {
+  it("notes WIP code that has not been run yet", () => {
     const out = buildInitialUserPrompt(
       baseContext({ code: "def realized_pnl(trades):\n    total = 0\n    return total\n" })
     );
-    expect(out).toMatch(/have not run it yet|proactive tip/i);
+    expect(out).toMatch(/have not run it yet/i);
     expect(out).not.toMatch(/has not started/i);
   });
 
@@ -126,12 +127,18 @@ describe("buildInitialUserPrompt", () => {
     expect(out).toMatch(/run or submitted this problem 2 time/);
   });
 
-  it("affirms and offers to sharpen on a passing run", () => {
+  it("reports a passing run as context", () => {
     const out = buildInitialUserPrompt(
       baseContext({ code: "def realized_pnl(trades):\n    return 42\n", runState: "passed" })
     );
     expect(out).toMatch(/PASSED/);
-    expect(out).toMatch(/affirm|sharpening/i);
+  });
+
+  it("tells the coach to answer the learner's question, not coach unprompted", () => {
+    const out = buildInitialUserPrompt(baseContext());
+    expect(out).toMatch(/answer exactly what they ask/i);
+    expect(out).toMatch(/do not volunteer code coaching/i);
+    expect(out).not.toMatch(/opening coaching message/i);
   });
 
   it("includes the multi-part title and grounds in authored content", () => {
@@ -214,5 +221,77 @@ describe("ollama client", () => {
       })
     );
     expect(await checkOllama()).toEqual({ available: false, model: null, reason: "unreachable" });
+  });
+});
+
+describe("groupCoachConversations", () => {
+  function record(
+    over: Partial<CoachExchangeRecord> & { conversationId: string; createdAt: string }
+  ): CoachExchangeRecord {
+    return {
+      id: 1,
+      problemId: "p1",
+      model: "gemma4:latest",
+      promptVersion: "test",
+      userMessage: null,
+      messages: [],
+      response: "ok",
+      context: {},
+      ...over
+    };
+  }
+
+  it("groups exchanges by conversation, newest conversation first", () => {
+    const convos = groupCoachConversations([
+      record({ id: 1, conversationId: "a", createdAt: "2026-05-20T10:00:00Z", response: "intro A" }),
+      record({ id: 2, conversationId: "a", createdAt: "2026-05-20T10:05:00Z", userMessage: "hint?", response: "reply A" }),
+      record({ id: 3, conversationId: "b", createdAt: "2026-05-21T09:00:00Z", response: "intro B" })
+    ]);
+    expect(convos.map((c) => c.id)).toEqual(["b", "a"]);
+    expect(convos[1].exchangeCount).toBe(2);
+  });
+
+  it("reconstructs turns in time order, user turn before each reply", () => {
+    const [convo] = groupCoachConversations([
+      record({ id: 2, conversationId: "a", createdAt: "2026-05-20T10:05:00Z", userMessage: "hint?", response: "reply" }),
+      record({ id: 1, conversationId: "a", createdAt: "2026-05-20T10:00:00Z", response: "intro" })
+    ]);
+    expect(convo.turns).toEqual([
+      { role: "assistant", content: "intro", exchangeId: 1 },
+      { role: "user", content: "hint?" },
+      { role: "assistant", content: "reply", exchangeId: 2 }
+    ]);
+  });
+
+  it("labels a conversation with its first user message, or a fallback", () => {
+    const [withUser] = groupCoachConversations([
+      record({ conversationId: "a", createdAt: "2026-05-20T10:00:00Z", response: "intro" }),
+      record({ conversationId: "a", createdAt: "2026-05-20T10:01:00Z", userMessage: "why does my loop fail", response: "r" })
+    ]);
+    expect(withUser.preview).toBe("why does my loop fail");
+
+    const [openingOnly] = groupCoachConversations([
+      record({ conversationId: "b", createdAt: "2026-05-20T10:00:00Z", response: "intro" })
+    ]);
+    expect(openingOnly.preview).toBe("Coach intro");
+  });
+
+  it("returns an empty list when there are no records", () => {
+    expect(groupCoachConversations([])).toEqual([]);
+  });
+});
+
+describe("formatRelativeTime", () => {
+  const now = new Date("2026-05-21T12:00:00Z");
+
+  it("formats recent times relatively", () => {
+    expect(formatRelativeTime("2026-05-21T11:59:30Z", now)).toBe("just now");
+    expect(formatRelativeTime("2026-05-21T11:30:00Z", now)).toBe("30m ago");
+    expect(formatRelativeTime("2026-05-21T09:00:00Z", now)).toBe("3h ago");
+    expect(formatRelativeTime("2026-05-19T12:00:00Z", now)).toBe("2d ago");
+  });
+
+  it("falls back to a calendar date for older times", () => {
+    expect(formatRelativeTime("2026-04-15T12:00:00Z", now)).toMatch(/Apr/);
   });
 });

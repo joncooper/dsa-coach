@@ -117,6 +117,13 @@ export function useCourseStore() {
     await db.coachLogs.update(id, { feedback });
   }, []);
 
+  const loadCoachExchanges = useCallback(
+    async (problemId: string): Promise<CoachExchangeRecord[]> => {
+      return db.coachLogs.where("problemId").equals(problemId).toArray();
+    },
+    []
+  );
+
   const exportCoachLog = useCallback(async () => exportCoachJsonl(), []);
 
   const exportJson = useCallback(async () => {
@@ -156,6 +163,7 @@ export function useCourseStore() {
     recordSubmission,
     logCoachExchange,
     rateCoachExchange,
+    loadCoachExchanges,
     exportCoachLog,
     exportJson,
     importJson
