@@ -794,7 +794,7 @@ const y1d5 = aocProblem({
   difficulty: "medium",
   patterns: ["binary encoding", "scan", "max"],
   prompt:
-    "Each non-empty line is a 10-character seat code. The first 7 characters are `F` (front, lower half) or `B` (back, upper half) and binary-partition the row range 0-127. The last 3 characters are `L` (left, lower half) or `R` (right, upper half) and binary-partition the column range 0-7. The seat ID is `row * 8 + column`. Return the maximum seat ID across all codes.",
+    "Each non-empty line is a 10-character seat code encoding a row (0-127) and a column (0-7).\n\nDecode the row from the first 7 characters. Start with the range 0-127. Read the characters left to right: `F` keeps the lower half of the current range, `B` keeps the upper half. After all 7 characters the range has narrowed to a single number — that is the row.\n\nDecode the column from the last 3 characters the same way, starting from the range 0-7: `L` keeps the lower half, `R` keeps the upper half.\n\nThe seat ID is `row * 8 + column`. Return the largest seat ID across all codes.",
   constraints: [
     "Lines are separated by `\\n`.",
     "Each non-empty line is exactly 10 characters long.",
@@ -866,7 +866,7 @@ const y1d5 = aocProblem({
     id: "part-2-missing-seat",
     title: "Part 2: Missing seat",
     prompt:
-      "Decode the same way, but now find your own seat: it is the single seat ID that is missing from the set of decoded IDs, while both `id - 1` and `id + 1` are present. Return that ID. If no such seat exists, return -1.",
+      "Decode the same way as Part 1 to get a set of seat IDs. A seat ID is a candidate when it is missing from that set while both `id - 1` and `id + 1` are present. Return the smallest candidate ID. If there is no candidate, return -1.",
     entrypoint: "find_missing_seat",
     starterCode:
       "def find_missing_seat(input_text):\n" +
@@ -1096,7 +1096,7 @@ const y1d7 = aocProblem({
   difficulty: "medium",
   patterns: ["graph", "DFS", "memoization"],
   prompt:
-    "Each non-empty line describes a colored container's contents in this exact shape:\n\n`<adjective> <color> containers hold <body>.`\n\nThe body is either the literal string `no other containers` or a comma-separated list of `<n> <adjective> <color> container[s]` entries (`container` for n=1, `containers` otherwise). The container's identifier is the two-word `<adjective> <color>` phrase. Return the number of distinct container identifiers from which a `bright gold` container is reachable, where \"reachable\" means: directly contained, or transitively contained through any chain.",
+    "Each non-empty line is a rule describing what one container type holds. A container type is named by exactly two lowercase words (for example, `dim red`). A rule has the form:\n\n`NAME containers hold CONTENTS.`\n\n`CONTENTS` is either the literal words `no other containers`, or a comma-separated list of entries like `2 dim red containers` — a count followed by a two-word container name. The word is `container` when the count is 1 and `containers` otherwise.\n\nA container type can hold a `bright gold` container if it holds one directly, or if it holds some container type that can (recursively) hold a `bright gold` container. Return how many distinct container types can hold a `bright gold` container. `bright gold` itself does not count.",
   constraints: [
     "Line shape is exactly as described; identifiers are two lowercase words.",
     "`no other containers` means zero children.",
@@ -1919,11 +1919,11 @@ const y2d4 = aocProblem({
   difficulty: "medium",
   patterns: ["multi-line records", "aggregation"],
   prompt:
-    "Shipment blocks are separated by blank lines. Each non-empty line within a block has the shape `key=value` with a single equals sign. Within a block, sum the integer values of every line whose value parses as a non-negative integer (zero or positive). Ignore lines whose value is not a valid non-negative integer. Return the largest per-block sum across all blocks.",
+    "Shipment blocks are separated by blank lines. Each non-empty line within a block has the shape `key=value` with a single equals sign. Within a block, sum the values of every line whose value — after trimming spaces around it — is a run of one or more digits `0`-`9` (a plain non-negative integer: no sign, no decimal point). Ignore every other line. Return the largest per-block sum across all blocks.",
   constraints: [
     "Blocks separated by `\\n\\n`. Lines within a block separated by `\\n`.",
     "Each non-empty line within a block has exactly one `=`.",
-    "Values that fail `int(value) >= 0` are skipped; the block is not invalidated.",
+    "A value counts only if, trimmed, it is all digits `0`-`9` — so `-1`, `+5`, and `1.5` are skipped. Skipping a line does not invalidate its block.",
     "Return 0 for an input with no blocks.",
     "If a block has zero valid lines, its contribution is 0."
   ],
@@ -2580,7 +2580,7 @@ const y2d7 = aocProblem({
     id: "part-2-paste-cost",
     title: "Part 2: Paste cost",
     prompt:
-      "Same input. Now compute the total quantity of `binding_paste` required to produce exactly one unit of the recipe named `final_product`. Direct dependencies multiply through the chain (e.g., 2 of X, and X needs 3 binding_paste each, contributes 6). If `final_product` is not defined in the input, return 0. If `final_product` does not transitively need `binding_paste`, return 0.",
+      "Same input. Now compute the total quantity of `binding_paste` required to produce exactly one unit of the recipe named `final_product`. `binding_paste` is a raw material: one unit of it counts as 1, and you do not descend into any rule that defines `binding_paste` itself. Direct dependencies multiply through the chain (e.g., 2 of X, and X needs 3 binding_paste each, contributes 6). If `final_product` is not defined in the input, return 0. If `final_product` does not transitively need `binding_paste`, return 0.",
     entrypoint: "binding_paste_cost",
     starterCode:
       "def binding_paste_cost(input_text):\n" +
@@ -2896,12 +2896,12 @@ const y3d2 = aocProblem({
   difficulty: "easy",
   patterns: ["parsing", "validation", "format check"],
   prompt:
-    "Each non-empty line has the shape `STAGE LICENSE EXPIRES` (three space-separated tokens). `STAGE` is one of `main`, `side`, `late`. `LICENSE` is a string of digits and hyphens; valid licenses are exactly the pattern `NNN-NN-NNNN` (three digits, hyphen, two digits, hyphen, four digits — eleven characters total). `EXPIRES` is a four-digit year. A permit is valid when (a) the license matches the strict pattern and (b) `EXPIRES` is at least 2025. Return the count of valid permits.",
+    "Each non-empty line has the shape `STAGE LICENSE EXPIRES` (three space-separated tokens). `STAGE` is one of `main`, `side`, `late`. `LICENSE` is a string of digits and hyphens; valid licenses are exactly the pattern `NNN-NN-NNNN` (three digits, hyphen, two digits, hyphen, four digits — eleven characters total). A permit is valid when (a) the license matches the strict pattern and (b) `EXPIRES` is exactly four digits and, read as a year, is at least 2025. Return the count of valid permits.",
   constraints: [
     "Lines are separated by `\\n`. Blank lines are ignored.",
     "Each non-empty line has exactly three space-separated tokens.",
     "License length is exactly 11 if valid; hyphens are at positions 3 and 6 (0-indexed).",
-    "EXPIRES is exactly 4 digits.",
+    "`EXPIRES` is rejected unless it is exactly 4 digits (all `0-9`).",
     "Return 0 for empty input."
   ],
   examples: [
@@ -2988,7 +2988,7 @@ const y3d2 = aocProblem({
     id: "part-2-permit-summary",
     title: "Part 2: Permits per stage",
     prompt:
-      "Same line shape and validity rule. Now return a dict mapping each stage (`main`, `side`, `late`) to the number of valid permits in that stage. Stages with zero valid permits should still appear in the dict with value `0`.",
+      "Same line shape and validity rule. Now return a dict mapping each stage (`main`, `side`, `late`) to the number of valid permits in that stage. Stages with zero valid permits should still appear in the dict with value `0`. Ignore any line whose stage token is not one of the three.",
     entrypoint: "permit_counts_by_stage",
     starterCode:
       "def permit_counts_by_stage(input_text):\n" +
@@ -3849,7 +3849,7 @@ const y3d7 = aocProblem({
   difficulty: "medium",
   patterns: ["graph", "topological sort", "DAG depth"],
   prompt:
-    "Each non-empty line has the shape `TASK before A, B, C.` meaning that completing `TASK` is a prerequisite for tasks `A`, `B`, and `C`. The body can also be exactly the literal `nothing` (e.g., `TASK before nothing.`), meaning `TASK` has no downstream tasks. All identifiers are single lowercase words. Return the depth of the longest dependency chain in the input: a single task with no children has depth 1; a parent of one leaf has depth 2; and so on. Return 0 for empty input.",
+    "Each non-empty line has the shape `TASK before A, B, C.` meaning that completing `TASK` is a prerequisite for tasks `A`, `B`, and `C`. The body can also be exactly the literal `nothing` (e.g., `TASK before nothing.`), meaning `TASK` has no downstream tasks. All identifiers are single lowercase words. A task may be named only as a child and never get its own rule line — treat it as a leaf with no downstream tasks. Return the depth of the longest dependency chain in the input: a single task with no children has depth 1; a parent of one leaf has depth 2; and so on. Return 0 for empty input.",
   constraints: [
     "Identifiers are single lowercase words (no spaces).",
     "Each rule ends with a period.",
@@ -4014,11 +4014,11 @@ const y3d7 = aocProblem({
     id: "part-2-task-ordering",
     title: "Part 2: Earliest-time scheduling",
     prompt:
-      "Same input. Each task takes `1` time unit. Tasks with no prerequisites can start at time 0. Each task's start time equals 1 plus the maximum start time of its prerequisites (it must wait for all prerequisites to finish). Return the total finish time of the schedule: the maximum `start_time + 1` across all tasks. Equivalent to the depth result of Part 1, but computed from the inverted graph — tasks that have no parents start at 0.",
+      "Same input. Each task takes `1` time unit. Tasks with no prerequisites can start at time 0. Each task's start time equals 1 plus the maximum start time of its prerequisites (it must wait for all prerequisites to finish). Return the total finish time of the schedule: the maximum `start_time + 1` across all tasks.",
     entrypoint: "schedule_finish",
     starterCode:
       "def schedule_finish(input_text):\n" +
-      "    # Compute finish time of an ALAP-style schedule on the dependency DAG.\n" +
+      "    # Compute finish time of an earliest-start schedule on the dependency DAG.\n" +
       "    pass\n",
     referenceCode:
       "def schedule_finish(input_text):\n" +

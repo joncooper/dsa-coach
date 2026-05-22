@@ -369,7 +369,7 @@ const problemSeeds: ProblemSeed[] = [
     patterns: ["prefix sum", "averages"],
     entrypoint: "minimum_average_gap_index",
     signature: "nums",
-    prompt: "For every split after index `i`, compare the floor average of `nums[:i+1]` with the floor average of `nums[i+1:]`. Return the index with the smallest absolute gap. Empty right side has average 0.",
+    prompt: "For every split after index `i`, compare the floor average of `nums[:i+1]` with the floor average of `nums[i+1:]`. Return the index `i` with the smallest absolute gap; if several indices tie, return the smallest such `i`. Empty right side has average 0.",
     visibleTests: [
       { name: "middle", args: [[2, 5, 3, 9, 5]], expected: 3 },
       { name: "single", args: [[7]], expected: 0 }
@@ -451,7 +451,7 @@ const problemSeeds: ProblemSeed[] = [
     patterns: ["opposite pointers", "sorted array"],
     entrypoint: "closest_pair_sum",
     signature: "nums, target",
-    prompt: "Given a sorted array, return the sum of two distinct values whose sum is closest to `target`. If there is a tie, return the smaller sum.",
+    prompt: "Given a sorted array, return the sum of two elements at different indices whose sum is closest to `target`. If there is a tie, return the smaller sum.",
     visibleTests: [
       { name: "near target", args: [[1, 4, 6, 8], 11], expected: 10 },
       { name: "exact", args: [[2, 3, 5], 8], expected: 8 }
@@ -1163,7 +1163,7 @@ const problemSeeds: ProblemSeed[] = [
     entrypoint: "shortest_edge_path",
     signature: "n, edges, start, goal",
     adapter: "graph",
-    prompt: "Given an undirected graph with nodes `0..n-1`, return the number of edges in the shortest path from `start` to `goal`, or -1 if unreachable.",
+    prompt: "Given an undirected graph with nodes `0..n-1`, return the number of edges in the shortest path from `start` to `goal`, or -1 if unreachable. `edges` is a list of `[u, v]` pairs, each an undirected edge between nodes `u` and `v`.",
     visibleTests: [
       { name: "reachable", args: [5, [[0, 1], [1, 2], [0, 3], [3, 4], [4, 2]], 0, 2], expected: 2 },
       { name: "unreachable", args: [4, [[0, 1]], 0, 3], expected: -1 }
@@ -1711,7 +1711,7 @@ const problemSeeds: ProblemSeed[] = [
     patterns: ["backtracking", "combinations"],
     entrypoint: "combination_sum_exact_local",
     signature: "nums, target",
-    prompt: "Return combinations of numbers that sum to `target`. Each number can be used at most once. Input may contain duplicates; output must not contain duplicate combinations. When `target` is `0`, the only combination is the empty one — return `[[]]`. When no combination reaches `target`, return `[]`.",
+    prompt: "Return combinations of numbers that sum to `target`. Each number can be used at most once. Input may contain duplicates; output must not contain duplicate combinations. List each combination's numbers in nondecreasing order, and sort the list of combinations lexicographically. When `target` is `0`, the only combination is the empty one — return `[[]]`. When no combination reaches `target`, return `[]`.",
     visibleTests: [
       { name: "duplicates", args: [[1, 1, 2, 5], 3], expected: [[1, 2]] },
       { name: "two answers", args: [[2, 3, 6, 7], 9], expected: [[2, 7], [3, 6]] }
@@ -1953,7 +1953,7 @@ const problemSeeds: ProblemSeed[] = [
     patterns: ["complexity recognition"],
     entrypoint: "growth_label",
     signature: "operations",
-    prompt: "Given operation counts observed as input size doubles, classify the growth as `constant`, `linear`, `quadratic`, or `unknown`. Use rough ratios: near 1, near 2, near 4.",
+    prompt: "Given a list of operation counts observed as input size doubles, classify the growth. Compute the ratio of each consecutive pair (`counts[i + 1] / counts[i]`) and average those ratios. Return `constant` when the average is in `[0.75, 1.35]`, `linear` when in `[1.55, 2.45]`, `quadratic` when in `[3.1, 5.0]`, and `unknown` for any other average. Also return `unknown` if there are fewer than two counts, or if any count before the last is `0`.",
     visibleTests: [
       { name: "linear", args: [[100, 210, 390]], expected: "linear" },
       { name: "quadratic", args: [[100, 410, 1600]], expected: "quadratic" }
@@ -1980,7 +1980,7 @@ const problemSeeds: ProblemSeed[] = [
     patterns: ["pattern recognition"],
     entrypoint: "choose_pattern_label",
     signature: "features",
-    prompt: "Given feature strings about a problem, return a likely pattern: `hashing`, `binary-search`, `sliding-window`, `graph`, or `dp`. Prefer graph over dp, dp over binary search, binary search over sliding window, sliding window over hashing.",
+    prompt: "Given a list of feature strings, classify the problem. Lowercase the features, join them into one space-separated string, then test these keyword substrings against it in priority order, returning the first category that matches: `graph` if the string contains `node`, `edge`, `shortest`, or `connected`; otherwise `dp` for `subproblem`, `reuse`, `minimum`, or `optimal`; otherwise `binary-search` for `sorted`, `boundary`, or `answer`; otherwise `sliding-window` for `contiguous`, `window`, `at most`, or `positive`. If none match, return `hashing`.",
     visibleTests: [
       { name: "graph", args: [["nodes", "edges", "shortest"]], expected: "graph" },
       { name: "window", args: [["contiguous", "at most", "positive"]], expected: "sliding-window" }
@@ -2028,8 +2028,25 @@ const problemSeeds: ProblemSeed[] = [
   }
 ];
 
-function starterCode(entrypoint: string, signature: string): string {
-  return `def ${entrypoint}(${signature}):\n    # Write your solution here.\n    pass\n`;
+function structureNote(adapter: Problem["adapter"] | undefined): string {
+  if (adapter === "binary-tree") {
+    return (
+      "# The tree is given as its root TreeNode, or None for an empty tree.\n" +
+      "# A TreeNode has attributes .val, .left, and .right; .left/.right are None when a child is absent.\n"
+    );
+  }
+  if (adapter === "linked-list") {
+    return (
+      "# Each list is given as its head ListNode, or None for an empty list.\n" +
+      "# A ListNode has attributes .val and .next; .next is None at the last node.\n" +
+      "# Call ListNode(val, next) if you need to build a new node.\n"
+    );
+  }
+  return "";
+}
+
+function starterCode(entrypoint: string, signature: string, adapter?: Problem["adapter"]): string {
+  return `${structureNote(adapter)}def ${entrypoint}(${signature}):\n    # Write your solution here.\n    pass\n`;
 }
 
 function extractSolutionCode(entrypoint: string): string {
@@ -2057,7 +2074,7 @@ function makeProblem(seed: ProblemSeed): Problem {
     prompt: seed.prompt,
     constraints: ["Handle empty inputs when the prompt permits them.", "Return the exact type shown in the examples.", "Keep the stated asymptotic complexity."],
     examples: seed.visibleTests,
-    starterCode: starterCode(seed.entrypoint, seed.signature),
+    starterCode: starterCode(seed.entrypoint, seed.signature, seed.adapter),
     referenceCode: guidedReferenceCode,
     solutionCode: extractSolutionCode(seed.entrypoint),
     entrypoint: seed.entrypoint,
@@ -2087,7 +2104,7 @@ function makeBonusProblem(seed: BonusSeed): BonusProblem {
     prompt: seed.prompt,
     constraints: seed.constraints,
     examples: seed.visibleTests,
-    starterCode: starterCode(seed.entrypoint, seed.signature),
+    starterCode: starterCode(seed.entrypoint, seed.signature, seed.adapter),
     referenceCode: seed.code,
     solutionCode: seed.code,
     entrypoint: seed.entrypoint,
