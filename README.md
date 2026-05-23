@@ -29,12 +29,6 @@ Most practice tools are either online judges that hide the test cases, or static
 - **Offline PWA** via a production service worker — the full app shell works without a network.
 - **Responsive** down to mobile, with an accessible component layer audited with axe.
 
-<p align="center">
-  <img src="ui-snapshots/problem-guided.png" alt="The problem workspace — prompt, editor, and local test results" width="620">
-  &nbsp;
-  <img src="ui-snapshots/mobile-problem.png" alt="The same workspace on a phone" width="215">
-</p>
-
 ## Practice tracks
 
 The sidebar splits practice into four kinds:

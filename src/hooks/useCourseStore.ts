@@ -19,6 +19,9 @@ export function useCourseStore() {
   const [submissions, setSubmissions] = useState<SubmissionRecord[]>([]);
   const [settings, setSettings] = useState<Record<string, SettingRecord>>({});
   const [ready, setReady] = useState(false);
+  // Ephemeral UI state — the mobile navigation drawer. Deliberately not
+  // persisted: a slide-over should always start closed on a fresh load.
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const load = useCallback(async () => {
     const [progressRows, noteRows, submissionRows, settingRows] = await Promise.all([
@@ -155,6 +158,8 @@ export function useCourseStore() {
     notes,
     submissions,
     settings,
+    mobileNavOpen,
+    setMobileNavOpen,
     progressSummary,
     markProgress,
     saveNote,

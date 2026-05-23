@@ -253,6 +253,16 @@ kbd {
    show-sidebar button stays available in the still-visible context bar
    so they can restore the sidebar without leaving focus mode. */
 
+/* Mobile-only problem-workspace chrome — hidden here, revealed by the
+   max-width:1050px query: the nav-drawer launcher, the drawer's backdrop
+   scrim, and the inline error block the phone Results pane shows in place
+   of the desktop-only Errors tab. */
+.problem-nav-toggle,
+.sidebar-scrim,
+.mobile-only-error {
+  display: none;
+}
+
 .page {
   width: min(1180px, 100%);
   margin: 0 auto;
@@ -2991,21 +3001,103 @@ pre {
     grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   }
 
+  /* The problem page renders the sidebar as an off-canvas drawer so a
+     phone opens straight onto the workspace, not the top of a long nav. */
+  /* Closed drawer: parked off-screen AND visibility:hidden. The hidden
+     state is load-bearing — it keeps the drawer's links out of the tab
+     order and untappable even while it is off-screen. No transition: the
+     same <aside> gains .sidebar-drawer whenever a problem route opens, so
+     an animated transform would slide the drawer across the workspace
+     (and intercept taps) on every navigation. */
+  .sidebar-drawer {
+    position: fixed;
+    z-index: 60;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(300px, 86vw);
+    height: auto;
+    transform: translateX(-100%);
+    visibility: hidden;
+  }
+
+  .sidebar-drawer.is-open {
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45);
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .sidebar-scrim {
+    position: fixed;
+    z-index: 55;
+    inset: 0;
+    display: none;
+    border: 0;
+    padding: 0;
+    background: rgba(15, 20, 22, 0.55);
+  }
+
+  .sidebar-scrim.is-open {
+    display: block;
+  }
+
+  /* The workspace is a viewport-tall app, not a long page scroll: a
+     compact header, the section tabs, one full-height pane, and a docked
+     run bar. The active pane scrolls internally; the page never does. */
   .problem-page {
-    /* Tabs become a visible grid item below 1050px, so reinstate the
-       middle track for them. */
-    grid-template-rows: auto auto minmax(0, 1fr);
-    min-height: auto;
-    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    grid-template-rows: none;
+    min-height: 0;
+    height: 100vh;
+    height: 100dvh;
+    gap: 8px;
+    padding: 10px 10px max(8px, env(safe-area-inset-bottom));
   }
 
   .problem-context-bar {
     display: grid;
-    gap: 10px;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "menu main"
+      "actions actions";
+    align-items: center;
+    gap: 8px 10px;
+    min-height: 0;
+    flex: 0 0 auto;
+  }
+
+  .problem-nav-toggle {
+    display: inline-grid;
+    grid-area: menu;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--muted);
+  }
+
+  .problem-context-bar .sidebar-show-toggle.inline {
+    display: none;
+  }
+
+  .problem-context-main {
+    grid-area: main;
+    min-width: 0;
   }
 
   .problem-context-actions {
+    grid-area: actions;
     justify-content: flex-start;
+  }
+
+  /* Difficulty/pattern chips and the focus toggle are desktop affordances;
+     on a phone the title and the brief tab carry that context. */
+  .problem-context-bar .compact-tags,
+  .problem-focus-toggle {
+    display: none;
   }
 
   .content-columns,
@@ -3019,45 +3111,43 @@ pre {
     min-height: auto;
   }
 
+  .problem-page .beta-workspace {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
   .split-handle {
     display: none;
   }
 
-  .problem-brief {
-    display: block;
-    max-height: none;
-    border-right: 0;
-  }
-
-  .prompt-scroll {
-    overflow: visible;
-  }
-
-  .prompt-actions {
-    position: static;
-  }
-
   .mobile-workspace-tabs {
-    position: sticky;
-    z-index: 4;
-    top: 0;
     display: grid;
+    flex: 0 0 auto;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px;
     border: 1px solid var(--line);
     border-radius: 8px;
-    padding: 6px;
+    padding: 5px;
     background: var(--paper);
     box-shadow: var(--shadow);
   }
 
   .mobile-workspace-tabs button {
-    min-height: 38px;
+    min-height: 40px;
+    padding: 0 2px;
     border: 0;
     border-radius: 6px;
     background: transparent;
     color: var(--muted);
+    font-size: 0.8rem;
     font-weight: 800;
+    white-space: nowrap;
     text-transform: capitalize;
   }
 
@@ -3070,14 +3160,35 @@ pre {
     display: none;
   }
 
-  .mobile-pane.active {
-    display: block;
+  /* Prompt tab: a self-contained scroll with the hint/solution actions
+     pinned at its foot. */
+  .problem-page .problem-brief.mobile-pane.active {
+    display: grid;
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    padding: 14px 14px 0;
+  }
+
+  .problem-page .prompt-scroll {
+    overflow: auto;
+  }
+
+  /* The workspace column collapses away while the brief tab is showing. */
+  .beta-workspace.show-brief .workspace {
+    display: none;
   }
 
   .problem-page .workspace {
-    display: block;
-    height: auto;
-    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    gap: 0;
+    padding: 0;
   }
 
   .desktop-workspace-tabs {
@@ -3088,40 +3199,158 @@ pre {
     display: none;
   }
 
+  /* The editor / results / scratch / notes pane fills the workspace and
+     scrolls inside itself. */
+  .workspace-editor.mobile-pane.active,
+  .workspace-bottom.mobile-pane.active {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
+    order: 1;
+    margin: 0 0 8px;
+  }
+
+  .workspace-editor.mobile-pane.active {
+    overflow: hidden;
+  }
+
+  .workspace-bottom.mobile-pane.active {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
   .workspace-panel.mobile-active {
     display: block;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: auto;
   }
 
   .scratchpad-panel.mobile-active {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: auto;
   }
 
-  .workspace-toolbar {
-    position: static;
-  }
-
-  .workspace-bottom {
-    display: block;
-    height: auto;
-    margin-top: 0;
+  .scratchpad-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .dock-resize-handle {
     display: none;
   }
 
+  /* Run / Submit dock to the foot of the workspace — within thumb reach
+     and always in view while the editor or results scroll above. */
+  .workspace-toolbar.mobile-pane.active {
+    display: flex;
+    flex: 0 0 auto;
+    order: 2;
+    position: static;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px;
+    background: var(--paper);
+    box-shadow: 0 8px 22px rgba(29, 37, 40, 0.12);
+  }
+
+  .workspace-toolbar.mobile-pane .toolbar-status-group {
+    display: none;
+  }
+
+  .workspace-toolbar.mobile-pane .toolbar-actions {
+    display: flex;
+    flex: 1;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .workspace-toolbar.mobile-pane .toolbar-actions .run-button,
+  .workspace-toolbar.mobile-pane .toolbar-actions .submit-button,
+  .workspace-toolbar.mobile-pane .toolbar-actions .stop-button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .workspace-toolbar.mobile-pane .toolbar-actions kbd,
+  .workspace-toolbar.mobile-pane .toolbar-actions .button-copy small {
+    display: none;
+  }
+
+  /* The More menu opens upward from the docked bar as a small sheet. */
+  .problem-page .toolbar-menu-panel {
+    position: fixed;
+    z-index: 30;
+    right: 10px;
+    left: 10px;
+    bottom: 80px;
+    top: auto;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .problem-page .toolbar-menu-panel .shortcut-list {
+    display: none;
+  }
+
   .result-diff {
     grid-template-columns: 1fr;
+  }
+
+  /* The phone Results pane has no Errors tab — show the error in place. */
+  .mobile-only-error {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .mobile-only-error pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .desktop-errors-hint {
+    display: none;
+  }
+
+  /* The coach takes over the screen on a phone rather than competing with
+     the workspace for height. */
+  .problem-page .beta-workspace.coach-open .coach-panel {
+    position: fixed;
+    z-index: 50;
+    inset: 0;
+    max-height: none;
+    border: 0;
+  }
+
+  /* Neutralise desktop focus mode when the viewport is phone-sized. */
+  .problem-focus-mode .problem-brief.mobile-pane.active {
+    display: grid;
+  }
+
+  .problem-focus-mode .problem-page .workspace {
+    min-height: 0;
   }
 }
 
 @media (max-width: 720px) {
   .page {
     padding: 20px;
-  }
-
-  .problem-page {
-    padding: 12px;
   }
 
   .page-header,
@@ -3150,7 +3379,6 @@ pre {
   }
 
   .prompt-actions,
-  .toolbar-actions,
   .completion-banner {
     display: grid;
     grid-template-columns: 1fr;
