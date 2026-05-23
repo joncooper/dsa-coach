@@ -3076,6 +3076,8 @@ pre {
 
   .problem-page .workspace {
     display: block;
+    height: auto;
+    overflow: visible;
   }
 
   .desktop-workspace-tabs {
@@ -3095,7 +3097,7 @@ pre {
   }
 
   .workspace-toolbar {
-    top: 56px;
+    position: static;
   }
 
   .workspace-bottom {

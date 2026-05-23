@@ -6,7 +6,7 @@ const routes = [
   ["/lesson/foundations-lesson", "Foundations"],
   ["/quiz/foundations-quiz", "Foundations Quiz"],
   ["/problem/sum-positive-readings", "Sum Positive Readings"],
-  ["/problem/foundations-bonus-01", "Count Scores At Least Threshold: Foundations"]
+  ["/problem/foundations-bonus-01", "Running Maximum"]
 ] as const;
 
 for (const [route, heading] of routes) {
