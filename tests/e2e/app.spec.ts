@@ -51,15 +51,15 @@ test("solves a guided problem with keyboard shortcut", async ({ page }, testInfo
 
 test("opens and solves a runnable bonus problem", async ({ page }) => {
   await page.goto("/chapter/foundations");
-  await expect(page.getByRole("heading", { name: "Runnable Bonus Drills" })).toBeVisible();
-  await page.getByRole("link", { name: /Count Scores At Least Threshold: Foundations/ }).click();
-  await expect(page.getByRole("heading", { name: "Count Scores At Least Threshold: Foundations" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bonus Problems" })).toBeVisible();
+  await page.getByRole("link", { name: /Running Maximum/ }).click();
+  await expect(page.getByRole("heading", { name: "Running Maximum" })).toBeVisible();
   await openCodeTabIfMobile(page);
   await editor(page).click();
   await page.keyboard.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
-  await page.keyboard.type("def foundations_bonus_01(nums, threshold):\n    return sum(1 for value in nums if value >= threshold)\n");
+  await page.keyboard.type("def running_maximum(nums):\n    return [max(nums[:i + 1]) for i in range(len(nums))]\n");
   await page.getByRole("button", { name: /Submit/ }).click();
-  await expect(page.getByText("2/2 hidden tests passed")).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText("5/5 hidden tests passed")).toBeVisible({ timeout: 60_000 });
 });
 
 test("reveals hints, solution, and hidden diagnostics", async ({ page }) => {
@@ -68,11 +68,11 @@ test("reveals hints, solution, and hidden diagnostics", async ({ page }) => {
   await expect(page.getByText("Hint 1:")).toBeVisible();
   await page.getByRole("button", { name: "Show solution" }).click();
   await expect(page.getByRole("heading", { name: "Solution" })).toBeVisible();
-  await expect(page.locator(".solution-box code").filter({ hasText: "def foundations_bonus_01" })).toBeVisible();
+  await expect(page.locator(".solution-box code").filter({ hasText: "def running_maximum" })).toBeVisible();
   await openCodeTabIfMobile(page);
   await editor(page).click();
   await page.keyboard.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
-  await page.keyboard.type("def foundations_bonus_01(nums, threshold):\n    return 0\n");
+  await page.keyboard.type("def running_maximum(nums):\n    return 0\n");
   await page.getByRole("button", { name: /Submit/ }).click();
   await expect(page.getByRole("button", { name: "Reveal hidden diagnostics" })).toBeVisible({ timeout: 60_000 });
   await page.getByRole("button", { name: "Reveal hidden diagnostics" }).click();
@@ -96,7 +96,7 @@ test("uses mobile problem tabs", async ({ page }) => {
 test("uses focus mode and sidebar collapse", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === "mobile", "Sidebar collapse is a desktop workspace control.");
   await page.goto("/problem/sum-positive-readings");
-  await page.getByRole("button", { name: "Collapse nav" }).click();
+  await page.getByRole("button", { name: "Collapse sidebar" }).click();
   await expect(page.getByPlaceholder("Search")).toBeHidden();
   await page.getByRole("button", { name: "Focus" }).click();
   await expect(page.getByRole("link", { name: "Dashboard" })).toBeHidden();
@@ -116,8 +116,10 @@ test("persists study workspace controls and shows run history", async ({ page },
   await page.locator(".starred-panel").getByRole("link", { name: /Sum Positive Readings/ }).click();
   await expect(page.getByRole("heading", { name: "Sum Positive Readings" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Full prompt" }).click();
-  await expect(page.getByRole("button", { name: "Compact prompt" })).toBeVisible();
+  const examplesDetail = page.locator("details.prompt-detail").filter({ hasText: "Visible examples" });
+  const wasOpen = await examplesDetail.evaluate((el) => (el as HTMLDetailsElement).open);
+  await examplesDetail.locator("summary").click();
+  await expect(examplesDetail).toHaveJSProperty("open", !wasOpen);
 
   await page.locator(".toolbar-menu summary").click();
   await expect(page.getByText("Submit all tests")).toBeVisible();
