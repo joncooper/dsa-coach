@@ -11,6 +11,7 @@ import {
   Lightbulb,
   ListRestart,
   Maximize2,
+  Menu,
   Minimize2,
   MoreHorizontal,
   Play,
@@ -57,7 +58,7 @@ export function ProblemPage() {
     : problemSet
       ? { id: problemSet.id, title: problemSet.title, kind: "set" as const, backLink: `/set/${problemSet.id}`, backLabel: "Back to set" }
       : undefined;
-  const { progress, submissions, settings, saveSetting, markProgress, recordSubmission } = useStore();
+  const { progress, submissions, settings, saveSetting, markProgress, recordSubmission, setMobileNavOpen } = useStore();
   const [code, setCode] = useState(problem?.starterCode ?? "");
   const [result, setResult] = useState<RunResult>(idleResult);
   const [scratchpadCode, setScratchpadCode] = useState(defaultScratchpadCode(problem?.title));
@@ -467,6 +468,14 @@ export function ProblemPage() {
   return (
     <section className="page problem-page">
       <header className="problem-context-bar">
+        <button
+          type="button"
+          className="problem-nav-toggle"
+          aria-label="Open navigation menu"
+          onClick={() => setMobileNavOpen(true)}
+        >
+          <Menu size={18} />
+        </button>
         <SidebarShowToggle />
         <div className="problem-context-main">
           <p className="problem-breadcrumb">
@@ -513,7 +522,7 @@ export function ProblemPage() {
             Coach
           </button>
           <button
-            className="secondary-button compact-button icon-only-button"
+            className="secondary-button compact-button icon-only-button problem-focus-toggle"
             type="button"
             aria-label={focusMode ? "Exit focus" : "Focus"}
             title={focusMode ? "Exit focus" : "Focus"}
@@ -532,7 +541,10 @@ export function ProblemPage() {
         ))}
       </nav>
 
-      <div className={`problem-layout beta-workspace ${coachOpen ? "coach-open" : ""}`} style={splitStyle}>
+      <div
+        className={`problem-layout beta-workspace ${activeMobileTab === "prompt" ? "show-brief" : "show-workspace"} ${coachOpen ? "coach-open" : ""}`}
+        style={splitStyle}
+      >
         <aside className={`problem-brief mobile-pane ${activeMobileTab === "prompt" ? "active" : ""}`}>
           <div className="prompt-scroll">
             {resolvedParts.length > 1 ? (
@@ -718,7 +730,7 @@ export function ProblemPage() {
               </div>
             </details>
             {result.status === "loading" ? (
-              <button className="primary-button stop-button" type="button" onClick={stopRun}>
+              <button className="primary-button stop-button" type="button" aria-label="Stop this run" onClick={stopRun}>
                 <Square size={18} fill="currentColor" />
                 <span className="button-copy">
                   <strong>Stop</strong>
@@ -727,7 +739,7 @@ export function ProblemPage() {
               </button>
             ) : (
               <>
-                <button className="primary-button run-button" type="button" onClick={() => void run(false)}>
+                <button className="primary-button run-button" type="button" aria-label="Run visible tests" onClick={() => void run(false)}>
                   <Play size={18} />
                   <span className="button-copy">
                     <strong>Run</strong>
@@ -735,7 +747,7 @@ export function ProblemPage() {
                   </span>
                   <kbd>⌘↵</kbd>
                 </button>
-                <button className="primary-button submit-button" type="button" onClick={() => void run(true)}>
+                <button className="primary-button submit-button" type="button" aria-label="Submit all tests" onClick={() => void run(true)}>
                   <CheckCircle2 size={18} />
                   <span className="button-copy">
                     <strong>Submit</strong>
@@ -838,7 +850,13 @@ export function ProblemPage() {
             ) : null}
             {hiddenSummary ? <p className="muted">{hiddenSummary}</p> : null}
             {result.status === "stopped" ? <p className="muted">Run stopped before it finished.</p> : null}
-            {hasErrors ? <p className="muted">Errors are available in the Errors tab.</p> : null}
+            {hasErrors ? <p className="muted desktop-errors-hint">Errors are available in the Errors tab.</p> : null}
+            {hasErrors ? (
+              <div className="mobile-only-error">
+                {result.message ? <pre className="error-output">{result.message}</pre> : null}
+                {result.stderr ? <pre className="error-output">{result.stderr}</pre> : null}
+              </div>
+            ) : null}
             {hasStdout ? (
               <details className="stdout-preview" open>
                 <summary>Printed output ({result.stdout.trim().split("\n").length} {result.stdout.trim().split("\n").length === 1 ? "line" : "lines"})</summary>
