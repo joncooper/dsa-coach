@@ -297,8 +297,8 @@ export function CodeEditor({ value, language, problemId, partId, signature, supp
 const editorTheme = EditorView.theme({
   "&": {
     height: "100%",
-    backgroundColor: "#101719",
-    color: "#edf4f2"
+    backgroundColor: "#fffdf8",
+    color: "#1d2528"
   },
   ".cm-scroller": {
     fontFamily: "\"SFMono-Regular\", Consolas, monospace",
@@ -307,36 +307,36 @@ const editorTheme = EditorView.theme({
   },
   ".cm-content": {
     padding: "14px 0",
-    caretColor: "#ffffff"
+    caretColor: "#096b72"
   },
   ".cm-line": {
     padding: "0 14px"
   },
   ".cm-gutters": {
-    backgroundColor: "#0b1113",
-    color: "#708184",
-    borderRight: "1px solid #263337"
+    backgroundColor: "#f3efe4",
+    color: "#617174",
+    borderRight: "1px solid #ddd7ca"
   },
   ".cm-activeLineGutter": {
-    backgroundColor: "#172326",
-    color: "#d9eeee"
+    backgroundColor: "#eef3f1",
+    color: "#1d2528"
   },
   ".cm-activeLine": {
-    backgroundColor: "rgba(255, 255, 255, 0.045)"
+    backgroundColor: "rgba(9, 107, 114, 0.08)"
   },
   "&.cm-focused": {
     outline: "none"
   },
   ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
-    backgroundColor: "rgba(8, 117, 125, 0.48)"
+    backgroundColor: "rgba(9, 107, 114, 0.22)"
   },
   ".cm-tooltip": {
-    border: "1px solid #314247",
-    backgroundColor: "#172326",
-    color: "#edf4f2",
-    borderRadius: "8px",
+    border: "1px solid #ddd7ca",
+    backgroundColor: "#fffdf8",
+    color: "#1d2528",
+    borderRadius: "6px",
     overflow: "hidden",
-    boxShadow: "0 18px 40px rgba(0, 0, 0, 0.32)"
+    boxShadow: "0 18px 40px rgba(36, 38, 35, 0.16)"
   },
   ".cm-tooltip-autocomplete ul": {
     fontFamily: "\"SFMono-Regular\", Consolas, monospace",
@@ -346,14 +346,14 @@ const editorTheme = EditorView.theme({
     padding: "6px 10px"
   },
   ".cm-tooltip-autocomplete ul li[aria-selected]": {
-    backgroundColor: "#08757d",
+    backgroundColor: "#096b72",
     color: "#ffffff"
   },
   ".cm-completionDetail": {
-    color: "#aababc"
+    color: "#617174"
   },
   ".cm-completionMatchedText": {
-    color: "#7de1df",
+    color: "#096b72",
     textDecoration: "none"
   }
 });

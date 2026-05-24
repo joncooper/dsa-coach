@@ -4,6 +4,7 @@ import { migrateLegacyBackup, type LegacyBackupPayload } from "../../../src/stor
 import type { NextUserData, NextWorkspaceState, WorkspaceEditorBuffer, WorkspaceSelection } from "../../../src/storage/userData";
 import { API_BASE } from "./apiBase";
 import { CodeEditor } from "./CodeEditor";
+import { CoachPanel } from "./CoachPanel";
 
 const USER_DATA_KEY = "dsa-coach-next:user-data";
 const WORKSPACE_STATE_KEY = "dsa-coach-next:workspace-state";
@@ -12,6 +13,11 @@ type LoadState =
   | { status: "loading" }
   | { status: "ready"; graph: ContentGraph; languages: LanguagePack[] }
   | { status: "error"; message: string };
+
+type SidebarScope =
+  | { kind: "all" }
+  | { kind: "module"; id: string }
+  | { kind: "problem-set"; id: string };
 
 export function App() {
   const [loadState, setLoadState] = useState<LoadState>({ status: "loading" });
@@ -28,6 +34,10 @@ export function App() {
   const [storageStatus, setStorageStatus] = useState("Checking app data storage...");
   const [daemonPersistenceAvailable, setDaemonPersistenceAvailable] = useState(false);
   const [migrationError, setMigrationError] = useState("");
+  const [sidebarQuery, setSidebarQuery] = useState("");
+  const [sidebarScope, setSidebarScope] = useState<SidebarScope>({ kind: "all" });
+  const [coachOpen, setCoachOpen] = useState(false);
+  const [coachMounted, setCoachMounted] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -105,6 +115,11 @@ export function App() {
   const activeTests = selectedPart?.tests ?? selectedProblem?.tests ?? [];
   const activeSignature = selectedPart?.signature ?? selectedProblem?.signature;
   const activeSupport = activeLanguages?.[selectedLanguage];
+  const visibleProblems = useMemo(
+    () => graph ? scopedProblems(graph, sidebarScope, sidebarQuery) : [],
+    [graph, sidebarQuery, sidebarScope]
+  );
+  const runStatus = busy ? "Running" : result ? statusLabel(result.status) : "Ready";
 
   useEffect(() => {
     if (!selectedProblem) return;
@@ -265,35 +280,64 @@ export function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand-block">
-          <span className="brand-mark" aria-hidden="true">DC</span>
-          <div>
-            <h1>DSA Coach Next</h1>
-            <p>Local multi-language workbench</p>
+        <div className="sidebar-brand-row">
+          <div className="brand">
+            <span className="brand-mark" aria-hidden="true">DC</span>
+            <span>DSA Coach</span>
           </div>
         </div>
 
-        <section className="nav-section" aria-label="Tracks">
-          <h2>Tracks</h2>
-          {loadState.graph.tracks.map((track) => (
-            <div className="track-block" key={track.id}>
-              <h3>{track.title}</h3>
-              <ul>
-                {track.entries.map((entry) => (
-                  <li key={`${entry.kind}:${entry.id}`}>
-                    <span>{entry.kind}</span>
-                    {entry.id}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </section>
+        <label className="search-box">
+          <span aria-hidden="true">⌕</span>
+          <input value={sidebarQuery} onChange={(event) => setSidebarQuery(event.target.value)} placeholder="Search" />
+        </label>
 
-        <section className="nav-section" aria-label="Problems">
-          <h2>Problems</h2>
+        <p className="sidebar-eyebrow">Workspace</p>
+        <nav className="chapter-nav" aria-label="Workspace">
+          <button type="button" className={sidebarScope.kind === "all" ? "active" : ""} onClick={() => setSidebarScope({ kind: "all" })}>
+            <span>all</span>
+            All problems
+          </button>
+        </nav>
+
+        {loadState.graph.problemSets.length ? (
+          <>
+            <p className="sidebar-eyebrow">Problem sets</p>
+            <nav className="chapter-nav" aria-label="Problem sets">
+              {loadState.graph.problemSets.map((set) => (
+                <button
+                  type="button"
+                  key={set.id}
+                  className={sidebarScope.kind === "problem-set" && sidebarScope.id === set.id ? "active" : ""}
+                  onClick={() => setSidebarScope({ kind: "problem-set", id: set.id })}
+                >
+                  <span aria-hidden="true">✦</span>
+                  {set.title}
+                </button>
+              ))}
+            </nav>
+          </>
+        ) : null}
+
+        <p className="sidebar-eyebrow">Modules</p>
+        <nav className="chapter-nav" aria-label="Modules">
+          {loadState.graph.modules.map((module, index) => (
+            <button
+              type="button"
+              key={module.id}
+              className={sidebarScope.kind === "module" && sidebarScope.id === module.id ? "active" : ""}
+              onClick={() => setSidebarScope({ kind: "module", id: module.id })}
+            >
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              {module.title}
+            </button>
+          ))}
+        </nav>
+
+        <section className="nav-section sidebar-problems" aria-label="Problems">
+          <p className="sidebar-eyebrow">Problems</p>
           <div className="problem-list">
-            {loadState.graph.problems.map((problem) => (
+            {visibleProblems.map((problem) => (
               <button
                 type="button"
                 key={problem.id}
@@ -307,6 +351,7 @@ export function App() {
                 <small>{problem.difficulty}</small>
               </button>
             ))}
+            {!visibleProblems.length ? <p className="sidebar-empty">No matching problems.</p> : null}
           </div>
         </section>
 
@@ -333,49 +378,89 @@ export function App() {
         </section>
       </aside>
 
-      <main className="workspace">
-        <header className="workspace-header">
-          <div>
-            <p className="eyebrow">{selectedProblem?.concepts.join(" / ")}</p>
-            <h2>{selectedProblem ? [selectedProblem.title, selectedPart?.title].filter(Boolean).join(" · ") : "No problem selected"}</h2>
+      <main className="main-panel problem-page">
+        <header className="problem-context-bar">
+          <div className="problem-context-main">
+            <p className="problem-breadcrumb">
+              <span>{selectedProblem?.concepts[0] ?? "Local course"}</span>
+              <span>/</span>
+              <span>{selectedProblem?.kind ?? "problem"}</span>
+            </p>
+            <div className="problem-title-row">
+              <h1>{selectedProblem ? [selectedProblem.title, selectedPart?.title].filter(Boolean).join(" · ") : "No problem selected"}</h1>
+              {selectedProblem ? (
+                <div className="tag-row compact-tags">
+                  <span>{selectedProblem.difficulty}</span>
+                  {selectedProblem.concepts.slice(0, 3).map((concept) => <span key={concept}>{concept}</span>)}
+                </div>
+              ) : null}
+            </div>
           </div>
-          <div className="daemon-pill">daemon {API_BASE.replace(/^https?:\/\//, "")}</div>
+          <div className="problem-context-actions">
+            <div className="daemon-pill">daemon {API_BASE.replace(/^https?:\/\//, "")}</div>
+            <button
+              type="button"
+              className={`secondary-button compact-button ${coachOpen ? "active" : ""}`}
+              aria-pressed={coachOpen}
+              onClick={() => {
+                setCoachMounted(true);
+                setCoachOpen((value) => !value);
+              }}
+              disabled={!selectedProblem}
+            >
+              Coach
+            </button>
+          </div>
         </header>
 
         {selectedProblem ? (
-          <div className="workspace-grid">
-            <section className="prompt-pane">
+          <div className={`problem-layout beta-workspace ${coachOpen ? "coach-open" : ""}`}>
+            <aside className="prompt-pane problem-brief">
               {selectedProblem.parts?.length ? (
-                <>
-                  <h3>Part</h3>
-                  <select value={selectedPartId} onChange={(event) => setSelectedPartId(event.target.value)}>
-                    <option value="">Base</option>
-                    {selectedProblem.parts.map((part) => (
-                      <option key={part.id} value={part.id}>
-                        {part.title}
-                      </option>
-                    ))}
-                  </select>
-                </>
+                <nav className="part-tabs" aria-label="Problem parts">
+                  <button type="button" className={!selectedPartId ? "part-tab active" : "part-tab"} onClick={() => setSelectedPartId("")}>
+                    Base
+                  </button>
+                  {selectedProblem.parts.map((part) => (
+                    <button
+                      type="button"
+                      key={part.id}
+                      className={selectedPartId === part.id ? "part-tab active" : "part-tab"}
+                      onClick={() => setSelectedPartId(part.id)}
+                    >
+                      {part.title}
+                    </button>
+                  ))}
+                </nav>
               ) : null}
-              <h3>Prompt</h3>
-              <p>{selectedPart?.prompt ?? selectedProblem.prompt}</p>
-              <h3>Signature</h3>
-              <code>{signatureLabel(selectedProblem, selectedPart)}</code>
-              <h3>Tests</h3>
-              <ul className="test-list">
-                {activeTests.map((test) => (
-                  <li key={test.name}>
-                    <span>{test.visibility}</span>
-                    {test.name}
-                  </li>
-                ))}
-              </ul>
-            </section>
+              <section className="prompt-primary">
+                <h2>Prompt</h2>
+                <p>{selectedPart?.prompt ?? selectedProblem.prompt}</p>
+              </section>
+              <section className="prompt-detail">
+                <h3>Signature</h3>
+                <code>{signatureLabel(selectedProblem, selectedPart, selectedLanguage)}</code>
+              </section>
+              <section className="prompt-detail">
+                <h3>Tests</h3>
+                <ul className="test-list">
+                  {activeTests.map((test) => (
+                    <li key={test.name}>
+                      <span>{test.visibility}</span>
+                      {test.name}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </aside>
 
-            <section className="editor-pane">
-              <div className="toolbar">
-                <label>
+            <section className={`workspace editor-pane ${!selectedPack?.runner.installedByDefault ? "has-notice" : ""}`}>
+              <div className="workspace-toolbar">
+                <div className="toolbar-status-group">
+                  <span className={`run-status ${busy ? "loading" : result?.status ?? "idle"}`}>{runStatus}</span>
+                  <small>{selectedPack?.label ?? selectedLanguage} local</small>
+                </div>
+                <label className="compact-select">
                   <span>Language</span>
                   <select value={selectedLanguage} onChange={(event) => setSelectedLanguage(event.target.value)}>
                     {supportedLanguages.map((language) => (
@@ -385,19 +470,21 @@ export function App() {
                     ))}
                   </select>
                 </label>
-                <label>
+                <label className="compact-select">
                   <span>Source</span>
                   <select value={sourceKind} onChange={(event) => setSourceKind(event.target.value as "starter" | "reference")}>
                     <option value="starter">Starter</option>
                     <option value="reference">Reference</option>
                   </select>
                 </label>
-                <button type="button" onClick={() => void run(false)} disabled={busy || !selectedPack?.runner.installedByDefault}>
-                  Run visible
-                </button>
-                <button type="button" className="primary" onClick={() => void run(true)} disabled={busy || !selectedPack?.runner.installedByDefault}>
-                  Submit all
-                </button>
+                <div className="toolbar-actions">
+                  <button className="primary-button run-button" type="button" onClick={() => void run(false)} disabled={busy || !selectedPack?.runner.installedByDefault}>
+                    Run visible
+                  </button>
+                  <button className="primary-button submit-button" type="button" onClick={() => void run(true)} disabled={busy || !selectedPack?.runner.installedByDefault}>
+                    Submit all
+                  </button>
+                </div>
               </div>
 
               {!selectedPack?.runner.installedByDefault ? (
@@ -418,6 +505,17 @@ export function App() {
 
               <ResultPanel result={result} busy={busy} />
             </section>
+            {coachMounted ? (
+              <CoachPanel
+                problem={selectedProblem}
+                part={selectedPart}
+                language={selectedLanguage}
+                code={code}
+                result={result}
+                visible={coachOpen}
+                onClose={() => setCoachOpen(false)}
+              />
+            ) : null}
           </div>
         ) : (
           <p>No problems are available in the content graph.</p>
@@ -495,15 +593,77 @@ function ResultPanel({ result, busy }: { result: RunResult | null; busy: boolean
   );
 }
 
-function signatureLabel(problem: Problem, part?: ProblemPart): string {
+function signatureLabel(problem: Problem, part: ProblemPart | undefined, language: LanguageId): string {
   const signature = part?.signature ?? problem.signature;
-  const args = signature.inputs.map((input) => `${input.name}: ${typeLabel(input.type)}`).join(", ");
-  return `${signature.name}(${args}) -> ${typeLabel(signature.output)}`;
+  const support = (part?.languages ?? problem.languages)[language];
+  const name = support?.entrypoint ?? signature.name;
+  const args = signature.inputs.map((input) => `${input.name}: ${typeLabel(input.type, language)}`).join(", ");
+  if (language === "python") return `def ${name}(${args}) -> ${typeLabel(signature.output, language)}`;
+  if (language === "go") return `func ${name}(${args}) ${typeLabel(signature.output, language)}`;
+  if (language === "scala") return `def ${name}(${args}): ${typeLabel(signature.output, language)}`;
+  return `${name}(${args}) -> ${typeLabel(signature.output, language)}`;
 }
 
-function typeLabel(type: Problem["signature"]["output"]): string {
-  const base = type.type === "array" ? `${typeLabel(type.items ?? { type: "any" })}[]` : type.type;
+function typeLabel(type: Problem["signature"]["output"], language: LanguageId): string {
+  if (type.type === "array") {
+    const item = typeLabel(type.items ?? { type: "any" }, language);
+    if (language === "python") return `list[${item}]`;
+    if (language === "go") return `[]${item}`;
+    if (language === "scala") return `List[${item}]`;
+    return `${item}[]`;
+  }
+  const base = primitiveTypeLabel(type.type, language);
   return type.nullable ? `${base} | null` : base;
+}
+
+function primitiveTypeLabel(type: string, language: LanguageId): string {
+  if (language === "python") {
+    if (type === "number") return "int";
+    if (type === "boolean") return "bool";
+    if (type === "object") return "dict";
+  }
+  if (language === "go") {
+    if (type === "number") return "int";
+    if (type === "boolean") return "bool";
+    if (type === "string") return "string";
+    if (type === "object" || type === "any") return "any";
+  }
+  if (language === "scala") {
+    if (type === "number") return "Int";
+    if (type === "boolean") return "Boolean";
+    if (type === "string") return "String";
+    if (type === "object" || type === "any") return "Any";
+  }
+  return type;
+}
+
+function statusLabel(status: RunResult["status"]): string {
+  if (status === "passed") return "Passed";
+  if (status === "failed") return "Failed tests";
+  if (status === "compile-error") return "Compile error";
+  if (status === "runtime-error") return "Runtime error";
+  if (status === "timeout") return "Timed out";
+  return "Unsupported";
+}
+
+function scopedProblems(graph: ContentGraph, scope: SidebarScope, query: string): Problem[] {
+  const normalized = query.trim().toLowerCase();
+  const ids = problemIdsForScope(graph, scope);
+  return graph.problems.filter((problem) => {
+    if (ids && !ids.has(problem.id)) return false;
+    if (!normalized) return true;
+    return `${problem.title} ${problem.difficulty} ${problem.concepts.join(" ")}`.toLowerCase().includes(normalized);
+  });
+}
+
+function problemIdsForScope(graph: ContentGraph, scope: SidebarScope): Set<string> | undefined {
+  if (scope.kind === "all") return undefined;
+  if (scope.kind === "module") {
+    const module = graph.modules.find((candidate) => candidate.id === scope.id);
+    return new Set(module?.sequence.filter((entry) => entry.kind === "problem").map((entry) => entry.id) ?? []);
+  }
+  const set = graph.problemSets.find((candidate) => candidate.id === scope.id);
+  return new Set(set?.entries.map((entry) => entry.problem) ?? []);
 }
 
 async function getJson<T>(path: string): Promise<T> {

@@ -58,6 +58,13 @@ async function handleRequest(
   if (req.method === "GET" && url.pathname === "/catalog") {
     return json(res, 200, options.graph);
   }
+  if (req.method === "GET" && url.pathname === "/coach/status") {
+    return json(res, 200, await coachStatus());
+  }
+  if (req.method === "POST" && url.pathname === "/coach/chat") {
+    const value = JSON.parse(await readBody(req)) as { messages?: CoachChatMessage[] };
+    return json(res, 200, { message: await coachChat(value.messages ?? []) });
+  }
   if (req.method === "GET" && url.pathname === "/user-data") {
     return json(res, 200, { userData: await readStoredJson(options, "user-data.json") });
   }
@@ -271,6 +278,47 @@ function contentType(file: string): string {
     default:
       return "application/octet-stream";
   }
+}
+
+const COACH_MODEL = "gemma4:latest";
+const OLLAMA_URL = "http://127.0.0.1:11434";
+
+interface CoachChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+async function coachStatus(): Promise<{ available: boolean; model: string | null; reason?: "unreachable" | "model-missing" }> {
+  try {
+    const res = await fetch(`${OLLAMA_URL}/api/tags`, {
+      signal: AbortSignal.timeout(2500)
+    });
+    if (!res.ok) return { available: false, model: null, reason: "unreachable" };
+    const data = (await res.json()) as { models?: Array<{ name: string }> };
+    const names = (data.models ?? []).map((model) => model.name);
+    const base = COACH_MODEL.split(":")[0];
+    const found = names.some((name) => name === COACH_MODEL || name === base || name.startsWith(`${base}:`));
+    return found
+      ? { available: true, model: COACH_MODEL }
+      : { available: false, model: null, reason: "model-missing" };
+  } catch {
+    return { available: false, model: null, reason: "unreachable" };
+  }
+}
+
+async function coachChat(messages: CoachChatMessage[]): Promise<string> {
+  const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ model: COACH_MODEL, messages, stream: false }),
+    signal: AbortSignal.timeout(60000)
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Ollama ${res.status}${detail ? `: ${detail}` : ""}`);
+  }
+  const data = (await res.json()) as { message?: { content?: string } };
+  return data.message?.content?.trim() || "(no response)";
 }
 
 function readBody(req: IncomingMessage): Promise<string> {
