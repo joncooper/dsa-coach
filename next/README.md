@@ -54,6 +54,22 @@ bun run web:dev
 
 Then open the Vite URL, usually `http://127.0.0.1:5174`.
 
+To build a double-clickable macOS app wrapper:
+
+```bash
+cd next
+bun run package:mac
+open "dist/macos/DSA Coach Next.app"
+```
+
+The app starts a local production host on an OS-assigned localhost port, serves
+the built web UI and daemon API from that one process, and terminates the host
+when the app window closes. The package copies a runtime snapshot into the app
+bundle: built UI assets, content, source modules, `node_modules`, the Bun
+binary, and installed `.runner-cache` LSP/toolchain assets. User data is written
+outside the bundle at `~/Library/Application Support/DSA Coach Next/User Data`,
+and writable runner caches live beside it under `Cache/runner`.
+
 ## Runner Backends
 
 The daemon currently has executable backends for:

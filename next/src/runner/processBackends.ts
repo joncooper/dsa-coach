@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import ts from "typescript";
 import type { Problem, ProblemTest, RunRequest, RunResult, TestResult, ValueType } from "../core/types.js";
+import { writableCacheRoot } from "../runtime/paths.js";
 import { resolveScalaToolchain } from "../toolchains/localToolchains.js";
 import { jsonEqual } from "./compare.js";
 import { commandExists, commandOutput, runSandboxedProcess, withSandboxWorkdir } from "./processSandbox.js";
@@ -127,8 +128,9 @@ export class GoProcessBackend {
     const tests = filteredTests(target.tests, request);
 
     return withSandboxWorkdir("dsa-go-", async (workdir) => {
-      const goCache = resolve(".runner-cache/go-build");
-      const goPath = resolve(".runner-cache/gopath");
+      const cacheRoot = writableCacheRoot();
+      const goCache = resolve(cacheRoot, "go-build");
+      const goPath = resolve(cacheRoot, "gopath");
       const goToolDir = await commandOutput("go", ["env", "GOTOOLDIR"], 1000);
       const goCommand = await commandOutput("which", ["go"], 1000);
       await mkdir(goCache, { recursive: true });

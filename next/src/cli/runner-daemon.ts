@@ -2,7 +2,11 @@ import { defaultContentRoot, loadContentGraph } from "../content/loadContentGrap
 import { createRunnerDaemonServer } from "../daemon/server.js";
 
 const graph = await loadContentGraph();
-const server = createRunnerDaemonServer({ graph, contentRoot: defaultContentRoot });
+const server = createRunnerDaemonServer({
+  graph,
+  contentRoot: defaultContentRoot,
+  userDataRoot: process.env.DSA_COACH_USER_DATA_DIR
+});
 
 const port = Number(process.env.DSA_COACH_NEXT_PORT ?? 4777);
 server.listen(port, "127.0.0.1", () => {

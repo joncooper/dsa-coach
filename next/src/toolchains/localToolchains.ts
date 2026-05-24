@@ -1,6 +1,7 @@
 import { access } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { commandOutput } from "../runner/processSandbox.js";
+import { toolchainRoots } from "../runtime/paths.js";
 
 export const SCALA_VERSION = "3.7.4";
 
@@ -20,8 +21,6 @@ export interface ScalaToolchain {
   classpath: string;
 }
 
-const TOOLCHAIN_ROOT = ".runner-cache/toolchains";
-
 export function currentScalaDescriptor(): ScalaToolchainDescriptor | undefined {
   const platformId = scalaPlatformId();
   if (!platformId) return undefined;
@@ -40,18 +39,28 @@ export function currentScalaDescriptor(): ScalaToolchainDescriptor | undefined {
 export async function resolveScalaToolchain(): Promise<ScalaToolchain | undefined> {
   const descriptor = currentScalaDescriptor();
   if (!descriptor) return undefined;
-  const home = resolve(TOOLCHAIN_ROOT, descriptor.directoryName);
-  const scalaJar = join(home, "lib", "scala.jar");
-  const compilerJar = join(home, "lib", "with_compiler.jar");
-  if (!(await fileExists(scalaJar)) || !(await fileExists(compilerJar))) return undefined;
+  const home = await resolveToolchainHome(descriptor);
+  if (!home) return undefined;
   const java = await resolveJava();
   if (!java) return undefined;
+  const scalaJar = join(home, "lib", "scala.jar");
+  const compilerJar = join(home, "lib", "with_compiler.jar");
   return {
     descriptor,
     home,
     java,
     classpath: [scalaJar, compilerJar].join(":")
   };
+}
+
+async function resolveToolchainHome(descriptor: ScalaToolchainDescriptor): Promise<string | undefined> {
+  for (const root of toolchainRoots()) {
+    const home = join(root, descriptor.directoryName);
+    const scalaJar = join(home, "lib", "scala.jar");
+    const compilerJar = join(home, "lib", "with_compiler.jar");
+    if ((await fileExists(scalaJar)) && (await fileExists(compilerJar))) return home;
+  }
+  return undefined;
 }
 
 export async function scalaToolchainAvailable(): Promise<boolean> {

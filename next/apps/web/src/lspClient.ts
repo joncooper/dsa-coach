@@ -10,8 +10,7 @@ import type {
   LspSignatureHelpResponse,
   LspSymbolsResponse
 } from "../../../src/lsp/types";
-
-const API_BASE = import.meta.env.VITE_DSA_DAEMON_URL ?? "http://127.0.0.1:4777";
+import { API_BASE } from "./apiBase";
 
 export async function getLspCompletions(
   request: LspCompletionRequest,

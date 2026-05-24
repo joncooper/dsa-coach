@@ -19,6 +19,25 @@ export interface NextUserData {
   migrationReport: MigrationReport;
 }
 
+export interface NextWorkspaceState {
+  schemaVersion: 1;
+  updatedAt: string;
+  lastSelection?: WorkspaceSelection;
+  editorBuffers: WorkspaceEditorBuffer[];
+}
+
+export interface WorkspaceSelection {
+  problemId: string;
+  partId?: string;
+  language: LanguageId;
+  sourceKind: "starter" | "reference";
+}
+
+export interface WorkspaceEditorBuffer extends WorkspaceSelection {
+  code: string;
+  updatedAt: string;
+}
+
 export interface UserProgressRecord {
   contentKind: "lesson" | "problem" | "quiz";
   contentId: string;

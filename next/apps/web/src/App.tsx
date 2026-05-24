@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import type { ContentGraph, LanguagePack, Problem, ProblemPart, RunResult } from "../../../src/core/types";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ContentGraph, LanguageId, LanguagePack, Problem, ProblemPart, RunResult } from "../../../src/core/types";
 import { migrateLegacyBackup, type LegacyBackupPayload } from "../../../src/storage/legacyMigration";
-import type { NextUserData } from "../../../src/storage/userData";
+import type { NextUserData, NextWorkspaceState, WorkspaceEditorBuffer, WorkspaceSelection } from "../../../src/storage/userData";
+import { API_BASE } from "./apiBase";
 import { CodeEditor } from "./CodeEditor";
 
-const API_BASE = import.meta.env.VITE_DSA_DAEMON_URL ?? "http://127.0.0.1:4777";
 const USER_DATA_KEY = "dsa-coach-next:user-data";
+const WORKSPACE_STATE_KEY = "dsa-coach-next:workspace-state";
 
 type LoadState =
   | { status: "loading" }
@@ -16,12 +17,16 @@ export function App() {
   const [loadState, setLoadState] = useState<LoadState>({ status: "loading" });
   const [selectedProblemId, setSelectedProblemId] = useState<string>("");
   const [selectedPartId, setSelectedPartId] = useState<string>("");
-  const [selectedLanguage, setSelectedLanguage] = useState("typescript");
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageId>("typescript");
   const [code, setCode] = useState("");
   const [sourceKind, setSourceKind] = useState<"starter" | "reference">("starter");
   const [result, setResult] = useState<RunResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [userData, setUserData] = useState<NextUserData | null>(() => loadStoredUserData());
+  const [workspaceState, setWorkspaceState] = useState<NextWorkspaceState | null>(() => loadStoredWorkspaceState());
+  const workspaceStateRef = useRef<NextWorkspaceState | null>(workspaceState);
+  const [storageStatus, setStorageStatus] = useState("Checking app data storage...");
+  const [daemonPersistenceAvailable, setDaemonPersistenceAvailable] = useState(false);
   const [migrationError, setMigrationError] = useState("");
 
   useEffect(() => {
@@ -32,9 +37,41 @@ export function App() {
           getJson<ContentGraph>("/catalog"),
           getJson<LanguagePack[]>("/languages")
         ]);
+        const [daemonUserData, daemonWorkspaceState] = await Promise.all([
+          safeGetJson<{ userData: NextUserData | null }>("/user-data"),
+          safeGetJson<{ workspaceState: NextWorkspaceState | null }>("/workspace-state")
+        ]);
+        const nextUserData = daemonUserData?.userData ?? loadStoredUserData();
+        const nextWorkspaceState =
+          daemonWorkspaceState?.workspaceState ??
+          loadStoredWorkspaceState() ??
+          (nextUserData ? workspaceStateFromUserData(nextUserData, null) : null);
+        const initialSelection =
+          validSelection(nextWorkspaceState?.lastSelection, graph) ??
+          defaultSelection(graph, languages);
         if (!alive) return;
         setLoadState({ status: "ready", graph, languages });
-        setSelectedProblemId(graph.problems[0]?.id ?? "");
+        if (nextUserData) {
+          localStorage.setItem(USER_DATA_KEY, JSON.stringify(nextUserData));
+          setUserData(nextUserData);
+        }
+        if (nextWorkspaceState) {
+          workspaceStateRef.current = nextWorkspaceState;
+          localStorage.setItem(WORKSPACE_STATE_KEY, JSON.stringify(nextWorkspaceState));
+          setWorkspaceState(nextWorkspaceState);
+        }
+        setDaemonPersistenceAvailable(Boolean(daemonUserData && daemonWorkspaceState));
+        setStorageStatus(
+          daemonUserData && daemonWorkspaceState
+            ? "Saving in the app data folder."
+            : "Saving in browser storage fallback."
+        );
+        if (initialSelection) {
+          setSelectedProblemId(initialSelection.problemId);
+          setSelectedPartId(initialSelection.partId ?? "");
+          setSelectedLanguage(initialSelection.language);
+          setSourceKind(initialSelection.sourceKind);
+        }
       } catch (error) {
         if (alive) {
           setLoadState({
@@ -48,6 +85,10 @@ export function App() {
       alive = false;
     };
   }, []);
+
+  useEffect(() => {
+    workspaceStateRef.current = workspaceState;
+  }, [workspaceState]);
 
   const graph = loadState.status === "ready" ? loadState.graph : undefined;
   const languages = loadState.status === "ready" ? loadState.languages : [];
@@ -83,6 +124,17 @@ export function App() {
     let alive = true;
     setResult(null);
     void (async () => {
+      const selection: WorkspaceSelection = {
+        problemId: selectedProblemId,
+        partId: selectedPartId || undefined,
+        language: selectedLanguage,
+        sourceKind
+      };
+      const savedBuffer = findWorkspaceBuffer(workspaceStateRef.current, selection);
+      if (savedBuffer) {
+        if (alive) setCode(savedBuffer.code);
+        return;
+      }
       try {
         const partParam = selectedPartId ? `&partId=${encodeURIComponent(selectedPartId)}` : "";
         const source = await getJson<{ code: string }>(
@@ -97,6 +149,25 @@ export function App() {
       alive = false;
     };
   }, [selectedLanguage, selectedPartId, selectedProblemId, sourceKind]);
+
+  useEffect(() => {
+    if (!selectedProblemId || !selectedLanguage) return;
+    const timer = window.setTimeout(() => {
+      const now = new Date().toISOString();
+      const nextState = upsertWorkspaceBuffer(workspaceStateRef.current, {
+        problemId: selectedProblemId,
+        partId: selectedPartId || undefined,
+        language: selectedLanguage,
+        sourceKind,
+        code,
+        updatedAt: now
+      });
+      workspaceStateRef.current = nextState;
+      setWorkspaceState(nextState);
+      void persistWorkspaceState(nextState);
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [code, selectedLanguage, selectedPartId, selectedProblemId, sourceKind]);
 
   async function run(includeHidden: boolean) {
     if (!selectedProblem) return;
@@ -127,14 +198,51 @@ export function App() {
     }
   }
 
+  async function persistImportedUserData(value: NextUserData) {
+    localStorage.setItem(USER_DATA_KEY, JSON.stringify(value));
+    try {
+      await postJson("/user-data", value);
+      setDaemonPersistenceAvailable(true);
+      setStorageStatus("Imported data saved in the app data folder.");
+    } catch {
+      setDaemonPersistenceAvailable(false);
+      setStorageStatus("Imported data saved in browser storage fallback.");
+    }
+  }
+
+  async function persistWorkspaceState(value: NextWorkspaceState) {
+    localStorage.setItem(WORKSPACE_STATE_KEY, JSON.stringify(value));
+    try {
+      await postJson("/workspace-state", value);
+      setDaemonPersistenceAvailable(true);
+      setStorageStatus("Workspace saved in the app data folder.");
+    } catch {
+      setDaemonPersistenceAvailable(false);
+      setStorageStatus("Workspace saved in browser storage fallback.");
+    }
+  }
+
   async function importLegacyBackup(file: File | undefined) {
     if (!file) return;
     setMigrationError("");
     try {
       const payload = JSON.parse(await file.text()) as LegacyBackupPayload;
       const migrated = migrateLegacyBackup(payload);
-      localStorage.setItem(USER_DATA_KEY, JSON.stringify(migrated));
       setUserData(migrated);
+      await persistImportedUserData(migrated);
+      const nextWorkspaceState = workspaceStateFromUserData(migrated, workspaceStateRef.current);
+      if (nextWorkspaceState) {
+        workspaceStateRef.current = nextWorkspaceState;
+        setWorkspaceState(nextWorkspaceState);
+        await persistWorkspaceState(nextWorkspaceState);
+        const activeBuffer = findWorkspaceBuffer(nextWorkspaceState, {
+          problemId: selectedProblemId,
+          partId: selectedPartId || undefined,
+          language: selectedLanguage,
+          sourceKind
+        });
+        if (activeBuffer) setCode(activeBuffer.code);
+      }
     } catch (error) {
       setMigrationError(error instanceof Error ? error.message : String(error));
     }
@@ -214,6 +322,12 @@ export function App() {
               />
             </label>
             {migrationError ? <p className="migration-error">{migrationError}</p> : null}
+            <p className="storage-status">{storageStatus}</p>
+            {userData && daemonPersistenceAvailable ? (
+              <a className="export-link" href={`${API_BASE}/user-data/export`}>
+                Export imported data
+              </a>
+            ) : null}
             {userData ? <MigrationSummary userData={userData} /> : <p className="muted">No migrated user data loaded.</p>}
           </div>
         </section>
@@ -408,6 +522,14 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function safeGetJson<T>(path: string): Promise<T | undefined> {
+  try {
+    return await getJson<T>(path);
+  } catch {
+    return undefined;
+  }
+}
+
 function loadStoredUserData(): NextUserData | null {
   try {
     const raw = localStorage.getItem(USER_DATA_KEY);
@@ -415,4 +537,117 @@ function loadStoredUserData(): NextUserData | null {
   } catch {
     return null;
   }
+}
+
+function loadStoredWorkspaceState(): NextWorkspaceState | null {
+  try {
+    const raw = localStorage.getItem(WORKSPACE_STATE_KEY);
+    return raw ? (JSON.parse(raw) as NextWorkspaceState) : null;
+  } catch {
+    return null;
+  }
+}
+
+function defaultSelection(graph: ContentGraph, languages: LanguagePack[]): WorkspaceSelection | undefined {
+  const problem = graph.problems[0];
+  if (!problem) return undefined;
+  const language = Object.keys(problem.languages)[0] ?? languages[0]?.id ?? "typescript";
+  return {
+    problemId: problem.id,
+    language,
+    sourceKind: "starter"
+  };
+}
+
+function validSelection(selection: WorkspaceSelection | undefined, graph: ContentGraph): WorkspaceSelection | undefined {
+  if (!selection) return undefined;
+  const problem = graph.problems.find((candidate) => candidate.id === selection.problemId);
+  if (!problem) return undefined;
+  const part = selection.partId ? problem.parts?.find((candidate) => candidate.id === selection.partId) : undefined;
+  const partId = selection.partId && part ? selection.partId : undefined;
+  const languageMap = part?.languages ?? problem.languages;
+  const language = languageMap[selection.language] ? selection.language : Object.keys(languageMap)[0];
+  if (!language) return undefined;
+  return {
+    problemId: problem.id,
+    partId,
+    language,
+    sourceKind: selection.sourceKind === "reference" ? "reference" : "starter"
+  };
+}
+
+function findWorkspaceBuffer(
+  state: NextWorkspaceState | null,
+  selection: WorkspaceSelection
+): WorkspaceEditorBuffer | undefined {
+  const key = workspaceKey(selection);
+  return state?.editorBuffers.find((buffer) => workspaceKey(buffer) === key);
+}
+
+function upsertWorkspaceBuffer(
+  state: NextWorkspaceState | null,
+  buffer: WorkspaceEditorBuffer
+): NextWorkspaceState {
+  const key = workspaceKey(buffer);
+  const updatedAt = buffer.updatedAt;
+  return {
+    schemaVersion: 1,
+    updatedAt,
+    lastSelection: selectionFromBuffer(buffer),
+    editorBuffers: [
+      ...(state?.editorBuffers.filter((candidate) => workspaceKey(candidate) !== key) ?? []),
+      buffer
+    ]
+  };
+}
+
+function workspaceStateFromUserData(
+  userData: NextUserData,
+  existing: NextWorkspaceState | null
+): NextWorkspaceState | null {
+  const imported = userData.editorBuffers.flatMap((record): WorkspaceEditorBuffer[] => {
+    if (record.scope !== "problem" && record.scope !== "problem-part") return [];
+    return [{
+      problemId: record.contentId,
+      partId: record.partId,
+      language: record.language,
+      sourceKind: "starter",
+      code: record.code,
+      updatedAt: userData.migratedAt
+    }];
+  });
+  if (!imported.length) return existing;
+
+  const merged = new Map<string, WorkspaceEditorBuffer>();
+  for (const buffer of existing?.editorBuffers ?? []) {
+    merged.set(workspaceKey(buffer), buffer);
+  }
+  for (const buffer of imported) {
+    merged.set(workspaceKey(buffer), buffer);
+  }
+  const updatedAt = new Date().toISOString();
+  return {
+    schemaVersion: 1,
+    updatedAt,
+    lastSelection: existing?.lastSelection ?? selectionFromBuffer(imported[0]),
+    editorBuffers: [...merged.values()]
+  };
+}
+
+function selectionFromBuffer(buffer: WorkspaceEditorBuffer): WorkspaceSelection {
+  return {
+    problemId: buffer.problemId,
+    partId: buffer.partId,
+    language: buffer.language,
+    sourceKind: buffer.sourceKind
+  };
+}
+
+function workspaceKey(selection: WorkspaceSelection): string {
+  return [
+    selection.problemId,
+    selection.partId ?? "",
+    selection.language,
+    selection.sourceKind
+  ].join("\u0000");
 }

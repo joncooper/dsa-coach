@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import type { ContentGraph, LanguagePack, LanguageServerSpec } from "../core/types.js";
 import { languagePacks } from "../languages/languagePacks.js";
 import { commandOutput } from "../runner/processSandbox.js";
+import { coursierCacheDirs, lspBinDirs, writableCacheRoot } from "../runtime/paths.js";
 import { encodeJsonRpcMessage, JsonRpcMessageBuffer, type JsonRpcId, type JsonRpcMessage } from "./protocol.js";
 import type {
   LspCompletionItem,
@@ -328,7 +329,7 @@ class LspSession {
     this.spec = options.pack.lsp;
     this.command = options.command;
     this.projectRoot = options.projectRoot;
-    this.workspaceRoot = join(this.projectRoot, ".runner-cache", "lsp-workspaces", this.pack.id);
+    this.workspaceRoot = join(writableCacheRoot(this.projectRoot), "lsp-workspaces", this.pack.id);
   }
 
   status(): LspServerStatus {
@@ -493,7 +494,7 @@ class LspSession {
 
     this.state = "starting";
     await this.prepareWorkspace();
-    const envRoot = join(this.projectRoot, ".runner-cache", "lsp-env", this.pack.id);
+    const envRoot = join(writableCacheRoot(this.projectRoot), "lsp-env", this.pack.id);
     await mkdir(join(envRoot, "home"), { recursive: true });
     await mkdir(join(envRoot, "tmp"), { recursive: true });
     await mkdir(join(envRoot, "cache"), { recursive: true });
@@ -505,10 +506,10 @@ class LspSession {
         PATH: [
           dirname(this.command.resolvedCommand),
           join(this.projectRoot, "node_modules", ".bin"),
-          join(this.projectRoot, ".runner-cache", "lsp", "bin"),
+          ...lspBinDirs(this.projectRoot),
           process.env.PATH ?? "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         ].join(":"),
-        COURSIER_CACHE: join(this.projectRoot, ".runner-cache", "lsp", "coursier-cache"),
+        COURSIER_CACHE: coursierCacheDirs(this.projectRoot)[0],
         XDG_CACHE_HOME: join(envRoot, "cache"),
         JAVA_TOOL_OPTIONS: javaToolOptions(join(envRoot, "home")),
         HOME: join(envRoot, "home"),
@@ -655,7 +656,7 @@ class LspSession {
     const resolved = await resolveToolCommand(command, this.projectRoot);
     if (!resolved) return undefined;
     const before = document.text;
-    const envRoot = join(this.projectRoot, ".runner-cache", "lsp-env", "formatters", this.pack.id);
+    const envRoot = join(writableCacheRoot(this.projectRoot), "lsp-env", "formatters", this.pack.id);
     await mkdir(join(envRoot, "home"), { recursive: true });
     await mkdir(join(envRoot, "tmp"), { recursive: true });
     await mkdir(join(envRoot, "cache"), { recursive: true });
@@ -854,10 +855,10 @@ function runFormatterProcess(options: {
         PATH: [
           dirname(options.command),
           join(options.projectRoot, "node_modules", ".bin"),
-          join(options.projectRoot, ".runner-cache", "lsp", "bin"),
+          ...lspBinDirs(options.projectRoot),
           process.env.PATH ?? "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         ].join(":"),
-        COURSIER_CACHE: join(options.projectRoot, ".runner-cache", "lsp", "coursier-cache"),
+        COURSIER_CACHE: coursierCacheDirs(options.projectRoot)[0],
         XDG_CACHE_HOME: join(options.envRoot, "cache"),
         JAVA_TOOL_OPTIONS: javaToolOptions(join(options.envRoot, "home")),
         HOME: join(options.envRoot, "home"),
@@ -922,7 +923,7 @@ function localExecutableCandidates(command: string, projectRoot: string): string
   const suffixes = process.platform === "win32" ? ["", ".cmd", ".exe"] : [""];
   return [
     ...suffixes.map((suffix) => join(projectRoot, "node_modules", ".bin", `${command}${suffix}`)),
-    ...suffixes.map((suffix) => join(projectRoot, ".runner-cache", "lsp", "bin", `${command}${suffix}`))
+    ...lspBinDirs(projectRoot).flatMap((dir) => suffixes.map((suffix) => join(dir, `${command}${suffix}`)))
   ];
 }
 

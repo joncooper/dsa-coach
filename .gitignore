@@ -15,3 +15,4 @@ playwright.config.d.ts
 next/home/
 next/.runner-cache/
 next/.scala-build/
+next/.user-data/
