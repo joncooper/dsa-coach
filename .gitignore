@@ -11,3 +11,7 @@ playwright.config.js
 playwright.config.d.ts
 .gstack/
 .venv/
+.home/
+next/home/
+next/.runner-cache/
+next/.scala-build/

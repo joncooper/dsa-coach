@@ -1,0 +1,263 @@
+{
+  "id": "shortest-edge-path",
+  "kind": "problem",
+  "title": "Shortest Edge Path",
+  "difficulty": "medium",
+  "concepts": [
+    "graph BFS",
+    "adjacency list"
+  ],
+  "prompt": "Given an undirected graph with nodes `0..n-1`, return the number of edges in the shortest path from `start` to `goal`, or -1 if unreachable. `edges` is a list of `[u, v]` pairs, each an undirected edge between nodes `u` and `v`.",
+  "signature": {
+    "name": "shortestEdgePath",
+    "inputs": [
+      {
+        "name": "n",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "edges",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "start",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "goal",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "reachable",
+      "args": [
+        5,
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            0,
+            3
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            2
+          ]
+        ],
+        0,
+        2
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "unreachable",
+      "args": [
+        4,
+        [
+          [
+            0,
+            1
+          ]
+        ],
+        0,
+        3
+      ],
+      "expected": -1,
+      "visibility": "visible"
+    },
+    {
+      "name": "same",
+      "args": [
+        3,
+        [],
+        1,
+        1
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "direct",
+      "args": [
+        2,
+        [
+          [
+            0,
+            1
+          ]
+        ],
+        1,
+        0
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single-node",
+      "args": [
+        1,
+        [],
+        0,
+        0
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two-disconnected",
+      "args": [
+        4,
+        [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        0,
+        3
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "triangle",
+      "args": [
+        3,
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            0,
+            2
+          ]
+        ],
+        0,
+        2
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "cycle-prefer-short",
+      "args": [
+        5,
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            0
+          ]
+        ],
+        0,
+        3
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "chain",
+      "args": [
+        5,
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        0,
+        4
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "shortest_edge_path",
+      "starterPath": "problems/shortest-edge-path/solutions/python/starter.py",
+      "referencePath": "problems/shortest-edge-path/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "shortestEdgePath",
+      "starterPath": "problems/shortest-edge-path/solutions/typescript/starter.ts",
+      "referencePath": "problems/shortest-edge-path/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ShortestEdgePath",
+      "starterPath": "problems/shortest-edge-path/solutions/go/starter.go",
+      "referencePath": "problems/shortest-edge-path/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "shortestEdgePath",
+      "starterPath": "problems/shortest-edge-path/solutions/scala/starter.scala",
+      "referencePath": "problems/shortest-edge-path/solutions/scala/reference.scala"
+    }
+  }
+}

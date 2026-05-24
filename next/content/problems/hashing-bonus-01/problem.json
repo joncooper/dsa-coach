@@ -1,0 +1,172 @@
+{
+  "id": "hashing-bonus-01",
+  "kind": "problem",
+  "title": "Nearby Duplicate",
+  "difficulty": "easy",
+  "concepts": [
+    "hashing",
+    "last seen map",
+    "iteration"
+  ],
+  "prompt": "Return True if the list contains two equal values whose indices differ by at most k, and False otherwise. The two occurrences must be distinct positions.",
+  "signature": {
+    "name": "containsDuplicateWithinK",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "close repeat",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          1
+        ],
+        3
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "repeat too far",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          1,
+          2,
+          3
+        ],
+        2
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        3
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          1
+        ],
+        5
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "k zero never matches",
+      "args": [
+        [
+          1,
+          1
+        ],
+        0
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "adjacent within k one",
+      "args": [
+        [
+          2,
+          2
+        ],
+        1
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "triple close",
+      "args": [
+        [
+          5,
+          5,
+          5
+        ],
+        1
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "later pair qualifies",
+      "args": [
+        [
+          1,
+          0,
+          1,
+          1
+        ],
+        1
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -1,
+          -1
+        ],
+        1
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "contains_duplicate_within_k",
+      "starterPath": "problems/hashing-bonus-01/solutions/python/starter.py",
+      "referencePath": "problems/hashing-bonus-01/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "containsDuplicateWithinK",
+      "starterPath": "problems/hashing-bonus-01/solutions/typescript/starter.ts",
+      "referencePath": "problems/hashing-bonus-01/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ContainsDuplicateWithinK",
+      "starterPath": "problems/hashing-bonus-01/solutions/go/starter.go",
+      "referencePath": "problems/hashing-bonus-01/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "containsDuplicateWithinK",
+      "starterPath": "problems/hashing-bonus-01/solutions/scala/starter.scala",
+      "referencePath": "problems/hashing-bonus-01/solutions/scala/reference.scala"
+    }
+  }
+}

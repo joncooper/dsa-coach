@@ -1,0 +1,106 @@
+{
+  "id": "two-pointers-sliding-window-bonus-04",
+  "kind": "problem",
+  "title": "Valid Palindrome Ignoring Punctuation",
+  "difficulty": "easy",
+  "concepts": [
+    "two-pointers-sliding-window",
+    "opposite pointers",
+    "palindromes"
+  ],
+  "prompt": "Return True if the string is a palindrome when only letters and digits are considered and letter case is ignored; otherwise return False.",
+  "signature": {
+    "name": "isLoosePalindrome",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "classic phrase",
+      "args": [
+        "A man, a plan, a canal: Panama"
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "not a palindrome",
+      "args": [
+        "race a car"
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single letter",
+      "args": [
+        "a"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "only punctuation",
+      "args": [
+        ".,"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "letter digit mismatch",
+      "args": [
+        "0P"
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed case phrase",
+      "args": [
+        "Was it a car or a cat I saw?"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "is_loose_palindrome",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-04/solutions/python/starter.py",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-04/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "isLoosePalindrome",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-04/solutions/typescript/starter.ts",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-04/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "IsLoosePalindrome",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-04/solutions/go/starter.go",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-04/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "isLoosePalindrome",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-04/solutions/scala/starter.scala",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-04/solutions/scala/reference.scala"
+    }
+  }
+}

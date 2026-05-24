@@ -1,0 +1,77 @@
+{
+  "id": "stacks-queues",
+  "kind": "module",
+  "title": "Stacks & Queues",
+  "order": 5,
+  "summary": "Practice stack parsing, monotonic stacks, queues, deques, and operational simulations.",
+  "concepts": [
+    "stacks",
+    "queues",
+    "monotonic stacks",
+    "deques",
+    "simulation"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "balanced-brackets-local"
+    },
+    {
+      "kind": "problem",
+      "id": "warmer-day-waits"
+    },
+    {
+      "kind": "problem",
+      "id": "simplify-folder-steps"
+    },
+    {
+      "kind": "problem",
+      "id": "recent-event-counts"
+    },
+    {
+      "kind": "problem",
+      "id": "next-greater-values"
+    },
+    {
+      "kind": "problem",
+      "id": "stacks-queues-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "stacks-queues-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "stacks-queues-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "stacks-queues-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "stacks-queues-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "stacks-queues-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "stacks-queues-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "stacks-queues-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "stacks-queues-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "stacks-queues-bonus-10"
+    }
+  ],
+  "bonus": []
+}

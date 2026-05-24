@@ -1,0 +1,158 @@
+{
+  "id": "backtracking-bonus-04",
+  "kind": "problem",
+  "title": "Partition Into Equal Subsets",
+  "difficulty": "medium",
+  "concepts": [
+    "backtracking",
+    "constraints",
+    "bin packing"
+  ],
+  "prompt": "Given a list of positive integers and an integer k, return True if the list can be split into exactly k groups whose sums are all equal. Every value must land in exactly one group.",
+  "signature": {
+    "name": "canPartitionKSubsets",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "splits into four",
+      "args": [
+        [
+          4,
+          3,
+          2,
+          3,
+          5,
+          2,
+          1
+        ],
+        4
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "no equal split",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        3
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "two equal halves",
+      "args": [
+        [
+          2,
+          2,
+          2,
+          2
+        ],
+        2
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "k is zero",
+      "args": [
+        [
+          1,
+          1,
+          1
+        ],
+        0
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty list",
+      "args": [
+        [],
+        1
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty list many groups",
+      "args": [
+        [],
+        3
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single group",
+      "args": [
+        [
+          5
+        ],
+        1
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "value exceeds target",
+      "args": [
+        [
+          10,
+          10
+        ],
+        3
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "can_partition_k_subsets",
+      "starterPath": "problems/backtracking-bonus-04/solutions/python/starter.py",
+      "referencePath": "problems/backtracking-bonus-04/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "canPartitionKSubsets",
+      "starterPath": "problems/backtracking-bonus-04/solutions/typescript/starter.ts",
+      "referencePath": "problems/backtracking-bonus-04/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CanPartitionKSubsets",
+      "starterPath": "problems/backtracking-bonus-04/solutions/go/starter.go",
+      "referencePath": "problems/backtracking-bonus-04/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "canPartitionKSubsets",
+      "starterPath": "problems/backtracking-bonus-04/solutions/scala/starter.scala",
+      "referencePath": "problems/backtracking-bonus-04/solutions/scala/reference.scala"
+    }
+  }
+}

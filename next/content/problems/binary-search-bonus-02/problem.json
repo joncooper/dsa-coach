@@ -1,0 +1,182 @@
+{
+  "id": "binary-search-bonus-02",
+  "kind": "problem",
+  "title": "Upper Bound Index",
+  "difficulty": "easy",
+  "concepts": [
+    "binary-search",
+    "boundary",
+    "upper bound"
+  ],
+  "prompt": "Given a list of integers sorted in non-decreasing order, return the index of the first element strictly greater than target. If every element is less than or equal to target, return the length of the list.",
+  "signature": {
+    "name": "upperBound",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "after duplicates",
+      "args": [
+        [
+          1,
+          2,
+          2,
+          2,
+          5
+        ],
+        2
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "past the end",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        9
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        4
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "before all",
+      "args": [
+        [
+          4,
+          5,
+          6
+        ],
+        1
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single equal",
+      "args": [
+        [
+          7
+        ],
+        7
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single greater",
+      "args": [
+        [
+          7
+        ],
+        2
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single smaller",
+      "args": [
+        [
+          7
+        ],
+        9
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal target",
+      "args": [
+        [
+          3,
+          3,
+          3
+        ],
+        3
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "between values",
+      "args": [
+        [
+          1,
+          3,
+          5,
+          7
+        ],
+        4
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "target absent low",
+      "args": [
+        [
+          2,
+          4,
+          6
+        ],
+        3
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "upper_bound",
+      "starterPath": "problems/binary-search-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/binary-search-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "upperBound",
+      "starterPath": "problems/binary-search-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/binary-search-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "UpperBound",
+      "starterPath": "problems/binary-search-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/binary-search-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "upperBound",
+      "starterPath": "problems/binary-search-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/binary-search-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "id": "coin-change-min-local",
+  "kind": "problem",
+  "title": "Coin Change Min Local",
+  "difficulty": "medium",
+  "concepts": [
+    "unbounded DP",
+    "minimum"
+  ],
+  "prompt": "Return the fewest coins needed to make `amount`, using each coin value any number of times. Return -1 if impossible.",
+  "signature": {
+    "name": "coinChangeMinLocal",
+    "inputs": [
+      {
+        "name": "coins",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "amount",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "eleven",
+      "args": [
+        [
+          1,
+          2,
+          5
+        ],
+        11
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "impossible",
+      "args": [
+        [
+          2
+        ],
+        3
+      ],
+      "expected": -1,
+      "visibility": "visible"
+    },
+    {
+      "name": "zero",
+      "args": [
+        [
+          1
+        ],
+        0
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "exact",
+      "args": [
+        [
+          7,
+          3
+        ],
+        6
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "amount one impossible",
+      "args": [
+        [
+          2,
+          4
+        ],
+        1
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "large denoms only",
+      "args": [
+        [
+          5,
+          10,
+          25
+        ],
+        30
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single coin used many",
+      "args": [
+        [
+          1
+        ],
+        7
+      ],
+      "expected": 7,
+      "visibility": "hidden"
+    },
+    {
+      "name": "coin equals amount",
+      "args": [
+        [
+          3,
+          5
+        ],
+        5
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed easy",
+      "args": [
+        [
+          1,
+          3,
+          4
+        ],
+        6
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "coin_change_min_local",
+      "starterPath": "problems/coin-change-min-local/solutions/python/starter.py",
+      "referencePath": "problems/coin-change-min-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "coinChangeMinLocal",
+      "starterPath": "problems/coin-change-min-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/coin-change-min-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CoinChangeMinLocal",
+      "starterPath": "problems/coin-change-min-local/solutions/go/starter.go",
+      "referencePath": "problems/coin-change-min-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "coinChangeMinLocal",
+      "starterPath": "problems/coin-change-min-local/solutions/scala/starter.scala",
+      "referencePath": "problems/coin-change-min-local/solutions/scala/reference.scala"
+    }
+  }
+}

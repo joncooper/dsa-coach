@@ -1,0 +1,246 @@
+{
+  "id": "aoc-y1-d3-slope-walk",
+  "kind": "problem",
+  "title": "Day 3: Slope Walk",
+  "difficulty": "easy",
+  "concepts": [
+    "grid traversal",
+    "modular arithmetic"
+  ],
+  "prompt": "You receive a grid as a multi-line string of `.` (open) and `#` (tree) characters. The grid repeats horizontally to infinity but not vertically. Starting at row 0 column 0, you step `right=3, down=1` repeatedly until you fall off the bottom. Count how many `#` tiles you pass through (the starting tile counts if and only if it is a tree).",
+  "signature": {
+    "name": "slope_walk",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "small grid",
+      "args": [
+        "..##\n.#..\n#...\n.#.#"
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "single open row",
+      "args": [
+        "...."
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "all trees",
+      "args": [
+        "####\n####\n####"
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "classic seven-by-eleven",
+      "args": [
+        "..##.......\n#...#...#..\n.#....#..#.\n..#.#...#.#\n.#...##..#.\n..#.##.....\n.#.#.#....#\n.#........#\n#.##...#...\n#...##....#\n.#..#...#.#"
+      ],
+      "expected": 7,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single row tree at start",
+      "args": [
+        "#...."
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "wrap immediately",
+      "args": [
+        "#.\n.#\n#."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single row no tree at column zero",
+      "args": [
+        ".###"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "narrow width wrap hits",
+      "args": [
+        "..\n.#"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "trailing newline filtered",
+      "args": [
+        "#...\n...#\n..#.\n"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "diagonal hits every row",
+      "args": [
+        "#...\n...#\n..#.\n.#.."
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-many-slopes",
+      "title": "Part 2: Multiple slopes",
+      "prompt": "Walk five slopes — `(1,1)`, `(3,1)`, `(5,1)`, `(7,1)`, `(1,2)` (each as `right, down`) — over the same grid. Count trees hit by each slope, then return the product of those five counts. The starting tile counts if it is a tree. The walk for a slope ends as soon as the row index reaches `len(rows)`.",
+      "signature": {
+        "name": "slope_walk_product",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "empty grid",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "classic seven-by-eleven",
+          "args": [
+            "..##.......\n#...#...#..\n.#....#..#.\n..#.#...#.#\n.#...##..#.\n..#.##.....\n.#.#.#....#\n.#........#\n#.##...#...\n#...##....#\n.#..#...#.#"
+          ],
+          "expected": 336,
+          "visibility": "visible"
+        },
+        {
+          "name": "single row all trees",
+          "args": [
+            "###"
+          ],
+          "expected": 1,
+          "visibility": "visible"
+        },
+        {
+          "name": "all clear product is zero",
+          "args": [
+            "....\n....\n....\n....\n...."
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "two-row all trees product",
+          "args": [
+            "####\n####"
+          ],
+          "expected": 16,
+          "visibility": "hidden"
+        },
+        {
+          "name": "slopes miss every tree",
+          "args": [
+            "....\n#...\n....\n#...\n....\n#..."
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "single row all trees product is one",
+          "args": [
+            "####"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "single column all trees",
+          "args": [
+            "#\n#\n#\n#\n#"
+          ],
+          "expected": 1875,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "slope_walk_product",
+          "starterPath": "problems/aoc-y1-d3-slope-walk/parts/part-2-many-slopes/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y1-d3-slope-walk/parts/part-2-many-slopes/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "slope_walk_product",
+          "starterPath": "problems/aoc-y1-d3-slope-walk/parts/part-2-many-slopes/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y1-d3-slope-walk/parts/part-2-many-slopes/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "SlopeWalkProduct",
+          "starterPath": "problems/aoc-y1-d3-slope-walk/parts/part-2-many-slopes/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y1-d3-slope-walk/parts/part-2-many-slopes/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "slope_walk_product",
+          "starterPath": "problems/aoc-y1-d3-slope-walk/parts/part-2-many-slopes/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y1-d3-slope-walk/parts/part-2-many-slopes/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "slope_walk",
+      "starterPath": "problems/aoc-y1-d3-slope-walk/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y1-d3-slope-walk/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "slope_walk",
+      "starterPath": "problems/aoc-y1-d3-slope-walk/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y1-d3-slope-walk/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SlopeWalk",
+      "starterPath": "problems/aoc-y1-d3-slope-walk/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y1-d3-slope-walk/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "slope_walk",
+      "starterPath": "problems/aoc-y1-d3-slope-walk/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y1-d3-slope-walk/solutions/scala/reference.scala"
+    }
+  }
+}

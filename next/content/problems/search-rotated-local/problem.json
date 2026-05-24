@@ -1,0 +1,186 @@
+{
+  "id": "search-rotated-local",
+  "kind": "problem",
+  "title": "Search Rotated Local",
+  "difficulty": "medium",
+  "concepts": [
+    "binary search",
+    "rotated sorted array"
+  ],
+  "prompt": "Given a sorted array rotated at an unknown pivot with distinct values, return the index of `target`, or -1.",
+  "signature": {
+    "name": "searchRotatedLocal",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "right side",
+      "args": [
+        [
+          4,
+          5,
+          6,
+          1,
+          2,
+          3
+        ],
+        2
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "missing",
+      "args": [
+        [
+          4,
+          5,
+          1,
+          2
+        ],
+        3
+      ],
+      "expected": -1,
+      "visibility": "visible"
+    },
+    {
+      "name": "not rotated",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        1
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ],
+        7
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "pivot at front",
+      "args": [
+        [
+          2,
+          3,
+          4,
+          5,
+          1
+        ],
+        1
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "found at pivot",
+      "args": [
+        [
+          6,
+          7,
+          0,
+          1,
+          2
+        ],
+        0
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two elements rotated",
+      "args": [
+        [
+          3,
+          1
+        ],
+        3
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "target larger than all",
+      "args": [
+        [
+          5,
+          6,
+          7,
+          1,
+          2
+        ],
+        9
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "rotated middle search left",
+      "args": [
+        [
+          4,
+          5,
+          6,
+          7,
+          0,
+          1,
+          2
+        ],
+        5
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "search_rotated_local",
+      "starterPath": "problems/search-rotated-local/solutions/python/starter.py",
+      "referencePath": "problems/search-rotated-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "searchRotatedLocal",
+      "starterPath": "problems/search-rotated-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/search-rotated-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SearchRotatedLocal",
+      "starterPath": "problems/search-rotated-local/solutions/go/starter.go",
+      "referencePath": "problems/search-rotated-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "searchRotatedLocal",
+      "starterPath": "problems/search-rotated-local/solutions/scala/starter.scala",
+      "referencePath": "problems/search-rotated-local/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "id": "remove-list-value",
+  "kind": "problem",
+  "title": "Remove List Value",
+  "difficulty": "easy",
+  "concepts": [
+    "dummy head",
+    "pointer rewiring"
+  ],
+  "prompt": "Remove every node whose value equals `target` and return the new head.",
+  "signature": {
+    "name": "removeListValue",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "nullable": true
+    }
+  },
+  "tests": [
+    {
+      "name": "remove middle and head",
+      "args": [
+        [
+          2,
+          1,
+          2,
+          3
+        ],
+        2
+      ],
+      "expected": [
+        1,
+        3
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "remove none",
+      "args": [
+        [
+          1,
+          2
+        ],
+        9
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "all removed",
+      "args": [
+        [
+          5,
+          5
+        ],
+        5
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        1
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "remove head only",
+      "args": [
+        [
+          7,
+          1,
+          2
+        ],
+        7
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "remove tail only",
+      "args": [
+        [
+          1,
+          2,
+          7
+        ],
+        7
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "remove consecutive",
+      "args": [
+        [
+          3,
+          3,
+          1,
+          3,
+          3,
+          2,
+          3,
+          3
+        ],
+        3
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single match",
+      "args": [
+        [
+          4
+        ],
+        4
+      ],
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single nonmatch",
+      "args": [
+        [
+          4
+        ],
+        9
+      ],
+      "expected": [
+        4
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "remove_list_value",
+      "starterPath": "problems/remove-list-value/solutions/python/starter.py",
+      "referencePath": "problems/remove-list-value/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "removeListValue",
+      "starterPath": "problems/remove-list-value/solutions/typescript/starter.ts",
+      "referencePath": "problems/remove-list-value/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RemoveListValue",
+      "starterPath": "problems/remove-list-value/solutions/go/starter.go",
+      "referencePath": "problems/remove-list-value/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "removeListValue",
+      "starterPath": "problems/remove-list-value/solutions/scala/starter.scala",
+      "referencePath": "problems/remove-list-value/solutions/scala/reference.scala"
+    }
+  }
+}

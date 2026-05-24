@@ -1,0 +1,136 @@
+{
+  "id": "two-pointers-sliding-window-bonus-09",
+  "kind": "problem",
+  "title": "Length After Removing Sorted Duplicates",
+  "difficulty": "easy",
+  "concepts": [
+    "two-pointers-sliding-window",
+    "same-direction pointers",
+    "sorted array"
+  ],
+  "prompt": "Given a list sorted in non-decreasing order, compact it so each distinct value appears once at the front, and return the count of distinct values. The values after that count do not matter.",
+  "signature": {
+    "name": "dedupeSortedLength",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "some duplicates",
+      "args": [
+        [
+          1,
+          1,
+          2,
+          2,
+          3
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "already distinct",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          4,
+          4,
+          4
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives with repeats",
+      "args": [
+        [
+          -3,
+          -3,
+          -1,
+          0,
+          0
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two distinct",
+      "args": [
+        [
+          1,
+          1,
+          1,
+          2
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "dedupe_sorted_length",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-09/solutions/python/starter.py",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-09/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "dedupeSortedLength",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-09/solutions/typescript/starter.ts",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-09/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "DedupeSortedLength",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-09/solutions/go/starter.go",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-09/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "dedupeSortedLength",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-09/solutions/scala/starter.scala",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-09/solutions/scala/reference.scala"
+    }
+  }
+}

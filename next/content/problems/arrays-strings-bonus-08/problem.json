@@ -1,0 +1,229 @@
+{
+  "id": "arrays-strings-bonus-08",
+  "kind": "problem",
+  "title": "Range Sum Queries",
+  "difficulty": "medium",
+  "concepts": [
+    "arrays-strings",
+    "prefix sums",
+    "indexing"
+  ],
+  "prompt": "Given a list of integers and a list of [lo, hi] index pairs, return a list answering each query with the sum of nums[lo] through nums[hi], inclusive of both ends.",
+  "signature": {
+    "name": "rangeSumQueries",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "queries",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "several ranges",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        [
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            0,
+            4
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      ],
+      "expected": [
+        6,
+        9,
+        15,
+        3
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "two queries",
+      "args": [
+        [
+          5,
+          5
+        ],
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      ],
+      "expected": [
+        10,
+        5
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "no queries",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single value",
+      "args": [
+        [
+          3
+        ],
+        [
+          [
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": [
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "whole negative",
+      "args": [
+        [
+          -1,
+          -2,
+          -3
+        ],
+        [
+          [
+            0,
+            2
+          ]
+        ]
+      ],
+      "expected": [
+        -6
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single element ranges",
+      "args": [
+        [
+          5,
+          5
+        ],
+        [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      ],
+      "expected": [
+        5,
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "repeated query",
+      "args": [
+        [
+          2,
+          4,
+          6
+        ],
+        [
+          [
+            1,
+            2
+          ],
+          [
+            1,
+            2
+          ]
+        ]
+      ],
+      "expected": [
+        10,
+        10
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "range_sum_queries",
+      "starterPath": "problems/arrays-strings-bonus-08/solutions/python/starter.py",
+      "referencePath": "problems/arrays-strings-bonus-08/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "rangeSumQueries",
+      "starterPath": "problems/arrays-strings-bonus-08/solutions/typescript/starter.ts",
+      "referencePath": "problems/arrays-strings-bonus-08/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RangeSumQueries",
+      "starterPath": "problems/arrays-strings-bonus-08/solutions/go/starter.go",
+      "referencePath": "problems/arrays-strings-bonus-08/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "rangeSumQueries",
+      "starterPath": "problems/arrays-strings-bonus-08/solutions/scala/starter.scala",
+      "referencePath": "problems/arrays-strings-bonus-08/solutions/scala/reference.scala"
+    }
+  }
+}

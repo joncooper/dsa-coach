@@ -1,0 +1,207 @@
+{
+  "id": "heaps-bonus-08",
+  "kind": "problem",
+  "title": "Priority Print Queue",
+  "difficulty": "medium",
+  "concepts": [
+    "heaps",
+    "priority simulation",
+    "scheduling"
+  ],
+  "prompt": "A printer processes jobs one at a time. Each job is a pair [priority, id]. The printer always prints the waiting job with the highest priority next; if several share the top priority, the one with the smaller id goes first. Return the list of job ids in the order they are printed.",
+  "signature": {
+    "name": "printOrder",
+    "inputs": [
+      {
+        "name": "jobs",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "mixed priorities",
+      "args": [
+        [
+          [
+            3,
+            10
+          ],
+          [
+            1,
+            20
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            2,
+            30
+          ]
+        ]
+      ],
+      "expected": [
+        5,
+        10,
+        30,
+        20
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single job",
+      "args": [
+        [
+          [
+            5,
+            99
+          ]
+        ]
+      ],
+      "expected": [
+        99
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all same priority",
+      "args": [
+        [
+          [
+            2,
+            3
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "already in priority order",
+      "args": [
+        [
+          [
+            9,
+            1
+          ],
+          [
+            5,
+            2
+          ],
+          [
+            1,
+            3
+          ]
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "reverse priority order",
+      "args": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            5,
+            2
+          ],
+          [
+            9,
+            3
+          ]
+        ]
+      ],
+      "expected": [
+        3,
+        2,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two jobs tie",
+      "args": [
+        [
+          [
+            4,
+            8
+          ],
+          [
+            4,
+            2
+          ]
+        ]
+      ],
+      "expected": [
+        2,
+        8
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "print_order",
+      "starterPath": "problems/heaps-bonus-08/solutions/python/starter.py",
+      "referencePath": "problems/heaps-bonus-08/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "printOrder",
+      "starterPath": "problems/heaps-bonus-08/solutions/typescript/starter.ts",
+      "referencePath": "problems/heaps-bonus-08/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "PrintOrder",
+      "starterPath": "problems/heaps-bonus-08/solutions/go/starter.go",
+      "referencePath": "problems/heaps-bonus-08/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "printOrder",
+      "starterPath": "problems/heaps-bonus-08/solutions/scala/starter.scala",
+      "referencePath": "problems/heaps-bonus-08/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "id": "interview-tools-bonus-02",
+  "kind": "problem",
+  "title": "The Unpaired Number",
+  "difficulty": "easy",
+  "concepts": [
+    "interview-tools",
+    "hashing",
+    "sets"
+  ],
+  "prompt": "Every value in the list appears exactly twice, except for one value that appears exactly once. Return that unpaired value.",
+  "signature": {
+    "name": "unpairedNumber",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "lone in middle",
+      "args": [
+        [
+          4,
+          1,
+          2,
+          1,
+          2
+        ]
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "lone first",
+      "args": [
+        [
+          7,
+          3,
+          3
+        ]
+      ],
+      "expected": 7,
+      "visibility": "visible"
+    },
+    {
+      "name": "single element",
+      "args": [
+        [
+          9
+        ]
+      ],
+      "expected": 9,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -5,
+          2,
+          2,
+          -5,
+          -8
+        ]
+      ],
+      "expected": -8,
+      "visibility": "hidden"
+    },
+    {
+      "name": "lone is zero",
+      "args": [
+        [
+          0,
+          6,
+          6
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "lone last",
+      "args": [
+        [
+          1,
+          1,
+          2,
+          2,
+          5
+        ]
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "larger list",
+      "args": [
+        [
+          3,
+          3,
+          9,
+          9,
+          4,
+          7,
+          7
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "unpaired_number",
+      "starterPath": "problems/interview-tools-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/interview-tools-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "unpairedNumber",
+      "starterPath": "problems/interview-tools-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/interview-tools-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "UnpairedNumber",
+      "starterPath": "problems/interview-tools-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/interview-tools-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "unpairedNumber",
+      "starterPath": "problems/interview-tools-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/interview-tools-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

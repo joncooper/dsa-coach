@@ -1,0 +1,160 @@
+{
+  "id": "min-cost-steps-local",
+  "kind": "problem",
+  "title": "Min Cost Steps Local",
+  "difficulty": "easy",
+  "concepts": [
+    "DP min",
+    "rolling state"
+  ],
+  "prompt": "You may start at step 0 or 1 and climb one or two steps at a time. Return the minimum cost to move beyond the final step.",
+  "signature": {
+    "name": "minCostStepsLocal",
+    "inputs": [
+      {
+        "name": "costs",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "choose cheap",
+      "args": [
+        [
+          10,
+          15,
+          20
+        ]
+      ],
+      "expected": 15,
+      "visibility": "visible"
+    },
+    {
+      "name": "zigzag",
+      "args": [
+        [
+          1,
+          100,
+          1,
+          1
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "one",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two equal",
+      "args": [
+        [
+          5,
+          5
+        ]
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "five step",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zeros",
+      "args": [
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "big then small",
+      "args": [
+        [
+          10,
+          1,
+          1,
+          10
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "alternating",
+      "args": [
+        [
+          1,
+          100,
+          1,
+          100,
+          1
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "min_cost_steps_local",
+      "starterPath": "problems/min-cost-steps-local/solutions/python/starter.py",
+      "referencePath": "problems/min-cost-steps-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "minCostStepsLocal",
+      "starterPath": "problems/min-cost-steps-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/min-cost-steps-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MinCostStepsLocal",
+      "starterPath": "problems/min-cost-steps-local/solutions/go/starter.go",
+      "referencePath": "problems/min-cost-steps-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "minCostStepsLocal",
+      "starterPath": "problems/min-cost-steps-local/solutions/scala/starter.scala",
+      "referencePath": "problems/min-cost-steps-local/solutions/scala/reference.scala"
+    }
+  }
+}

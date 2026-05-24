@@ -1,0 +1,149 @@
+{
+  "id": "hashing-bonus-10",
+  "kind": "problem",
+  "title": "Longest Balanced Span",
+  "difficulty": "medium",
+  "concepts": [
+    "hashing",
+    "prefix counts",
+    "first occurrence map"
+  ],
+  "prompt": "The list contains only 0s and 1s. Return the length of the longest contiguous span that holds an equal number of 0s and 1s.",
+  "signature": {
+    "name": "longestBalancedPrefix",
+    "inputs": [
+      {
+        "name": "bits",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "one balanced pair",
+      "args": [
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "all ones",
+      "args": [
+        [
+          1,
+          1,
+          1,
+          1
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          0
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "minimal pair",
+      "args": [
+        [
+          0,
+          1
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "whole list balanced",
+      "args": [
+        [
+          0,
+          0,
+          1,
+          0,
+          1,
+          1
+        ]
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "alternating",
+      "args": [
+        [
+          1,
+          0,
+          1,
+          0
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "balanced prefix only",
+      "args": [
+        [
+          1,
+          1,
+          0,
+          0,
+          1
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "longest_balanced_prefix",
+      "starterPath": "problems/hashing-bonus-10/solutions/python/starter.py",
+      "referencePath": "problems/hashing-bonus-10/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "longestBalancedPrefix",
+      "starterPath": "problems/hashing-bonus-10/solutions/typescript/starter.ts",
+      "referencePath": "problems/hashing-bonus-10/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LongestBalancedPrefix",
+      "starterPath": "problems/hashing-bonus-10/solutions/go/starter.go",
+      "referencePath": "problems/hashing-bonus-10/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "longestBalancedPrefix",
+      "starterPath": "problems/hashing-bonus-10/solutions/scala/starter.scala",
+      "referencePath": "problems/hashing-bonus-10/solutions/scala/reference.scala"
+    }
+  }
+}

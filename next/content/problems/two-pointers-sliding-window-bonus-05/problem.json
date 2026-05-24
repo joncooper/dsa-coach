@@ -1,0 +1,167 @@
+{
+  "id": "two-pointers-sliding-window-bonus-05",
+  "kind": "problem",
+  "title": "Fixed Window Averages",
+  "difficulty": "warmup",
+  "concepts": [
+    "two-pointers-sliding-window",
+    "fixed window"
+  ],
+  "prompt": "Return a list of the averages of every contiguous window of length k. The result has len(nums) - k + 1 entries. If k is not a valid window length, return an empty list.",
+  "signature": {
+    "name": "windowAverages",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "windows of two",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        2
+      ],
+      "expected": [
+        1.5,
+        2.5,
+        3.5,
+        4.5
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "whole array",
+      "args": [
+        [
+          4,
+          4,
+          4
+        ],
+        3
+      ],
+      "expected": [
+        4
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "k too large",
+      "args": [
+        [
+          1,
+          2
+        ],
+        5
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty list",
+      "args": [
+        [],
+        2
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "k is zero",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        0
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "k of one",
+      "args": [
+        [
+          2,
+          2,
+          2,
+          2
+        ],
+        1
+      ],
+      "expected": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -2,
+          0,
+          2,
+          4
+        ],
+        2
+      ],
+      "expected": [
+        -1,
+        1,
+        3
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "window_averages",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-05/solutions/python/starter.py",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-05/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "windowAverages",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-05/solutions/typescript/starter.ts",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-05/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "WindowAverages",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-05/solutions/go/starter.go",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-05/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "windowAverages",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-05/solutions/scala/starter.scala",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-05/solutions/scala/reference.scala"
+    }
+  }
+}

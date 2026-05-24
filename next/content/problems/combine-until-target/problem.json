@@ -1,0 +1,170 @@
+{
+  "id": "combine-until-target",
+  "kind": "problem",
+  "title": "Combine Until Target",
+  "difficulty": "medium",
+  "concepts": [
+    "min heap",
+    "simulation"
+  ],
+  "prompt": "Repeatedly combine the two smallest values into `small + 2 * large` until every value is at least `target`. Return the number of combines, or -1 if impossible.",
+  "signature": {
+    "name": "combineUntilTarget",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "possible",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          9
+        ],
+        7
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "already",
+      "args": [
+        [
+          8,
+          9
+        ],
+        7
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "impossible",
+      "args": [
+        [
+          1
+        ],
+        10
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        1
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "already meets",
+      "args": [
+        [
+          5,
+          5,
+          5
+        ],
+        3
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "one combine",
+      "args": [
+        [
+          1,
+          5
+        ],
+        5
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two equal small",
+      "args": [
+        [
+          2,
+          2,
+          2,
+          2
+        ],
+        6
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "target zero",
+      "args": [
+        [
+          0,
+          0,
+          0
+        ],
+        0
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "large gap",
+      "args": [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        10
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "combine_until_target",
+      "starterPath": "problems/combine-until-target/solutions/python/starter.py",
+      "referencePath": "problems/combine-until-target/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "combineUntilTarget",
+      "starterPath": "problems/combine-until-target/solutions/typescript/starter.ts",
+      "referencePath": "problems/combine-until-target/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CombineUntilTarget",
+      "starterPath": "problems/combine-until-target/solutions/go/starter.go",
+      "referencePath": "problems/combine-until-target/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "combineUntilTarget",
+      "starterPath": "problems/combine-until-target/solutions/scala/starter.scala",
+      "referencePath": "problems/combine-until-target/solutions/scala/reference.scala"
+    }
+  }
+}

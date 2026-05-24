@@ -1,0 +1,160 @@
+{
+  "id": "middle-list-value",
+  "kind": "problem",
+  "title": "Middle List Value",
+  "difficulty": "easy",
+  "concepts": [
+    "fast and slow pointers"
+  ],
+  "prompt": "Return the value of the middle node. For an even-length list, return the second middle value. Return `None` for an empty list.",
+  "signature": {
+    "name": "middleListValue",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number",
+      "nullable": true
+    }
+  },
+  "tests": [
+    {
+      "name": "odd",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "even",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          8
+        ]
+      ],
+      "expected": 8,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two nodes",
+      "args": [
+        [
+          10,
+          20
+        ]
+      ],
+      "expected": 20,
+      "visibility": "hidden"
+    },
+    {
+      "name": "five nodes odd",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "six nodes even",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates",
+      "args": [
+        [
+          7,
+          7,
+          7,
+          7
+        ]
+      ],
+      "expected": 7,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative values",
+      "args": [
+        [
+          -3,
+          -2,
+          -1
+        ]
+      ],
+      "expected": -2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "middle_list_value",
+      "starterPath": "problems/middle-list-value/solutions/python/starter.py",
+      "referencePath": "problems/middle-list-value/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "middleListValue",
+      "starterPath": "problems/middle-list-value/solutions/typescript/starter.ts",
+      "referencePath": "problems/middle-list-value/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MiddleListValue",
+      "starterPath": "problems/middle-list-value/solutions/go/starter.go",
+      "referencePath": "problems/middle-list-value/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "middleListValue",
+      "starterPath": "problems/middle-list-value/solutions/scala/starter.scala",
+      "referencePath": "problems/middle-list-value/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,189 @@
+{
+  "id": "linked-lists-bonus-08",
+  "kind": "problem",
+  "title": "Remove Nth Node From End",
+  "difficulty": "medium",
+  "concepts": [
+    "linked-lists",
+    "fast and slow pointers",
+    "dummy head"
+  ],
+  "prompt": "Given the head of a singly linked list, remove the n-th node counting from the end of the list and return the head.",
+  "signature": {
+    "name": "removeNthFromEnd",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "n",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "remove middle",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        2
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "remove last",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        1
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "remove head",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        3
+      ],
+      "expected": [
+        2,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single node",
+      "args": [
+        [
+          9
+        ],
+        1
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two nodes remove head",
+      "args": [
+        [
+          1,
+          2
+        ],
+        2
+      ],
+      "expected": [
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two nodes remove tail",
+      "args": [
+        [
+          1,
+          2
+        ],
+        1
+      ],
+      "expected": [
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "remove first of many",
+      "args": [
+        [
+          5,
+          6,
+          7,
+          8
+        ],
+        4
+      ],
+      "expected": [
+        6,
+        7,
+        8
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "with negatives",
+      "args": [
+        [
+          -1,
+          -2,
+          -3,
+          -4
+        ],
+        3
+      ],
+      "expected": [
+        -1,
+        -3,
+        -4
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "remove_nth_from_end",
+      "starterPath": "problems/linked-lists-bonus-08/solutions/python/starter.py",
+      "referencePath": "problems/linked-lists-bonus-08/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "removeNthFromEnd",
+      "starterPath": "problems/linked-lists-bonus-08/solutions/typescript/starter.ts",
+      "referencePath": "problems/linked-lists-bonus-08/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RemoveNthFromEnd",
+      "starterPath": "problems/linked-lists-bonus-08/solutions/go/starter.go",
+      "referencePath": "problems/linked-lists-bonus-08/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "removeNthFromEnd",
+      "starterPath": "problems/linked-lists-bonus-08/solutions/scala/starter.scala",
+      "referencePath": "problems/linked-lists-bonus-08/solutions/scala/reference.scala"
+    }
+  }
+}

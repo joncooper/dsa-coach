@@ -1,0 +1,218 @@
+{
+  "id": "combination-sum-exact-local",
+  "kind": "problem",
+  "title": "Combination Sum Exact Local",
+  "difficulty": "medium",
+  "concepts": [
+    "backtracking",
+    "combinations"
+  ],
+  "prompt": "Return combinations of numbers that sum to `target`. Each number can be used at most once. Input may contain duplicates; output must not contain duplicate combinations. List each combination's numbers in nondecreasing order, and sort the list of combinations lexicographically. When `target` is `0`, the only combination is the empty one — return `[[]]`. When no combination reaches `target`, return `[]`.",
+  "signature": {
+    "name": "combinationSumExactLocal",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "duplicates",
+      "args": [
+        [
+          1,
+          1,
+          2,
+          5
+        ],
+        3
+      ],
+      "expected": [
+        [
+          1,
+          2
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "two answers",
+      "args": [
+        [
+          2,
+          3,
+          6,
+          7
+        ],
+        9
+      ],
+      "expected": [
+        [
+          2,
+          7
+        ],
+        [
+          3,
+          6
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "none",
+      "args": [
+        [
+          4,
+          5
+        ],
+        3
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "exact",
+      "args": [
+        [
+          1,
+          2,
+          2
+        ],
+        4
+      ],
+      "expected": [
+        [
+          2,
+          2
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty list",
+      "args": [
+        [],
+        5
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero target",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        0
+      ],
+      "expected": [
+        []
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "multiple dup pairs",
+      "args": [
+        [
+          1,
+          1,
+          1,
+          2
+        ],
+        3
+      ],
+      "expected": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single exact",
+      "args": [
+        [
+          5
+        ],
+        5
+      ],
+      "expected": [
+        [
+          5
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all dups one combo",
+      "args": [
+        [
+          3,
+          3,
+          3,
+          3
+        ],
+        6
+      ],
+      "expected": [
+        [
+          3,
+          3
+        ]
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "combination_sum_exact_local",
+      "starterPath": "problems/combination-sum-exact-local/solutions/python/starter.py",
+      "referencePath": "problems/combination-sum-exact-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "combinationSumExactLocal",
+      "starterPath": "problems/combination-sum-exact-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/combination-sum-exact-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CombinationSumExactLocal",
+      "starterPath": "problems/combination-sum-exact-local/solutions/go/starter.go",
+      "referencePath": "problems/combination-sum-exact-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "combinationSumExactLocal",
+      "starterPath": "problems/combination-sum-exact-local/solutions/scala/starter.scala",
+      "referencePath": "problems/combination-sum-exact-local/solutions/scala/reference.scala"
+    }
+  }
+}

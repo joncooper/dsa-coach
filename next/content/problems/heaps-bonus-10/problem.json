@@ -1,0 +1,143 @@
+{
+  "id": "heaps-bonus-10",
+  "kind": "problem",
+  "title": "Maximize Score By Halving",
+  "difficulty": "medium",
+  "concepts": [
+    "heaps",
+    "max-heap",
+    "greedy simulation"
+  ],
+  "prompt": "Your score starts as the sum of the list. You perform exactly k operations; each operation replaces a chosen value `v` with `ceil(v / 2)`, lowering the score by `v - ceil(v / 2)`. Choosing well loses as little as possible. Return the highest score remaining after exactly k operations.",
+  "signature": {
+    "name": "maxScoreAfterHalving",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two operations",
+      "args": [
+        [
+          10,
+          20
+        ],
+        2
+      ],
+      "expected": 15,
+      "visibility": "visible"
+    },
+    {
+      "name": "one operation",
+      "args": [
+        [
+          5,
+          5,
+          5
+        ],
+        1
+      ],
+      "expected": 13,
+      "visibility": "visible"
+    },
+    {
+      "name": "zero operations",
+      "args": [
+        [
+          3,
+          7,
+          1
+        ],
+        0
+      ],
+      "expected": 11,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single value halved twice",
+      "args": [
+        [
+          8
+        ],
+        2
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "ceiling rounds up",
+      "args": [
+        [
+          7
+        ],
+        1
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "value reaches one",
+      "args": [
+        [
+          1
+        ],
+        3
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "with zeros present",
+      "args": [
+        [
+          0,
+          0,
+          6
+        ],
+        1
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "max_score_after_halving",
+      "starterPath": "problems/heaps-bonus-10/solutions/python/starter.py",
+      "referencePath": "problems/heaps-bonus-10/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "maxScoreAfterHalving",
+      "starterPath": "problems/heaps-bonus-10/solutions/typescript/starter.ts",
+      "referencePath": "problems/heaps-bonus-10/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MaxScoreAfterHalving",
+      "starterPath": "problems/heaps-bonus-10/solutions/go/starter.go",
+      "referencePath": "problems/heaps-bonus-10/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "maxScoreAfterHalving",
+      "starterPath": "problems/heaps-bonus-10/solutions/scala/starter.scala",
+      "referencePath": "problems/heaps-bonus-10/solutions/scala/reference.scala"
+    }
+  }
+}

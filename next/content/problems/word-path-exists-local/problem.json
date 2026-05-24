@@ -1,0 +1,212 @@
+{
+  "id": "word-path-exists-local",
+  "kind": "problem",
+  "title": "Word Path Exists Local",
+  "difficulty": "medium",
+  "concepts": [
+    "grid backtracking",
+    "visited"
+  ],
+  "prompt": "Return true if `word` can be formed by moving 4-directionally through adjacent cells without reusing a cell in the same path.",
+  "signature": {
+    "name": "wordPathExistsLocal",
+    "inputs": [
+      {
+        "name": "board",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "word",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "exists",
+      "args": [
+        [
+          [
+            "A",
+            "B"
+          ],
+          [
+            "C",
+            "D"
+          ]
+        ],
+        "ABD"
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "reuse blocked",
+      "args": [
+        [
+          [
+            "A",
+            "B"
+          ],
+          [
+            "C",
+            "D"
+          ]
+        ],
+        "ABA"
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          [
+            "Z"
+          ]
+        ],
+        "Z"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "missing",
+      "args": [
+        [
+          [
+            "A"
+          ]
+        ],
+        "B"
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "snake path",
+      "args": [
+        [
+          [
+            "A",
+            "B",
+            "C"
+          ],
+          [
+            "F",
+            "E",
+            "D"
+          ]
+        ],
+        "ABCDE"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "longer than board",
+      "args": [
+        [
+          [
+            "A",
+            "B"
+          ]
+        ],
+        "ABBA"
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "starts elsewhere",
+      "args": [
+        [
+          [
+            "X",
+            "A"
+          ],
+          [
+            "B",
+            "C"
+          ]
+        ],
+        "ABC"
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "vertical word",
+      "args": [
+        [
+          [
+            "A"
+          ],
+          [
+            "B"
+          ],
+          [
+            "C"
+          ]
+        ],
+        "ABC"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "reuse needed fails",
+      "args": [
+        [
+          [
+            "A",
+            "B"
+          ],
+          [
+            "C",
+            "D"
+          ]
+        ],
+        "ABDCA"
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "word_path_exists_local",
+      "starterPath": "problems/word-path-exists-local/solutions/python/starter.py",
+      "referencePath": "problems/word-path-exists-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "wordPathExistsLocal",
+      "starterPath": "problems/word-path-exists-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/word-path-exists-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "WordPathExistsLocal",
+      "starterPath": "problems/word-path-exists-local/solutions/go/starter.go",
+      "referencePath": "problems/word-path-exists-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "wordPathExistsLocal",
+      "starterPath": "problems/word-path-exists-local/solutions/scala/starter.scala",
+      "referencePath": "problems/word-path-exists-local/solutions/scala/reference.scala"
+    }
+  }
+}

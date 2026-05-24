@@ -1,0 +1,106 @@
+{
+  "id": "interview-tools-bonus-04",
+  "kind": "problem",
+  "title": "Balanced Brackets",
+  "difficulty": "medium",
+  "concepts": [
+    "interview-tools",
+    "stacks-queues",
+    "stack"
+  ],
+  "prompt": "A string contains only the bracket characters (), [], and {}. Return True if every bracket is closed by the matching type in the correct order, and False otherwise.",
+  "signature": {
+    "name": "isBalanced",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "nested ok",
+      "args": [
+        "{[()]}"
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "wrong order",
+      "args": [
+        "(]"
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single open",
+      "args": [
+        "("
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single close",
+      "args": [
+        ")"
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "interleaved valid",
+      "args": [
+        "()[]{}"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "crossed pairs",
+      "args": [
+        "([)]"
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "is_balanced",
+      "starterPath": "problems/interview-tools-bonus-04/solutions/python/starter.py",
+      "referencePath": "problems/interview-tools-bonus-04/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "isBalanced",
+      "starterPath": "problems/interview-tools-bonus-04/solutions/typescript/starter.ts",
+      "referencePath": "problems/interview-tools-bonus-04/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "IsBalanced",
+      "starterPath": "problems/interview-tools-bonus-04/solutions/go/starter.go",
+      "referencePath": "problems/interview-tools-bonus-04/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "isBalanced",
+      "starterPath": "problems/interview-tools-bonus-04/solutions/scala/starter.scala",
+      "referencePath": "problems/interview-tools-bonus-04/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "id": "binary-search-bonus-05",
+  "kind": "problem",
+  "title": "Minimum In Rotated Array",
+  "difficulty": "medium",
+  "concepts": [
+    "binary-search",
+    "rotated sorted array"
+  ],
+  "prompt": "A list sorted in increasing order with distinct values has been rotated at an unknown pivot. Return its smallest element.",
+  "signature": {
+    "name": "findMinRotated",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "rotated",
+      "args": [
+        [
+          4,
+          5,
+          6,
+          7,
+          0,
+          1,
+          2
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "rotated small",
+      "args": [
+        [
+          3,
+          1,
+          2
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          5
+        ]
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two rotated",
+      "args": [
+        [
+          2,
+          1
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two sorted",
+      "args": [
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "not rotated",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "rotated by one",
+      "args": [
+        [
+          5,
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "minimum at end position",
+      "args": [
+        [
+          2,
+          3,
+          4,
+          5,
+          1
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          0,
+          1,
+          -3,
+          -2,
+          -1
+        ]
+      ],
+      "expected": -3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "find_min_rotated",
+      "starterPath": "problems/binary-search-bonus-05/solutions/python/starter.py",
+      "referencePath": "problems/binary-search-bonus-05/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "findMinRotated",
+      "starterPath": "problems/binary-search-bonus-05/solutions/typescript/starter.ts",
+      "referencePath": "problems/binary-search-bonus-05/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "FindMinRotated",
+      "starterPath": "problems/binary-search-bonus-05/solutions/go/starter.go",
+      "referencePath": "problems/binary-search-bonus-05/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "findMinRotated",
+      "starterPath": "problems/binary-search-bonus-05/solutions/scala/starter.scala",
+      "referencePath": "problems/binary-search-bonus-05/solutions/scala/reference.scala"
+    }
+  }
+}

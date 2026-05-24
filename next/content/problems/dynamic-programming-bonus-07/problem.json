@@ -1,0 +1,128 @@
+{
+  "id": "dynamic-programming-bonus-07",
+  "kind": "problem",
+  "title": "Edit Distance",
+  "difficulty": "hard",
+  "concepts": [
+    "dynamic-programming",
+    "string pair",
+    "optimization"
+  ],
+  "prompt": "Return the minimum number of single-character edits needed to turn the source string into the target string. An edit inserts a character, deletes a character, or replaces a character.",
+  "signature": {
+    "name": "editDistance",
+    "inputs": [
+      {
+        "name": "source",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "horse to ros",
+      "args": [
+        "horse",
+        "ros"
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "intention to execution",
+      "args": [
+        "intention",
+        "execution"
+      ],
+      "expected": 5,
+      "visibility": "visible"
+    },
+    {
+      "name": "both empty",
+      "args": [
+        "",
+        ""
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "delete all",
+      "args": [
+        "abc",
+        ""
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "insert all",
+      "args": [
+        "",
+        "abc"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "already equal",
+      "args": [
+        "abc",
+        "abc"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single replace",
+      "args": [
+        "a",
+        "b"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "kitten to sitting",
+      "args": [
+        "kitten",
+        "sitting"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "edit_distance",
+      "starterPath": "problems/dynamic-programming-bonus-07/solutions/python/starter.py",
+      "referencePath": "problems/dynamic-programming-bonus-07/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "editDistance",
+      "starterPath": "problems/dynamic-programming-bonus-07/solutions/typescript/starter.ts",
+      "referencePath": "problems/dynamic-programming-bonus-07/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "EditDistance",
+      "starterPath": "problems/dynamic-programming-bonus-07/solutions/go/starter.go",
+      "referencePath": "problems/dynamic-programming-bonus-07/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "editDistance",
+      "starterPath": "problems/dynamic-programming-bonus-07/solutions/scala/starter.scala",
+      "referencePath": "problems/dynamic-programming-bonus-07/solutions/scala/reference.scala"
+    }
+  }
+}

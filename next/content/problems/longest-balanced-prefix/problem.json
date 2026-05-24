@@ -1,0 +1,129 @@
+{
+  "id": "longest-balanced-prefix",
+  "kind": "problem",
+  "title": "Longest Balanced Prefix",
+  "difficulty": "easy",
+  "concepts": [
+    "string scan",
+    "counter"
+  ],
+  "prompt": "The string contains only `A` and `B`. Return the length of the longest prefix with the same number of `A` and `B` characters.",
+  "signature": {
+    "name": "longestBalancedPrefix",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "balanced early",
+      "args": [
+        "AABBBA"
+      ],
+      "expected": 6,
+      "visibility": "visible"
+    },
+    {
+      "name": "never",
+      "args": [
+        "AAA"
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "whole string",
+      "args": [
+        "ABBA"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single A",
+      "args": [
+        "A"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single B",
+      "args": [
+        "B"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "AB pair",
+      "args": [
+        "AB"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "BA pair",
+      "args": [
+        "BA"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "balanced then trail",
+      "args": [
+        "ABABAAA"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "nested balance",
+      "args": [
+        "AABBAB"
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "longest_balanced_prefix",
+      "starterPath": "problems/longest-balanced-prefix/solutions/python/starter.py",
+      "referencePath": "problems/longest-balanced-prefix/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "longestBalancedPrefix",
+      "starterPath": "problems/longest-balanced-prefix/solutions/typescript/starter.ts",
+      "referencePath": "problems/longest-balanced-prefix/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LongestBalancedPrefix",
+      "starterPath": "problems/longest-balanced-prefix/solutions/go/starter.go",
+      "referencePath": "problems/longest-balanced-prefix/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "longestBalancedPrefix",
+      "starterPath": "problems/longest-balanced-prefix/solutions/scala/starter.scala",
+      "referencePath": "problems/longest-balanced-prefix/solutions/scala/reference.scala"
+    }
+  }
+}

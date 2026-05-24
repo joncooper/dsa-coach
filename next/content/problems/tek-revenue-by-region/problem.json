@@ -1,0 +1,413 @@
+{
+  "id": "tek-revenue-by-region",
+  "kind": "problem",
+  "title": "Revenue by Region (Join + Roll-up)",
+  "difficulty": "medium",
+  "concepts": [
+    "hash join",
+    "group-by",
+    "aggregation"
+  ],
+  "prompt": "You are given two lists. `customers` is a list of dicts, each with an integer `id` and a string `region`. `orders` is a list of dicts, each with a `customer_id` and an integer `amount` in cents. Join orders to customers on the customer id and return a dict mapping `region -> total order amount` for that region. An order whose `customer_id` does not match any customer is dropped entirely. A region only appears in the output if at least one matched order rolled up into it.",
+  "signature": {
+    "name": "revenueByRegion",
+    "inputs": [
+      {
+        "name": "customers",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      {
+        "name": "orders",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "object"
+    }
+  },
+  "tests": [
+    {
+      "name": "empty everything",
+      "args": [
+        [],
+        []
+      ],
+      "expected": {},
+      "visibility": "visible"
+    },
+    {
+      "name": "two regions",
+      "args": [
+        [
+          {
+            "id": 1,
+            "region": "US"
+          },
+          {
+            "id": 2,
+            "region": "EU"
+          }
+        ],
+        [
+          {
+            "customer_id": 1,
+            "amount": 100
+          },
+          {
+            "customer_id": 2,
+            "amount": 50
+          },
+          {
+            "customer_id": 1,
+            "amount": 25
+          }
+        ]
+      ],
+      "expected": {
+        "US": 125,
+        "EU": 50
+      },
+      "visibility": "visible"
+    },
+    {
+      "name": "unmatched order dropped",
+      "args": [
+        [
+          {
+            "id": 1,
+            "region": "US"
+          }
+        ],
+        [
+          {
+            "customer_id": 9,
+            "amount": 100
+          }
+        ]
+      ],
+      "expected": {},
+      "visibility": "visible"
+    },
+    {
+      "name": "two customers same region",
+      "args": [
+        [
+          {
+            "id": 1,
+            "region": "US"
+          },
+          {
+            "id": 2,
+            "region": "US"
+          }
+        ],
+        [
+          {
+            "customer_id": 1,
+            "amount": 10
+          },
+          {
+            "customer_id": 2,
+            "amount": 5
+          }
+        ]
+      ],
+      "expected": {
+        "US": 15
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "customer with no orders absent",
+      "args": [
+        [
+          {
+            "id": 1,
+            "region": "US"
+          },
+          {
+            "id": 2,
+            "region": "EU"
+          }
+        ],
+        [
+          {
+            "customer_id": 1,
+            "amount": 40
+          }
+        ]
+      ],
+      "expected": {
+        "US": 40
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero amount still creates region",
+      "args": [
+        [
+          {
+            "id": 1,
+            "region": "APAC"
+          }
+        ],
+        [
+          {
+            "customer_id": 1,
+            "amount": 0
+          }
+        ]
+      ],
+      "expected": {
+        "APAC": 0
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed matched and unmatched",
+      "args": [
+        [
+          {
+            "id": 1,
+            "region": "US"
+          },
+          {
+            "id": 2,
+            "region": "EU"
+          }
+        ],
+        [
+          {
+            "customer_id": 1,
+            "amount": 30
+          },
+          {
+            "customer_id": 7,
+            "amount": 999
+          },
+          {
+            "customer_id": 2,
+            "amount": 20
+          },
+          {
+            "customer_id": 2,
+            "amount": 5
+          }
+        ]
+      ],
+      "expected": {
+        "US": 30,
+        "EU": 25
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "no orders at all",
+      "args": [
+        [
+          {
+            "id": 1,
+            "region": "US"
+          }
+        ],
+        []
+      ],
+      "expected": {},
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-stats",
+      "title": "Part 2: Per-region statistics",
+      "prompt": "Extend the roll-up. Instead of a single number per region, return a dict mapping `region -> {\"total\": <summed amount>, \"count\": <number of matched orders>}`. The same join and drop-unmatched rules apply. A region appears only if at least one matched order contributed to it, and `count` is the number of matched orders for that region (never zero in the output).",
+      "signature": {
+        "name": "revenue_stats_by_region",
+        "inputs": [
+          {
+            "name": "arg0",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "object"
+        }
+      },
+      "tests": [
+        {
+          "name": "empty stats",
+          "args": [
+            [],
+            []
+          ],
+          "expected": {},
+          "visibility": "visible"
+        },
+        {
+          "name": "two regions with counts",
+          "args": [
+            [
+              {
+                "id": 1,
+                "region": "US"
+              },
+              {
+                "id": 2,
+                "region": "EU"
+              }
+            ],
+            [
+              {
+                "customer_id": 1,
+                "amount": 100
+              },
+              {
+                "customer_id": 2,
+                "amount": 50
+              },
+              {
+                "customer_id": 1,
+                "amount": 25
+              }
+            ]
+          ],
+          "expected": {
+            "US": {
+              "total": 125,
+              "count": 2
+            },
+            "EU": {
+              "total": 50,
+              "count": 1
+            }
+          },
+          "visibility": "visible"
+        },
+        {
+          "name": "unmatched not counted",
+          "args": [
+            [
+              {
+                "id": 1,
+                "region": "US"
+              }
+            ],
+            [
+              {
+                "customer_id": 1,
+                "amount": 10
+              },
+              {
+                "customer_id": 9,
+                "amount": 99
+              }
+            ]
+          ],
+          "expected": {
+            "US": {
+              "total": 10,
+              "count": 1
+            }
+          },
+          "visibility": "hidden"
+        },
+        {
+          "name": "zero amount counts as an order",
+          "args": [
+            [
+              {
+                "id": 1,
+                "region": "APAC"
+              }
+            ],
+            [
+              {
+                "customer_id": 1,
+                "amount": 0
+              },
+              {
+                "customer_id": 1,
+                "amount": 5
+              }
+            ]
+          ],
+          "expected": {
+            "APAC": {
+              "total": 5,
+              "count": 2
+            }
+          },
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "revenue_stats_by_region",
+          "starterPath": "problems/tek-revenue-by-region/parts/part-2-stats/solutions/python/starter.py",
+          "referencePath": "problems/tek-revenue-by-region/parts/part-2-stats/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "revenue_stats_by_region",
+          "starterPath": "problems/tek-revenue-by-region/parts/part-2-stats/solutions/typescript/starter.ts",
+          "referencePath": "problems/tek-revenue-by-region/parts/part-2-stats/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "RevenueStatsByRegion",
+          "starterPath": "problems/tek-revenue-by-region/parts/part-2-stats/solutions/go/starter.go",
+          "referencePath": "problems/tek-revenue-by-region/parts/part-2-stats/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "revenue_stats_by_region",
+          "starterPath": "problems/tek-revenue-by-region/parts/part-2-stats/solutions/scala/starter.scala",
+          "referencePath": "problems/tek-revenue-by-region/parts/part-2-stats/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "revenue_by_region",
+      "starterPath": "problems/tek-revenue-by-region/solutions/python/starter.py",
+      "referencePath": "problems/tek-revenue-by-region/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "revenueByRegion",
+      "starterPath": "problems/tek-revenue-by-region/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-revenue-by-region/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RevenueByRegion",
+      "starterPath": "problems/tek-revenue-by-region/solutions/go/starter.go",
+      "referencePath": "problems/tek-revenue-by-region/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "revenue_by_region",
+      "starterPath": "problems/tek-revenue-by-region/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-revenue-by-region/solutions/scala/reference.scala"
+    }
+  }
+}

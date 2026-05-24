@@ -1,0 +1,195 @@
+{
+  "id": "assign-snacks",
+  "kind": "problem",
+  "title": "Assign Snacks",
+  "difficulty": "easy",
+  "concepts": [
+    "two sorted lists",
+    "greedy matching"
+  ],
+  "prompt": "Each child needs a snack size at least their appetite. Each snack can be used once. Return the maximum satisfied children.",
+  "signature": {
+    "name": "assignSnacks",
+    "inputs": [
+      {
+        "name": "appetites",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "snacks",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two satisfied",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          1,
+          3
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "none",
+      "args": [
+        [
+          5
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "all",
+      "args": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        [
+          1
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty snacks",
+      "args": [
+        [
+          1,
+          2
+        ],
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "more snacks than kids",
+      "args": [
+        [
+          2
+        ],
+        [
+          1,
+          3,
+          5
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "exact match",
+      "args": [
+        [
+          3,
+          3,
+          3
+        ],
+        [
+          3,
+          3,
+          3
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all too small",
+      "args": [
+        [
+          10,
+          20
+        ],
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates",
+      "args": [
+        [
+          1,
+          1,
+          2
+        ],
+        [
+          1,
+          2,
+          2
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "assign_snacks",
+      "starterPath": "problems/assign-snacks/solutions/python/starter.py",
+      "referencePath": "problems/assign-snacks/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "assignSnacks",
+      "starterPath": "problems/assign-snacks/solutions/typescript/starter.ts",
+      "referencePath": "problems/assign-snacks/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "AssignSnacks",
+      "starterPath": "problems/assign-snacks/solutions/go/starter.go",
+      "referencePath": "problems/assign-snacks/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "assignSnacks",
+      "starterPath": "problems/assign-snacks/solutions/scala/starter.scala",
+      "referencePath": "problems/assign-snacks/solutions/scala/reference.scala"
+    }
+  }
+}

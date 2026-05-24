@@ -1,0 +1,219 @@
+{
+  "id": "tek-parse-csv-row",
+  "kind": "problem",
+  "title": "Parse a Quoted CSV Row",
+  "difficulty": "medium",
+  "concepts": [
+    "state machine",
+    "string scan",
+    "tokenization"
+  ],
+  "prompt": "Implement a single-row CSV parser without using the `csv` module. The input is one line of CSV text. Fields are separated by commas. A field may be wrapped in double quotes; inside a quoted field, commas are literal characters and the two-character sequence `\"\"` represents a single literal `\"`. A field is only considered quoted when its first character is `\"`. Return a list of the parsed field strings.",
+  "signature": {
+    "name": "parseCsvRow",
+    "inputs": [
+      {
+        "name": "line",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "plain fields",
+      "args": [
+        "a,b,c"
+      ],
+      "expected": [
+        "a",
+        "b",
+        "c"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single field",
+      "args": [
+        "hello"
+      ],
+      "expected": [
+        "hello"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty input",
+      "args": [
+        ""
+      ],
+      "expected": [
+        ""
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "embedded comma",
+      "args": [
+        "\"a,b\",c"
+      ],
+      "expected": [
+        "a,b",
+        "c"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "trailing empty field",
+      "args": [
+        "a,"
+      ],
+      "expected": [
+        "a",
+        ""
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "escaped quotes",
+      "args": [
+        "\"he said \"\"hi\"\"\""
+      ],
+      "expected": [
+        "he said \"hi\""
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two empty fields",
+      "args": [
+        ","
+      ],
+      "expected": [
+        "",
+        ""
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed quoted and plain",
+      "args": [
+        "\"alpha\",beta,\"gamma,delta\""
+      ],
+      "expected": [
+        "alpha",
+        "beta",
+        "gamma,delta"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "quote not at field start is literal",
+      "args": [
+        "a\"b,c"
+      ],
+      "expected": [
+        "a\"b",
+        "c"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty quoted field",
+      "args": [
+        "\"\",x"
+      ],
+      "expected": [
+        "",
+        "x"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "adjacent escaped quotes",
+      "args": [
+        "\"a\"\"\"\"b\""
+      ],
+      "expected": [
+        "a\"\"b"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "three commas yield four empty fields",
+      "args": [
+        ",,,"
+      ],
+      "expected": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "leading comma",
+      "args": [
+        ",a,b"
+      ],
+      "expected": [
+        "",
+        "a",
+        "b"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "quoted field preserves whitespace",
+      "args": [
+        "\" hello \",x"
+      ],
+      "expected": [
+        " hello ",
+        "x"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "embedded commas across two quoted fields",
+      "args": [
+        "\"a,b\",\"c,d,e\""
+      ],
+      "expected": [
+        "a,b",
+        "c,d,e"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "parse_csv_row",
+      "starterPath": "problems/tek-parse-csv-row/solutions/python/starter.py",
+      "referencePath": "problems/tek-parse-csv-row/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "parseCsvRow",
+      "starterPath": "problems/tek-parse-csv-row/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-parse-csv-row/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ParseCsvRow",
+      "starterPath": "problems/tek-parse-csv-row/solutions/go/starter.go",
+      "referencePath": "problems/tek-parse-csv-row/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "parse_csv_row",
+      "starterPath": "problems/tek-parse-csv-row/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-parse-csv-row/solutions/scala/reference.scala"
+    }
+  }
+}

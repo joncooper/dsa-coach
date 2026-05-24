@@ -1,0 +1,270 @@
+{
+  "id": "aoc-y2-d5-coordinate-codes",
+  "kind": "problem",
+  "title": "Day 5: Coordinate Codes",
+  "difficulty": "medium",
+  "concepts": [
+    "encoding",
+    "manhattan distance"
+  ],
+  "prompt": "Each non-empty line is a coordinate code of exactly 8 characters. Every pair of characters encodes one axis step: `NN` adds (1, 0), `SS` adds (-1, 0), `EE` adds (0, 1), `WW` adds (0, -1). The starting position is (0, 0). After applying all four pairs of a code, record the final position. Return the largest Manhattan distance `|row| + |col|` among the recorded positions.",
+  "signature": {
+    "name": "max_manhattan",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two opposites",
+      "args": [
+        "NNNNEEEE\nSSSSWWWW"
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "single code",
+      "args": [
+        "NNNNNNNN"
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "cancel out",
+      "args": [
+        "NNSSEEWW"
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "only east",
+      "args": [
+        "EEEEEEEE"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed",
+      "args": [
+        "NNNNEESS\nWWWWEENN"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "blank between",
+      "args": [
+        "NNNNNNNN\n\nSSSSSSSS"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "three codes",
+      "args": [
+        "NNEESSWW\nNNNNSSSS\nEEEEEEEE"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "north then east diagonal",
+      "args": [
+        "NNNNEEEE"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two codes second wins",
+      "args": [
+        "NNSSEEWW\nNNNNEEEE"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "only south",
+      "args": [
+        "SSSSSSSS"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "only west",
+      "args": [
+        "WWWWWWWW"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-trajectories",
+      "title": "Part 2: Step-by-step max distance",
+      "prompt": "Same input. Now for each code, evaluate the Manhattan distance from the origin after every single pair (so each code produces four intermediate distances). Return the largest such distance seen across all codes and all intermediate positions, including the starting position. The starting position has distance 0.",
+      "signature": {
+        "name": "max_step_distance",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "single straight",
+          "args": [
+            "NNNNNNNN"
+          ],
+          "expected": 4,
+          "visibility": "visible"
+        },
+        {
+          "name": "out and back",
+          "args": [
+            "NNNNSSSS"
+          ],
+          "expected": 2,
+          "visibility": "visible"
+        },
+        {
+          "name": "two codes",
+          "args": [
+            "NNEESSWW\nNNNNSSSS"
+          ],
+          "expected": 2,
+          "visibility": "visible"
+        },
+        {
+          "name": "peak before return",
+          "args": [
+            "NNNNNNSS"
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        },
+        {
+          "name": "east then west",
+          "args": [
+            "EEEEWWWW"
+          ],
+          "expected": 2,
+          "visibility": "hidden"
+        },
+        {
+          "name": "out and back peaks at one",
+          "args": [
+            "NNSSEEWW"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "diagonal climb peaks at end",
+          "args": [
+            "NNNNEEEE"
+          ],
+          "expected": 4,
+          "visibility": "hidden"
+        },
+        {
+          "name": "two codes second has larger intermediate peak",
+          "args": [
+            "NNSSEEWW\nNNNNNNNN"
+          ],
+          "expected": 4,
+          "visibility": "hidden"
+        },
+        {
+          "name": "S-shaped path peaks before return",
+          "args": [
+            "NNEEEESS"
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "max_step_distance",
+          "starterPath": "problems/aoc-y2-d5-coordinate-codes/parts/part-2-trajectories/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y2-d5-coordinate-codes/parts/part-2-trajectories/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "max_step_distance",
+          "starterPath": "problems/aoc-y2-d5-coordinate-codes/parts/part-2-trajectories/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y2-d5-coordinate-codes/parts/part-2-trajectories/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "MaxStepDistance",
+          "starterPath": "problems/aoc-y2-d5-coordinate-codes/parts/part-2-trajectories/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y2-d5-coordinate-codes/parts/part-2-trajectories/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "max_step_distance",
+          "starterPath": "problems/aoc-y2-d5-coordinate-codes/parts/part-2-trajectories/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y2-d5-coordinate-codes/parts/part-2-trajectories/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "max_manhattan",
+      "starterPath": "problems/aoc-y2-d5-coordinate-codes/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y2-d5-coordinate-codes/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "max_manhattan",
+      "starterPath": "problems/aoc-y2-d5-coordinate-codes/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y2-d5-coordinate-codes/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MaxManhattan",
+      "starterPath": "problems/aoc-y2-d5-coordinate-codes/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y2-d5-coordinate-codes/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "max_manhattan",
+      "starterPath": "problems/aoc-y2-d5-coordinate-codes/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y2-d5-coordinate-codes/solutions/scala/reference.scala"
+    }
+  }
+}

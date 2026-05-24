@@ -1,0 +1,178 @@
+{
+  "id": "longest-with-flips",
+  "kind": "problem",
+  "title": "Longest With Flips",
+  "difficulty": "medium",
+  "concepts": [
+    "sliding window",
+    "at most k"
+  ],
+  "prompt": "Given a binary array, return the longest contiguous length that can become all 1s after flipping at most `k` zeroes.",
+  "signature": {
+    "name": "longestWithFlips",
+    "inputs": [
+      {
+        "name": "bits",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two flips",
+      "args": [
+        [
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          0
+        ],
+        2
+      ],
+      "expected": 6,
+      "visibility": "visible"
+    },
+    {
+      "name": "no flips",
+      "args": [
+        [
+          1,
+          1,
+          0,
+          1
+        ],
+        0
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "all zero",
+      "args": [
+        [
+          0,
+          0,
+          0
+        ],
+        1
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all one",
+      "args": [
+        [
+          1,
+          1,
+          1
+        ],
+        2
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "k larger than zeros",
+      "args": [
+        [
+          1,
+          0,
+          1,
+          0
+        ],
+        5
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        3
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single zero no flip",
+      "args": [
+        [
+          0
+        ],
+        0
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "trailing zeros",
+      "args": [
+        [
+          1,
+          1,
+          0,
+          0
+        ],
+        1
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "alternating",
+      "args": [
+        [
+          0,
+          1,
+          0,
+          1,
+          0
+        ],
+        2
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "longest_with_flips",
+      "starterPath": "problems/longest-with-flips/solutions/python/starter.py",
+      "referencePath": "problems/longest-with-flips/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "longestWithFlips",
+      "starterPath": "problems/longest-with-flips/solutions/typescript/starter.ts",
+      "referencePath": "problems/longest-with-flips/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LongestWithFlips",
+      "starterPath": "problems/longest-with-flips/solutions/go/starter.go",
+      "referencePath": "problems/longest-with-flips/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "longestWithFlips",
+      "starterPath": "problems/longest-with-flips/solutions/scala/starter.scala",
+      "referencePath": "problems/longest-with-flips/solutions/scala/reference.scala"
+    }
+  }
+}

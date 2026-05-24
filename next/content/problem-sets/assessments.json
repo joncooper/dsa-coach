@@ -1,0 +1,23 @@
+{
+  "id": "assessments",
+  "kind": "problem-set",
+  "title": "CodeSignal ICF Practice",
+  "summary": "Timed, four-level evolving problems in the CodeSignal Industry Coding Framework format.",
+  "entries": [
+    {
+      "problem": "asm-filesystem",
+      "category": "assessments",
+      "note": "simulation, stateful design, hash map, sorting"
+    },
+    {
+      "problem": "asm-banking",
+      "category": "assessments",
+      "note": "simulation, stateful design, hash map, scheduling"
+    },
+    {
+      "problem": "asm-in-memory-db",
+      "category": "assessments",
+      "note": "simulation, stateful design, hash map, snapshot"
+    }
+  ]
+}

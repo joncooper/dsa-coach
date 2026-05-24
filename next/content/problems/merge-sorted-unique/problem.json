@@ -1,0 +1,238 @@
+{
+  "id": "merge-sorted-unique",
+  "kind": "problem",
+  "title": "Merge Sorted Unique",
+  "difficulty": "easy",
+  "concepts": [
+    "merge",
+    "dedupe"
+  ],
+  "prompt": "Merge two sorted integer arrays into one sorted array with duplicate values removed.",
+  "signature": {
+    "name": "mergeSortedUnique",
+    "inputs": [
+      {
+        "name": "a",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "b",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "overlap",
+      "args": [
+        [
+          1,
+          2,
+          4
+        ],
+        [
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "one empty",
+      "args": [
+        [],
+        [
+          1,
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "both empty",
+      "args": [
+        [],
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates inside",
+      "args": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          2,
+          2
+        ]
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "disjoint ascending",
+      "args": [
+        [
+          1,
+          3,
+          5
+        ],
+        [
+          2,
+          4,
+          6
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "identical",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "a all dupes",
+      "args": [
+        [
+          2,
+          2,
+          2
+        ],
+        []
+      ],
+      "expected": [
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "interleave with dupes",
+      "args": [
+        [
+          1,
+          1,
+          4
+        ],
+        [
+          2,
+          4,
+          4,
+          5
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        4,
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -3,
+          -1,
+          2
+        ],
+        [
+          -3,
+          0,
+          2
+        ]
+      ],
+      "expected": [
+        -3,
+        -1,
+        0,
+        2
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "merge_sorted_unique",
+      "starterPath": "problems/merge-sorted-unique/solutions/python/starter.py",
+      "referencePath": "problems/merge-sorted-unique/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "mergeSortedUnique",
+      "starterPath": "problems/merge-sorted-unique/solutions/typescript/starter.ts",
+      "referencePath": "problems/merge-sorted-unique/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MergeSortedUnique",
+      "starterPath": "problems/merge-sorted-unique/solutions/go/starter.go",
+      "referencePath": "problems/merge-sorted-unique/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "mergeSortedUnique",
+      "starterPath": "problems/merge-sorted-unique/solutions/scala/starter.scala",
+      "referencePath": "problems/merge-sorted-unique/solutions/scala/reference.scala"
+    }
+  }
+}

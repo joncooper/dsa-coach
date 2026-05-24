@@ -1,0 +1,116 @@
+{
+  "id": "backtracking-bonus-06",
+  "kind": "problem",
+  "title": "Restore IP Addresses",
+  "difficulty": "medium",
+  "concepts": [
+    "backtracking",
+    "string segmentation",
+    "constraints"
+  ],
+  "prompt": "Given a string of at most 12 digits, return every valid IPv4 address that can be formed by inserting three dots. Each of the four parts is 0 to 255 and has no leading zero unless the part is exactly \"0\". Return the addresses sorted ascending.",
+  "signature": {
+    "name": "restoreIpAddresses",
+    "inputs": [
+      {
+        "name": "digits",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "two readings",
+      "args": [
+        "25525511135"
+      ],
+      "expected": [
+        "255.255.11.135",
+        "255.255.111.35"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "all zeros",
+      "args": [
+        "0000"
+      ],
+      "expected": [
+        "0.0.0.0"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty string",
+      "args": [
+        ""
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "too short",
+      "args": [
+        "123"
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "too long",
+      "args": [
+        "999999999999"
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all ones",
+      "args": [
+        "1111"
+      ],
+      "expected": [
+        "1.1.1.1"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "non digit",
+      "args": [
+        "1a23"
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "restore_ip_addresses",
+      "starterPath": "problems/backtracking-bonus-06/solutions/python/starter.py",
+      "referencePath": "problems/backtracking-bonus-06/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "restoreIpAddresses",
+      "starterPath": "problems/backtracking-bonus-06/solutions/typescript/starter.ts",
+      "referencePath": "problems/backtracking-bonus-06/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RestoreIpAddresses",
+      "starterPath": "problems/backtracking-bonus-06/solutions/go/starter.go",
+      "referencePath": "problems/backtracking-bonus-06/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "restoreIpAddresses",
+      "starterPath": "problems/backtracking-bonus-06/solutions/scala/starter.scala",
+      "referencePath": "problems/backtracking-bonus-06/solutions/scala/reference.scala"
+    }
+  }
+}

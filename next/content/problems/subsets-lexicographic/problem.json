@@ -1,0 +1,264 @@
+{
+  "id": "subsets-lexicographic",
+  "kind": "problem",
+  "title": "Subsets Lexicographic",
+  "difficulty": "medium",
+  "concepts": [
+    "backtracking",
+    "subsets"
+  ],
+  "prompt": "Given distinct integers, return all subsets. Sort the input first and return subsets in DFS order where each subset is copied when visited.",
+  "signature": {
+    "name": "subsetsLexicographic",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "two",
+      "args": [
+        [
+          2,
+          1
+        ]
+      ],
+      "expected": [
+        [],
+        [
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [
+        []
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "one",
+      "args": [
+        [
+          5
+        ]
+      ],
+      "expected": [
+        [],
+        [
+          5
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "three count shape",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        [],
+        [
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two reversed",
+      "args": [
+        [
+          3,
+          1
+        ]
+      ],
+      "expected": [
+        [],
+        [
+          1
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          3
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "includes negative",
+      "args": [
+        [
+          -1,
+          0,
+          1
+        ]
+      ],
+      "expected": [
+        [],
+        [
+          -1
+        ],
+        [
+          -1,
+          0
+        ],
+        [
+          -1,
+          0,
+          1
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single negative",
+      "args": [
+        [
+          -5
+        ]
+      ],
+      "expected": [
+        [],
+        [
+          -5
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "three out of order",
+      "args": [
+        [
+          5,
+          3,
+          1
+        ]
+      ],
+      "expected": [
+        [],
+        [
+          1
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          3,
+          5
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          3
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          5
+        ]
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "subsets_lexicographic",
+      "starterPath": "problems/subsets-lexicographic/solutions/python/starter.py",
+      "referencePath": "problems/subsets-lexicographic/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "subsetsLexicographic",
+      "starterPath": "problems/subsets-lexicographic/solutions/typescript/starter.ts",
+      "referencePath": "problems/subsets-lexicographic/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SubsetsLexicographic",
+      "starterPath": "problems/subsets-lexicographic/solutions/go/starter.go",
+      "referencePath": "problems/subsets-lexicographic/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "subsetsLexicographic",
+      "starterPath": "problems/subsets-lexicographic/solutions/scala/starter.scala",
+      "referencePath": "problems/subsets-lexicographic/solutions/scala/reference.scala"
+    }
+  }
+}

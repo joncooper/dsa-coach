@@ -1,0 +1,182 @@
+{
+  "id": "heaps-bonus-06",
+  "kind": "problem",
+  "title": "Kth Smallest Pair Sum",
+  "difficulty": "medium",
+  "concepts": [
+    "heaps",
+    "merge",
+    "frontier search"
+  ],
+  "prompt": "Given two lists of integers each sorted in ascending order, consider every pair (a[i], b[j]) and its sum a[i] + b[j]. Return the k-th smallest pair sum. Different index pairs are distinct even if their sums are equal.",
+  "signature": {
+    "name": "kthSmallestPairSum",
+    "inputs": [
+      {
+        "name": "a",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "b",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "third smallest sum",
+      "args": [
+        [
+          1,
+          7,
+          11
+        ],
+        [
+          2,
+          4,
+          6
+        ],
+        3
+      ],
+      "expected": 7,
+      "visibility": "visible"
+    },
+    {
+      "name": "first smallest sum",
+      "args": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        1
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "last sum is max",
+      "args": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        4
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single by single",
+      "args": [
+        [
+          5
+        ],
+        [
+          9
+        ],
+        1
+      ],
+      "expected": 14,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single row",
+      "args": [
+        [
+          2
+        ],
+        [
+          1,
+          3,
+          5
+        ],
+        2
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "ties in sums",
+      "args": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        5
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -3,
+          -1
+        ],
+        [
+          -2,
+          4
+        ],
+        3
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "kth_smallest_pair_sum",
+      "starterPath": "problems/heaps-bonus-06/solutions/python/starter.py",
+      "referencePath": "problems/heaps-bonus-06/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "kthSmallestPairSum",
+      "starterPath": "problems/heaps-bonus-06/solutions/typescript/starter.ts",
+      "referencePath": "problems/heaps-bonus-06/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "KthSmallestPairSum",
+      "starterPath": "problems/heaps-bonus-06/solutions/go/starter.go",
+      "referencePath": "problems/heaps-bonus-06/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "kthSmallestPairSum",
+      "starterPath": "problems/heaps-bonus-06/solutions/scala/starter.scala",
+      "referencePath": "problems/heaps-bonus-06/solutions/scala/reference.scala"
+    }
+  }
+}

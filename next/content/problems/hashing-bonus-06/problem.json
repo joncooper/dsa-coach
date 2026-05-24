@@ -1,0 +1,178 @@
+{
+  "id": "hashing-bonus-06",
+  "kind": "problem",
+  "title": "Symmetric Difference Size",
+  "difficulty": "warmup",
+  "concepts": [
+    "hashing",
+    "set operations"
+  ],
+  "prompt": "Return how many distinct values appear in exactly one of the two lists — present in one but not the other. Values appearing in both are excluded.",
+  "signature": {
+    "name": "symmetricDifferenceSize",
+    "inputs": [
+      {
+        "name": "a",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "b",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "partial overlap",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "identical sets",
+      "args": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "both empty",
+      "args": [
+        [],
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "one empty",
+      "args": [
+        [],
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates collapse",
+      "args": [
+        [
+          1,
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "fully disjoint",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          4,
+          5,
+          6
+        ]
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -1,
+          -2
+        ],
+        [
+          -2,
+          -3
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicate value shared",
+      "args": [
+        [
+          5
+        ],
+        [
+          5,
+          5,
+          5
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "symmetric_difference_size",
+      "starterPath": "problems/hashing-bonus-06/solutions/python/starter.py",
+      "referencePath": "problems/hashing-bonus-06/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "symmetricDifferenceSize",
+      "starterPath": "problems/hashing-bonus-06/solutions/typescript/starter.ts",
+      "referencePath": "problems/hashing-bonus-06/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SymmetricDifferenceSize",
+      "starterPath": "problems/hashing-bonus-06/solutions/go/starter.go",
+      "referencePath": "problems/hashing-bonus-06/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "symmetricDifferenceSize",
+      "starterPath": "problems/hashing-bonus-06/solutions/scala/starter.scala",
+      "referencePath": "problems/hashing-bonus-06/solutions/scala/reference.scala"
+    }
+  }
+}

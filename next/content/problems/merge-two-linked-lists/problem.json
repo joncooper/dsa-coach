@@ -1,0 +1,235 @@
+{
+  "id": "merge-two-linked-lists",
+  "kind": "problem",
+  "title": "Merge Two Linked Lists",
+  "difficulty": "medium",
+  "concepts": [
+    "merge",
+    "dummy head"
+  ],
+  "prompt": "Merge two sorted linked lists and return the head of one sorted linked list containing all nodes. Creating new nodes is allowed.",
+  "signature": {
+    "name": "mergeTwoLinkedLists",
+    "inputs": [
+      {
+        "name": "a",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "b",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "interleaved",
+      "args": [
+        [
+          1,
+          3,
+          5
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "one empty",
+      "args": [
+        [],
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "duplicates",
+      "args": [
+        [
+          1,
+          1
+        ],
+        [
+          1
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "both empty",
+      "args": [
+        [],
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "one empty other singleton",
+      "args": [
+        [],
+        [
+          5
+        ]
+      ],
+      "expected": [
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "disjoint ranges",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          10,
+          11,
+          12
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        10,
+        11,
+        12
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "interleaved equal lengths",
+      "args": [
+        [
+          1,
+          4,
+          7
+        ],
+        [
+          2,
+          5,
+          8
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        4,
+        5,
+        7,
+        8
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives mixed",
+      "args": [
+        [
+          -5,
+          -1,
+          4
+        ],
+        [
+          -3,
+          0,
+          6
+        ]
+      ],
+      "expected": [
+        -5,
+        -3,
+        -1,
+        0,
+        4,
+        6
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "a fully before b",
+      "args": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "merge_two_linked_lists",
+      "starterPath": "problems/merge-two-linked-lists/solutions/python/starter.py",
+      "referencePath": "problems/merge-two-linked-lists/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "mergeTwoLinkedLists",
+      "starterPath": "problems/merge-two-linked-lists/solutions/typescript/starter.ts",
+      "referencePath": "problems/merge-two-linked-lists/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MergeTwoLinkedLists",
+      "starterPath": "problems/merge-two-linked-lists/solutions/go/starter.go",
+      "referencePath": "problems/merge-two-linked-lists/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "mergeTwoLinkedLists",
+      "starterPath": "problems/merge-two-linked-lists/solutions/scala/starter.scala",
+      "referencePath": "problems/merge-two-linked-lists/solutions/scala/reference.scala"
+    }
+  }
+}

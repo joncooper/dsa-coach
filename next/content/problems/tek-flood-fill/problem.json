@@ -1,0 +1,445 @@
+{
+  "id": "tek-flood-fill",
+  "kind": "problem",
+  "title": "Flood Fill a Region",
+  "difficulty": "easy",
+  "concepts": [
+    "grid",
+    "BFS/DFS",
+    "connected component"
+  ],
+  "prompt": "You are given a 2D grid of integers, a start cell `(sr, sc)`, and a `new_value`. Starting from the start cell, repaint every cell that is connected to it through 4-directional moves (up, down, left, right) and shares the start cell's original value, setting those cells to `new_value`. Cells of a different value act as walls and are never crossed. Return the modified grid. If `new_value` already equals the start cell's value, return the grid unchanged — do not loop forever.",
+  "signature": {
+    "name": "floodFill",
+    "inputs": [
+      {
+        "name": "grid",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "sr",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "sc",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "newValue",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "fill corner region",
+      "args": [
+        [
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        0,
+        0,
+        2
+      ],
+      "expected": [
+        [
+          2,
+          2,
+          0
+        ],
+        [
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "new value equals old is a no-op",
+      "args": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        0,
+        0,
+        1
+      ],
+      "expected": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single cell grid",
+      "args": [
+        [
+          [
+            5
+          ]
+        ],
+        0,
+        0,
+        9
+      ],
+      "expected": [
+        [
+          9
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "whole grid one color",
+      "args": [
+        [
+          [
+            3,
+            3
+          ],
+          [
+            3,
+            3
+          ]
+        ],
+        1,
+        1,
+        7
+      ],
+      "expected": [
+        [
+          7,
+          7
+        ],
+        [
+          7,
+          7
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "walls isolate the start cell",
+      "args": [
+        [
+          [
+            1,
+            2,
+            1
+          ],
+          [
+            2,
+            2,
+            2
+          ],
+          [
+            1,
+            2,
+            1
+          ]
+        ],
+        0,
+        0,
+        9
+      ],
+      "expected": [
+        [
+          9,
+          2,
+          1
+        ],
+        [
+          2,
+          2,
+          2
+        ],
+        [
+          1,
+          2,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "diagonal cells are not connected",
+      "args": [
+        [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        0,
+        0,
+        5
+      ],
+      "expected": [
+        [
+          5,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "L-shaped region",
+      "args": [
+        [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            1
+          ]
+        ],
+        0,
+        0,
+        4
+      ],
+      "expected": [
+        [
+          4,
+          4,
+          4
+        ],
+        [
+          4,
+          1,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "start away from origin",
+      "args": [
+        [
+          [
+            8,
+            8,
+            8
+          ],
+          [
+            8,
+            1,
+            8
+          ],
+          [
+            8,
+            8,
+            8
+          ]
+        ],
+        1,
+        1,
+        0
+      ],
+      "expected": [
+        [
+          8,
+          8,
+          8
+        ],
+        [
+          8,
+          0,
+          8
+        ],
+        [
+          8,
+          8,
+          8
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two separate regions only one filled",
+      "args": [
+        [
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            1
+          ]
+        ],
+        0,
+        0,
+        6
+      ],
+      "expected": [
+        [
+          6,
+          0,
+          1
+        ],
+        [
+          6,
+          0,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single row grid stops at wall",
+      "args": [
+        [
+          [
+            1,
+            1,
+            1,
+            2,
+            1
+          ]
+        ],
+        0,
+        0,
+        7
+      ],
+      "expected": [
+        [
+          7,
+          7,
+          7,
+          2,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single column grid stops at wall",
+      "args": [
+        [
+          [
+            1
+          ],
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            1
+          ]
+        ],
+        0,
+        0,
+        9
+      ],
+      "expected": [
+        [
+          9
+        ],
+        [
+          9
+        ],
+        [
+          2
+        ],
+        [
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "flood_fill",
+      "starterPath": "problems/tek-flood-fill/solutions/python/starter.py",
+      "referencePath": "problems/tek-flood-fill/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "floodFill",
+      "starterPath": "problems/tek-flood-fill/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-flood-fill/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "FloodFill",
+      "starterPath": "problems/tek-flood-fill/solutions/go/starter.go",
+      "referencePath": "problems/tek-flood-fill/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "flood_fill",
+      "starterPath": "problems/tek-flood-fill/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-flood-fill/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "id": "first-day-for-bouquets",
+  "kind": "problem",
+  "title": "First Day For Bouquets",
+  "difficulty": "medium",
+  "concepts": [
+    "binary search answer",
+    "feasibility"
+  ],
+  "prompt": "Each flower blooms on its listed day. A bouquet needs `size` adjacent bloomed flowers. Return the earliest day to make `bouquets` bouquets, or -1 if impossible.",
+  "signature": {
+    "name": "firstDayForBouquets",
+    "inputs": [
+      {
+        "name": "bloomDays",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "bouquets",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "size",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "day three",
+      "args": [
+        [
+          1,
+          3,
+          2,
+          4
+        ],
+        2,
+        1
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "impossible",
+      "args": [
+        [
+          1,
+          2
+        ],
+        2,
+        2
+      ],
+      "expected": -1,
+      "visibility": "visible"
+    },
+    {
+      "name": "adjacent needed",
+      "args": [
+        [
+          1,
+          10,
+          3,
+          10,
+          2
+        ],
+        1,
+        3
+      ],
+      "expected": 10,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          5
+        ],
+        1,
+        1
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "size two adjacent",
+      "args": [
+        [
+          1,
+          2,
+          1,
+          2
+        ],
+        2,
+        2
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all same day",
+      "args": [
+        [
+          3,
+          3,
+          3,
+          3
+        ],
+        2,
+        2
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "must wait for slowest",
+      "args": [
+        [
+          7,
+          7,
+          7,
+          13,
+          11,
+          12,
+          7
+        ],
+        2,
+        3
+      ],
+      "expected": 12,
+      "visibility": "hidden"
+    },
+    {
+      "name": "not enough flowers",
+      "args": [
+        [
+          1,
+          1,
+          1
+        ],
+        2,
+        2
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "size one many bouquets",
+      "args": [
+        [
+          1,
+          5,
+          3,
+          7,
+          2
+        ],
+        4,
+        1
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "first_day_for_bouquets",
+      "starterPath": "problems/first-day-for-bouquets/solutions/python/starter.py",
+      "referencePath": "problems/first-day-for-bouquets/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "firstDayForBouquets",
+      "starterPath": "problems/first-day-for-bouquets/solutions/typescript/starter.ts",
+      "referencePath": "problems/first-day-for-bouquets/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "FirstDayForBouquets",
+      "starterPath": "problems/first-day-for-bouquets/solutions/go/starter.go",
+      "referencePath": "problems/first-day-for-bouquets/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "firstDayForBouquets",
+      "starterPath": "problems/first-day-for-bouquets/solutions/scala/starter.scala",
+      "referencePath": "problems/first-day-for-bouquets/solutions/scala/reference.scala"
+    }
+  }
+}

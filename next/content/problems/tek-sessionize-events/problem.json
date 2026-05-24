@@ -1,0 +1,509 @@
+{
+  "id": "tek-sessionize-events",
+  "kind": "problem",
+  "title": "Sessionize an Event Stream",
+  "difficulty": "medium",
+  "concepts": [
+    "per-key state",
+    "gap detection",
+    "stream processing"
+  ],
+  "prompt": "You are given a chronological list of events `[[timestamp, user_id], ...]` sorted by `timestamp` (integer seconds, non-decreasing), and a `timeout` in seconds. Group each user's events into sessions: a user's session ends when more than `timeout` seconds elapse between their consecutive events. A new event for the same user after that gap starts a fresh session. Return one entry per session as `[user_id, start, end, count]`, sorted by `(start, user_id)` ascending. A session of a single event has `start == end` and `count == 1`.",
+  "signature": {
+    "name": "sessionizeEvents",
+    "inputs": [
+      {
+        "name": "events",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "any"
+            }
+          }
+        }
+      },
+      {
+        "name": "timeout",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "any"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "empty",
+      "args": [
+        [],
+        5
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "single event",
+      "args": [
+        [
+          [
+            1,
+            "a"
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        [
+          "a",
+          1,
+          1,
+          1
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single user one session",
+      "args": [
+        [
+          [
+            1,
+            "a"
+          ],
+          [
+            3,
+            "a"
+          ],
+          [
+            6,
+            "a"
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        [
+          "a",
+          1,
+          6,
+          3
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "gap splits user",
+      "args": [
+        [
+          [
+            1,
+            "a"
+          ],
+          [
+            7,
+            "a"
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        [
+          "a",
+          1,
+          1,
+          1
+        ],
+        [
+          "a",
+          7,
+          7,
+          1
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "exact timeout keeps open",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            5,
+            "a"
+          ],
+          [
+            10,
+            "a"
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        [
+          "a",
+          0,
+          10,
+          3
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "users interleaved",
+      "args": [
+        [
+          [
+            1,
+            "a"
+          ],
+          [
+            2,
+            "b"
+          ],
+          [
+            3,
+            "a"
+          ],
+          [
+            4,
+            "b"
+          ]
+        ],
+        10
+      ],
+      "expected": [
+        [
+          "a",
+          1,
+          3,
+          2
+        ],
+        [
+          "b",
+          2,
+          4,
+          2
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "tie on start sorts by user",
+      "args": [
+        [
+          [
+            1,
+            "b"
+          ],
+          [
+            1,
+            "a"
+          ]
+        ],
+        10
+      ],
+      "expected": [
+        [
+          "a",
+          1,
+          1,
+          1
+        ],
+        [
+          "b",
+          1,
+          1,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "multiple sessions per user",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            3,
+            "a"
+          ],
+          [
+            20,
+            "a"
+          ],
+          [
+            22,
+            "a"
+          ],
+          [
+            50,
+            "a"
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        [
+          "a",
+          0,
+          3,
+          2
+        ],
+        [
+          "a",
+          20,
+          22,
+          2
+        ],
+        [
+          "a",
+          50,
+          50,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "gap measured from last event not start",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            4,
+            "a"
+          ],
+          [
+            8,
+            "a"
+          ],
+          [
+            12,
+            "a"
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        [
+          "a",
+          0,
+          12,
+          4
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "gap exceeded by one second",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            4,
+            "a"
+          ],
+          [
+            10,
+            "a"
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        [
+          "a",
+          0,
+          4,
+          2
+        ],
+        [
+          "a",
+          10,
+          10,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two users overlapping sessions",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            1,
+            "b"
+          ],
+          [
+            5,
+            "a"
+          ],
+          [
+            6,
+            "b"
+          ],
+          [
+            20,
+            "a"
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        [
+          "a",
+          0,
+          5,
+          2
+        ],
+        [
+          "b",
+          1,
+          6,
+          2
+        ],
+        [
+          "a",
+          20,
+          20,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "ties on start sort by user across many",
+      "args": [
+        [
+          [
+            5,
+            "c"
+          ],
+          [
+            5,
+            "a"
+          ],
+          [
+            5,
+            "b"
+          ]
+        ],
+        1
+      ],
+      "expected": [
+        [
+          "a",
+          5,
+          5,
+          1
+        ],
+        [
+          "b",
+          5,
+          5,
+          1
+        ],
+        [
+          "c",
+          5,
+          5,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "ties on start with different ends",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            0,
+            "b"
+          ],
+          [
+            4,
+            "a"
+          ],
+          [
+            10,
+            "b"
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        [
+          "a",
+          0,
+          4,
+          2
+        ],
+        [
+          "b",
+          0,
+          0,
+          1
+        ],
+        [
+          "b",
+          10,
+          10,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "sessionize_events",
+      "starterPath": "problems/tek-sessionize-events/solutions/python/starter.py",
+      "referencePath": "problems/tek-sessionize-events/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "sessionizeEvents",
+      "starterPath": "problems/tek-sessionize-events/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-sessionize-events/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SessionizeEvents",
+      "starterPath": "problems/tek-sessionize-events/solutions/go/starter.go",
+      "referencePath": "problems/tek-sessionize-events/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "sessionize_events",
+      "starterPath": "problems/tek-sessionize-events/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-sessionize-events/solutions/scala/reference.scala"
+    }
+  }
+}

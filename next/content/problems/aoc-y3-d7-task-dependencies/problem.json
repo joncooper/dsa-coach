@@ -1,0 +1,247 @@
+{
+  "id": "aoc-y3-d7-task-dependencies",
+  "kind": "problem",
+  "title": "Day 7: Task Dependencies",
+  "difficulty": "medium",
+  "concepts": [
+    "graph",
+    "topological sort",
+    "DAG depth"
+  ],
+  "prompt": "Each non-empty line has the shape `TASK before A, B, C.` meaning that completing `TASK` is a prerequisite for tasks `A`, `B`, and `C`. The body can also be exactly the literal `nothing` (e.g., `TASK before nothing.`), meaning `TASK` has no downstream tasks. All identifiers are single lowercase words. A task may be named only as a child and never get its own rule line — treat it as a leaf with no downstream tasks. Return the depth of the longest dependency chain in the input: a single task with no children has depth 1; a parent of one leaf has depth 2; and so on. Return 0 for empty input.",
+  "signature": {
+    "name": "longest_chain",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "chain of three",
+      "args": [
+        "a before b.\nb before c.\nc before nothing."
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "single leaf",
+      "args": [
+        "only before nothing."
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "branching",
+      "args": [
+        "root before a, b.\na before nothing.\nb before nothing."
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "two roots one chain wins",
+      "args": [
+        "a before nothing.\nb before c.\nc before d.\nd before nothing."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "diamond",
+      "args": [
+        "top before left, right.\nleft before bottom.\nright before bottom.\nbottom before nothing."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "long chain",
+      "args": [
+        "a before b.\nb before c.\nc before d.\nd before e.\ne before nothing."
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "implicit leaf without rule",
+      "args": [
+        "a before b."
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "wide branching but shallow",
+      "args": [
+        "root before a, b, c, d, e.\na before nothing.\nb before nothing.\nc before nothing.\nd before nothing.\ne before nothing."
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "asymmetric tree picks deeper branch",
+      "args": [
+        "root before a, b.\na before nothing.\nb before x.\nx before y.\ny before nothing."
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-task-ordering",
+      "title": "Part 2: Earliest-time scheduling",
+      "prompt": "Same input. Each task takes `1` time unit. Tasks with no prerequisites can start at time 0. Each task's start time equals 1 plus the maximum start time of its prerequisites (it must wait for all prerequisites to finish). Return the total finish time of the schedule: the maximum `start_time + 1` across all tasks.",
+      "signature": {
+        "name": "schedule_finish",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "chain of three",
+          "args": [
+            "a before b.\nb before c.\nc before nothing."
+          ],
+          "expected": 3,
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "single task",
+          "args": [
+            "only before nothing."
+          ],
+          "expected": 1,
+          "visibility": "visible"
+        },
+        {
+          "name": "branching",
+          "args": [
+            "root before a, b.\na before nothing.\nb before nothing."
+          ],
+          "expected": 2,
+          "visibility": "visible"
+        },
+        {
+          "name": "diamond bottom waits for both",
+          "args": [
+            "top before left, right.\nleft before bottom.\nright before bottom.\nbottom before nothing."
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        },
+        {
+          "name": "parallel two roots",
+          "args": [
+            "a before nothing.\nb before c.\nc before d.\nd before nothing."
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        },
+        {
+          "name": "long chain",
+          "args": [
+            "a before b.\nb before c.\nc before d.\nd before e.\ne before nothing."
+          ],
+          "expected": 5,
+          "visibility": "hidden"
+        },
+        {
+          "name": "wide flat tree",
+          "args": [
+            "root before a, b, c.\na before nothing.\nb before nothing.\nc before nothing."
+          ],
+          "expected": 2,
+          "visibility": "hidden"
+        },
+        {
+          "name": "deepest chain wins schedule length",
+          "args": [
+            "root before a, deep1.\na before nothing.\ndeep1 before deep2.\ndeep2 before deep3.\ndeep3 before nothing."
+          ],
+          "expected": 4,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "schedule_finish",
+          "starterPath": "problems/aoc-y3-d7-task-dependencies/parts/part-2-task-ordering/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y3-d7-task-dependencies/parts/part-2-task-ordering/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "schedule_finish",
+          "starterPath": "problems/aoc-y3-d7-task-dependencies/parts/part-2-task-ordering/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y3-d7-task-dependencies/parts/part-2-task-ordering/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "ScheduleFinish",
+          "starterPath": "problems/aoc-y3-d7-task-dependencies/parts/part-2-task-ordering/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y3-d7-task-dependencies/parts/part-2-task-ordering/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "schedule_finish",
+          "starterPath": "problems/aoc-y3-d7-task-dependencies/parts/part-2-task-ordering/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y3-d7-task-dependencies/parts/part-2-task-ordering/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "longest_chain",
+      "starterPath": "problems/aoc-y3-d7-task-dependencies/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y3-d7-task-dependencies/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "longest_chain",
+      "starterPath": "problems/aoc-y3-d7-task-dependencies/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y3-d7-task-dependencies/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LongestChain",
+      "starterPath": "problems/aoc-y3-d7-task-dependencies/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y3-d7-task-dependencies/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "longest_chain",
+      "starterPath": "problems/aoc-y3-d7-task-dependencies/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y3-d7-task-dependencies/solutions/scala/reference.scala"
+    }
+  }
+}

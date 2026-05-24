@@ -1,0 +1,122 @@
+{
+  "id": "binary-search-bonus-09",
+  "kind": "problem",
+  "title": "Cube Root Floor",
+  "difficulty": "easy",
+  "concepts": [
+    "binary-search",
+    "answer search",
+    "integer math"
+  ],
+  "prompt": "Given a non-negative integer n, return the greatest integer x such that x cubed is less than or equal to n. Do not use floating-point arithmetic.",
+  "signature": {
+    "name": "cubeRootFloor",
+    "inputs": [
+      {
+        "name": "n",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "perfect cube",
+      "args": [
+        27
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "not a cube",
+      "args": [
+        30
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "zero",
+      "args": [
+        0
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "one",
+      "args": [
+        1
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "just below eight",
+      "args": [
+        7
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "eight",
+      "args": [
+        8
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "just below sixty four",
+      "args": [
+        63
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "large perfect cube",
+      "args": [
+        1000000
+      ],
+      "expected": 100,
+      "visibility": "hidden"
+    },
+    {
+      "name": "large non cube",
+      "args": [
+        999999
+      ],
+      "expected": 99,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "cube_root_floor",
+      "starterPath": "problems/binary-search-bonus-09/solutions/python/starter.py",
+      "referencePath": "problems/binary-search-bonus-09/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "cubeRootFloor",
+      "starterPath": "problems/binary-search-bonus-09/solutions/typescript/starter.ts",
+      "referencePath": "problems/binary-search-bonus-09/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CubeRootFloor",
+      "starterPath": "problems/binary-search-bonus-09/solutions/go/starter.go",
+      "referencePath": "problems/binary-search-bonus-09/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "cubeRootFloor",
+      "starterPath": "problems/binary-search-bonus-09/solutions/scala/starter.scala",
+      "referencePath": "problems/binary-search-bonus-09/solutions/scala/reference.scala"
+    }
+  }
+}

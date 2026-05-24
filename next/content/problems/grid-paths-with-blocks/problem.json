@@ -1,0 +1,209 @@
+{
+  "id": "grid-paths-with-blocks",
+  "kind": "problem",
+  "title": "Grid Paths With Blocks",
+  "difficulty": "medium",
+  "concepts": [
+    "grid DP",
+    "path count"
+  ],
+  "prompt": "A grid has 0 for open cells and 1 for blocked cells. Moving only right or down from top-left, return how many paths reach bottom-right.",
+  "signature": {
+    "name": "gridPathsWithBlocks",
+    "inputs": [
+      {
+        "name": "grid",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "one block",
+      "args": [
+        [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "blocked start",
+      "args": [
+        [
+          [
+            1
+          ]
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "single open",
+      "args": [
+        [
+          [
+            0
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "blocked end",
+      "args": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single row open",
+      "args": [
+        [
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single col open",
+      "args": [
+        [
+          [
+            0
+          ],
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "middle wall",
+      "args": [
+        [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "fully blocked column",
+      "args": [
+        [
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "grid_paths_with_blocks",
+      "starterPath": "problems/grid-paths-with-blocks/solutions/python/starter.py",
+      "referencePath": "problems/grid-paths-with-blocks/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "gridPathsWithBlocks",
+      "starterPath": "problems/grid-paths-with-blocks/solutions/typescript/starter.ts",
+      "referencePath": "problems/grid-paths-with-blocks/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "GridPathsWithBlocks",
+      "starterPath": "problems/grid-paths-with-blocks/solutions/go/starter.go",
+      "referencePath": "problems/grid-paths-with-blocks/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "gridPathsWithBlocks",
+      "starterPath": "problems/grid-paths-with-blocks/solutions/scala/starter.scala",
+      "referencePath": "problems/grid-paths-with-blocks/solutions/scala/reference.scala"
+    }
+  }
+}

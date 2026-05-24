@@ -1,0 +1,278 @@
+{
+  "id": "aoc-y3-d6-overlap-windows",
+  "kind": "problem",
+  "title": "Day 6: Overlap Windows",
+  "difficulty": "medium",
+  "concepts": [
+    "multi-line records",
+    "set operations"
+  ],
+  "prompt": "Records are separated by blank lines. Within a record, each non-empty line is a comma-separated list of strings (tag names). For each record, compute the symmetric difference across all its lines — that is, the count of tags that appear in an odd number of lines within the record (each tag within one line counts once, duplicates within a single line are deduplicated). Sum these counts across records.",
+  "signature": {
+    "name": "odd_tag_count",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two records",
+      "args": [
+        "a,b\nb,c\n\nx,y\nx,y\nx"
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "single line",
+      "args": [
+        "a,b,c"
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "all even",
+      "args": [
+        "a\na"
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "duplicate within line",
+      "args": [
+        "a,a,b\nb,c"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "three lines mix",
+      "args": [
+        "a,b\nb,c\nc,a"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed records",
+      "args": [
+        "a\na\na\n\nx\ny\nx,y"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "blank trailing block",
+      "args": [
+        "a,b\n\n\n"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "tag in exactly two lines counts even",
+      "args": [
+        "a\na"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "tag in three lines counts odd",
+      "args": [
+        "a\na\na"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates within line dedup before parity",
+      "args": [
+        "a,a,a\nb"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "five-line record mixed parity",
+      "args": [
+        "a,b\na\nb\nc\nc,d"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-shared-by-half",
+      "title": "Part 2: Tags shared by at least half",
+      "prompt": "Same input. Now within each record, count the tags that appear in at least half of the record's non-empty lines (use ceiling: a record with 3 lines requires the tag to appear in at least 2 lines; a record with 4 lines requires at least 2; a record with 5 lines requires at least 3). Sum across records.",
+      "signature": {
+        "name": "majority_tag_count",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "two records",
+          "args": [
+            "a,b\nb,c\n\nx,y\nx,y\nx"
+          ],
+          "expected": 5,
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "single line",
+          "args": [
+            "a,b,c"
+          ],
+          "expected": 3,
+          "visibility": "visible"
+        },
+        {
+          "name": "three lines majority is two",
+          "args": [
+            "a\nb\na,b"
+          ],
+          "expected": 2,
+          "visibility": "visible"
+        },
+        {
+          "name": "four lines threshold two",
+          "args": [
+            "a\na\nb\nc"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "five lines threshold three",
+          "args": [
+            "a\na\na\nb\nc"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "no majority",
+          "args": [
+            "a\nb\nc\nd"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "blank trailing block",
+          "args": [
+            "a\na\nb\n\n\n"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "even lines threshold equals half",
+          "args": [
+            "a,b\na\nb\na"
+          ],
+          "expected": 2,
+          "visibility": "hidden"
+        },
+        {
+          "name": "tag in every line is majority",
+          "args": [
+            "a,b\na,c\na,d"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "two records sum thresholds",
+          "args": [
+            "a\na\nb\n\nx\nx\ny"
+          ],
+          "expected": 2,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "majority_tag_count",
+          "starterPath": "problems/aoc-y3-d6-overlap-windows/parts/part-2-shared-by-half/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y3-d6-overlap-windows/parts/part-2-shared-by-half/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "majority_tag_count",
+          "starterPath": "problems/aoc-y3-d6-overlap-windows/parts/part-2-shared-by-half/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y3-d6-overlap-windows/parts/part-2-shared-by-half/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "MajorityTagCount",
+          "starterPath": "problems/aoc-y3-d6-overlap-windows/parts/part-2-shared-by-half/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y3-d6-overlap-windows/parts/part-2-shared-by-half/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "majority_tag_count",
+          "starterPath": "problems/aoc-y3-d6-overlap-windows/parts/part-2-shared-by-half/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y3-d6-overlap-windows/parts/part-2-shared-by-half/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "odd_tag_count",
+      "starterPath": "problems/aoc-y3-d6-overlap-windows/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y3-d6-overlap-windows/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "odd_tag_count",
+      "starterPath": "problems/aoc-y3-d6-overlap-windows/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y3-d6-overlap-windows/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "OddTagCount",
+      "starterPath": "problems/aoc-y3-d6-overlap-windows/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y3-d6-overlap-windows/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "odd_tag_count",
+      "starterPath": "problems/aoc-y3-d6-overlap-windows/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y3-d6-overlap-windows/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "id": "stacks-queues-bonus-02",
+  "kind": "problem",
+  "title": "Streaming Moving Average",
+  "difficulty": "warmup",
+  "concepts": [
+    "stacks-queues",
+    "queue",
+    "streaming"
+  ],
+  "prompt": "Numbers arrive one at a time. After each arrival, report the average of the most recent `window` numbers (or of all numbers seen so far, if fewer than `window` have arrived). Return the list of averages, one per arrival.",
+  "signature": {
+    "name": "movingAverages",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "window",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "window of three",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        3
+      ],
+      "expected": [
+        1,
+        1.5,
+        2,
+        3,
+        4
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "window larger than stream",
+      "args": [
+        [
+          10
+        ],
+        5
+      ],
+      "expected": [
+        10
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        2
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "window of one",
+      "args": [
+        [
+          4,
+          8,
+          2
+        ],
+        1
+      ],
+      "expected": [
+        4,
+        8,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          4,
+          4,
+          4,
+          4
+        ],
+        2
+      ],
+      "expected": [
+        4,
+        4,
+        4,
+        4
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives cancel",
+      "args": [
+        [
+          2,
+          -2,
+          2,
+          -2
+        ],
+        2
+      ],
+      "expected": [
+        2,
+        0,
+        0,
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single value",
+      "args": [
+        [
+          6
+        ],
+        3
+      ],
+      "expected": [
+        6
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "moving_averages",
+      "starterPath": "problems/stacks-queues-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/stacks-queues-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "movingAverages",
+      "starterPath": "problems/stacks-queues-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/stacks-queues-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MovingAverages",
+      "starterPath": "problems/stacks-queues-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/stacks-queues-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "movingAverages",
+      "starterPath": "problems/stacks-queues-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/stacks-queues-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

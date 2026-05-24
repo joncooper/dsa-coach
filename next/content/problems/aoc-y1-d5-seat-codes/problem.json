@@ -1,0 +1,247 @@
+{
+  "id": "aoc-y1-d5-seat-codes",
+  "kind": "problem",
+  "title": "Day 5: Seat Codes",
+  "difficulty": "medium",
+  "concepts": [
+    "binary encoding",
+    "scan",
+    "max"
+  ],
+  "prompt": "Each non-empty line is a 10-character seat code encoding a row (0-127) and a column (0-7).\n\nDecode the row from the first 7 characters. Start with the range 0-127. Read the characters left to right: `F` keeps the lower half of the current range, `B` keeps the upper half. After all 7 characters the range has narrowed to a single number — that is the row.\n\nDecode the column from the last 3 characters the same way, starting from the range 0-7: `L` keeps the lower half, `R` keeps the upper half.\n\nThe seat ID is `row * 8 + column`. Return the largest seat ID across all codes.",
+  "signature": {
+    "name": "max_seat_id",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two codes",
+      "args": [
+        "FBFBBFFRLR\nBFFFBBFRRR"
+      ],
+      "expected": 567,
+      "visibility": "visible"
+    },
+    {
+      "name": "three codes",
+      "args": [
+        "FFFBBBFRRR\nBBFFBBFRLL\nFBFBBFFRLR"
+      ],
+      "expected": 820,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty input",
+      "args": [
+        ""
+      ],
+      "expected": -1,
+      "visibility": "visible"
+    },
+    {
+      "name": "single code",
+      "args": [
+        "FBFBBFFRLR"
+      ],
+      "expected": 357,
+      "visibility": "hidden"
+    },
+    {
+      "name": "front-left zero",
+      "args": [
+        "FFFFFFFLLL"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "back-right max",
+      "args": [
+        "BBBBBBBRRR"
+      ],
+      "expected": 1023,
+      "visibility": "hidden"
+    },
+    {
+      "name": "blank lines ignored",
+      "args": [
+        "\nFBFBBFFRLR\n\nBFFFBBFRRR\n"
+      ],
+      "expected": 567,
+      "visibility": "hidden"
+    },
+    {
+      "name": "lowest column wins over higher column same row",
+      "args": [
+        "FFFFFFFRLL\nFFFFFFFLLR"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "row math row 1 col 0 is id 8",
+      "args": [
+        "FFFFFFBLLL"
+      ],
+      "expected": 8,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all rows same column varies",
+      "args": [
+        "FFFFFFFLLL\nBFFFFFFLLL\nFBFFFFFLLL"
+      ],
+      "expected": 512,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-missing-seat",
+      "title": "Part 2: Missing seat",
+      "prompt": "Decode the same way as Part 1 to get a set of seat IDs. A seat ID is a candidate when it is missing from that set while both `id - 1` and `id + 1` are present. Return the smallest candidate ID. If there is no candidate, return -1.",
+      "signature": {
+        "name": "find_missing_seat",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "missing in middle",
+          "args": [
+            "FFFFFFFLLL\nFFFFFFFLLR\nFFFFFFFLRR\nFFFFFFFRLL"
+          ],
+          "expected": 2,
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": -1,
+          "visibility": "visible"
+        },
+        {
+          "name": "no gap",
+          "args": [
+            "FFFFFFFLLL\nFFFFFFFLLR"
+          ],
+          "expected": -1,
+          "visibility": "visible"
+        },
+        {
+          "name": "missing seat surrounded",
+          "args": [
+            "FFFFFFFLLL\nFFFFFFFLRL\nFFFFFFFLRR"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "edge of range not counted",
+          "args": [
+            "FFFFFFFLLR\nFFFFFFFLRL"
+          ],
+          "expected": -1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "single seat",
+          "args": [
+            "FBFBBFFRLR"
+          ],
+          "expected": -1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "two distinct gaps return smallest",
+          "args": [
+            "FFFFFFFLLL\nFFFFFFFLRL\nFFFFFFFLRR\nFFFFFFFRLR\nFFFFFFFRRR"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "gap of three returns minus one",
+          "args": [
+            "FFFFFFFLLL\nFFFFFFFRLR"
+          ],
+          "expected": -1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "duplicate codes still find gap",
+          "args": [
+            "FFFFFFFLLL\nFFFFFFFLLL\nFFFFFFFLRL"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "find_missing_seat",
+          "starterPath": "problems/aoc-y1-d5-seat-codes/parts/part-2-missing-seat/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y1-d5-seat-codes/parts/part-2-missing-seat/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "find_missing_seat",
+          "starterPath": "problems/aoc-y1-d5-seat-codes/parts/part-2-missing-seat/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y1-d5-seat-codes/parts/part-2-missing-seat/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "FindMissingSeat",
+          "starterPath": "problems/aoc-y1-d5-seat-codes/parts/part-2-missing-seat/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y1-d5-seat-codes/parts/part-2-missing-seat/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "find_missing_seat",
+          "starterPath": "problems/aoc-y1-d5-seat-codes/parts/part-2-missing-seat/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y1-d5-seat-codes/parts/part-2-missing-seat/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "max_seat_id",
+      "starterPath": "problems/aoc-y1-d5-seat-codes/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y1-d5-seat-codes/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "max_seat_id",
+      "starterPath": "problems/aoc-y1-d5-seat-codes/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y1-d5-seat-codes/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MaxSeatId",
+      "starterPath": "problems/aoc-y1-d5-seat-codes/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y1-d5-seat-codes/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "max_seat_id",
+      "starterPath": "problems/aoc-y1-d5-seat-codes/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y1-d5-seat-codes/solutions/scala/reference.scala"
+    }
+  }
+}

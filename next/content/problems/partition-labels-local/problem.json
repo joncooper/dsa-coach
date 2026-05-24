@@ -1,0 +1,146 @@
+{
+  "id": "partition-labels-local",
+  "kind": "problem",
+  "title": "Partition Labels Local",
+  "difficulty": "medium",
+  "concepts": [
+    "greedy partition",
+    "last occurrence"
+  ],
+  "prompt": "Split the string into as many parts as possible so each character appears in at most one part. Return the part lengths.",
+  "signature": {
+    "name": "partitionLabelsLocal",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "classic shape",
+      "args": [
+        "abacddc"
+      ],
+      "expected": [
+        3,
+        4
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "all same",
+      "args": [
+        "aaaa"
+      ],
+      "expected": [
+        4
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "all separate",
+      "args": [
+        "abc"
+      ],
+      "expected": [
+        1,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single char",
+      "args": [
+        "a"
+      ],
+      "expected": [
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two parts uneven",
+      "args": [
+        "ababcdcd"
+      ],
+      "expected": [
+        4,
+        4
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "interleaved",
+      "args": [
+        "abcabc"
+      ],
+      "expected": [
+        6
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "nested envelope",
+      "args": [
+        "abccba"
+      ],
+      "expected": [
+        6
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "classic leetcode",
+      "args": [
+        "ababcbacadefegdehijhklij"
+      ],
+      "expected": [
+        9,
+        7,
+        8
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "partition_labels_local",
+      "starterPath": "problems/partition-labels-local/solutions/python/starter.py",
+      "referencePath": "problems/partition-labels-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "partitionLabelsLocal",
+      "starterPath": "problems/partition-labels-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/partition-labels-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "PartitionLabelsLocal",
+      "starterPath": "problems/partition-labels-local/solutions/go/starter.go",
+      "referencePath": "problems/partition-labels-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "partitionLabelsLocal",
+      "starterPath": "problems/partition-labels-local/solutions/scala/starter.scala",
+      "referencePath": "problems/partition-labels-local/solutions/scala/reference.scala"
+    }
+  }
+}

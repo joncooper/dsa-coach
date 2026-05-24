@@ -1,0 +1,198 @@
+{
+  "id": "next-greater-values",
+  "kind": "problem",
+  "title": "Next Greater Values",
+  "difficulty": "medium",
+  "concepts": [
+    "monotonic stack"
+  ],
+  "prompt": "For each value, return the next value to its right that is strictly greater. Use -1 when none exists.",
+  "signature": {
+    "name": "nextGreaterValues",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "mixed",
+      "args": [
+        [
+          2,
+          1,
+          3,
+          2
+        ]
+      ],
+      "expected": [
+        3,
+        3,
+        -1,
+        -1
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "increasing",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        2,
+        3,
+        -1
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "decreasing",
+      "args": [
+        [
+          3,
+          2,
+          1
+        ]
+      ],
+      "expected": [
+        -1,
+        -1,
+        -1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates",
+      "args": [
+        [
+          2,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        3,
+        3,
+        -1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          5
+        ]
+      ],
+      "expected": [
+        -1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two ascending",
+      "args": [
+        [
+          1,
+          9
+        ]
+      ],
+      "expected": [
+        9,
+        -1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two descending",
+      "args": [
+        [
+          9,
+          1
+        ]
+      ],
+      "expected": [
+        -1,
+        -1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          3,
+          3,
+          3
+        ]
+      ],
+      "expected": [
+        -1,
+        -1,
+        -1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "zig-zag",
+      "args": [
+        [
+          1,
+          3,
+          2,
+          4,
+          1,
+          5
+        ]
+      ],
+      "expected": [
+        3,
+        4,
+        4,
+        5,
+        5,
+        -1
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "next_greater_values",
+      "starterPath": "problems/next-greater-values/solutions/python/starter.py",
+      "referencePath": "problems/next-greater-values/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "nextGreaterValues",
+      "starterPath": "problems/next-greater-values/solutions/typescript/starter.ts",
+      "referencePath": "problems/next-greater-values/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "NextGreaterValues",
+      "starterPath": "problems/next-greater-values/solutions/go/starter.go",
+      "referencePath": "problems/next-greater-values/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "nextGreaterValues",
+      "starterPath": "problems/next-greater-values/solutions/scala/starter.scala",
+      "referencePath": "problems/next-greater-values/solutions/scala/reference.scala"
+    }
+  }
+}

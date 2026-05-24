@@ -1,0 +1,121 @@
+{
+  "id": "longest-distinct-span",
+  "kind": "problem",
+  "title": "Longest Distinct Span",
+  "difficulty": "medium",
+  "concepts": [
+    "sliding window",
+    "last seen map"
+  ],
+  "prompt": "Return the length of the longest substring with no repeated characters.",
+  "signature": {
+    "name": "longestDistinctSpan",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "repeat",
+      "args": [
+        "pwwkew"
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "all same",
+      "args": [
+        "aaaa"
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all distinct",
+      "args": [
+        "abcdef"
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single char",
+      "args": [
+        "z"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two distinct",
+      "args": [
+        "ab"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "repeat at edges",
+      "args": [
+        "abba"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "digits and letters",
+      "args": [
+        "a1b2c3"
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "repeat far apart",
+      "args": [
+        "abcabcbb"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "longest_distinct_span",
+      "starterPath": "problems/longest-distinct-span/solutions/python/starter.py",
+      "referencePath": "problems/longest-distinct-span/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "longestDistinctSpan",
+      "starterPath": "problems/longest-distinct-span/solutions/typescript/starter.ts",
+      "referencePath": "problems/longest-distinct-span/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LongestDistinctSpan",
+      "starterPath": "problems/longest-distinct-span/solutions/go/starter.go",
+      "referencePath": "problems/longest-distinct-span/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "longestDistinctSpan",
+      "starterPath": "problems/longest-distinct-span/solutions/scala/starter.scala",
+      "referencePath": "problems/longest-distinct-span/solutions/scala/reference.scala"
+    }
+  }
+}

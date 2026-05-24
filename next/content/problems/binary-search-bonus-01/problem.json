@@ -1,0 +1,187 @@
+{
+  "id": "binary-search-bonus-01",
+  "kind": "problem",
+  "title": "Classic Binary Search",
+  "difficulty": "warmup",
+  "concepts": [
+    "binary-search",
+    "sorted array"
+  ],
+  "prompt": "Given a list of integers sorted in strictly increasing order, return the index of target. If target is not present, return -1.",
+  "signature": {
+    "name": "binarySearch",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "found in middle",
+      "args": [
+        [
+          1,
+          3,
+          5,
+          7,
+          9
+        ],
+        5
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "absent",
+      "args": [
+        [
+          1,
+          3,
+          5,
+          7,
+          9
+        ],
+        6
+      ],
+      "expected": -1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        4
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single match",
+      "args": [
+        [
+          8
+        ],
+        8
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single miss",
+      "args": [
+        [
+          8
+        ],
+        3
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "first element",
+      "args": [
+        [
+          2,
+          4,
+          6,
+          8
+        ],
+        2
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "last element",
+      "args": [
+        [
+          2,
+          4,
+          6,
+          8
+        ],
+        8
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "below all",
+      "args": [
+        [
+          5,
+          6,
+          7
+        ],
+        1
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "above all",
+      "args": [
+        [
+          5,
+          6,
+          7
+        ],
+        9
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -9,
+          -4,
+          0,
+          3
+        ],
+        -4
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "binary_search",
+      "starterPath": "problems/binary-search-bonus-01/solutions/python/starter.py",
+      "referencePath": "problems/binary-search-bonus-01/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "binarySearch",
+      "starterPath": "problems/binary-search-bonus-01/solutions/typescript/starter.ts",
+      "referencePath": "problems/binary-search-bonus-01/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "BinarySearch",
+      "starterPath": "problems/binary-search-bonus-01/solutions/go/starter.go",
+      "referencePath": "problems/binary-search-bonus-01/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "binarySearch",
+      "starterPath": "problems/binary-search-bonus-01/solutions/scala/starter.scala",
+      "referencePath": "problems/binary-search-bonus-01/solutions/scala/reference.scala"
+    }
+  }
+}

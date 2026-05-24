@@ -1,0 +1,291 @@
+{
+  "id": "tek-flatten-config",
+  "kind": "problem",
+  "title": "Flatten a Nested Config",
+  "difficulty": "easy",
+  "concepts": [
+    "recursion",
+    "tree traversal",
+    "dict manipulation"
+  ],
+  "prompt": "You are given a configuration as a nested dict. A value is either another dict (a subtree) or a scalar leaf (string, number, or boolean). Return a flat dict whose keys are the dot-joined paths from the root to each scalar leaf, mapping to that leaf's value. Keys never contain dots. An empty dict — including a nested empty dict — contributes no entries, so a config that has only empty subtrees flattens to an empty dict.",
+  "signature": {
+    "name": "flattenConfig",
+    "inputs": [
+      {
+        "name": "config",
+        "type": {
+          "type": "object"
+        }
+      }
+    ],
+    "output": {
+      "type": "object"
+    }
+  },
+  "tests": [
+    {
+      "name": "empty config",
+      "args": [
+        {}
+      ],
+      "expected": {},
+      "visibility": "visible"
+    },
+    {
+      "name": "one level of nesting",
+      "args": [
+        {
+          "a": {
+            "b": 1,
+            "c": 2
+          },
+          "d": 3
+        }
+      ],
+      "expected": {
+        "a.b": 1,
+        "a.c": 2,
+        "d": 3
+      },
+      "visibility": "visible"
+    },
+    {
+      "name": "flat already",
+      "args": [
+        {
+          "x": 1,
+          "y": 2
+        }
+      ],
+      "expected": {
+        "x": 1,
+        "y": 2
+      },
+      "visibility": "visible"
+    },
+    {
+      "name": "deeply nested single leaf",
+      "args": [
+        {
+          "a": {
+            "b": {
+              "c": 42
+            }
+          }
+        }
+      ],
+      "expected": {
+        "a.b.c": 42
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "nested empty dict contributes nothing",
+      "args": [
+        {
+          "a": {},
+          "b": {
+            "c": {}
+          }
+        }
+      ],
+      "expected": {},
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed scalar types",
+      "args": [
+        {
+          "name": "app",
+          "db": {
+            "host": "local",
+            "port": 5432
+          },
+          "debug": true
+        }
+      ],
+      "expected": {
+        "name": "app",
+        "db.host": "local",
+        "db.port": 5432,
+        "debug": true
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "siblings at multiple depths",
+      "args": [
+        {
+          "a": 1,
+          "b": {
+            "c": 2,
+            "d": {
+              "e": 3
+            }
+          },
+          "f": 4
+        }
+      ],
+      "expected": {
+        "a": 1,
+        "b.c": 2,
+        "b.d.e": 3,
+        "f": 4
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "only empty subtrees",
+      "args": [
+        {
+          "a": {
+            "b": {}
+          },
+          "c": {}
+        }
+      ],
+      "expected": {},
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-unflatten",
+      "title": "Part 2: Rebuild the nested config",
+      "prompt": "Write the reconstruction. Given a flat dict whose keys are dot-joined paths mapping to scalar values, rebuild the nested dict. Every intermediate path segment becomes a nested dict. This recovers the scalar leaves only — flattening discards empty subtrees, so it is the inverse of `flatten_config` for any config without empty subtrees. You may assume the flat keys are consistent (no key is a strict prefix of another) and every path segment is a non-empty string containing no dot, so the result is unambiguous.",
+      "signature": {
+        "name": "unflatten_config",
+        "inputs": [
+          {
+            "name": "arg0",
+            "type": {
+              "type": "object"
+            }
+          }
+        ],
+        "output": {
+          "type": "object"
+        }
+      },
+      "tests": [
+        {
+          "name": "empty flat",
+          "args": [
+            {}
+          ],
+          "expected": {},
+          "visibility": "visible"
+        },
+        {
+          "name": "one level",
+          "args": [
+            {
+              "a.b": 1,
+              "a.c": 2,
+              "d": 3
+            }
+          ],
+          "expected": {
+            "a": {
+              "b": 1,
+              "c": 2
+            },
+            "d": 3
+          },
+          "visibility": "visible"
+        },
+        {
+          "name": "deep single key",
+          "args": [
+            {
+              "a.b.c": 42
+            }
+          ],
+          "expected": {
+            "a": {
+              "b": {
+                "c": 42
+              }
+            }
+          },
+          "visibility": "hidden"
+        },
+        {
+          "name": "already flat",
+          "args": [
+            {
+              "x": 1
+            }
+          ],
+          "expected": {
+            "x": 1
+          },
+          "visibility": "hidden"
+        },
+        {
+          "name": "mixed depths and types",
+          "args": [
+            {
+              "name": "app",
+              "db.host": "local",
+              "db.port": 5432
+            }
+          ],
+          "expected": {
+            "name": "app",
+            "db": {
+              "host": "local",
+              "port": 5432
+            }
+          },
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "unflatten_config",
+          "starterPath": "problems/tek-flatten-config/parts/part-2-unflatten/solutions/python/starter.py",
+          "referencePath": "problems/tek-flatten-config/parts/part-2-unflatten/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "unflatten_config",
+          "starterPath": "problems/tek-flatten-config/parts/part-2-unflatten/solutions/typescript/starter.ts",
+          "referencePath": "problems/tek-flatten-config/parts/part-2-unflatten/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "UnflattenConfig",
+          "starterPath": "problems/tek-flatten-config/parts/part-2-unflatten/solutions/go/starter.go",
+          "referencePath": "problems/tek-flatten-config/parts/part-2-unflatten/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "unflatten_config",
+          "starterPath": "problems/tek-flatten-config/parts/part-2-unflatten/solutions/scala/starter.scala",
+          "referencePath": "problems/tek-flatten-config/parts/part-2-unflatten/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "flatten_config",
+      "starterPath": "problems/tek-flatten-config/solutions/python/starter.py",
+      "referencePath": "problems/tek-flatten-config/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "flattenConfig",
+      "starterPath": "problems/tek-flatten-config/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-flatten-config/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "FlattenConfig",
+      "starterPath": "problems/tek-flatten-config/solutions/go/starter.go",
+      "referencePath": "problems/tek-flatten-config/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "flatten_config",
+      "starterPath": "problems/tek-flatten-config/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-flatten-config/solutions/scala/reference.scala"
+    }
+  }
+}

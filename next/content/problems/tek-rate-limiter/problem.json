@@ -1,0 +1,814 @@
+{
+  "id": "tek-rate-limiter",
+  "kind": "problem",
+  "title": "Per-User Sliding-Window Rate Limiter",
+  "difficulty": "medium",
+  "concepts": [
+    "sliding window",
+    "queue per key",
+    "stream processing"
+  ],
+  "prompt": "Process a stream of events `[[timestamp, user_id], ...]` already sorted by `timestamp` (integer seconds, non-decreasing). For each event, decide whether the request is accepted. The rule per user: a request is accepted only if strictly fewer than `limit` of that user's previously accepted requests have timestamps within the last `window` seconds (counting requests whose timestamp difference from the current one is strictly less than `window`). Rejected requests do not count toward the limit. Return a list of booleans with one entry per event, in input order, where `True` means accepted.",
+  "signature": {
+    "name": "rateLimited",
+    "inputs": [
+      {
+        "name": "events",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "any"
+            }
+          }
+        }
+      },
+      {
+        "name": "limit",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "window",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "boolean"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "empty stream",
+      "args": [
+        [],
+        5,
+        10
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "two accepted then one rejected",
+      "args": [
+        [
+          [
+            1,
+            "a"
+          ],
+          [
+            2,
+            "a"
+          ],
+          [
+            3,
+            "a"
+          ]
+        ],
+        2,
+        5
+      ],
+      "expected": [
+        true,
+        true,
+        false
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "different users do not interfere",
+      "args": [
+        [
+          [
+            1,
+            "a"
+          ],
+          [
+            2,
+            "b"
+          ]
+        ],
+        1,
+        10
+      ],
+      "expected": [
+        true,
+        true
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "edge-of-window allowed",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            5,
+            "a"
+          ]
+        ],
+        1,
+        5
+      ],
+      "expected": [
+        true,
+        true
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "rejected does not consume budget",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            1,
+            "a"
+          ],
+          [
+            5,
+            "a"
+          ],
+          [
+            6,
+            "a"
+          ]
+        ],
+        1,
+        5
+      ],
+      "expected": [
+        true,
+        false,
+        true,
+        false
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "burst at same timestamp",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            0,
+            "a"
+          ],
+          [
+            0,
+            "a"
+          ]
+        ],
+        2,
+        10
+      ],
+      "expected": [
+        true,
+        true,
+        false
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "user resets after gap",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            4,
+            "a"
+          ],
+          [
+            9,
+            "a"
+          ],
+          [
+            13,
+            "a"
+          ]
+        ],
+        1,
+        5
+      ],
+      "expected": [
+        true,
+        false,
+        true,
+        false
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "multiple users interleaved",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            1,
+            "b"
+          ],
+          [
+            2,
+            "a"
+          ],
+          [
+            3,
+            "b"
+          ],
+          [
+            4,
+            "a"
+          ]
+        ],
+        2,
+        10
+      ],
+      "expected": [
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "narrow window allows tight recovery",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            0,
+            "a"
+          ],
+          [
+            1,
+            "a"
+          ],
+          [
+            1,
+            "a"
+          ]
+        ],
+        1,
+        1
+      ],
+      "expected": [
+        true,
+        false,
+        true,
+        false
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "one full one fresh user",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            0,
+            "a"
+          ],
+          [
+            0,
+            "a"
+          ],
+          [
+            0,
+            "b"
+          ]
+        ],
+        2,
+        10
+      ],
+      "expected": [
+        true,
+        true,
+        false,
+        true
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all events same timestamp same user",
+      "args": [
+        [
+          [
+            5,
+            "a"
+          ],
+          [
+            5,
+            "a"
+          ],
+          [
+            5,
+            "a"
+          ],
+          [
+            5,
+            "a"
+          ],
+          [
+            5,
+            "a"
+          ]
+        ],
+        3,
+        10
+      ],
+      "expected": [
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "long stream tight rhythm",
+      "args": [
+        [
+          [
+            0,
+            "a"
+          ],
+          [
+            1,
+            "a"
+          ],
+          [
+            2,
+            "a"
+          ],
+          [
+            3,
+            "a"
+          ],
+          [
+            4,
+            "a"
+          ],
+          [
+            5,
+            "a"
+          ],
+          [
+            6,
+            "a"
+          ]
+        ],
+        2,
+        3
+      ],
+      "expected": [
+        true,
+        true,
+        false,
+        true,
+        true,
+        false,
+        true
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-token-bucket",
+      "title": "Part 2: Token-bucket variant",
+      "prompt": "Now switch to a token-bucket scheme. Each user has a bucket that starts full with `capacity` tokens. Tokens refill at the rate of one token every `refill_period` seconds (integer). The bucket never holds more than `capacity` tokens — extra refills are dropped. Each event spends one token: if the bucket has at least one token at the moment of the event, accept and decrement; otherwise reject with no state change. Events are sorted by timestamp; a user's bucket is created on their first appearance.",
+      "signature": {
+        "name": "token_bucket_rate_limited",
+        "inputs": [
+          {
+            "name": "arg0",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "any"
+                }
+              }
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "arg2",
+            "type": {
+              "type": "number"
+            }
+          }
+        ],
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "boolean"
+          }
+        }
+      },
+      "tests": [
+        {
+          "name": "empty stream",
+          "args": [
+            [],
+            5,
+            10
+          ],
+          "expected": [],
+          "visibility": "visible"
+        },
+        {
+          "name": "start full and drain",
+          "args": [
+            [
+              [
+                0,
+                "a"
+              ],
+              [
+                0,
+                "a"
+              ],
+              [
+                0,
+                "a"
+              ]
+            ],
+            2,
+            1
+          ],
+          "expected": [
+            true,
+            true,
+            false
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "one refill arrives",
+          "args": [
+            [
+              [
+                0,
+                "a"
+              ],
+              [
+                0,
+                "a"
+              ],
+              [
+                1,
+                "a"
+              ]
+            ],
+            2,
+            1
+          ],
+          "expected": [
+            true,
+            true,
+            true
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "different users independent",
+          "args": [
+            [
+              [
+                0,
+                "a"
+              ],
+              [
+                0,
+                "b"
+              ]
+            ],
+            1,
+            10
+          ],
+          "expected": [
+            true,
+            true
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "partial elapsed no refill",
+          "args": [
+            [
+              [
+                0,
+                "a"
+              ],
+              [
+                0,
+                "a"
+              ],
+              [
+                1,
+                "a"
+              ],
+              [
+                2,
+                "a"
+              ]
+            ],
+            1,
+            2
+          ],
+          "expected": [
+            true,
+            false,
+            false,
+            true
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "exhaust then slow recovery",
+          "args": [
+            [
+              [
+                0,
+                "a"
+              ],
+              [
+                0,
+                "a"
+              ],
+              [
+                0,
+                "a"
+              ],
+              [
+                3,
+                "a"
+              ],
+              [
+                3,
+                "a"
+              ]
+            ],
+            2,
+            2
+          ],
+          "expected": [
+            true,
+            true,
+            false,
+            true,
+            false
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "capacity above refill rate",
+          "args": [
+            [
+              [
+                0,
+                "a"
+              ],
+              [
+                10,
+                "a"
+              ]
+            ],
+            5,
+            1
+          ],
+          "expected": [
+            true,
+            true
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "burst at same timestamp depletes bucket",
+          "args": [
+            [
+              [
+                5,
+                "a"
+              ],
+              [
+                5,
+                "a"
+              ],
+              [
+                5,
+                "a"
+              ],
+              [
+                5,
+                "a"
+              ]
+            ],
+            3,
+            1
+          ],
+          "expected": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "refill anchor preserves fractional carry",
+          "args": [
+            [
+              [
+                0,
+                "a"
+              ],
+              [
+                4,
+                "a"
+              ],
+              [
+                6,
+                "a"
+              ],
+              [
+                7,
+                "a"
+              ]
+            ],
+            1,
+            3
+          ],
+          "expected": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "refill never exceeds capacity",
+          "args": [
+            [
+              [
+                0,
+                "a"
+              ],
+              [
+                0,
+                "a"
+              ],
+              [
+                100,
+                "a"
+              ],
+              [
+                100,
+                "a"
+              ],
+              [
+                100,
+                "a"
+              ]
+            ],
+            2,
+            1
+          ],
+          "expected": [
+            true,
+            true,
+            true,
+            true,
+            false
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "two users independent bucket state",
+          "args": [
+            [
+              [
+                0,
+                "a"
+              ],
+              [
+                0,
+                "a"
+              ],
+              [
+                0,
+                "b"
+              ],
+              [
+                0,
+                "b"
+              ],
+              [
+                0,
+                "a"
+              ],
+              [
+                0,
+                "b"
+              ]
+            ],
+            2,
+            5
+          ],
+          "expected": [
+            true,
+            true,
+            true,
+            true,
+            false,
+            false
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "token_bucket_rate_limited",
+          "starterPath": "problems/tek-rate-limiter/parts/part-2-token-bucket/solutions/python/starter.py",
+          "referencePath": "problems/tek-rate-limiter/parts/part-2-token-bucket/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "token_bucket_rate_limited",
+          "starterPath": "problems/tek-rate-limiter/parts/part-2-token-bucket/solutions/typescript/starter.ts",
+          "referencePath": "problems/tek-rate-limiter/parts/part-2-token-bucket/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "TokenBucketRateLimited",
+          "starterPath": "problems/tek-rate-limiter/parts/part-2-token-bucket/solutions/go/starter.go",
+          "referencePath": "problems/tek-rate-limiter/parts/part-2-token-bucket/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "token_bucket_rate_limited",
+          "starterPath": "problems/tek-rate-limiter/parts/part-2-token-bucket/solutions/scala/starter.scala",
+          "referencePath": "problems/tek-rate-limiter/parts/part-2-token-bucket/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "rate_limited",
+      "starterPath": "problems/tek-rate-limiter/solutions/python/starter.py",
+      "referencePath": "problems/tek-rate-limiter/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "rateLimited",
+      "starterPath": "problems/tek-rate-limiter/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-rate-limiter/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RateLimited",
+      "starterPath": "problems/tek-rate-limiter/solutions/go/starter.go",
+      "referencePath": "problems/tek-rate-limiter/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "rate_limited",
+      "starterPath": "problems/tek-rate-limiter/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-rate-limiter/solutions/scala/reference.scala"
+    }
+  }
+}

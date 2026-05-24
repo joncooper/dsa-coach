@@ -1,0 +1,132 @@
+{
+  "id": "heaps-bonus-03",
+  "kind": "problem",
+  "title": "Last Stone Weight",
+  "difficulty": "easy",
+  "concepts": [
+    "heaps",
+    "max-heap",
+    "simulation"
+  ],
+  "prompt": "Each turn, smash the two heaviest stones together. If they weigh x and y with x <= y, the heavier one is reduced to y - x and the lighter one is destroyed; if they are equal both are destroyed. Repeat until at most one stone remains, and return its weight (0 if none remain).",
+  "signature": {
+    "name": "lastStoneWeight",
+    "inputs": [
+      {
+        "name": "stones",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "classic example",
+      "args": [
+        [
+          2,
+          7,
+          4,
+          1,
+          8,
+          1
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "all destroyed",
+      "args": [
+        [
+          3,
+          3
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single stone",
+      "args": [
+        [
+          6
+        ]
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two unequal",
+      "args": [
+        [
+          10,
+          4
+        ]
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "leaves one survivor",
+      "args": [
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "with zero weights",
+      "args": [
+        [
+          0,
+          0,
+          5
+        ]
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "last_stone_weight",
+      "starterPath": "problems/heaps-bonus-03/solutions/python/starter.py",
+      "referencePath": "problems/heaps-bonus-03/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "lastStoneWeight",
+      "starterPath": "problems/heaps-bonus-03/solutions/typescript/starter.ts",
+      "referencePath": "problems/heaps-bonus-03/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LastStoneWeight",
+      "starterPath": "problems/heaps-bonus-03/solutions/go/starter.go",
+      "referencePath": "problems/heaps-bonus-03/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "lastStoneWeight",
+      "starterPath": "problems/heaps-bonus-03/solutions/scala/starter.scala",
+      "referencePath": "problems/heaps-bonus-03/solutions/scala/reference.scala"
+    }
+  }
+}

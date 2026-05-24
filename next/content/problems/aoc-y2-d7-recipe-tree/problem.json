@@ -1,0 +1,256 @@
+{
+  "id": "aoc-y2-d7-recipe-tree",
+  "kind": "problem",
+  "title": "Day 7: Recipe Tree",
+  "difficulty": "medium",
+  "concepts": [
+    "graph",
+    "DFS",
+    "memoization",
+    "topological order"
+  ],
+  "prompt": "Each non-empty line describes one recipe in this exact shape:\n\n`RESULT requires N1 INGRED_A, N2 INGRED_B, ... .`\n\nor\n\n`RESULT requires nothing.`\n\nResult and ingredient names are single lowercase words (no spaces). Counts are positive integers. Return the number of distinct recipes (results) that transitively depend on `binding_paste` — that is, recipes that directly list `binding_paste` as an ingredient OR list any recipe that does. The starting `binding_paste` recipe is not counted as depending on itself.",
+  "signature": {
+    "name": "count_dependents_on_paste",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two dependents",
+      "args": [
+        "core requires 1 binding_paste.\nshell requires 1 core.\nbinding_paste requires nothing."
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "no dependents",
+      "args": [
+        "alpha requires 1 beta.\nbeta requires nothing."
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "diamond dependents",
+      "args": [
+        "left requires 1 binding_paste.\nright requires 1 binding_paste.\ntop requires 1 left, 1 right.\nbinding_paste requires nothing."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "long chain",
+      "args": [
+        "a requires 1 binding_paste.\nb requires 1 a.\nc requires 1 b.\nd requires 1 c.\nbinding_paste requires nothing."
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "irrelevant subtree",
+      "args": [
+        "core requires 1 binding_paste.\nirrelevant requires 1 dust.\ndust requires nothing.\nbinding_paste requires nothing."
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "binding_paste not referenced anywhere",
+      "args": [
+        "alpha requires 1 beta.\nbeta requires 1 gamma.\ngamma requires nothing.\nbinding_paste requires nothing."
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "multiple direct dependents",
+      "args": [
+        "alpha requires 1 binding_paste.\nbeta requires 1 binding_paste.\ngamma requires 1 binding_paste.\nbinding_paste requires nothing."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "deep transitive chain",
+      "args": [
+        "a requires 1 b.\nb requires 1 c.\nc requires 1 binding_paste.\nbinding_paste requires nothing."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed ingredient counts dont matter for reachability",
+      "args": [
+        "tonic requires 5 binding_paste, 3 herb.\nherb requires nothing.\nbinding_paste requires nothing."
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-paste-cost",
+      "title": "Part 2: Paste cost",
+      "prompt": "Same input. Now compute the total quantity of `binding_paste` required to produce exactly one unit of the recipe named `final_product`. `binding_paste` is a raw material: one unit of it counts as 1, and you do not descend into any rule that defines `binding_paste` itself. Direct dependencies multiply through the chain (e.g., 2 of X, and X needs 3 binding_paste each, contributes 6). If `final_product` is not defined in the input, return 0. If `final_product` does not transitively need `binding_paste`, return 0.",
+      "signature": {
+        "name": "binding_paste_cost",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "direct cost",
+          "args": [
+            "final_product requires 3 binding_paste.\nbinding_paste requires nothing."
+          ],
+          "expected": 3,
+          "visibility": "visible"
+        },
+        {
+          "name": "indirect cost",
+          "args": [
+            "final_product requires 2 core.\ncore requires 5 binding_paste.\nbinding_paste requires nothing."
+          ],
+          "expected": 10,
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "no paste needed",
+          "args": [
+            "final_product requires 1 dust.\ndust requires nothing.\nbinding_paste requires nothing."
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "diamond multiplies twice",
+          "args": [
+            "final_product requires 2 left, 3 right.\nleft requires 1 binding_paste.\nright requires 4 binding_paste.\nbinding_paste requires nothing."
+          ],
+          "expected": 14,
+          "visibility": "hidden"
+        },
+        {
+          "name": "long chain",
+          "args": [
+            "final_product requires 2 a.\na requires 3 b.\nb requires 5 binding_paste.\nbinding_paste requires nothing."
+          ],
+          "expected": 30,
+          "visibility": "hidden"
+        },
+        {
+          "name": "final_product not defined returns zero",
+          "args": [
+            "binding_paste requires nothing."
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "diamond with shared deeper subtree",
+          "args": [
+            "final_product requires 2 a, 2 b.\na requires 3 base.\nb requires 3 base.\nbase requires 2 binding_paste.\nbinding_paste requires nothing."
+          ],
+          "expected": 24,
+          "visibility": "hidden"
+        },
+        {
+          "name": "mixed paste and non-paste ingredients",
+          "args": [
+            "final_product requires 2 binding_paste, 1 sleeve.\nsleeve requires 3 binding_paste, 4 leather.\nleather requires nothing.\nbinding_paste requires nothing."
+          ],
+          "expected": 5,
+          "visibility": "hidden"
+        },
+        {
+          "name": "final_product directly depends on non-paste leaf",
+          "args": [
+            "final_product requires 10 sand.\nsand requires nothing.\nbinding_paste requires nothing."
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "binding_paste_cost",
+          "starterPath": "problems/aoc-y2-d7-recipe-tree/parts/part-2-paste-cost/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y2-d7-recipe-tree/parts/part-2-paste-cost/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "binding_paste_cost",
+          "starterPath": "problems/aoc-y2-d7-recipe-tree/parts/part-2-paste-cost/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y2-d7-recipe-tree/parts/part-2-paste-cost/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "BindingPasteCost",
+          "starterPath": "problems/aoc-y2-d7-recipe-tree/parts/part-2-paste-cost/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y2-d7-recipe-tree/parts/part-2-paste-cost/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "binding_paste_cost",
+          "starterPath": "problems/aoc-y2-d7-recipe-tree/parts/part-2-paste-cost/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y2-d7-recipe-tree/parts/part-2-paste-cost/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_dependents_on_paste",
+      "starterPath": "problems/aoc-y2-d7-recipe-tree/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y2-d7-recipe-tree/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "count_dependents_on_paste",
+      "starterPath": "problems/aoc-y2-d7-recipe-tree/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y2-d7-recipe-tree/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountDependentsOnPaste",
+      "starterPath": "problems/aoc-y2-d7-recipe-tree/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y2-d7-recipe-tree/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "count_dependents_on_paste",
+      "starterPath": "problems/aoc-y2-d7-recipe-tree/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y2-d7-recipe-tree/solutions/scala/reference.scala"
+    }
+  }
+}

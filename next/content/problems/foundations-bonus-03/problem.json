@@ -1,0 +1,134 @@
+{
+  "id": "foundations-bonus-03",
+  "kind": "problem",
+  "title": "Second Largest Value",
+  "difficulty": "easy",
+  "concepts": [
+    "foundations",
+    "iteration",
+    "running state"
+  ],
+  "prompt": "Return the second largest distinct value in the list. If there are fewer than two distinct values, return None.",
+  "signature": {
+    "name": "secondLargest",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number",
+      "nullable": true
+    }
+  },
+  "tests": [
+    {
+      "name": "clear runner up",
+      "args": [
+        [
+          3,
+          1,
+          4,
+          1,
+          5
+        ]
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "only one distinct",
+      "args": [
+        [
+          5,
+          5,
+          5
+        ]
+      ],
+      "expected": null,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two values",
+      "args": [
+        [
+          2,
+          1
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicate largest",
+      "args": [
+        [
+          10,
+          10,
+          9,
+          8
+        ]
+      ],
+      "expected": 9,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all negative",
+      "args": [
+        [
+          -1,
+          -2,
+          -3
+        ]
+      ],
+      "expected": -2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "second_largest",
+      "starterPath": "problems/foundations-bonus-03/solutions/python/starter.py",
+      "referencePath": "problems/foundations-bonus-03/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "secondLargest",
+      "starterPath": "problems/foundations-bonus-03/solutions/typescript/starter.ts",
+      "referencePath": "problems/foundations-bonus-03/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SecondLargest",
+      "starterPath": "problems/foundations-bonus-03/solutions/go/starter.go",
+      "referencePath": "problems/foundations-bonus-03/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "secondLargest",
+      "starterPath": "problems/foundations-bonus-03/solutions/scala/starter.scala",
+      "referencePath": "problems/foundations-bonus-03/solutions/scala/reference.scala"
+    }
+  }
+}

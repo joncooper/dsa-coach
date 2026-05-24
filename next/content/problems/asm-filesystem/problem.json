@@ -1,0 +1,1414 @@
+{
+  "id": "asm-filesystem",
+  "kind": "problem",
+  "title": "Progressive Filesystem",
+  "difficulty": "medium",
+  "concepts": [
+    "simulation",
+    "stateful design",
+    "hash map",
+    "sorting"
+  ],
+  "prompt": "Implement an in-memory file store driven by a list of operations. `solution(queries)` receives a list of queries; each query is a list of strings `[OP, ...args]`. Return a list with one string result per query, in order.\n\n**Level 1 operations**\n\n- `[\"ADD_FILE\", name, size]` — add a new file. Return `\"true\"` if added, or `\"false\"` if a file with that name already exists (no change in that case). `size` is a non-negative integer given as a string.\n- `[\"GET_FILE_SIZE\", name]` — return the file's size as a string, or `\"\"` if no such file exists.\n- `[\"COPY_FILE\", source, dest]` — copy `source` to `dest` (overwriting `dest` if it already exists). Return `\"true\"`, or `\"false\"` if `source` does not exist.\n\nNames are case-sensitive. This problem has four progressive levels; later levels add operations to this same function, so structure it as a clean per-op dispatcher.",
+  "signature": {
+    "name": "solution",
+    "inputs": [
+      {
+        "name": "queries",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "l1-empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-add-then-get",
+      "args": [
+        [
+          [
+            "ADD_FILE",
+            "a.txt",
+            "100"
+          ],
+          [
+            "GET_FILE_SIZE",
+            "a.txt"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "100"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-duplicate-add",
+      "args": [
+        [
+          [
+            "ADD_FILE",
+            "a.txt",
+            "100"
+          ],
+          [
+            "ADD_FILE",
+            "a.txt",
+            "200"
+          ],
+          [
+            "GET_FILE_SIZE",
+            "a.txt"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "false",
+        "100"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-copy-then-get",
+      "args": [
+        [
+          [
+            "ADD_FILE",
+            "a.txt",
+            "50"
+          ],
+          [
+            "COPY_FILE",
+            "a.txt",
+            "b.txt"
+          ],
+          [
+            "GET_FILE_SIZE",
+            "b.txt"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "50"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-copy-missing-src",
+      "args": [
+        [
+          [
+            "COPY_FILE",
+            "x",
+            "y"
+          ]
+        ]
+      ],
+      "expected": [
+        "false"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-get-missing",
+      "args": [
+        [
+          [
+            "GET_FILE_SIZE",
+            "nope"
+          ]
+        ]
+      ],
+      "expected": [
+        ""
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-copy-overwrites-dest",
+      "args": [
+        [
+          [
+            "ADD_FILE",
+            "a",
+            "10"
+          ],
+          [
+            "ADD_FILE",
+            "b",
+            "99"
+          ],
+          [
+            "COPY_FILE",
+            "a",
+            "b"
+          ],
+          [
+            "GET_FILE_SIZE",
+            "b"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "true",
+        "10"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-case-sensitive",
+      "args": [
+        [
+          [
+            "ADD_FILE",
+            "File",
+            "1"
+          ],
+          [
+            "GET_FILE_SIZE",
+            "file"
+          ],
+          [
+            "GET_FILE_SIZE",
+            "File"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "",
+        "1"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-copy-to-self",
+      "args": [
+        [
+          [
+            "ADD_FILE",
+            "a",
+            "7"
+          ],
+          [
+            "COPY_FILE",
+            "a",
+            "a"
+          ],
+          [
+            "GET_FILE_SIZE",
+            "a"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "7"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-size-zero",
+      "args": [
+        [
+          [
+            "ADD_FILE",
+            "z",
+            "0"
+          ],
+          [
+            "GET_FILE_SIZE",
+            "z"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "0"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "l2-search",
+      "title": "Level 2: Prefix & suffix search",
+      "prompt": "Extend your Level 1 file store with search. All Level 1 operations keep working unchanged.\n\n**New operations**\n\n- `[\"FIND_BY_PREFIX\", prefix]` — find every file whose name starts with `prefix`.\n- `[\"FIND_BY_SUFFIX\", suffix]` — find every file whose name ends with `suffix`.\n\nBoth return a single string: the matching files formatted as `name(size)`, joined by commas, **sorted by size descending, breaking ties by name ascending**. Return `\"\"` when nothing matches. An empty `prefix`/`suffix` matches every file.",
+      "signature": {
+        "name": "solution",
+        "inputs": [
+          {
+            "name": "queries",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "tests": [
+        {
+          "name": "l2-prefix-by-size-desc",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "data1.txt",
+                "30"
+              ],
+              [
+                "ADD_FILE",
+                "data2.txt",
+                "90"
+              ],
+              [
+                "FIND_BY_PREFIX",
+                "data"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "data2.txt(90),data1.txt(30)"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-prefix-no-match",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "a",
+                "1"
+              ],
+              [
+                "FIND_BY_PREFIX",
+                "z"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-suffix-match",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "a.log",
+                "5"
+              ],
+              [
+                "ADD_FILE",
+                "b.txt",
+                "6"
+              ],
+              [
+                "FIND_BY_SUFFIX",
+                ".log"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "a.log(5)"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-prefix-equals-name",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "report",
+                "42"
+              ],
+              [
+                "FIND_BY_PREFIX",
+                "report"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "report(42)"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-size-tie-lexicographic",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "b",
+                "10"
+              ],
+              [
+                "ADD_FILE",
+                "a",
+                "10"
+              ],
+              [
+                "FIND_BY_PREFIX",
+                ""
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "a(10),b(10)"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-empty-prefix-all",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "x",
+                "5"
+              ],
+              [
+                "ADD_FILE",
+                "y",
+                "9"
+              ],
+              [
+                "FIND_BY_PREFIX",
+                ""
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "y(9),x(5)"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-copied-file-searchable",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "src.txt",
+                "12"
+              ],
+              [
+                "COPY_FILE",
+                "src.txt",
+                "dst.txt"
+              ],
+              [
+                "FIND_BY_SUFFIX",
+                ".txt"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "dst.txt(12),src.txt(12)"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-size-zero-tie",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "f2",
+                "0"
+              ],
+              [
+                "ADD_FILE",
+                "f1",
+                "0"
+              ],
+              [
+                "FIND_BY_PREFIX",
+                "f"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "f1(0),f2(0)"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-prefix-and-suffix-overlap",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "abc",
+                "3"
+              ],
+              [
+                "FIND_BY_PREFIX",
+                "ab"
+              ],
+              [
+                "FIND_BY_SUFFIX",
+                "bc"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "abc(3)",
+            "abc(3)"
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-filesystem/parts/l2-search/solutions/python/starter.py",
+          "referencePath": "problems/asm-filesystem/parts/l2-search/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-filesystem/parts/l2-search/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-filesystem/parts/l2-search/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-filesystem/parts/l2-search/solutions/go/starter.go",
+          "referencePath": "problems/asm-filesystem/parts/l2-search/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-filesystem/parts/l2-search/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-filesystem/parts/l2-search/solutions/scala/reference.scala"
+        }
+      }
+    },
+    {
+      "id": "l3-users-quotas",
+      "title": "Level 3: Users, quotas & eviction",
+      "prompt": "Add multi-user storage with quotas. All earlier operations keep working: files added via `ADD_FILE` (and any `COPY_FILE` destination) belong to an internal system owner with unlimited quota, and are never evicted by the rule below.\n\n**New operations**\n\n- `[\"ADD_USER\", user, capacity]` — create a user with integer byte `capacity`. Return `\"true\"`, or `\"false\"` if the user already exists.\n- `[\"ADD_FILE_BY\", user, name, size]` — add a file owned by `user`. Return `\"false\"` (no change) if the user does not exist, a file with that name already exists, or `size` exceeds the user's total capacity. Otherwise, if the user's used bytes plus `size` would exceed capacity, **evict that user's own files largest first (ties: name ascending)** until the new file fits, then add it and return `\"true\"`.",
+      "signature": {
+        "name": "solution",
+        "inputs": [
+          {
+            "name": "queries",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "tests": [
+        {
+          "name": "l3-user-add-within-quota",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "f",
+                "40"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "f"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "40"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-evicts-largest-first",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "big",
+                "80"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "small",
+                "30"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "new",
+                "80"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "big"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "small"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "new"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "true",
+            "true",
+            "",
+            "",
+            "80"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-unknown-user",
+          "args": [
+            [
+              [
+                "ADD_FILE_BY",
+                "ghost",
+                "f",
+                "10"
+              ]
+            ]
+          ],
+          "expected": [
+            "false"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-quota-exactly-equal",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "50"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "f",
+                "50"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "f"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "50"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-eviction-tie-by-name",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "20"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "b",
+                "10"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "a",
+                "10"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "c",
+                "10"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "a"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "b"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "c"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "true",
+            "true",
+            "",
+            "10",
+            "10"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-multi-file-eviction",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "f1",
+                "30"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "f2",
+                "30"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "f3",
+                "30"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "big",
+                "80"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "f1"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "f2"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "f3"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "big"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "true",
+            "true",
+            "true",
+            "",
+            "",
+            "",
+            "80"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-too-big-no-change",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "50"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "a",
+                "20"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "toobig",
+                "60"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "a"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "toobig"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "false",
+            "20",
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-system-files-not-evicted",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "sys.txt",
+                "90"
+              ],
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "ufile",
+                "80"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "ufile2",
+                "80"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "sys.txt"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "ufile"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "true",
+            "true",
+            "90",
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-duplicate-user",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "10"
+              ],
+              [
+                "ADD_USER",
+                "u",
+                "20"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "false"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-add-file-by-name-collision",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "x",
+                "5"
+              ],
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "x",
+                "10"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "x"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "false",
+            "5"
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-filesystem/parts/l3-users-quotas/solutions/python/starter.py",
+          "referencePath": "problems/asm-filesystem/parts/l3-users-quotas/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-filesystem/parts/l3-users-quotas/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-filesystem/parts/l3-users-quotas/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-filesystem/parts/l3-users-quotas/solutions/go/starter.go",
+          "referencePath": "problems/asm-filesystem/parts/l3-users-quotas/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-filesystem/parts/l3-users-quotas/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-filesystem/parts/l3-users-quotas/solutions/scala/reference.scala"
+        }
+      }
+    },
+    {
+      "id": "l4-compression",
+      "title": "Level 4: Compression",
+      "prompt": "Add file compression. All earlier operations keep working.\n\n**New operations**\n\n- `[\"COMPRESS_FILE\", user, name]` — if the file exists, is owned by `user`, and is not already compressed, halve its size using integer floor division (`new = size // 2`), decrease the owner's used bytes accordingly, and return the new size as a string. Otherwise return `\"\"` (no change).\n- `[\"DECOMPRESS_FILE\", user, name]` — if the file exists, is owned by `user`, and is compressed, restore its original size. If restoring would exceed the owner's capacity, return `\"\"` and leave it compressed; otherwise update the owner's used bytes, restore the size, and return the restored size as a string. Otherwise return `\"\"`.",
+      "signature": {
+        "name": "solution",
+        "inputs": [
+          {
+            "name": "queries",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "tests": [
+        {
+          "name": "l4-compress-then-get",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "f",
+                "40"
+              ],
+              [
+                "COMPRESS_FILE",
+                "u",
+                "f"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "f"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "20",
+            "20"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-compress-missing",
+          "args": [
+            [
+              [
+                "COMPRESS_FILE",
+                "u",
+                "ghost"
+              ]
+            ]
+          ],
+          "expected": [
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-double-compress",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "f",
+                "40"
+              ],
+              [
+                "COMPRESS_FILE",
+                "u",
+                "f"
+              ],
+              [
+                "COMPRESS_FILE",
+                "u",
+                "f"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "20",
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-decompress-restores",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "f",
+                "40"
+              ],
+              [
+                "COMPRESS_FILE",
+                "u",
+                "f"
+              ],
+              [
+                "DECOMPRESS_FILE",
+                "u",
+                "f"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "f"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "20",
+            "40",
+            "40"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-compression-frees-quota",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "a",
+                "80"
+              ],
+              [
+                "COMPRESS_FILE",
+                "u",
+                "a"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "b",
+                "60"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "a"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "b"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "40",
+            "true",
+            "40",
+            "60"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-decompress-exceeds-quota",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "a",
+                "80"
+              ],
+              [
+                "COMPRESS_FILE",
+                "u",
+                "a"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "b",
+                "60"
+              ],
+              [
+                "DECOMPRESS_FILE",
+                "u",
+                "a"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "a"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "40",
+            "true",
+            "",
+            "40"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-compress-size-one",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "f",
+                "1"
+              ],
+              [
+                "COMPRESS_FILE",
+                "u",
+                "f"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "f"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "0",
+            "0"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-compress-owner-mismatch",
+          "args": [
+            [
+              [
+                "ADD_FILE",
+                "s",
+                "10"
+              ],
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "COMPRESS_FILE",
+                "u",
+                "s"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-decompress-after-eviction",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "a",
+                "80"
+              ],
+              [
+                "COMPRESS_FILE",
+                "u",
+                "a"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "big",
+                "100"
+              ],
+              [
+                "DECOMPRESS_FILE",
+                "u",
+                "a"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "40",
+            "true",
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-compress-then-copy",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "u",
+                "100"
+              ],
+              [
+                "ADD_FILE_BY",
+                "u",
+                "a",
+                "40"
+              ],
+              [
+                "COMPRESS_FILE",
+                "u",
+                "a"
+              ],
+              [
+                "COPY_FILE",
+                "a",
+                "c"
+              ],
+              [
+                "GET_FILE_SIZE",
+                "c"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "20",
+            "true",
+            "20"
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-filesystem/parts/l4-compression/solutions/python/starter.py",
+          "referencePath": "problems/asm-filesystem/parts/l4-compression/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-filesystem/parts/l4-compression/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-filesystem/parts/l4-compression/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-filesystem/parts/l4-compression/solutions/go/starter.go",
+          "referencePath": "problems/asm-filesystem/parts/l4-compression/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-filesystem/parts/l4-compression/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-filesystem/parts/l4-compression/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-filesystem/solutions/python/starter.py",
+      "referencePath": "problems/asm-filesystem/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-filesystem/solutions/typescript/starter.ts",
+      "referencePath": "problems/asm-filesystem/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "Solution",
+      "starterPath": "problems/asm-filesystem/solutions/go/starter.go",
+      "referencePath": "problems/asm-filesystem/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-filesystem/solutions/scala/starter.scala",
+      "referencePath": "problems/asm-filesystem/solutions/scala/reference.scala"
+    }
+  }
+}

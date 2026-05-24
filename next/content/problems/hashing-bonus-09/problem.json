@@ -1,0 +1,153 @@
+{
+  "id": "hashing-bonus-09",
+  "kind": "problem",
+  "title": "Can Form Word From Letters",
+  "difficulty": "easy",
+  "concepts": [
+    "hashing",
+    "frequency map",
+    "multiset"
+  ],
+  "prompt": "Given a target word and a list of available single-character letters, return True if the word can be spelled using those letters. Each letter may be used at most as many times as it appears in the list.",
+  "signature": {
+    "name": "canFormWord",
+    "inputs": [
+      {
+        "name": "word",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "letters",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "enough letters",
+      "args": [
+        "cat",
+        [
+          "a",
+          "c",
+          "t",
+          "x"
+        ]
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "missing copy",
+      "args": [
+        "aa",
+        [
+          "a"
+        ]
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty word",
+      "args": [
+        "",
+        [
+          "a",
+          "b"
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "no letters",
+      "args": [
+        "a",
+        []
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "exact letters",
+      "args": [
+        "abc",
+        [
+          "c",
+          "b",
+          "a"
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates needed",
+      "args": [
+        "aab",
+        [
+          "a",
+          "a",
+          "b",
+          "b"
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "short on repeats",
+      "args": [
+        "aaa",
+        [
+          "a",
+          "a"
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "both empty",
+      "args": [
+        "",
+        []
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "can_form_word",
+      "starterPath": "problems/hashing-bonus-09/solutions/python/starter.py",
+      "referencePath": "problems/hashing-bonus-09/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "canFormWord",
+      "starterPath": "problems/hashing-bonus-09/solutions/typescript/starter.ts",
+      "referencePath": "problems/hashing-bonus-09/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CanFormWord",
+      "starterPath": "problems/hashing-bonus-09/solutions/go/starter.go",
+      "referencePath": "problems/hashing-bonus-09/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "canFormWord",
+      "starterPath": "problems/hashing-bonus-09/solutions/scala/starter.scala",
+      "referencePath": "problems/hashing-bonus-09/solutions/scala/reference.scala"
+    }
+  }
+}

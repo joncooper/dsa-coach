@@ -1,0 +1,217 @@
+{
+  "id": "stacks-queues-bonus-05",
+  "kind": "problem",
+  "title": "Min-Tracking Stack",
+  "difficulty": "easy",
+  "concepts": [
+    "stacks-queues",
+    "stack",
+    "simulation"
+  ],
+  "prompt": "Simulate a stack that also reports its smallest value in constant time. Each operation is a list: ['push', v] adds a value, ['pop'] removes the top, and ['min'] asks for the current minimum. Return the list of answers, one per 'min' operation, in order.",
+  "signature": {
+    "name": "minStackOps",
+    "inputs": [
+      {
+        "name": "ops",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "any"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "min tracks across push and pop",
+      "args": [
+        [
+          [
+            "push",
+            3
+          ],
+          [
+            "push",
+            1
+          ],
+          [
+            "min"
+          ],
+          [
+            "push",
+            2
+          ],
+          [
+            "min"
+          ],
+          [
+            "pop"
+          ],
+          [
+            "min"
+          ]
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        1
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single value",
+      "args": [
+        [
+          [
+            "push",
+            5
+          ],
+          [
+            "min"
+          ],
+          [
+            "pop"
+          ]
+        ]
+      ],
+      "expected": [
+        5
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "no queries",
+      "args": [
+        [
+          [
+            "push",
+            9
+          ],
+          [
+            "push",
+            2
+          ],
+          [
+            "pop"
+          ]
+        ]
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          [
+            "push",
+            -1
+          ],
+          [
+            "push",
+            -3
+          ],
+          [
+            "min"
+          ]
+        ]
+      ],
+      "expected": [
+        -3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "min rises after pop",
+      "args": [
+        [
+          [
+            "push",
+            4
+          ],
+          [
+            "push",
+            1
+          ],
+          [
+            "pop"
+          ],
+          [
+            "min"
+          ]
+        ]
+      ],
+      "expected": [
+        4
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "reset by full drain",
+      "args": [
+        [
+          [
+            "push",
+            2
+          ],
+          [
+            "pop"
+          ],
+          [
+            "push",
+            9
+          ],
+          [
+            "min"
+          ]
+        ]
+      ],
+      "expected": [
+        9
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "min_stack_ops",
+      "starterPath": "problems/stacks-queues-bonus-05/solutions/python/starter.py",
+      "referencePath": "problems/stacks-queues-bonus-05/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "minStackOps",
+      "starterPath": "problems/stacks-queues-bonus-05/solutions/typescript/starter.ts",
+      "referencePath": "problems/stacks-queues-bonus-05/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MinStackOps",
+      "starterPath": "problems/stacks-queues-bonus-05/solutions/go/starter.go",
+      "referencePath": "problems/stacks-queues-bonus-05/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "minStackOps",
+      "starterPath": "problems/stacks-queues-bonus-05/solutions/scala/starter.scala",
+      "referencePath": "problems/stacks-queues-bonus-05/solutions/scala/reference.scala"
+    }
+  }
+}

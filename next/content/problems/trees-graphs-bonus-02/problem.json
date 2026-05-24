@@ -1,0 +1,141 @@
+{
+  "id": "trees-graphs-bonus-02",
+  "kind": "problem",
+  "title": "Count Tree Nodes",
+  "difficulty": "warmup",
+  "concepts": [
+    "trees-graphs",
+    "BFS",
+    "level-order traversal"
+  ],
+  "prompt": "Given the root of a binary tree, return the total number of nodes it contains. Solve it iteratively with a breadth-first traversal.",
+  "signature": {
+    "name": "countTreeNodes",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "nullable": true
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "five nodes",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": 5,
+      "visibility": "visible"
+    },
+    {
+      "name": "single node",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty tree",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "left chain",
+      "args": [
+        [
+          1,
+          2,
+          null,
+          3,
+          null
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "right chain",
+      "args": [
+        [
+          1,
+          null,
+          2,
+          null,
+          3
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "full three levels",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      ],
+      "expected": 7,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two nodes",
+      "args": [
+        [
+          8,
+          9
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_tree_nodes",
+      "starterPath": "problems/trees-graphs-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/trees-graphs-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "countTreeNodes",
+      "starterPath": "problems/trees-graphs-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/trees-graphs-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountTreeNodes",
+      "starterPath": "problems/trees-graphs-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/trees-graphs-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "countTreeNodes",
+      "starterPath": "problems/trees-graphs-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/trees-graphs-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

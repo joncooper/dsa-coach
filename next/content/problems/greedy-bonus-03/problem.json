@@ -1,0 +1,135 @@
+{
+  "id": "greedy-bonus-03",
+  "kind": "problem",
+  "title": "Lemonade Stand Change",
+  "difficulty": "easy",
+  "concepts": [
+    "greedy",
+    "running state",
+    "simulation"
+  ],
+  "prompt": "Each lemonade costs exactly 5. Customers pay in order with a 5, 10, or 20 bill, listed in `bills`. You start with no money and must give correct change from bills you have already collected. Return True if you can serve every customer, otherwise False.",
+  "signature": {
+    "name": "canMakeChange",
+    "inputs": [
+      {
+        "name": "bills",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "serves everyone",
+      "args": [
+        [
+          5,
+          5,
+          5,
+          10,
+          20
+        ]
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "no change for ten",
+      "args": [
+        [
+          10,
+          10
+        ]
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single five",
+      "args": [
+        [
+          5
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "twenty first fails",
+      "args": [
+        [
+          20
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "three fives break twenty",
+      "args": [
+        [
+          5,
+          5,
+          5,
+          20
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "ten preferred keeps fives",
+      "args": [
+        [
+          5,
+          5,
+          5,
+          10,
+          20,
+          5,
+          10
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "can_make_change",
+      "starterPath": "problems/greedy-bonus-03/solutions/python/starter.py",
+      "referencePath": "problems/greedy-bonus-03/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "canMakeChange",
+      "starterPath": "problems/greedy-bonus-03/solutions/typescript/starter.ts",
+      "referencePath": "problems/greedy-bonus-03/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CanMakeChange",
+      "starterPath": "problems/greedy-bonus-03/solutions/go/starter.go",
+      "referencePath": "problems/greedy-bonus-03/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "canMakeChange",
+      "starterPath": "problems/greedy-bonus-03/solutions/scala/starter.scala",
+      "referencePath": "problems/greedy-bonus-03/solutions/scala/reference.scala"
+    }
+  }
+}

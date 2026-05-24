@@ -1,0 +1,245 @@
+{
+  "id": "merge-sorted-batches",
+  "kind": "problem",
+  "title": "Merge Sorted Batches",
+  "difficulty": "medium",
+  "concepts": [
+    "heap",
+    "k-way merge"
+  ],
+  "prompt": "Given a list of sorted integer arrays, merge them into one sorted array.",
+  "signature": {
+    "name": "mergeSortedBatches",
+    "inputs": [
+      {
+        "name": "batches",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "three batches",
+      "args": [
+        [
+          [
+            1,
+            4
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            0,
+            8
+          ]
+        ]
+      ],
+      "expected": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        8
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty batches",
+      "args": [
+        [
+          [],
+          [
+            1
+          ]
+        ]
+      ],
+      "expected": [
+        1
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "none",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates",
+      "args": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1
+          ]
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single batch",
+      "args": [
+        [
+          [
+            5,
+            7,
+            9
+          ]
+        ]
+      ],
+      "expected": [
+        5,
+        7,
+        9
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all empty",
+      "args": [
+        [
+          [],
+          [],
+          []
+        ]
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "interleaved tail",
+      "args": [
+        [
+          [
+            1,
+            5,
+            9
+          ],
+          [
+            2,
+            3,
+            4
+          ],
+          [
+            6,
+            7,
+            8
+          ]
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative values",
+      "args": [
+        [
+          [
+            -5,
+            -1
+          ],
+          [
+            -3,
+            0,
+            2
+          ]
+        ]
+      ],
+      "expected": [
+        -5,
+        -3,
+        -1,
+        0,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "varied lengths",
+      "args": [
+        [
+          [
+            1
+          ],
+          [
+            2,
+            3,
+            4,
+            5
+          ],
+          [
+            0
+          ]
+        ]
+      ],
+      "expected": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "merge_sorted_batches",
+      "starterPath": "problems/merge-sorted-batches/solutions/python/starter.py",
+      "referencePath": "problems/merge-sorted-batches/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "mergeSortedBatches",
+      "starterPath": "problems/merge-sorted-batches/solutions/typescript/starter.ts",
+      "referencePath": "problems/merge-sorted-batches/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MergeSortedBatches",
+      "starterPath": "problems/merge-sorted-batches/solutions/go/starter.go",
+      "referencePath": "problems/merge-sorted-batches/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "mergeSortedBatches",
+      "starterPath": "problems/merge-sorted-batches/solutions/scala/starter.scala",
+      "referencePath": "problems/merge-sorted-batches/solutions/scala/reference.scala"
+    }
+  }
+}

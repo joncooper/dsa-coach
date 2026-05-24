@@ -1,0 +1,141 @@
+{
+  "id": "hashing-bonus-03",
+  "kind": "problem",
+  "title": "Smallest Missing Whole Number",
+  "difficulty": "easy",
+  "concepts": [
+    "hashing",
+    "set membership",
+    "iteration"
+  ],
+  "prompt": "The list holds n distinct values, each somewhere in the range 0 to n inclusive, so exactly one number in that range is absent. Return the missing number.",
+  "signature": {
+    "name": "missingNumber",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two missing",
+      "args": [
+        [
+          3,
+          0,
+          1
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "top missing",
+      "args": [
+        [
+          0,
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty misses zero",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single has zero",
+      "args": [
+        [
+          0
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single misses zero",
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero missing",
+      "args": [
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "middle missing",
+      "args": [
+        [
+          0,
+          2
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero missing longer",
+      "args": [
+        [
+          4,
+          3,
+          2,
+          1
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "missing_number",
+      "starterPath": "problems/hashing-bonus-03/solutions/python/starter.py",
+      "referencePath": "problems/hashing-bonus-03/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "missingNumber",
+      "starterPath": "problems/hashing-bonus-03/solutions/typescript/starter.ts",
+      "referencePath": "problems/hashing-bonus-03/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MissingNumber",
+      "starterPath": "problems/hashing-bonus-03/solutions/go/starter.go",
+      "referencePath": "problems/hashing-bonus-03/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "missingNumber",
+      "starterPath": "problems/hashing-bonus-03/solutions/scala/starter.scala",
+      "referencePath": "problems/hashing-bonus-03/solutions/scala/reference.scala"
+    }
+  }
+}

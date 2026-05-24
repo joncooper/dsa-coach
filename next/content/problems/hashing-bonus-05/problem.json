@@ -1,0 +1,150 @@
+{
+  "id": "hashing-bonus-05",
+  "kind": "problem",
+  "title": "First Repeated Value",
+  "difficulty": "warmup",
+  "concepts": [
+    "hashing",
+    "set membership",
+    "first occurrence"
+  ],
+  "prompt": "Return the first value whose copy has already appeared earlier in the list — that is, the value at the earliest index that closes a repeat. Return None if every value is unique.",
+  "signature": {
+    "name": "firstRepeatedValue",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number",
+      "nullable": true
+    }
+  },
+  "tests": [
+    {
+      "name": "inner repeat first",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          2,
+          1
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "all unique",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": null,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          4,
+          4,
+          4
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -1,
+          0,
+          -1
+        ]
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two repeats",
+      "args": [
+        [
+          5,
+          6,
+          7,
+          5,
+          6
+        ]
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "wrap around",
+      "args": [
+        [
+          0,
+          1,
+          2,
+          3,
+          0
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "first_repeated_value",
+      "starterPath": "problems/hashing-bonus-05/solutions/python/starter.py",
+      "referencePath": "problems/hashing-bonus-05/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "firstRepeatedValue",
+      "starterPath": "problems/hashing-bonus-05/solutions/typescript/starter.ts",
+      "referencePath": "problems/hashing-bonus-05/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "FirstRepeatedValue",
+      "starterPath": "problems/hashing-bonus-05/solutions/go/starter.go",
+      "referencePath": "problems/hashing-bonus-05/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "firstRepeatedValue",
+      "starterPath": "problems/hashing-bonus-05/solutions/scala/starter.scala",
+      "referencePath": "problems/hashing-bonus-05/solutions/scala/reference.scala"
+    }
+  }
+}

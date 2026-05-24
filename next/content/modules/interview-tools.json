@@ -1,0 +1,52 @@
+{
+  "id": "interview-tools",
+  "kind": "module",
+  "title": "Interview Tools",
+  "order": 13,
+  "summary": "Practice complexity classification, pattern diagnosis, mixed review, and synthesis problems.",
+  "concepts": [
+    "pattern recognition",
+    "complexity",
+    "mixed review",
+    "interview practice"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "growth-label"
+    },
+    {
+      "kind": "problem",
+      "id": "choose-pattern-label"
+    },
+    {
+      "kind": "problem",
+      "id": "mixed-review-score"
+    },
+    {
+      "kind": "problem",
+      "id": "interview-tools-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "interview-tools-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "interview-tools-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "interview-tools-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "interview-tools-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "interview-tools-bonus-06"
+    }
+  ],
+  "bonus": []
+}

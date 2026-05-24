@@ -1,0 +1,152 @@
+{
+  "id": "list-sum",
+  "kind": "problem",
+  "title": "List Sum",
+  "difficulty": "warmup",
+  "concepts": [
+    "linked-list traversal"
+  ],
+  "prompt": "Given the head of a singly linked list of integers, return the sum of its values.",
+  "signature": {
+    "name": "listSum",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "three nodes",
+      "args": [
+        [
+          4,
+          1,
+          7
+        ]
+      ],
+      "expected": 12,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "negative",
+      "args": [
+        [
+          -2,
+          5
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          9
+        ]
+      ],
+      "expected": 9,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zeros only",
+      "args": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mix neg pos",
+      "args": [
+        [
+          -5,
+          3,
+          -8,
+          10
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all negative",
+      "args": [
+        [
+          -1,
+          -2,
+          -3
+        ]
+      ],
+      "expected": -6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single zero",
+      "args": [
+        [
+          0
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "large values",
+      "args": [
+        [
+          100,
+          200,
+          300,
+          400
+        ]
+      ],
+      "expected": 1000,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "list_sum",
+      "starterPath": "problems/list-sum/solutions/python/starter.py",
+      "referencePath": "problems/list-sum/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "listSum",
+      "starterPath": "problems/list-sum/solutions/typescript/starter.ts",
+      "referencePath": "problems/list-sum/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ListSum",
+      "starterPath": "problems/list-sum/solutions/go/starter.go",
+      "referencePath": "problems/list-sum/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "listSum",
+      "starterPath": "problems/list-sum/solutions/scala/starter.scala",
+      "referencePath": "problems/list-sum/solutions/scala/reference.scala"
+    }
+  }
+}

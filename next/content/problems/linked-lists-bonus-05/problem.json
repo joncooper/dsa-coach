@@ -1,0 +1,195 @@
+{
+  "id": "linked-lists-bonus-05",
+  "kind": "problem",
+  "title": "Insert After Index",
+  "difficulty": "easy",
+  "concepts": [
+    "linked-lists",
+    "dummy head",
+    "pointer rewiring"
+  ],
+  "prompt": "Given the head of a singly linked list, insert a new node holding `value` immediately after the node at the given zero-based index, and return the head. If the index is out of range, return the list unchanged.",
+  "signature": {
+    "name": "insertAfterIndex",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "index",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "insert in middle",
+      "args": [
+        [
+          1,
+          2,
+          4
+        ],
+        1,
+        3
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "index out of range",
+      "args": [
+        [
+          1,
+          2
+        ],
+        5,
+        9
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "insert after head",
+      "args": [
+        [
+          1,
+          3
+        ],
+        0,
+        2
+      ],
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "append at tail",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        2,
+        4
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty list",
+      "args": [
+        [],
+        0,
+        5
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single node insert",
+      "args": [
+        [
+          7
+        ],
+        0,
+        8
+      ],
+      "expected": [
+        7,
+        8
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single node out of range",
+      "args": [
+        [
+          7
+        ],
+        1,
+        8
+      ],
+      "expected": [
+        7
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "insert negative value",
+      "args": [
+        [
+          5,
+          5
+        ],
+        0,
+        -1
+      ],
+      "expected": [
+        5,
+        -1,
+        5
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "insert_after_index",
+      "starterPath": "problems/linked-lists-bonus-05/solutions/python/starter.py",
+      "referencePath": "problems/linked-lists-bonus-05/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "insertAfterIndex",
+      "starterPath": "problems/linked-lists-bonus-05/solutions/typescript/starter.ts",
+      "referencePath": "problems/linked-lists-bonus-05/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "InsertAfterIndex",
+      "starterPath": "problems/linked-lists-bonus-05/solutions/go/starter.go",
+      "referencePath": "problems/linked-lists-bonus-05/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "insertAfterIndex",
+      "starterPath": "problems/linked-lists-bonus-05/solutions/scala/starter.scala",
+      "referencePath": "problems/linked-lists-bonus-05/solutions/scala/reference.scala"
+    }
+  }
+}

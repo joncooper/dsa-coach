@@ -1,0 +1,260 @@
+{
+  "id": "max-compatible-meetings",
+  "kind": "problem",
+  "title": "Max Compatible Meetings",
+  "difficulty": "medium",
+  "concepts": [
+    "interval greedy",
+    "sorting"
+  ],
+  "prompt": "Given intervals `[start, end]`, return the maximum number of non-overlapping meetings. A meeting ending at time `t` is compatible with one starting at `t`.",
+  "signature": {
+    "name": "maxCompatibleMeetings",
+    "inputs": [
+      {
+        "name": "intervals",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "choose three",
+      "args": [
+        [
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            4
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            5,
+            6
+          ]
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "single interval",
+      "args": [
+        [
+          [
+            1,
+            5
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "nested",
+      "args": [
+        [
+          [
+            1,
+            10
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "same end",
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            2,
+            3
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all overlap heavily",
+      "args": [
+        [
+          [
+            1,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            7
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "touching ends chain",
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "long meeting blocks short ones",
+      "args": [
+        [
+          [
+            0,
+            100
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            5,
+            6
+          ]
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicate intervals",
+      "args": [
+        [
+          [
+            1,
+            3
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            1,
+            3
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "reverse-sorted input",
+      "args": [
+        [
+          [
+            10,
+            11
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            5,
+            8
+          ],
+          [
+            1,
+            5
+          ]
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "max_compatible_meetings",
+      "starterPath": "problems/max-compatible-meetings/solutions/python/starter.py",
+      "referencePath": "problems/max-compatible-meetings/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "maxCompatibleMeetings",
+      "starterPath": "problems/max-compatible-meetings/solutions/typescript/starter.ts",
+      "referencePath": "problems/max-compatible-meetings/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MaxCompatibleMeetings",
+      "starterPath": "problems/max-compatible-meetings/solutions/go/starter.go",
+      "referencePath": "problems/max-compatible-meetings/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "maxCompatibleMeetings",
+      "starterPath": "problems/max-compatible-meetings/solutions/scala/starter.scala",
+      "referencePath": "problems/max-compatible-meetings/solutions/scala/reference.scala"
+    }
+  }
+}

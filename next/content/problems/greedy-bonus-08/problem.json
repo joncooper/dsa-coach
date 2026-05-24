@@ -1,0 +1,147 @@
+{
+  "id": "greedy-bonus-08",
+  "kind": "problem",
+  "title": "Largest Sum After K Sign Flips",
+  "difficulty": "easy",
+  "concepts": [
+    "greedy",
+    "heap",
+    "exchange argument"
+  ],
+  "prompt": "You must perform exactly `k` operations on the list. Each operation negates one element (its sign flips); the same element may be chosen more than once. Return the largest sum reachable after exactly k operations — note that because every operation must be used, extra flips can be forced to lower the sum.",
+  "signature": {
+    "name": "maxSumAfterFlips",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "flip the negatives",
+      "args": [
+        [
+          4,
+          -1,
+          -2,
+          3
+        ],
+        2
+      ],
+      "expected": 10,
+      "visibility": "visible"
+    },
+    {
+      "name": "leftover flips toggle",
+      "args": [
+        [
+          2,
+          5,
+          7
+        ],
+        3
+      ],
+      "expected": 10,
+      "visibility": "visible"
+    },
+    {
+      "name": "zero operations",
+      "args": [
+        [
+          3,
+          -5,
+          1
+        ],
+        0
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single element odd flips",
+      "args": [
+        [
+          6
+        ],
+        3
+      ],
+      "expected": -6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single element even flips",
+      "args": [
+        [
+          6
+        ],
+        4
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all negative fully flipped",
+      "args": [
+        [
+          -3,
+          -2,
+          -4
+        ],
+        3
+      ],
+      "expected": 9,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero present absorbs flips",
+      "args": [
+        [
+          -1,
+          0,
+          2
+        ],
+        5
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "max_sum_after_flips",
+      "starterPath": "problems/greedy-bonus-08/solutions/python/starter.py",
+      "referencePath": "problems/greedy-bonus-08/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "maxSumAfterFlips",
+      "starterPath": "problems/greedy-bonus-08/solutions/typescript/starter.ts",
+      "referencePath": "problems/greedy-bonus-08/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MaxSumAfterFlips",
+      "starterPath": "problems/greedy-bonus-08/solutions/go/starter.go",
+      "referencePath": "problems/greedy-bonus-08/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "maxSumAfterFlips",
+      "starterPath": "problems/greedy-bonus-08/solutions/scala/starter.scala",
+      "referencePath": "problems/greedy-bonus-08/solutions/scala/reference.scala"
+    }
+  }
+}

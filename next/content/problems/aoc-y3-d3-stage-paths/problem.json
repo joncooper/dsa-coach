@@ -1,0 +1,270 @@
+{
+  "id": "aoc-y3-d3-stage-paths",
+  "kind": "problem",
+  "title": "Day 3: Stage Paths",
+  "difficulty": "easy",
+  "concepts": [
+    "grid traversal",
+    "step counting"
+  ],
+  "prompt": "The festival map is a multi-line grid. `.` is open, `T` is a stagehand, `#` is a barrier. From row 0 column 0, take exactly one step right and one step down per move (a diagonal step). If the new cell is a barrier `#`, the move fails and you stay; the walk ends. Otherwise count `T` if landed on, then continue. The walk also ends when you fall off the grid. Return the number of `T` cells collected. The starting cell counts if it is `T`.",
+  "signature": {
+    "name": "diagonal_count",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "three diagonals",
+      "args": [
+        "T..\n.T.\n..T"
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "barrier stops early",
+      "args": [
+        "T..\n.#.\n..T"
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "no T",
+      "args": [
+        "...\n...\n..."
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "non-square wide",
+      "args": [
+        "T...\n.T..\n..T."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "non-square tall",
+      "args": [
+        "T..\n.T.\n..T\n..."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "barrier at start",
+      "args": [
+        "#TT\nTTT\nTTT"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "first cell stagehand",
+      "args": [
+        "T...\n....\n....\n...."
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "barrier on diagonal mid-walk",
+      "args": [
+        "T..\nT#.\n..T"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single cell start T",
+      "args": [
+        "T"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single cell start barrier",
+      "args": [
+        "#"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "T off diagonal not counted",
+      "args": [
+        ".T.\nT.T\n.T."
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-three-paths",
+      "title": "Part 2: Three diagonal paths",
+      "prompt": "Now walk three different diagonals from row 0 column 0: `(+1, +1)`, `(+1, +2)`, `(+2, +1)`. Each path collects `T` cells under the same rules (barriers stop, off-grid stops). Return the sum of the three counts. Each path is independent.",
+      "signature": {
+        "name": "three_paths_sum",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "small grid",
+          "args": [
+            "T..\n.T.\n..T"
+          ],
+          "expected": 5,
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "no T",
+          "args": [
+            "...\n...\n..."
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "all T",
+          "args": [
+            "TT\nTT\nTT"
+          ],
+          "expected": 5,
+          "visibility": "visible"
+        },
+        {
+          "name": "wide grid",
+          "args": [
+            "T.T.T\n.T.T.\nT.T.T"
+          ],
+          "expected": 6,
+          "visibility": "hidden"
+        },
+        {
+          "name": "barrier blocks one path",
+          "args": [
+            "T..\n.#.\n..T"
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        },
+        {
+          "name": "tall grid",
+          "args": [
+            "T.\n.T\nT.\n.T\nT."
+          ],
+          "expected": 4,
+          "visibility": "hidden"
+        },
+        {
+          "name": "single cell barrier blocks all paths",
+          "args": [
+            "#"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "single cell T counted three times",
+          "args": [
+            "T"
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        },
+        {
+          "name": "two by two all T",
+          "args": [
+            "TT\nTT"
+          ],
+          "expected": 4,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "three_paths_sum",
+          "starterPath": "problems/aoc-y3-d3-stage-paths/parts/part-2-three-paths/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y3-d3-stage-paths/parts/part-2-three-paths/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "three_paths_sum",
+          "starterPath": "problems/aoc-y3-d3-stage-paths/parts/part-2-three-paths/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y3-d3-stage-paths/parts/part-2-three-paths/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "ThreePathsSum",
+          "starterPath": "problems/aoc-y3-d3-stage-paths/parts/part-2-three-paths/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y3-d3-stage-paths/parts/part-2-three-paths/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "three_paths_sum",
+          "starterPath": "problems/aoc-y3-d3-stage-paths/parts/part-2-three-paths/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y3-d3-stage-paths/parts/part-2-three-paths/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "diagonal_count",
+      "starterPath": "problems/aoc-y3-d3-stage-paths/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y3-d3-stage-paths/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "diagonal_count",
+      "starterPath": "problems/aoc-y3-d3-stage-paths/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y3-d3-stage-paths/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "DiagonalCount",
+      "starterPath": "problems/aoc-y3-d3-stage-paths/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y3-d3-stage-paths/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "diagonal_count",
+      "starterPath": "problems/aoc-y3-d3-stage-paths/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y3-d3-stage-paths/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "id": "aoc-year-2",
+  "kind": "problem-set",
+  "title": "Year Two: Vault Inventory",
+  "summary": "Seven AoC-shaped exercises with a different problem at each rung: pair-counting via combinatorics, type dispatch, running medians, and recipe DAGs.",
+  "entries": [
+    {
+      "problem": "aoc-y2-d1-relic-pair",
+      "category": "aoc-year-2",
+      "note": "parsing, two-pointer, sorted scan"
+    },
+    {
+      "problem": "aoc-y2-d2-cipher-check",
+      "category": "aoc-year-2",
+      "note": "parsing, validation"
+    },
+    {
+      "problem": "aoc-y2-d3-aisle-scan",
+      "category": "aoc-year-2",
+      "note": "grid traversal, step counting"
+    },
+    {
+      "problem": "aoc-y2-d4-shipment-blocks",
+      "category": "aoc-year-2",
+      "note": "multi-line records, aggregation"
+    },
+    {
+      "problem": "aoc-y2-d5-coordinate-codes",
+      "category": "aoc-year-2",
+      "note": "encoding, manhattan distance"
+    },
+    {
+      "problem": "aoc-y2-d6-shelf-overlap",
+      "category": "aoc-year-2",
+      "note": "multi-line records, set intersection"
+    },
+    {
+      "problem": "aoc-y2-d7-recipe-tree",
+      "category": "aoc-year-2",
+      "note": "graph, DFS, memoization, topological order"
+    }
+  ]
+}

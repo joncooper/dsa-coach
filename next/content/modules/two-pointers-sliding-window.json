@@ -1,0 +1,89 @@
+{
+  "id": "two-pointers-sliding-window",
+  "kind": "module",
+  "title": "Two Pointers & Sliding Window",
+  "order": 4,
+  "summary": "Practice opposite pointers, same-direction scans, fixed windows, and variable windows.",
+  "concepts": [
+    "two pointers",
+    "sliding window",
+    "palindromes",
+    "sorted arrays",
+    "window sums"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "closest-pair-sum"
+    },
+    {
+      "kind": "problem",
+      "id": "trim-adjacent-pairs"
+    },
+    {
+      "kind": "problem",
+      "id": "max-sum-under-limit"
+    },
+    {
+      "kind": "problem",
+      "id": "longest-with-flips"
+    },
+    {
+      "kind": "problem",
+      "id": "palindrome-edge-score"
+    },
+    {
+      "kind": "problem",
+      "id": "sorted-squares-local"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-10"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-11"
+    },
+    {
+      "kind": "problem",
+      "id": "two-pointers-sliding-window-bonus-12"
+    }
+  ],
+  "bonus": []
+}

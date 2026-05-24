@@ -1,0 +1,157 @@
+{
+  "id": "growth-label",
+  "kind": "problem",
+  "title": "Growth Label",
+  "difficulty": "easy",
+  "concepts": [
+    "complexity recognition"
+  ],
+  "prompt": "Given a list of operation counts observed as input size doubles, classify the growth. Compute the ratio of each consecutive pair (`counts[i + 1] / counts[i]`) and average those ratios. Return `constant` when the average is in `[0.75, 1.35]`, `linear` when in `[1.55, 2.45]`, `quadratic` when in `[3.1, 5.0]`, and `unknown` for any other average. Also return `unknown` if there are fewer than two counts, or if any count before the last is `0`.",
+  "signature": {
+    "name": "growthLabel",
+    "inputs": [
+      {
+        "name": "operations",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "linear",
+      "args": [
+        [
+          100,
+          210,
+          390
+        ]
+      ],
+      "expected": "linear",
+      "visibility": "visible"
+    },
+    {
+      "name": "quadratic",
+      "args": [
+        [
+          100,
+          410,
+          1600
+        ]
+      ],
+      "expected": "quadratic",
+      "visibility": "visible"
+    },
+    {
+      "name": "constant",
+      "args": [
+        [
+          50,
+          52,
+          49
+        ]
+      ],
+      "expected": "constant",
+      "visibility": "hidden"
+    },
+    {
+      "name": "unknown",
+      "args": [
+        [
+          10,
+          100,
+          105
+        ]
+      ],
+      "expected": "unknown",
+      "visibility": "hidden"
+    },
+    {
+      "name": "near 2 again",
+      "args": [
+        [
+          20,
+          41,
+          78
+        ]
+      ],
+      "expected": "linear",
+      "visibility": "hidden"
+    },
+    {
+      "name": "ratio 3 ambiguous",
+      "args": [
+        [
+          10,
+          30,
+          90
+        ]
+      ],
+      "expected": "unknown",
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero early",
+      "args": [
+        [
+          0,
+          50,
+          200
+        ]
+      ],
+      "expected": "unknown",
+      "visibility": "hidden"
+    },
+    {
+      "name": "single value",
+      "args": [
+        [
+          42
+        ]
+      ],
+      "expected": "unknown",
+      "visibility": "hidden"
+    },
+    {
+      "name": "near 4 again",
+      "args": [
+        [
+          5,
+          21,
+          80
+        ]
+      ],
+      "expected": "quadratic",
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "growth_label",
+      "starterPath": "problems/growth-label/solutions/python/starter.py",
+      "referencePath": "problems/growth-label/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "growthLabel",
+      "starterPath": "problems/growth-label/solutions/typescript/starter.ts",
+      "referencePath": "problems/growth-label/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "GrowthLabel",
+      "starterPath": "problems/growth-label/solutions/go/starter.go",
+      "referencePath": "problems/growth-label/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "growthLabel",
+      "starterPath": "problems/growth-label/solutions/scala/starter.scala",
+      "referencePath": "problems/growth-label/solutions/scala/reference.scala"
+    }
+  }
+}

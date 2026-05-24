@@ -1,0 +1,152 @@
+{
+  "id": "dynamic-programming-bonus-08",
+  "kind": "problem",
+  "title": "Count Ways To Make Change",
+  "difficulty": "medium",
+  "concepts": [
+    "dynamic-programming",
+    "unbounded knapsack",
+    "counting"
+  ],
+  "prompt": "Given coin denominations and a target amount, return how many distinct combinations of coins add up to the amount. Each denomination may be used any number of times, and combinations that differ only in order count as the same.",
+  "signature": {
+    "name": "countChange",
+    "inputs": [
+      {
+        "name": "coins",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "amount",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "standard coins",
+      "args": [
+        [
+          1,
+          2,
+          5
+        ],
+        5
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "unreachable amount",
+      "args": [
+        [
+          2
+        ],
+        3
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty coins zero amount",
+      "args": [
+        [],
+        0
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty coins nonzero amount",
+      "args": [
+        [],
+        5
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero amount with coins",
+      "args": [
+        [
+          1
+        ],
+        0
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single combination",
+      "args": [
+        [
+          3,
+          5,
+          7
+        ],
+        8
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "small denominations",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        4
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "four denominations",
+      "args": [
+        [
+          2,
+          5,
+          3,
+          6
+        ],
+        10
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_change",
+      "starterPath": "problems/dynamic-programming-bonus-08/solutions/python/starter.py",
+      "referencePath": "problems/dynamic-programming-bonus-08/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "countChange",
+      "starterPath": "problems/dynamic-programming-bonus-08/solutions/typescript/starter.ts",
+      "referencePath": "problems/dynamic-programming-bonus-08/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountChange",
+      "starterPath": "problems/dynamic-programming-bonus-08/solutions/go/starter.go",
+      "referencePath": "problems/dynamic-programming-bonus-08/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "countChange",
+      "starterPath": "problems/dynamic-programming-bonus-08/solutions/scala/starter.scala",
+      "referencePath": "problems/dynamic-programming-bonus-08/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "id": "trees-graphs-bonus-03",
+  "kind": "problem",
+  "title": "Minimum Value In Tree",
+  "difficulty": "easy",
+  "concepts": [
+    "trees-graphs",
+    "tree recursion",
+    "DFS"
+  ],
+  "prompt": "Given the root of a binary tree, return the smallest value stored anywhere in the tree. Return None if the tree is empty. The tree is not a binary search tree, so values are unordered.",
+  "signature": {
+    "name": "treeMinimum",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "nullable": true
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number",
+      "nullable": true
+    }
+  },
+  "tests": [
+    {
+      "name": "minimum in subtree",
+      "args": [
+        [
+          5,
+          3,
+          8,
+          1,
+          4
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "single node",
+      "args": [
+        [
+          42
+        ]
+      ],
+      "expected": 42,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty tree",
+      "args": [
+        []
+      ],
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative deep",
+      "args": [
+        [
+          0,
+          -7,
+          2,
+          null,
+          null,
+          -3,
+          9
+        ]
+      ],
+      "expected": -7,
+      "visibility": "hidden"
+    },
+    {
+      "name": "root is smallest",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "repeated minimum",
+      "args": [
+        [
+          4,
+          4,
+          5,
+          4
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all negative",
+      "args": [
+        [
+          -1,
+          -2,
+          -3
+        ]
+      ],
+      "expected": -3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "tree_minimum",
+      "starterPath": "problems/trees-graphs-bonus-03/solutions/python/starter.py",
+      "referencePath": "problems/trees-graphs-bonus-03/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "treeMinimum",
+      "starterPath": "problems/trees-graphs-bonus-03/solutions/typescript/starter.ts",
+      "referencePath": "problems/trees-graphs-bonus-03/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "TreeMinimum",
+      "starterPath": "problems/trees-graphs-bonus-03/solutions/go/starter.go",
+      "referencePath": "problems/trees-graphs-bonus-03/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "treeMinimum",
+      "starterPath": "problems/trees-graphs-bonus-03/solutions/scala/starter.scala",
+      "referencePath": "problems/trees-graphs-bonus-03/solutions/scala/reference.scala"
+    }
+  }
+}

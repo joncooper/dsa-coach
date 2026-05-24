@@ -1,0 +1,263 @@
+{
+  "id": "aoc-y1-d2-patrol-tags",
+  "kind": "problem",
+  "title": "Day 2: Patrol Tags",
+  "difficulty": "easy",
+  "concepts": [
+    "parsing",
+    "validation",
+    "counting"
+  ],
+  "prompt": "Each non-empty line of the input has the shape `MIN-MAX CHAR: WORD` (for example `1-3 a: abcde`). The line is valid when the count of `CHAR` in `WORD` is at least `MIN` and at most `MAX`. Return the number of valid lines.",
+  "signature": {
+    "name": "count_valid_tags",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two valid",
+      "args": [
+        "1-3 a: abcde\n1-3 b: cdefg\n2-9 c: ccccccccc"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "all invalid",
+      "args": [
+        "1-1 z: aaa\n2-2 a: aaaa"
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty input",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "boundary inclusive low",
+      "args": [
+        "3-5 q: qqqxx"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "boundary inclusive high",
+      "args": [
+        "1-3 z: zzzab"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "ignore blanks",
+      "args": [
+        "\n1-1 a: a\n\n"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed letters",
+      "args": [
+        "2-4 t: ttabt\n5-9 m: mmmm"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "min equals max strict",
+      "args": [
+        "3-3 a: aaa\n3-3 a: aaaa"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero min allows missing char",
+      "args": [
+        "0-2 a: bcd"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "count over max invalid",
+      "args": [
+        "1-2 a: aaaa"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "char absent triggers strict min",
+      "args": [
+        "1-5 q: abcde"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-position-rule",
+      "title": "Part 2: Exactly one position matches",
+      "prompt": "Same format, new rule. Treat `MIN` and `MAX` as one-indexed positions into the word. The line is valid when exactly one of `word[MIN-1]` and `word[MAX-1]` equals `CHAR`. Both matching or neither matching is invalid. Positions that fall outside the word index never match. Return the count of valid lines.",
+      "signature": {
+        "name": "count_valid_positions",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "one position matches",
+          "args": [
+            "1-3 a: abcde\n1-3 b: cdefg\n2-9 c: ccccccccc"
+          ],
+          "expected": 1,
+          "visibility": "visible"
+        },
+        {
+          "name": "both match invalid",
+          "args": [
+            "1-2 x: xxaaa"
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "neither matches",
+          "args": [
+            "2-4 z: abcde"
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "first only matches",
+          "args": [
+            "1-3 q: qabxy"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "second only matches",
+          "args": [
+            "1-3 q: aaqxy"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "position out of range counts as no-match",
+          "args": [
+            "1-99 a: a"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "blank lines ignored",
+          "args": [
+            "\n1-2 z: zx\n"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "both positions out of range invalid",
+          "args": [
+            "10-20 a: abc"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "same position twice always invalid",
+          "args": [
+            "2-2 a: babcd\n2-2 b: babcd"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "first char index one",
+          "args": [
+            "1-3 z: zxz"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "count_valid_positions",
+          "starterPath": "problems/aoc-y1-d2-patrol-tags/parts/part-2-position-rule/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y1-d2-patrol-tags/parts/part-2-position-rule/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "count_valid_positions",
+          "starterPath": "problems/aoc-y1-d2-patrol-tags/parts/part-2-position-rule/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y1-d2-patrol-tags/parts/part-2-position-rule/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "CountValidPositions",
+          "starterPath": "problems/aoc-y1-d2-patrol-tags/parts/part-2-position-rule/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y1-d2-patrol-tags/parts/part-2-position-rule/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "count_valid_positions",
+          "starterPath": "problems/aoc-y1-d2-patrol-tags/parts/part-2-position-rule/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y1-d2-patrol-tags/parts/part-2-position-rule/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_valid_tags",
+      "starterPath": "problems/aoc-y1-d2-patrol-tags/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y1-d2-patrol-tags/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "count_valid_tags",
+      "starterPath": "problems/aoc-y1-d2-patrol-tags/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y1-d2-patrol-tags/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountValidTags",
+      "starterPath": "problems/aoc-y1-d2-patrol-tags/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y1-d2-patrol-tags/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "count_valid_tags",
+      "starterPath": "problems/aoc-y1-d2-patrol-tags/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y1-d2-patrol-tags/solutions/scala/reference.scala"
+    }
+  }
+}

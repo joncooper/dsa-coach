@@ -1,0 +1,150 @@
+{
+  "id": "two-pointers-sliding-window-bonus-01",
+  "kind": "problem",
+  "title": "Container With Most Water",
+  "difficulty": "medium",
+  "concepts": [
+    "two-pointers-sliding-window",
+    "opposite pointers"
+  ],
+  "prompt": "Each value in the list is the height of a vertical line drawn at that index. Picking two lines, the water they trap is the shorter line's height times the index distance between them. Return the maximum area any pair of lines can hold.",
+  "signature": {
+    "name": "maxWaterArea",
+    "inputs": [
+      {
+        "name": "heights",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "classic case",
+      "args": [
+        [
+          1,
+          8,
+          6,
+          2,
+          5,
+          4,
+          8,
+          3,
+          7
+        ]
+      ],
+      "expected": 49,
+      "visibility": "visible"
+    },
+    {
+      "name": "two lines",
+      "args": [
+        [
+          1,
+          1
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single line",
+      "args": [
+        [
+          5
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all zero",
+      "args": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "increasing",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "tall ends",
+      "args": [
+        [
+          6,
+          1,
+          1,
+          6
+        ]
+      ],
+      "expected": 18,
+      "visibility": "hidden"
+    },
+    {
+      "name": "peak in middle",
+      "args": [
+        [
+          2,
+          9,
+          2
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "max_water_area",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-01/solutions/python/starter.py",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-01/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "maxWaterArea",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-01/solutions/typescript/starter.ts",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-01/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MaxWaterArea",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-01/solutions/go/starter.go",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-01/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "maxWaterArea",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-01/solutions/scala/starter.scala",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-01/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "id": "largest-one-swap",
+  "kind": "problem",
+  "title": "Largest One Swap",
+  "difficulty": "medium",
+  "concepts": [
+    "greedy",
+    "digits"
+  ],
+  "prompt": "Given a string of digits, return the largest string obtainable by at most one swap of two positions.",
+  "signature": {
+    "name": "largestOneSwap",
+    "inputs": [
+      {
+        "name": "digits",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "improve",
+      "args": [
+        "2736"
+      ],
+      "expected": "7236",
+      "visibility": "visible"
+    },
+    {
+      "name": "already",
+      "args": [
+        "987"
+      ],
+      "expected": "987",
+      "visibility": "visible"
+    },
+    {
+      "name": "duplicate best",
+      "args": [
+        "1993"
+      ],
+      "expected": "9913",
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        "5"
+      ],
+      "expected": "5",
+      "visibility": "hidden"
+    },
+    {
+      "name": "zeros tail",
+      "args": [
+        "1200"
+      ],
+      "expected": "2100",
+      "visibility": "hidden"
+    },
+    {
+      "name": "swap last two",
+      "args": [
+        "98368"
+      ],
+      "expected": "98863",
+      "visibility": "hidden"
+    },
+    {
+      "name": "ascending",
+      "args": [
+        "1234"
+      ],
+      "expected": "4231",
+      "visibility": "hidden"
+    },
+    {
+      "name": "descending sorted",
+      "args": [
+        "54321"
+      ],
+      "expected": "54321",
+      "visibility": "hidden"
+    },
+    {
+      "name": "repeated nines",
+      "args": [
+        "9999"
+      ],
+      "expected": "9999",
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "largest_one_swap",
+      "starterPath": "problems/largest-one-swap/solutions/python/starter.py",
+      "referencePath": "problems/largest-one-swap/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "largestOneSwap",
+      "starterPath": "problems/largest-one-swap/solutions/typescript/starter.ts",
+      "referencePath": "problems/largest-one-swap/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LargestOneSwap",
+      "starterPath": "problems/largest-one-swap/solutions/go/starter.go",
+      "referencePath": "problems/largest-one-swap/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "largestOneSwap",
+      "starterPath": "problems/largest-one-swap/solutions/scala/starter.scala",
+      "referencePath": "problems/largest-one-swap/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,278 @@
+{
+  "id": "aoc-y2-d2-cipher-check",
+  "kind": "problem",
+  "title": "Day 2: Cipher Check",
+  "difficulty": "easy",
+  "concepts": [
+    "parsing",
+    "validation"
+  ],
+  "prompt": "Each non-empty line has the shape `TYPE CODE STATUS` separated by single spaces. `TYPE` is one of `cargo`, `text`, `ledger`. `CODE` is a string of letters and digits. `STATUS` is `ok` or `bad`. A line is valid when (a) `STATUS` is `ok` and (b) `CODE` has at least one letter and at least one digit. Return the number of valid lines.",
+  "signature": {
+    "name": "valid_cipher_count",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "mixed validity",
+      "args": [
+        "cargo a1b2 ok\ntext hello bad\nledger 4242 ok\ntext h1 ok"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "all bad",
+      "args": [
+        "cargo a1 bad\ntext b2 bad"
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "letters only fails",
+      "args": [
+        "cargo abcd ok"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "digits only fails",
+      "args": [
+        "cargo 1234 ok"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "one letter one digit passes",
+      "args": [
+        "text a1 ok"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "blank lines skipped",
+      "args": [
+        "\ntext a1 ok\n\n"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two-token line rejected",
+      "args": [
+        "cargo a1"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "four-token line rejected",
+      "args": [
+        "cargo a1 ok extra"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "uppercase ok rejected",
+      "args": [
+        "cargo a1 OK"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed valid invalid",
+      "args": [
+        "cargo a1 ok\ntext b2 ok\nledger c3 ok\ntext bad bad"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-checksum",
+      "title": "Part 2: Type-specific checksum",
+      "prompt": "Same line shape and validity rule. Among the lines that pass Part 1's validity check, compute a checksum: every `cargo` line contributes the integer value of the leading run of digits in its `CODE` (e.g., `42abc` → 42; if the code starts with a letter, that line contributes 0). Every `text` line contributes the number of letters in `CODE`. Every `ledger` line contributes the sum of the digits in `CODE`. Return the total checksum.",
+      "signature": {
+        "name": "cipher_checksum",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "mix all types",
+          "args": [
+            "cargo 42xy ok\ntext hello1 ok\nledger 4242 bad\nledger a13 ok"
+          ],
+          "expected": 51,
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "ignore invalid",
+          "args": [
+            "cargo abcd ok\ntext h1 ok\ntext nope bad"
+          ],
+          "expected": 1,
+          "visibility": "visible"
+        },
+        {
+          "name": "cargo leading letter contributes zero",
+          "args": [
+            "cargo a99 ok"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "ledger sums digits",
+          "args": [
+            "ledger a1b2c3 ok"
+          ],
+          "expected": 6,
+          "visibility": "hidden"
+        },
+        {
+          "name": "text counts letters only",
+          "args": [
+            "text abc123def ok"
+          ],
+          "expected": 6,
+          "visibility": "hidden"
+        },
+        {
+          "name": "mixed many lines",
+          "args": [
+            "cargo 12abc ok\ntext h2llo ok\nledger 9z9 ok"
+          ],
+          "expected": 34,
+          "visibility": "hidden"
+        },
+        {
+          "name": "cargo digit run stops at first non-digit",
+          "args": [
+            "cargo 7a8 ok"
+          ],
+          "expected": 7,
+          "visibility": "hidden"
+        },
+        {
+          "name": "invalid status zero contribution",
+          "args": [
+            "cargo 99x bad\nledger a9 ok"
+          ],
+          "expected": 9,
+          "visibility": "hidden"
+        },
+        {
+          "name": "ledger ignores letters",
+          "args": [
+            "ledger abc123 ok"
+          ],
+          "expected": 6,
+          "visibility": "hidden"
+        },
+        {
+          "name": "text ignores digits",
+          "args": [
+            "text a1b2c3 ok"
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        },
+        {
+          "name": "unknown type contributes zero",
+          "args": [
+            "weird a1 ok"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "cipher_checksum",
+          "starterPath": "problems/aoc-y2-d2-cipher-check/parts/part-2-checksum/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y2-d2-cipher-check/parts/part-2-checksum/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "cipher_checksum",
+          "starterPath": "problems/aoc-y2-d2-cipher-check/parts/part-2-checksum/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y2-d2-cipher-check/parts/part-2-checksum/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "CipherChecksum",
+          "starterPath": "problems/aoc-y2-d2-cipher-check/parts/part-2-checksum/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y2-d2-cipher-check/parts/part-2-checksum/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "cipher_checksum",
+          "starterPath": "problems/aoc-y2-d2-cipher-check/parts/part-2-checksum/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y2-d2-cipher-check/parts/part-2-checksum/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "valid_cipher_count",
+      "starterPath": "problems/aoc-y2-d2-cipher-check/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y2-d2-cipher-check/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "valid_cipher_count",
+      "starterPath": "problems/aoc-y2-d2-cipher-check/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y2-d2-cipher-check/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ValidCipherCount",
+      "starterPath": "problems/aoc-y2-d2-cipher-check/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y2-d2-cipher-check/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "valid_cipher_count",
+      "starterPath": "problems/aoc-y2-d2-cipher-check/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y2-d2-cipher-check/solutions/scala/reference.scala"
+    }
+  }
+}

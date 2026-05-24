@@ -1,0 +1,121 @@
+{
+  "id": "trim-adjacent-pairs",
+  "kind": "problem",
+  "title": "Trim Adjacent Pairs",
+  "difficulty": "easy",
+  "concepts": [
+    "stack as output",
+    "string cleanup"
+  ],
+  "prompt": "Repeatedly remove adjacent equal character pairs. Return the final string after no adjacent equal pair remains.",
+  "signature": {
+    "name": "trimAdjacentPairs",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "cascade",
+      "args": [
+        "abbaca"
+      ],
+      "expected": "ca",
+      "visibility": "visible"
+    },
+    {
+      "name": "none",
+      "args": [
+        "abc"
+      ],
+      "expected": "abc",
+      "visibility": "visible"
+    },
+    {
+      "name": "all removed",
+      "args": [
+        "aabb"
+      ],
+      "expected": "",
+      "visibility": "hidden"
+    },
+    {
+      "name": "nested",
+      "args": [
+        "azxxzy"
+      ],
+      "expected": "ay",
+      "visibility": "hidden"
+    },
+    {
+      "name": "single char",
+      "args": [
+        "a"
+      ],
+      "expected": "a",
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": "",
+      "visibility": "hidden"
+    },
+    {
+      "name": "triple",
+      "args": [
+        "aaa"
+      ],
+      "expected": "a",
+      "visibility": "hidden"
+    },
+    {
+      "name": "two stack pops",
+      "args": [
+        "abccba"
+      ],
+      "expected": "",
+      "visibility": "hidden"
+    },
+    {
+      "name": "partial leftover",
+      "args": [
+        "aabcddc"
+      ],
+      "expected": "b",
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "trim_adjacent_pairs",
+      "starterPath": "problems/trim-adjacent-pairs/solutions/python/starter.py",
+      "referencePath": "problems/trim-adjacent-pairs/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "trimAdjacentPairs",
+      "starterPath": "problems/trim-adjacent-pairs/solutions/typescript/starter.ts",
+      "referencePath": "problems/trim-adjacent-pairs/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "TrimAdjacentPairs",
+      "starterPath": "problems/trim-adjacent-pairs/solutions/go/starter.go",
+      "referencePath": "problems/trim-adjacent-pairs/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "trimAdjacentPairs",
+      "starterPath": "problems/trim-adjacent-pairs/solutions/scala/starter.scala",
+      "referencePath": "problems/trim-adjacent-pairs/solutions/scala/reference.scala"
+    }
+  }
+}

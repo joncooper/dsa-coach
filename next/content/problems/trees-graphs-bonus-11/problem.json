@@ -1,0 +1,177 @@
+{
+  "id": "trees-graphs-bonus-11",
+  "kind": "problem",
+  "title": "Count Reachable Nodes",
+  "difficulty": "easy",
+  "concepts": [
+    "trees-graphs",
+    "BFS",
+    "graph traversal"
+  ],
+  "prompt": "You are given a directed graph as an adjacency dictionary mapping each node name to a list of node names it points to. Return how many distinct nodes are reachable from the source node, including the source itself.",
+  "signature": {
+    "name": "countReachable",
+    "inputs": [
+      {
+        "name": "graph",
+        "type": {
+          "type": "object"
+        }
+      },
+      {
+        "name": "source",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "reaches all",
+      "args": [
+        {
+          "a": [
+            "b",
+            "c"
+          ],
+          "b": [
+            "d"
+          ],
+          "c": [],
+          "d": []
+        },
+        "a"
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "isolated source",
+      "args": [
+        {
+          "a": [],
+          "b": [
+            "a"
+          ]
+        },
+        "a"
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "cycle counted once",
+      "args": [
+        {
+          "a": [
+            "b"
+          ],
+          "b": [
+            "c"
+          ],
+          "c": [
+            "a"
+          ]
+        },
+        "a"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "partial reach",
+      "args": [
+        {
+          "a": [
+            "b"
+          ],
+          "b": [],
+          "c": [
+            "d"
+          ],
+          "d": []
+        },
+        "a"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "self loop",
+      "args": [
+        {
+          "a": [
+            "a"
+          ]
+        },
+        "a"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "diamond shape",
+      "args": [
+        {
+          "a": [
+            "b",
+            "c"
+          ],
+          "b": [
+            "d"
+          ],
+          "c": [
+            "d"
+          ],
+          "d": []
+        },
+        "a"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "start in middle",
+      "args": [
+        {
+          "a": [
+            "b"
+          ],
+          "b": [
+            "c"
+          ],
+          "c": []
+        },
+        "b"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_reachable",
+      "starterPath": "problems/trees-graphs-bonus-11/solutions/python/starter.py",
+      "referencePath": "problems/trees-graphs-bonus-11/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "countReachable",
+      "starterPath": "problems/trees-graphs-bonus-11/solutions/typescript/starter.ts",
+      "referencePath": "problems/trees-graphs-bonus-11/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountReachable",
+      "starterPath": "problems/trees-graphs-bonus-11/solutions/go/starter.go",
+      "referencePath": "problems/trees-graphs-bonus-11/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "countReachable",
+      "starterPath": "problems/trees-graphs-bonus-11/solutions/scala/starter.scala",
+      "referencePath": "problems/trees-graphs-bonus-11/solutions/scala/reference.scala"
+    }
+  }
+}

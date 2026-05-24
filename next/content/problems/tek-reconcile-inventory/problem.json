@@ -1,0 +1,350 @@
+{
+  "id": "tek-reconcile-inventory",
+  "kind": "problem",
+  "title": "Reconcile Expected vs Observed Inventory",
+  "difficulty": "easy",
+  "concepts": [
+    "dict diff",
+    "set union",
+    "sorted output"
+  ],
+  "prompt": "You are given two dicts: `expected` and `observed`, each mapping `sku -> quantity` (non-negative integers). Produce a sorted list of discrepancy rows. For each sku that appears in either dict, classify the row as: `missing` if the sku is in `expected` but not `observed`, `extra` if in `observed` but not `expected`, `short` if `observed[sku] < expected[sku]`, `over` if `observed[sku] > expected[sku]`. Exact matches do not appear in the output. Each row is `[sku, status, expected_qty, observed_qty, delta]` where `delta = observed_qty - expected_qty` (missing sku contributes 0 for the missing side). Return the rows sorted by sku ascending.",
+  "signature": {
+    "name": "reconcileInventory",
+    "inputs": [
+      {
+        "name": "expected",
+        "type": {
+          "type": "object"
+        }
+      },
+      {
+        "name": "observed",
+        "type": {
+          "type": "object"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "any"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "both empty",
+      "args": [
+        {},
+        {}
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "exact match is omitted",
+      "args": [
+        {
+          "apple": 5
+        },
+        {
+          "apple": 5
+        }
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "single short row",
+      "args": [
+        {
+          "apple": 10
+        },
+        {
+          "apple": 7
+        }
+      ],
+      "expected": [
+        [
+          "apple",
+          "short",
+          10,
+          7,
+          -3
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "missing sku in observed",
+      "args": [
+        {
+          "apple": 5
+        },
+        {}
+      ],
+      "expected": [
+        [
+          "apple",
+          "missing",
+          5,
+          0,
+          -5
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "extra sku in observed",
+      "args": [
+        {},
+        {
+          "apple": 5
+        }
+      ],
+      "expected": [
+        [
+          "apple",
+          "extra",
+          0,
+          5,
+          5
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "all four statuses sorted",
+      "args": [
+        {
+          "a": 1,
+          "b": 2,
+          "c": 3,
+          "d": 4
+        },
+        {
+          "a": 1,
+          "b": 5,
+          "d": 1,
+          "e": 9
+        }
+      ],
+      "expected": [
+        [
+          "b",
+          "over",
+          2,
+          5,
+          3
+        ],
+        [
+          "c",
+          "missing",
+          3,
+          0,
+          -3
+        ],
+        [
+          "d",
+          "short",
+          4,
+          1,
+          -3
+        ],
+        [
+          "e",
+          "extra",
+          0,
+          9,
+          9
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single over row",
+      "args": [
+        {
+          "apple": 5
+        },
+        {
+          "apple": 8
+        }
+      ],
+      "expected": [
+        [
+          "apple",
+          "over",
+          5,
+          8,
+          3
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "delta sign on missing is negative",
+      "args": [
+        {
+          "widget": 12
+        },
+        {}
+      ],
+      "expected": [
+        [
+          "widget",
+          "missing",
+          12,
+          0,
+          -12
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "input dicts are not mutated",
+      "args": [
+        {
+          "a": 5
+        },
+        {
+          "a": 5
+        }
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed report sorted by sku",
+      "args": [
+        {
+          "a": 5,
+          "c": 3
+        },
+        {
+          "a": 5,
+          "b": 1,
+          "c": 10
+        }
+      ],
+      "expected": [
+        [
+          "b",
+          "extra",
+          0,
+          1,
+          1
+        ],
+        [
+          "c",
+          "over",
+          3,
+          10,
+          7
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "lex sort across long sku names",
+      "args": [
+        {
+          "zebra": 1,
+          "alpha": 5,
+          "mango": 3
+        },
+        {
+          "alpha": 6,
+          "mango": 3,
+          "zebra": 1,
+          "banana": 2
+        }
+      ],
+      "expected": [
+        [
+          "alpha",
+          "over",
+          5,
+          6,
+          1
+        ],
+        [
+          "banana",
+          "extra",
+          0,
+          2,
+          2
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero observed treated as short not missing",
+      "args": [
+        {
+          "a": 5
+        },
+        {
+          "a": 0
+        }
+      ],
+      "expected": [
+        [
+          "a",
+          "short",
+          5,
+          0,
+          -5
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero expected treated as over not extra",
+      "args": [
+        {
+          "a": 0
+        },
+        {
+          "a": 5
+        }
+      ],
+      "expected": [
+        [
+          "a",
+          "over",
+          0,
+          5,
+          5
+        ]
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "reconcile_inventory",
+      "starterPath": "problems/tek-reconcile-inventory/solutions/python/starter.py",
+      "referencePath": "problems/tek-reconcile-inventory/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "reconcileInventory",
+      "starterPath": "problems/tek-reconcile-inventory/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-reconcile-inventory/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ReconcileInventory",
+      "starterPath": "problems/tek-reconcile-inventory/solutions/go/starter.go",
+      "referencePath": "problems/tek-reconcile-inventory/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "reconcile_inventory",
+      "starterPath": "problems/tek-reconcile-inventory/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-reconcile-inventory/solutions/scala/reference.scala"
+    }
+  }
+}

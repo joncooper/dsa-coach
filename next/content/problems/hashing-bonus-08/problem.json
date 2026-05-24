@@ -1,0 +1,161 @@
+{
+  "id": "hashing-bonus-08",
+  "kind": "problem",
+  "title": "Group Words By First Letter",
+  "difficulty": "easy",
+  "concepts": [
+    "hashing",
+    "grouping",
+    "canonical key"
+  ],
+  "prompt": "Group the words by their first letter and return a dictionary mapping each first letter to the list of words that start with it, in their original order. Skip any empty string. Iterate the dictionary keys in sorted order.",
+  "signature": {
+    "name": "groupByFirstLetter",
+    "inputs": [
+      {
+        "name": "words",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "object"
+    }
+  },
+  "tests": [
+    {
+      "name": "two groups",
+      "args": [
+        [
+          "apple",
+          "ant",
+          "bee",
+          "bat"
+        ]
+      ],
+      "expected": {
+        "a": [
+          "apple",
+          "ant"
+        ],
+        "b": [
+          "bee",
+          "bat"
+        ]
+      },
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": {},
+      "visibility": "visible"
+    },
+    {
+      "name": "single word",
+      "args": [
+        [
+          "one"
+        ]
+      ],
+      "expected": {
+        "o": [
+          "one"
+        ]
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "one group",
+      "args": [
+        [
+          "cat",
+          "car",
+          "cap"
+        ]
+      ],
+      "expected": {
+        "c": [
+          "cat",
+          "car",
+          "cap"
+        ]
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "keys sorted",
+      "args": [
+        [
+          "zoo",
+          "ant"
+        ]
+      ],
+      "expected": {
+        "a": [
+          "ant"
+        ],
+        "z": [
+          "zoo"
+        ]
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "all empty strings",
+      "args": [
+        [
+          "",
+          ""
+        ]
+      ],
+      "expected": {},
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty string skipped",
+      "args": [
+        [
+          "dog",
+          "",
+          "deer"
+        ]
+      ],
+      "expected": {
+        "d": [
+          "dog",
+          "deer"
+        ]
+      },
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "group_by_first_letter",
+      "starterPath": "problems/hashing-bonus-08/solutions/python/starter.py",
+      "referencePath": "problems/hashing-bonus-08/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "groupByFirstLetter",
+      "starterPath": "problems/hashing-bonus-08/solutions/typescript/starter.ts",
+      "referencePath": "problems/hashing-bonus-08/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "GroupByFirstLetter",
+      "starterPath": "problems/hashing-bonus-08/solutions/go/starter.go",
+      "referencePath": "problems/hashing-bonus-08/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "groupByFirstLetter",
+      "starterPath": "problems/hashing-bonus-08/solutions/scala/starter.scala",
+      "referencePath": "problems/hashing-bonus-08/solutions/scala/reference.scala"
+    }
+  }
+}

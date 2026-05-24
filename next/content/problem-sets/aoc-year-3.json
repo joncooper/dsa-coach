@@ -1,0 +1,43 @@
+{
+  "id": "aoc-year-3",
+  "kind": "problem-set",
+  "title": "Year Three: Festival Logistics",
+  "summary": "Seven AoC-shaped exercises ramping from sliding windows to schedule planning on a DAG.",
+  "entries": [
+    {
+      "problem": "aoc-y3-d1-revenue-window",
+      "category": "aoc-year-3",
+      "note": "parsing, sliding window, max"
+    },
+    {
+      "problem": "aoc-y3-d2-permit-validation",
+      "category": "aoc-year-3",
+      "note": "parsing, validation, format check"
+    },
+    {
+      "problem": "aoc-y3-d3-stage-paths",
+      "category": "aoc-year-3",
+      "note": "grid traversal, step counting"
+    },
+    {
+      "problem": "aoc-y3-d4-vendor-rosters",
+      "category": "aoc-year-3",
+      "note": "multi-line records, validation, category aggregation"
+    },
+    {
+      "problem": "aoc-y3-d5-stamp-decoder",
+      "category": "aoc-year-3",
+      "note": "encoding, decoding"
+    },
+    {
+      "problem": "aoc-y3-d6-overlap-windows",
+      "category": "aoc-year-3",
+      "note": "multi-line records, set operations"
+    },
+    {
+      "problem": "aoc-y3-d7-task-dependencies",
+      "category": "aoc-year-3",
+      "note": "graph, topological sort, DAG depth"
+    }
+  ]
+}

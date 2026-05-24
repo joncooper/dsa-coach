@@ -1,0 +1,203 @@
+{
+  "id": "product-except-self-local",
+  "kind": "problem",
+  "title": "Product Except Self Local",
+  "difficulty": "medium",
+  "concepts": [
+    "prefix product",
+    "suffix product"
+  ],
+  "prompt": "Return an array where each position contains the product of every input value except the value at that position. Do not use division.",
+  "signature": {
+    "name": "productExceptSelfLocal",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "basic",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": [
+        24,
+        12,
+        8,
+        6
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "contains zero",
+      "args": [
+        [
+          0,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        6,
+        0,
+        0
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          9
+        ]
+      ],
+      "expected": [
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative",
+      "args": [
+        [
+          -1,
+          2,
+          -3
+        ]
+      ],
+      "expected": [
+        -6,
+        3,
+        -2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two values",
+      "args": [
+        [
+          3,
+          5
+        ]
+      ],
+      "expected": [
+        5,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two zeros",
+      "args": [
+        [
+          0,
+          0,
+          4
+        ]
+      ],
+      "expected": [
+        0,
+        0,
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "with ones",
+      "args": [
+        [
+          1,
+          1,
+          1,
+          1
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "ascending five",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": [
+        120,
+        60,
+        40,
+        30,
+        24
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "includes negative zero mix",
+      "args": [
+        [
+          -2,
+          0,
+          3,
+          -4
+        ]
+      ],
+      "expected": [
+        0,
+        24,
+        0,
+        0
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "product_except_self_local",
+      "starterPath": "problems/product-except-self-local/solutions/python/starter.py",
+      "referencePath": "problems/product-except-self-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "productExceptSelfLocal",
+      "starterPath": "problems/product-except-self-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/product-except-self-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ProductExceptSelfLocal",
+      "starterPath": "problems/product-except-self-local/solutions/go/starter.go",
+      "referencePath": "problems/product-except-self-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "productExceptSelfLocal",
+      "starterPath": "problems/product-except-self-local/solutions/scala/starter.scala",
+      "referencePath": "problems/product-except-self-local/solutions/scala/reference.scala"
+    }
+  }
+}

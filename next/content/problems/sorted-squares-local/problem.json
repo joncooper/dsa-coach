@@ -1,0 +1,187 @@
+{
+  "id": "sorted-squares-local",
+  "kind": "problem",
+  "title": "Sorted Squares Local",
+  "difficulty": "easy",
+  "concepts": [
+    "two pointers",
+    "sorted output"
+  ],
+  "prompt": "Given a nondecreasing integer array, return a nondecreasing array of the squares.",
+  "signature": {
+    "name": "sortedSquaresLocal",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "mixed",
+      "args": [
+        [
+          -4,
+          -1,
+          0,
+          3
+        ]
+      ],
+      "expected": [
+        0,
+        1,
+        9,
+        16
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "positive",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        1,
+        4,
+        9
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "negative",
+      "args": [
+        [
+          -5,
+          -3,
+          -1
+        ]
+      ],
+      "expected": [
+        1,
+        9,
+        25
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single negative",
+      "args": [
+        [
+          -7
+        ]
+      ],
+      "expected": [
+        49
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single zero",
+      "args": [
+        [
+          0
+        ]
+      ],
+      "expected": [
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "with zero in middle",
+      "args": [
+        [
+          -2,
+          0,
+          2
+        ]
+      ],
+      "expected": [
+        0,
+        4,
+        4
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all zeros",
+      "args": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "expected": [
+        0,
+        0,
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates around zero",
+      "args": [
+        [
+          -3,
+          -3,
+          1,
+          1
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        9,
+        9
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "sorted_squares_local",
+      "starterPath": "problems/sorted-squares-local/solutions/python/starter.py",
+      "referencePath": "problems/sorted-squares-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "sortedSquaresLocal",
+      "starterPath": "problems/sorted-squares-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/sorted-squares-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SortedSquaresLocal",
+      "starterPath": "problems/sorted-squares-local/solutions/go/starter.go",
+      "referencePath": "problems/sorted-squares-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "sortedSquaresLocal",
+      "starterPath": "problems/sorted-squares-local/solutions/scala/starter.scala",
+      "referencePath": "problems/sorted-squares-local/solutions/scala/reference.scala"
+    }
+  }
+}

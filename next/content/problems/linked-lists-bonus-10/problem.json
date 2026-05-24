@@ -1,0 +1,184 @@
+{
+  "id": "linked-lists-bonus-10",
+  "kind": "problem",
+  "title": "Swap Nodes In Pairs",
+  "difficulty": "medium",
+  "concepts": [
+    "linked-lists",
+    "in-place updates",
+    "dummy head"
+  ],
+  "prompt": "Given the head of a singly linked list, swap every two adjacent nodes and return the head. Swap the nodes themselves by rewiring pointers, not by changing values. If the list has an odd number of nodes, the final node stays in place.",
+  "signature": {
+    "name": "swapPairs",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "four nodes",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": [
+        2,
+        1,
+        4,
+        3
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "odd tail",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        2,
+        1,
+        3
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": [
+        7
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two nodes",
+      "args": [
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        2,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "five nodes",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": [
+        2,
+        1,
+        4,
+        3,
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "six nodes",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      ],
+      "expected": [
+        2,
+        1,
+        4,
+        3,
+        6,
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "with negatives",
+      "args": [
+        [
+          -1,
+          -2,
+          -3,
+          -4
+        ]
+      ],
+      "expected": [
+        -2,
+        -1,
+        -4,
+        -3
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "swap_pairs",
+      "starterPath": "problems/linked-lists-bonus-10/solutions/python/starter.py",
+      "referencePath": "problems/linked-lists-bonus-10/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "swapPairs",
+      "starterPath": "problems/linked-lists-bonus-10/solutions/typescript/starter.ts",
+      "referencePath": "problems/linked-lists-bonus-10/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SwapPairs",
+      "starterPath": "problems/linked-lists-bonus-10/solutions/go/starter.go",
+      "referencePath": "problems/linked-lists-bonus-10/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "swapPairs",
+      "starterPath": "problems/linked-lists-bonus-10/solutions/scala/starter.scala",
+      "referencePath": "problems/linked-lists-bonus-10/solutions/scala/reference.scala"
+    }
+  }
+}

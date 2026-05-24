@@ -1,0 +1,121 @@
+{
+  "id": "compress-runs",
+  "kind": "problem",
+  "title": "Compress Runs",
+  "difficulty": "easy",
+  "concepts": [
+    "string scan",
+    "run length"
+  ],
+  "prompt": "Compress consecutive equal characters as `character + count`. For example, `aaabb` becomes `a3b2`.",
+  "signature": {
+    "name": "compressRuns",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "two groups",
+      "args": [
+        "aaabb"
+      ],
+      "expected": "a3b2",
+      "visibility": "visible"
+    },
+    {
+      "name": "single chars",
+      "args": [
+        "abc"
+      ],
+      "expected": "a1b1c1",
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": "",
+      "visibility": "hidden"
+    },
+    {
+      "name": "one run",
+      "args": [
+        "zzzz"
+      ],
+      "expected": "z4",
+      "visibility": "hidden"
+    },
+    {
+      "name": "single char",
+      "args": [
+        "x"
+      ],
+      "expected": "x1",
+      "visibility": "hidden"
+    },
+    {
+      "name": "two equal",
+      "args": [
+        "aa"
+      ],
+      "expected": "a2",
+      "visibility": "hidden"
+    },
+    {
+      "name": "alternating",
+      "args": [
+        "ababab"
+      ],
+      "expected": "a1b1a1b1a1b1",
+      "visibility": "hidden"
+    },
+    {
+      "name": "long run start",
+      "args": [
+        "aaaaabc"
+      ],
+      "expected": "a5b1c1",
+      "visibility": "hidden"
+    },
+    {
+      "name": "symbols",
+      "args": [
+        "xxyyzz"
+      ],
+      "expected": "x2y2z2",
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "compress_runs",
+      "starterPath": "problems/compress-runs/solutions/python/starter.py",
+      "referencePath": "problems/compress-runs/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "compressRuns",
+      "starterPath": "problems/compress-runs/solutions/typescript/starter.ts",
+      "referencePath": "problems/compress-runs/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CompressRuns",
+      "starterPath": "problems/compress-runs/solutions/go/starter.go",
+      "referencePath": "problems/compress-runs/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "compressRuns",
+      "starterPath": "problems/compress-runs/solutions/scala/starter.scala",
+      "referencePath": "problems/compress-runs/solutions/scala/reference.scala"
+    }
+  }
+}

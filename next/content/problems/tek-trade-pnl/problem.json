@@ -1,0 +1,555 @@
+{
+  "id": "tek-trade-pnl",
+  "kind": "problem",
+  "title": "Realized P&L from a Trade Tape",
+  "difficulty": "medium",
+  "concepts": [
+    "queue",
+    "FIFO matching",
+    "domain modeling"
+  ],
+  "prompt": "You are given a chronological list of trades for a single instrument. Each trade is a dict with keys `side` (`\"BUY\"` or `\"SELL\"`), `qty` (positive integer), and `price` (integer cents per share). Compute the total realized profit and loss in cents using FIFO lot matching: every SELL is matched against the oldest unsold BUY lots in order. Unmatched BUY quantity remains as open inventory and does not contribute to realized P&L. Trades are processed in input order; you may assume the input never sells more than has been bought.",
+  "signature": {
+    "name": "realizedPnl",
+    "inputs": [
+      {
+        "name": "trades",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "empty tape",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "buy only no realized",
+      "args": [
+        [
+          {
+            "side": "BUY",
+            "qty": 100,
+            "price": 50
+          }
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "simple round trip",
+      "args": [
+        [
+          {
+            "side": "BUY",
+            "qty": 10,
+            "price": 50
+          },
+          {
+            "side": "SELL",
+            "qty": 10,
+            "price": 70
+          }
+        ]
+      ],
+      "expected": 200,
+      "visibility": "visible"
+    },
+    {
+      "name": "two-lot fifo",
+      "args": [
+        [
+          {
+            "side": "BUY",
+            "qty": 100,
+            "price": 50
+          },
+          {
+            "side": "BUY",
+            "qty": 100,
+            "price": 60
+          },
+          {
+            "side": "SELL",
+            "qty": 150,
+            "price": 70
+          }
+        ]
+      ],
+      "expected": 2500,
+      "visibility": "visible"
+    },
+    {
+      "name": "partial sell leaves open lot",
+      "args": [
+        [
+          {
+            "side": "BUY",
+            "qty": 100,
+            "price": 50
+          },
+          {
+            "side": "SELL",
+            "qty": 30,
+            "price": 70
+          }
+        ]
+      ],
+      "expected": 600,
+      "visibility": "hidden"
+    },
+    {
+      "name": "multiple sells against same lot",
+      "args": [
+        [
+          {
+            "side": "BUY",
+            "qty": 100,
+            "price": 50
+          },
+          {
+            "side": "SELL",
+            "qty": 50,
+            "price": 70
+          },
+          {
+            "side": "SELL",
+            "qty": 50,
+            "price": 80
+          }
+        ]
+      ],
+      "expected": 2500,
+      "visibility": "hidden"
+    },
+    {
+      "name": "realized loss",
+      "args": [
+        [
+          {
+            "side": "BUY",
+            "qty": 10,
+            "price": 100
+          },
+          {
+            "side": "SELL",
+            "qty": 10,
+            "price": 90
+          }
+        ]
+      ],
+      "expected": -100,
+      "visibility": "hidden"
+    },
+    {
+      "name": "interleaved buys and sells",
+      "args": [
+        [
+          {
+            "side": "BUY",
+            "qty": 50,
+            "price": 10
+          },
+          {
+            "side": "SELL",
+            "qty": 20,
+            "price": 15
+          },
+          {
+            "side": "BUY",
+            "qty": 30,
+            "price": 12
+          },
+          {
+            "side": "SELL",
+            "qty": 40,
+            "price": 14
+          }
+        ]
+      ],
+      "expected": 240,
+      "visibility": "hidden"
+    },
+    {
+      "name": "exact lot match clears queue",
+      "args": [
+        [
+          {
+            "side": "BUY",
+            "qty": 10,
+            "price": 50
+          },
+          {
+            "side": "BUY",
+            "qty": 10,
+            "price": 60
+          },
+          {
+            "side": "SELL",
+            "qty": 10,
+            "price": 70
+          },
+          {
+            "side": "BUY",
+            "qty": 5,
+            "price": 40
+          },
+          {
+            "side": "SELL",
+            "qty": 15,
+            "price": 80
+          }
+        ]
+      ],
+      "expected": 600,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single sell drains three lots in order",
+      "args": [
+        [
+          {
+            "side": "BUY",
+            "qty": 10,
+            "price": 1
+          },
+          {
+            "side": "BUY",
+            "qty": 10,
+            "price": 2
+          },
+          {
+            "side": "BUY",
+            "qty": 10,
+            "price": 3
+          },
+          {
+            "side": "SELL",
+            "qty": 30,
+            "price": 5
+          }
+        ]
+      ],
+      "expected": 90,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed wins and losses across many trades",
+      "args": [
+        [
+          {
+            "side": "BUY",
+            "qty": 100,
+            "price": 50
+          },
+          {
+            "side": "SELL",
+            "qty": 40,
+            "price": 60
+          },
+          {
+            "side": "BUY",
+            "qty": 20,
+            "price": 80
+          },
+          {
+            "side": "SELL",
+            "qty": 60,
+            "price": 55
+          },
+          {
+            "side": "SELL",
+            "qty": 20,
+            "price": 70
+          }
+        ]
+      ],
+      "expected": 500,
+      "visibility": "hidden"
+    },
+    {
+      "name": "sell of one against thousand-lot buy",
+      "args": [
+        [
+          {
+            "side": "BUY",
+            "qty": 1000,
+            "price": 100
+          },
+          {
+            "side": "SELL",
+            "qty": 1,
+            "price": 200
+          }
+        ]
+      ],
+      "expected": 100,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-multi-instrument",
+      "title": "Part 2: Multiple instruments",
+      "prompt": "Now the tape contains trades for many instruments. Each trade has an additional `symbol` field (string). FIFO lots are tracked per symbol — a SELL in one symbol never consumes BUY lots from another. Return a dict mapping `symbol -> total realized P&L in cents`. Symbols that never had a SELL should not appear in the output. A symbol whose realized P&L is exactly zero (because of offsetting wins and losses) does appear.",
+      "signature": {
+        "name": "realized_pnl_by_symbol",
+        "inputs": [
+          {
+            "name": "queries",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "object"
+        }
+      },
+      "tests": [
+        {
+          "name": "empty tape multi",
+          "args": [
+            []
+          ],
+          "expected": {},
+          "visibility": "visible"
+        },
+        {
+          "name": "single symbol round trip",
+          "args": [
+            [
+              {
+                "symbol": "AAPL",
+                "side": "BUY",
+                "qty": 10,
+                "price": 50
+              },
+              {
+                "symbol": "AAPL",
+                "side": "SELL",
+                "qty": 10,
+                "price": 70
+              }
+            ]
+          ],
+          "expected": {
+            "AAPL": 200
+          },
+          "visibility": "visible"
+        },
+        {
+          "name": "two symbols interleaved",
+          "args": [
+            [
+              {
+                "symbol": "AAPL",
+                "side": "BUY",
+                "qty": 10,
+                "price": 50
+              },
+              {
+                "symbol": "MSFT",
+                "side": "BUY",
+                "qty": 5,
+                "price": 30
+              },
+              {
+                "symbol": "AAPL",
+                "side": "SELL",
+                "qty": 10,
+                "price": 70
+              },
+              {
+                "symbol": "MSFT",
+                "side": "SELL",
+                "qty": 5,
+                "price": 35
+              }
+            ]
+          ],
+          "expected": {
+            "AAPL": 200,
+            "MSFT": 25
+          },
+          "visibility": "visible"
+        },
+        {
+          "name": "buy-only symbol omitted",
+          "args": [
+            [
+              {
+                "symbol": "AAPL",
+                "side": "BUY",
+                "qty": 10,
+                "price": 50
+              }
+            ]
+          ],
+          "expected": {},
+          "visibility": "visible"
+        },
+        {
+          "name": "partial sells per symbol",
+          "args": [
+            [
+              {
+                "symbol": "X",
+                "side": "BUY",
+                "qty": 100,
+                "price": 10
+              },
+              {
+                "symbol": "Y",
+                "side": "BUY",
+                "qty": 100,
+                "price": 20
+              },
+              {
+                "symbol": "X",
+                "side": "SELL",
+                "qty": 30,
+                "price": 12
+              },
+              {
+                "symbol": "Y",
+                "side": "SELL",
+                "qty": 50,
+                "price": 25
+              }
+            ]
+          ],
+          "expected": {
+            "X": 60,
+            "Y": 250
+          },
+          "visibility": "hidden"
+        },
+        {
+          "name": "symbols do not share lots",
+          "args": [
+            [
+              {
+                "symbol": "X",
+                "side": "BUY",
+                "qty": 10,
+                "price": 100
+              },
+              {
+                "symbol": "Y",
+                "side": "BUY",
+                "qty": 10,
+                "price": 50
+              },
+              {
+                "symbol": "X",
+                "side": "SELL",
+                "qty": 10,
+                "price": 60
+              }
+            ]
+          ],
+          "expected": {
+            "X": -400
+          },
+          "visibility": "hidden"
+        },
+        {
+          "name": "offsetting net zero still reported",
+          "args": [
+            [
+              {
+                "symbol": "A",
+                "side": "BUY",
+                "qty": 10,
+                "price": 100
+              },
+              {
+                "symbol": "A",
+                "side": "BUY",
+                "qty": 10,
+                "price": 50
+              },
+              {
+                "symbol": "A",
+                "side": "SELL",
+                "qty": 10,
+                "price": 50
+              },
+              {
+                "symbol": "A",
+                "side": "SELL",
+                "qty": 10,
+                "price": 100
+              }
+            ]
+          ],
+          "expected": {
+            "A": 0
+          },
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "realized_pnl_by_symbol",
+          "starterPath": "problems/tek-trade-pnl/parts/part-2-multi-instrument/solutions/python/starter.py",
+          "referencePath": "problems/tek-trade-pnl/parts/part-2-multi-instrument/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "realized_pnl_by_symbol",
+          "starterPath": "problems/tek-trade-pnl/parts/part-2-multi-instrument/solutions/typescript/starter.ts",
+          "referencePath": "problems/tek-trade-pnl/parts/part-2-multi-instrument/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "RealizedPnlBySymbol",
+          "starterPath": "problems/tek-trade-pnl/parts/part-2-multi-instrument/solutions/go/starter.go",
+          "referencePath": "problems/tek-trade-pnl/parts/part-2-multi-instrument/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "realized_pnl_by_symbol",
+          "starterPath": "problems/tek-trade-pnl/parts/part-2-multi-instrument/solutions/scala/starter.scala",
+          "referencePath": "problems/tek-trade-pnl/parts/part-2-multi-instrument/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "realized_pnl",
+      "starterPath": "problems/tek-trade-pnl/solutions/python/starter.py",
+      "referencePath": "problems/tek-trade-pnl/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "realizedPnl",
+      "starterPath": "problems/tek-trade-pnl/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-trade-pnl/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RealizedPnl",
+      "starterPath": "problems/tek-trade-pnl/solutions/go/starter.go",
+      "referencePath": "problems/tek-trade-pnl/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "realized_pnl",
+      "starterPath": "problems/tek-trade-pnl/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-trade-pnl/solutions/scala/reference.scala"
+    }
+  }
+}

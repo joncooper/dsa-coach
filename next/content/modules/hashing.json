@@ -1,0 +1,89 @@
+{
+  "id": "hashing",
+  "kind": "module",
+  "title": "Hashing",
+  "order": 3,
+  "summary": "Practice set membership, frequency maps, grouping, complements, and prefix-count tricks.",
+  "concepts": [
+    "sets",
+    "maps",
+    "frequency tables",
+    "prefix sums",
+    "grouping"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "pairable-remainders"
+    },
+    {
+      "kind": "problem",
+      "id": "first-unique-token"
+    },
+    {
+      "kind": "problem",
+      "id": "anagram-bucket-sizes"
+    },
+    {
+      "kind": "problem",
+      "id": "longest-distinct-span"
+    },
+    {
+      "kind": "problem",
+      "id": "count-target-sum-subarrays"
+    },
+    {
+      "kind": "problem",
+      "id": "common-customers"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-10"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-11"
+    },
+    {
+      "kind": "problem",
+      "id": "hashing-bonus-12"
+    }
+  ],
+  "bonus": []
+}

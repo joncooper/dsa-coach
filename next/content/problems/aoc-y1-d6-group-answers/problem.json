@@ -1,0 +1,270 @@
+{
+  "id": "aoc-y1-d6-group-answers",
+  "kind": "problem",
+  "title": "Day 6: Group Answers",
+  "difficulty": "easy",
+  "concepts": [
+    "multi-line records",
+    "set union"
+  ],
+  "prompt": "Records are separated by blank lines. Within a record, each non-empty line is one person's answer string of lowercase letters; each letter represents one `yes` answer. For each group, compute the number of distinct letters that appear in at least one person's line. Return the sum of those counts across all groups.",
+  "signature": {
+    "name": "anyone_yes_sum",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two simple groups",
+      "args": [
+        "abc\n\nabac"
+      ],
+      "expected": 6,
+      "visibility": "visible"
+    },
+    {
+      "name": "single group",
+      "args": [
+        "abc"
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "duplicates within one line",
+      "args": [
+        "aaaa\n\nbbbb"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "multi-line group",
+      "args": [
+        "a\nb\nc\n\nab\nac"
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all letters",
+      "args": [
+        "abcdefghijklmnopqrstuvwxyz"
+      ],
+      "expected": 26,
+      "visibility": "hidden"
+    },
+    {
+      "name": "blank trailing block",
+      "args": [
+        "abc\n\n\n"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates across multiple lines",
+      "args": [
+        "ab\nab\nab"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "leading blank block",
+      "args": [
+        "\n\nabc"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "many groups",
+      "args": [
+        "a\n\nb\n\nc\n\nd\n\ne"
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "wide spans",
+      "args": [
+        "abcdef\nghijkl\n\nmnopqr"
+      ],
+      "expected": 18,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-everyone-yes",
+      "title": "Part 2: Everyone-yes",
+      "prompt": "Now compute, for each group, the number of letters that every person in the group answered yes to. That is the set intersection across the group's persons. Sum across groups. An empty group contributes 0.",
+      "signature": {
+        "name": "everyone_yes_sum",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "two multi-person groups",
+          "args": [
+            "abc\nbcd\n\nef\nfg"
+          ],
+          "expected": 3,
+          "visibility": "visible"
+        },
+        {
+          "name": "single person",
+          "args": [
+            "abc"
+          ],
+          "expected": 3,
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "all share none",
+          "args": [
+            "a\nb\nc"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "all share one",
+          "args": [
+            "ab\nac\nad"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "mixed groups",
+          "args": [
+            "ab\nac\n\nef\nef\n\nx"
+          ],
+          "expected": 4,
+          "visibility": "hidden"
+        },
+        {
+          "name": "blank group skipped",
+          "args": [
+            "abc\n\n\n\ndef\nde"
+          ],
+          "expected": 5,
+          "visibility": "hidden"
+        },
+        {
+          "name": "identical answers across group",
+          "args": [
+            "abc\nabc\nabc"
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        },
+        {
+          "name": "intersection shrinks each step",
+          "args": [
+            "abcd\nabc\nab\na"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "two groups one empty intersection",
+          "args": [
+            "a\nb\n\nx\nx"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "single letter unanimous",
+          "args": [
+            "a\na\na"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "everyone_yes_sum",
+          "starterPath": "problems/aoc-y1-d6-group-answers/parts/part-2-everyone-yes/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y1-d6-group-answers/parts/part-2-everyone-yes/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "everyone_yes_sum",
+          "starterPath": "problems/aoc-y1-d6-group-answers/parts/part-2-everyone-yes/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y1-d6-group-answers/parts/part-2-everyone-yes/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "EveryoneYesSum",
+          "starterPath": "problems/aoc-y1-d6-group-answers/parts/part-2-everyone-yes/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y1-d6-group-answers/parts/part-2-everyone-yes/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "everyone_yes_sum",
+          "starterPath": "problems/aoc-y1-d6-group-answers/parts/part-2-everyone-yes/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y1-d6-group-answers/parts/part-2-everyone-yes/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "anyone_yes_sum",
+      "starterPath": "problems/aoc-y1-d6-group-answers/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y1-d6-group-answers/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "anyone_yes_sum",
+      "starterPath": "problems/aoc-y1-d6-group-answers/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y1-d6-group-answers/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "AnyoneYesSum",
+      "starterPath": "problems/aoc-y1-d6-group-answers/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y1-d6-group-answers/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "anyone_yes_sum",
+      "starterPath": "problems/aoc-y1-d6-group-answers/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y1-d6-group-answers/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "id": "foundations",
+  "kind": "module",
+  "title": "Foundations",
+  "order": 1,
+  "summary": "Build the shared language for invariants, edge cases, simple scans, recursion, and complexity.",
+  "concepts": [
+    "invariants",
+    "single-pass",
+    "edge-cases",
+    "recursion",
+    "complexity"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "sum-positive-readings"
+    },
+    {
+      "kind": "problem",
+      "id": "first-repeated-index"
+    },
+    {
+      "kind": "problem",
+      "id": "safe-window-count"
+    },
+    {
+      "kind": "problem",
+      "id": "longest-true-run"
+    },
+    {
+      "kind": "problem",
+      "id": "recursive-digit-sum"
+    },
+    {
+      "kind": "problem",
+      "id": "halve-step-count"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-10"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-11"
+    },
+    {
+      "kind": "problem",
+      "id": "foundations-bonus-12"
+    }
+  ],
+  "bonus": []
+}

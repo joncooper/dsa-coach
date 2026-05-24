@@ -1,0 +1,106 @@
+{
+  "id": "dynamic-programming-bonus-02",
+  "kind": "problem",
+  "title": "Count Binary Strings Without Adjacent Ones",
+  "difficulty": "easy",
+  "concepts": [
+    "dynamic-programming",
+    "counting",
+    "state split"
+  ],
+  "prompt": "Return how many binary strings of length n contain no two adjacent 1s. The empty string of length 0 counts as one valid string.",
+  "signature": {
+    "name": "countBinaryStrings",
+    "inputs": [
+      {
+        "name": "n",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "length three",
+      "args": [
+        3
+      ],
+      "expected": 5,
+      "visibility": "visible"
+    },
+    {
+      "name": "length one",
+      "args": [
+        1
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "length zero",
+      "args": [
+        0
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "length two",
+      "args": [
+        2
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "length four",
+      "args": [
+        4
+      ],
+      "expected": 8,
+      "visibility": "hidden"
+    },
+    {
+      "name": "length five",
+      "args": [
+        5
+      ],
+      "expected": 13,
+      "visibility": "hidden"
+    },
+    {
+      "name": "length ten",
+      "args": [
+        10
+      ],
+      "expected": 144,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_binary_strings",
+      "starterPath": "problems/dynamic-programming-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/dynamic-programming-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "countBinaryStrings",
+      "starterPath": "problems/dynamic-programming-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/dynamic-programming-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountBinaryStrings",
+      "starterPath": "problems/dynamic-programming-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/dynamic-programming-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "countBinaryStrings",
+      "starterPath": "problems/dynamic-programming-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/dynamic-programming-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

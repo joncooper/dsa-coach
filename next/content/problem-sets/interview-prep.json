@@ -1,0 +1,98 @@
+{
+  "id": "interview-prep",
+  "kind": "problem-set",
+  "title": "Practical Interview Problems",
+  "summary": "Practical, language-agnostic programming problems sized to a generalist coding interview that screens for clear thinking and structure rather than algorithm trivia.",
+  "entries": [
+    {
+      "problem": "tek-trade-pnl",
+      "category": "streams",
+      "note": "queue, FIFO matching, domain modeling"
+    },
+    {
+      "problem": "tek-log-errors-per-hour",
+      "category": "streams",
+      "note": "string parsing, grouping, tokenization"
+    },
+    {
+      "problem": "tek-rate-limiter",
+      "category": "streams",
+      "note": "sliding window, queue per key, stream processing"
+    },
+    {
+      "problem": "tek-bank-transactions",
+      "category": "streams",
+      "note": "dispatch, validation, domain modeling"
+    },
+    {
+      "problem": "tek-sessionize-events",
+      "category": "streams",
+      "note": "per-key state, gap detection, stream processing"
+    },
+    {
+      "problem": "tek-parse-csv-row",
+      "category": "parsing",
+      "note": "state machine, string scan, tokenization"
+    },
+    {
+      "problem": "tek-render-template",
+      "category": "parsing",
+      "note": "string scan, tokenization, substitution"
+    },
+    {
+      "problem": "tek-resolve-path",
+      "category": "parsing",
+      "note": "stack, string scan, normalization"
+    },
+    {
+      "problem": "tek-eval-expression",
+      "category": "parsing",
+      "note": "tokenizer, recursive descent, operator precedence"
+    },
+    {
+      "problem": "tek-min-meeting-rooms",
+      "category": "intervals",
+      "note": "sweep line, interval scheduling, sorting"
+    },
+    {
+      "problem": "tek-top-k-words",
+      "category": "aggregation",
+      "note": "tokenization, counting, stable tie-breaking"
+    },
+    {
+      "problem": "tek-reconcile-inventory",
+      "category": "aggregation",
+      "note": "dict diff, set union, sorted output"
+    },
+    {
+      "problem": "tek-revenue-by-region",
+      "category": "aggregation",
+      "note": "hash join, group-by, aggregation"
+    },
+    {
+      "problem": "tek-flatten-config",
+      "category": "recursion",
+      "note": "recursion, tree traversal, dict manipulation"
+    },
+    {
+      "problem": "tek-versioned-kv",
+      "category": "system-design",
+      "note": "per-key sorted history, binary search, operation log"
+    },
+    {
+      "problem": "tek-mini-filesystem",
+      "category": "system-design",
+      "note": "tree, command interpreter, path resolution"
+    },
+    {
+      "problem": "tek-task-order",
+      "category": "dependencies",
+      "note": "topological sort, cycle detection, graph"
+    },
+    {
+      "problem": "tek-flood-fill",
+      "category": "grid",
+      "note": "grid, BFS/DFS, connected component"
+    }
+  ]
+}

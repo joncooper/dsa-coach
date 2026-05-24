@@ -1,0 +1,78 @@
+{
+  "id": "backtracking",
+  "kind": "module",
+  "title": "Backtracking",
+  "order": 11,
+  "summary": "Practice recursion trees, choose-and-undo state, duplicate pruning, and constraint search.",
+  "concepts": [
+    "backtracking",
+    "recursion",
+    "subsets",
+    "permutations",
+    "constraints",
+    "grid search"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "subsets-lexicographic"
+    },
+    {
+      "kind": "problem",
+      "id": "unique-tile-sequence-count"
+    },
+    {
+      "kind": "problem",
+      "id": "combination-sum-exact-local"
+    },
+    {
+      "kind": "problem",
+      "id": "generate-parentheses-local"
+    },
+    {
+      "kind": "problem",
+      "id": "word-path-exists-local"
+    },
+    {
+      "kind": "problem",
+      "id": "backtracking-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "backtracking-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "backtracking-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "backtracking-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "backtracking-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "backtracking-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "backtracking-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "backtracking-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "backtracking-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "backtracking-bonus-10"
+    }
+  ],
+  "bonus": []
+}

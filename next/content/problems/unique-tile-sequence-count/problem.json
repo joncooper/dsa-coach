@@ -1,0 +1,121 @@
+{
+  "id": "unique-tile-sequence-count",
+  "kind": "problem",
+  "title": "Unique Tile Sequence Count",
+  "difficulty": "medium",
+  "concepts": [
+    "backtracking",
+    "frequency counts"
+  ],
+  "prompt": "Given a string of uppercase tiles, return how many non-empty sequences can be formed using each tile at most once. Duplicate letters are indistinguishable.",
+  "signature": {
+    "name": "uniqueTileSequenceCount",
+    "inputs": [
+      {
+        "name": "tiles",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "aab",
+      "args": [
+        "AAB"
+      ],
+      "expected": 8,
+      "visibility": "visible"
+    },
+    {
+      "name": "single",
+      "args": [
+        "Z"
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "duplicates only",
+      "args": [
+        "AA"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "three distinct",
+      "args": [
+        "ABC"
+      ],
+      "expected": 15,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all same triple",
+      "args": [
+        "AAA"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed dup",
+      "args": [
+        "AABB"
+      ],
+      "expected": 18,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two distinct",
+      "args": [
+        "AB"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "trio with dup",
+      "args": [
+        "AAB"
+      ],
+      "expected": 8,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "unique_tile_sequence_count",
+      "starterPath": "problems/unique-tile-sequence-count/solutions/python/starter.py",
+      "referencePath": "problems/unique-tile-sequence-count/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "uniqueTileSequenceCount",
+      "starterPath": "problems/unique-tile-sequence-count/solutions/typescript/starter.ts",
+      "referencePath": "problems/unique-tile-sequence-count/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "UniqueTileSequenceCount",
+      "starterPath": "problems/unique-tile-sequence-count/solutions/go/starter.go",
+      "referencePath": "problems/unique-tile-sequence-count/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "uniqueTileSequenceCount",
+      "starterPath": "problems/unique-tile-sequence-count/solutions/scala/starter.scala",
+      "referencePath": "problems/unique-tile-sequence-count/solutions/scala/reference.scala"
+    }
+  }
+}

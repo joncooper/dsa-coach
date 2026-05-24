@@ -1,0 +1,182 @@
+{
+  "id": "lower-bound-local",
+  "kind": "problem",
+  "title": "Lower Bound Local",
+  "difficulty": "easy",
+  "concepts": [
+    "binary search",
+    "boundary"
+  ],
+  "prompt": "Return the first index where `target` could be inserted without breaking sorted order.",
+  "signature": {
+    "name": "lowerBoundLocal",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "inside",
+      "args": [
+        [
+          1,
+          3,
+          3,
+          7
+        ],
+        3
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "end",
+      "args": [
+        [
+          1,
+          2
+        ],
+        5
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "start",
+      "args": [
+        [
+          2,
+          4
+        ],
+        1
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        9
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "present once",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        3
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal target",
+      "args": [
+        [
+          2,
+          2,
+          2
+        ],
+        2
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "between values",
+      "args": [
+        [
+          1,
+          4,
+          7
+        ],
+        5
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single match",
+      "args": [
+        [
+          7
+        ],
+        7
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single below",
+      "args": [
+        [
+          7
+        ],
+        8
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -5,
+          -3,
+          -1,
+          1
+        ],
+        -2
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "lower_bound_local",
+      "starterPath": "problems/lower-bound-local/solutions/python/starter.py",
+      "referencePath": "problems/lower-bound-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "lowerBoundLocal",
+      "starterPath": "problems/lower-bound-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/lower-bound-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LowerBoundLocal",
+      "starterPath": "problems/lower-bound-local/solutions/go/starter.go",
+      "referencePath": "problems/lower-bound-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "lowerBoundLocal",
+      "starterPath": "problems/lower-bound-local/solutions/scala/starter.scala",
+      "referencePath": "problems/lower-bound-local/solutions/scala/reference.scala"
+    }
+  }
+}

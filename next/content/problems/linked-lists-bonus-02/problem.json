@@ -1,0 +1,156 @@
+{
+  "id": "linked-lists-bonus-02",
+  "kind": "problem",
+  "title": "Node Value At Index",
+  "difficulty": "warmup",
+  "concepts": [
+    "linked-lists",
+    "traversal",
+    "indexing"
+  ],
+  "prompt": "Given the head of a singly linked list and a zero-based index, return the value stored at that index. If the index is out of range, return None.",
+  "signature": {
+    "name": "valueAtIndex",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "index",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number",
+      "nullable": true
+    }
+  },
+  "tests": [
+    {
+      "name": "middle index",
+      "args": [
+        [
+          10,
+          20,
+          30,
+          40
+        ],
+        2
+      ],
+      "expected": 30,
+      "visibility": "visible"
+    },
+    {
+      "name": "index too large",
+      "args": [
+        [
+          1,
+          2
+        ],
+        5
+      ],
+      "expected": null,
+      "visibility": "visible"
+    },
+    {
+      "name": "first index",
+      "args": [
+        [
+          7,
+          8,
+          9
+        ],
+        0
+      ],
+      "expected": 7,
+      "visibility": "hidden"
+    },
+    {
+      "name": "last index",
+      "args": [
+        [
+          7,
+          8,
+          9
+        ],
+        2
+      ],
+      "expected": 9,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty list",
+      "args": [
+        [],
+        0
+      ],
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single node hit",
+      "args": [
+        [
+          42
+        ],
+        0
+      ],
+      "expected": 42,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single node miss",
+      "args": [
+        [
+          42
+        ],
+        1
+      ],
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "one past end",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        3
+      ],
+      "expected": null,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "value_at_index",
+      "starterPath": "problems/linked-lists-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/linked-lists-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "valueAtIndex",
+      "starterPath": "problems/linked-lists-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/linked-lists-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ValueAtIndex",
+      "starterPath": "problems/linked-lists-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/linked-lists-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "valueAtIndex",
+      "starterPath": "problems/linked-lists-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/linked-lists-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

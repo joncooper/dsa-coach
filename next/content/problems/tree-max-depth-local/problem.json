@@ -1,0 +1,173 @@
+{
+  "id": "tree-max-depth-local",
+  "kind": "problem",
+  "title": "Tree Max Depth Local",
+  "difficulty": "easy",
+  "concepts": [
+    "tree DFS",
+    "recursion"
+  ],
+  "prompt": "Given a binary tree, return its maximum depth. An empty tree has depth 0.",
+  "signature": {
+    "name": "treeMaxDepthLocal",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "nullable": true
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "balanced",
+      "args": [
+        [
+          3,
+          9,
+          20,
+          null,
+          null,
+          15,
+          7
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "chain",
+      "args": [
+        [
+          1,
+          2,
+          null,
+          3
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "only-left-chain",
+      "args": [
+        [
+          1,
+          2,
+          null,
+          3,
+          null,
+          4
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "only-right-chain",
+      "args": [
+        [
+          1,
+          null,
+          2,
+          null,
+          3
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "perfect-3-levels",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "lopsided",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          null,
+          null,
+          null,
+          5
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two-nodes",
+      "args": [
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "tree_max_depth_local",
+      "starterPath": "problems/tree-max-depth-local/solutions/python/starter.py",
+      "referencePath": "problems/tree-max-depth-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "treeMaxDepthLocal",
+      "starterPath": "problems/tree-max-depth-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/tree-max-depth-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "TreeMaxDepthLocal",
+      "starterPath": "problems/tree-max-depth-local/solutions/go/starter.go",
+      "referencePath": "problems/tree-max-depth-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "treeMaxDepthLocal",
+      "starterPath": "problems/tree-max-depth-local/solutions/scala/starter.scala",
+      "referencePath": "problems/tree-max-depth-local/solutions/scala/reference.scala"
+    }
+  }
+}

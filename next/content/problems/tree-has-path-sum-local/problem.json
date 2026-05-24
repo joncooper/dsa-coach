@@ -1,0 +1,176 @@
+{
+  "id": "tree-has-path-sum-local",
+  "kind": "problem",
+  "title": "Tree Has Path Sum Local",
+  "difficulty": "easy",
+  "concepts": [
+    "tree DFS",
+    "path state"
+  ],
+  "prompt": "Return true if the tree has a root-to-leaf path whose node values sum to `target`.",
+  "signature": {
+    "name": "treeHasPathSumLocal",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "nullable": true
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "exists",
+      "args": [
+        [
+          5,
+          4,
+          8,
+          11,
+          null,
+          13,
+          4,
+          7,
+          2
+        ],
+        22
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "missing",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        5
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        0
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          1
+        ],
+        1
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single-mismatch",
+      "args": [
+        [
+          5
+        ],
+        4
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single-match",
+      "args": [
+        [
+          3
+        ],
+        3
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "only-left-path",
+      "args": [
+        [
+          1,
+          2,
+          null,
+          3
+        ],
+        6
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "internal-node-sum",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        3
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative-values",
+      "args": [
+        [
+          1,
+          -2,
+          -3,
+          1,
+          3,
+          -2
+        ],
+        -1
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "tree_has_path_sum_local",
+      "starterPath": "problems/tree-has-path-sum-local/solutions/python/starter.py",
+      "referencePath": "problems/tree-has-path-sum-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "treeHasPathSumLocal",
+      "starterPath": "problems/tree-has-path-sum-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/tree-has-path-sum-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "TreeHasPathSumLocal",
+      "starterPath": "problems/tree-has-path-sum-local/solutions/go/starter.go",
+      "referencePath": "problems/tree-has-path-sum-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "treeHasPathSumLocal",
+      "starterPath": "problems/tree-has-path-sum-local/solutions/scala/starter.scala",
+      "referencePath": "problems/tree-has-path-sum-local/solutions/scala/reference.scala"
+    }
+  }
+}

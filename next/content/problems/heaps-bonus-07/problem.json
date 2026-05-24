@@ -1,0 +1,258 @@
+{
+  "id": "heaps-bonus-07",
+  "kind": "problem",
+  "title": "K Weakest Rows",
+  "difficulty": "easy",
+  "concepts": [
+    "heaps",
+    "top k",
+    "composite key"
+  ],
+  "prompt": "You are given a grid of 0s and 1s where every row has all its 1s packed to the left. A row's strength is the count of 1s it contains. Return the indices of the k weakest rows ordered from weakest to strongest; when two rows have equal strength, the row with the smaller index is weaker.",
+  "signature": {
+    "name": "kWeakestRows",
+    "inputs": [
+      {
+        "name": "grid",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "five rows pick three",
+      "args": [
+        [
+          [
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        ],
+        3
+      ],
+      "expected": [
+        2,
+        0,
+        3
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "tie broken by index",
+      "args": [
+        [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            0
+          ]
+        ],
+        2
+      ],
+      "expected": [
+        0,
+        2
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single row",
+      "args": [
+        [
+          [
+            1,
+            1,
+            0
+          ]
+        ],
+        1
+      ],
+      "expected": [
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "k equals all rows",
+      "args": [
+        [
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        3
+      ],
+      "expected": [
+        2,
+        0,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all rows empty of ones",
+      "args": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        2
+      ],
+      "expected": [
+        0,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all rows full",
+      "args": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        2
+      ],
+      "expected": [
+        0,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "weakest is last row",
+      "args": [
+        [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0
+          ]
+        ],
+        1
+      ],
+      "expected": [
+        2
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "k_weakest_rows",
+      "starterPath": "problems/heaps-bonus-07/solutions/python/starter.py",
+      "referencePath": "problems/heaps-bonus-07/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "kWeakestRows",
+      "starterPath": "problems/heaps-bonus-07/solutions/typescript/starter.ts",
+      "referencePath": "problems/heaps-bonus-07/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "KWeakestRows",
+      "starterPath": "problems/heaps-bonus-07/solutions/go/starter.go",
+      "referencePath": "problems/heaps-bonus-07/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "kWeakestRows",
+      "starterPath": "problems/heaps-bonus-07/solutions/scala/starter.scala",
+      "referencePath": "problems/heaps-bonus-07/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,190 @@
+{
+  "id": "greedy-bonus-05",
+  "kind": "problem",
+  "title": "Fewest Arrows To Pop Balloons",
+  "difficulty": "medium",
+  "concepts": [
+    "greedy",
+    "intervals",
+    "sorting"
+  ],
+  "prompt": "Each balloon is an interval `[start, end]` floating along a wall. An arrow shot straight up at position x pops every balloon whose interval contains x (inclusive at both ends). Return the minimum number of arrows needed to pop every balloon.",
+  "signature": {
+    "name": "minArrows",
+    "inputs": [
+      {
+        "name": "intervals",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two clusters",
+      "args": [
+        [
+          [
+            10,
+            16
+          ],
+          [
+            2,
+            8
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            7,
+            12
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "all disjoint",
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            7,
+            8
+          ]
+        ]
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single balloon",
+      "args": [
+        [
+          [
+            4,
+            9
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all share a point",
+      "args": [
+        [
+          [
+            1,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "touching ends count",
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative coordinates",
+      "args": [
+        [
+          [
+            -7,
+            -3
+          ],
+          [
+            -5,
+            -1
+          ],
+          [
+            0,
+            4
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "min_arrows",
+      "starterPath": "problems/greedy-bonus-05/solutions/python/starter.py",
+      "referencePath": "problems/greedy-bonus-05/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "minArrows",
+      "starterPath": "problems/greedy-bonus-05/solutions/typescript/starter.ts",
+      "referencePath": "problems/greedy-bonus-05/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MinArrows",
+      "starterPath": "problems/greedy-bonus-05/solutions/go/starter.go",
+      "referencePath": "problems/greedy-bonus-05/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "minArrows",
+      "starterPath": "problems/greedy-bonus-05/solutions/scala/starter.scala",
+      "referencePath": "problems/greedy-bonus-05/solutions/scala/reference.scala"
+    }
+  }
+}

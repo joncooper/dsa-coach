@@ -1,0 +1,164 @@
+{
+  "id": "arrays-strings-bonus-03",
+  "kind": "problem",
+  "title": "Move Zeros To End",
+  "difficulty": "easy",
+  "concepts": [
+    "arrays-strings",
+    "in-place thinking",
+    "two write pointers"
+  ],
+  "prompt": "Return a new list with every zero moved to the end, while every non-zero value keeps its original relative order.",
+  "signature": {
+    "name": "moveZeros",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "scattered zeros",
+      "args": [
+        [
+          0,
+          1,
+          0,
+          3,
+          12
+        ]
+      ],
+      "expected": [
+        1,
+        3,
+        12,
+        0,
+        0
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "interleaved",
+      "args": [
+        [
+          1,
+          0,
+          2,
+          0,
+          3
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        0,
+        0
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single zero",
+      "args": [
+        [
+          0
+        ]
+      ],
+      "expected": [
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "no zeros",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all zeros",
+      "args": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "expected": [
+        0,
+        0,
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -1,
+          0,
+          -2
+        ]
+      ],
+      "expected": [
+        -1,
+        -2,
+        0
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "move_zeros",
+      "starterPath": "problems/arrays-strings-bonus-03/solutions/python/starter.py",
+      "referencePath": "problems/arrays-strings-bonus-03/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "moveZeros",
+      "starterPath": "problems/arrays-strings-bonus-03/solutions/typescript/starter.ts",
+      "referencePath": "problems/arrays-strings-bonus-03/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MoveZeros",
+      "starterPath": "problems/arrays-strings-bonus-03/solutions/go/starter.go",
+      "referencePath": "problems/arrays-strings-bonus-03/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "moveZeros",
+      "starterPath": "problems/arrays-strings-bonus-03/solutions/scala/starter.scala",
+      "referencePath": "problems/arrays-strings-bonus-03/solutions/scala/reference.scala"
+    }
+  }
+}

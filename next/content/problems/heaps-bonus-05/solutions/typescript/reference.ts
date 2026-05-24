@@ -1,0 +1,9 @@
+export function topKFrequent(nums: number[], k: number): number[] {
+  const counts = new Map<number, number>();
+  for (const num of nums) counts.set(num, (counts.get(num) ?? 0) + 1);
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, k)
+    .map(([num]) => num)
+    .sort((a, b) => a - b);
+}

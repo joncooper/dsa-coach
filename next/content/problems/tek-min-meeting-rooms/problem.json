@@ -1,0 +1,336 @@
+{
+  "id": "tek-min-meeting-rooms",
+  "kind": "problem",
+  "title": "Minimum Meeting Rooms",
+  "difficulty": "medium",
+  "concepts": [
+    "sweep line",
+    "interval scheduling",
+    "sorting"
+  ],
+  "prompt": "You are given a list of meetings, each represented as `[start, end]` with `start < end` and end exclusive (a meeting ending at 10 frees the room for a meeting starting at exactly 10). Return the minimum number of meeting rooms needed so that no two meetings sharing a room overlap. Input meetings are in no particular order.",
+  "signature": {
+    "name": "minMeetingRooms",
+    "inputs": [
+      {
+        "name": "meetings",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "single meeting",
+      "args": [
+        [
+          [
+            0,
+            30
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "three overlapping",
+      "args": [
+        [
+          [
+            0,
+            30
+          ],
+          [
+            5,
+            10
+          ],
+          [
+            15,
+            20
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "back to back same room",
+      "args": [
+        [
+          [
+            0,
+            10
+          ],
+          [
+            10,
+            20
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "fully nested",
+      "args": [
+        [
+          [
+            1,
+            10
+          ],
+          [
+            2,
+            9
+          ],
+          [
+            3,
+            8
+          ]
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "disjoint",
+      "args": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "unsorted input",
+      "args": [
+        [
+          [
+            10,
+            20
+          ],
+          [
+            0,
+            30
+          ],
+          [
+            5,
+            15
+          ]
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "shared endpoints chain",
+      "args": [
+        [
+          [
+            1,
+            5
+          ],
+          [
+            5,
+            10
+          ],
+          [
+            10,
+            15
+          ],
+          [
+            1,
+            12
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "five simultaneous starts",
+      "args": [
+        [
+          [
+            0,
+            30
+          ],
+          [
+            0,
+            20
+          ],
+          [
+            0,
+            10
+          ],
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "non-zero offsets disjoint",
+      "args": [
+        [
+          [
+            5,
+            10
+          ],
+          [
+            10,
+            15
+          ],
+          [
+            15,
+            20
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "peak in the middle",
+      "args": [
+        [
+          [
+            0,
+            100
+          ],
+          [
+            10,
+            20
+          ],
+          [
+            10,
+            20
+          ],
+          [
+            10,
+            20
+          ],
+          [
+            90,
+            95
+          ]
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "tight chain of end-equals-start",
+      "args": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two pairs of identical intervals",
+      "args": [
+        [
+          [
+            0,
+            10
+          ],
+          [
+            0,
+            10
+          ],
+          [
+            5,
+            15
+          ],
+          [
+            5,
+            15
+          ]
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "min_meeting_rooms",
+      "starterPath": "problems/tek-min-meeting-rooms/solutions/python/starter.py",
+      "referencePath": "problems/tek-min-meeting-rooms/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "minMeetingRooms",
+      "starterPath": "problems/tek-min-meeting-rooms/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-min-meeting-rooms/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MinMeetingRooms",
+      "starterPath": "problems/tek-min-meeting-rooms/solutions/go/starter.go",
+      "referencePath": "problems/tek-min-meeting-rooms/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "min_meeting_rooms",
+      "starterPath": "problems/tek-min-meeting-rooms/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-min-meeting-rooms/solutions/scala/reference.scala"
+    }
+  }
+}

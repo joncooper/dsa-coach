@@ -1,0 +1,77 @@
+{
+  "id": "heaps",
+  "kind": "module",
+  "title": "Heaps",
+  "order": 8,
+  "summary": "Practice top-k selection, priority simulation, k-way merge, and streaming order statistics.",
+  "concepts": [
+    "heaps",
+    "priority queues",
+    "top k",
+    "k-way merge",
+    "streaming medians"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "top-k-scores"
+    },
+    {
+      "kind": "problem",
+      "id": "merge-sorted-batches"
+    },
+    {
+      "kind": "problem",
+      "id": "k-closest-points-local"
+    },
+    {
+      "kind": "problem",
+      "id": "running-medians-local"
+    },
+    {
+      "kind": "problem",
+      "id": "combine-until-target"
+    },
+    {
+      "kind": "problem",
+      "id": "heaps-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "heaps-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "heaps-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "heaps-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "heaps-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "heaps-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "heaps-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "heaps-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "heaps-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "heaps-bonus-10"
+    }
+  ],
+  "bonus": []
+}

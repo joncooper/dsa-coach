@@ -1,0 +1,200 @@
+{
+  "id": "connected-component-count",
+  "kind": "problem",
+  "title": "Connected Component Count",
+  "difficulty": "easy",
+  "concepts": [
+    "graph DFS",
+    "visited"
+  ],
+  "prompt": "Return the number of connected components in an undirected graph with nodes `0..n-1`. Each edge is `[u, v]`. Self-loops (an edge `[a, a]`) do not connect `a` to any other node. Return `0` when `n == 0`.",
+  "signature": {
+    "name": "connectedComponentCount",
+    "inputs": [
+      {
+        "name": "n",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "edges",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two",
+      "args": [
+        5,
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "isolated",
+      "args": [
+        3,
+        []
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "one",
+      "args": [
+        4,
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty graph",
+      "args": [
+        0,
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single-node",
+      "args": [
+        1,
+        []
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two-with-edge",
+      "args": [
+        2,
+        [
+          [
+            0,
+            1
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "triangle-and-isolated",
+      "args": [
+        4,
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            0,
+            2
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two-pairs",
+      "args": [
+        4,
+        [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            3
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "self-loop-only",
+      "args": [
+        3,
+        [
+          [
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "connected_component_count",
+      "starterPath": "problems/connected-component-count/solutions/python/starter.py",
+      "referencePath": "problems/connected-component-count/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "connectedComponentCount",
+      "starterPath": "problems/connected-component-count/solutions/typescript/starter.ts",
+      "referencePath": "problems/connected-component-count/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ConnectedComponentCount",
+      "starterPath": "problems/connected-component-count/solutions/go/starter.go",
+      "referencePath": "problems/connected-component-count/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "connectedComponentCount",
+      "starterPath": "problems/connected-component-count/solutions/scala/starter.scala",
+      "referencePath": "problems/connected-component-count/solutions/scala/reference.scala"
+    }
+  }
+}

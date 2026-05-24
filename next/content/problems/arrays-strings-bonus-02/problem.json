@@ -1,0 +1,158 @@
+{
+  "id": "arrays-strings-bonus-02",
+  "kind": "problem",
+  "title": "Running Range Width",
+  "difficulty": "easy",
+  "concepts": [
+    "arrays-strings",
+    "prefix state",
+    "running min max"
+  ],
+  "prompt": "Return a new list where each position holds the difference between the largest and smallest value seen up to and including that position.",
+  "signature": {
+    "name": "runningRangeWidth",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "widening",
+      "args": [
+        [
+          4,
+          2,
+          7,
+          1
+        ]
+      ],
+      "expected": [
+        0,
+        2,
+        5,
+        6
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "steady climb",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          5
+        ]
+      ],
+      "expected": [
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          3,
+          3,
+          3
+        ]
+      ],
+      "expected": [
+        0,
+        0,
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all negative",
+      "args": [
+        [
+          -2,
+          -5,
+          -1
+        ]
+      ],
+      "expected": [
+        0,
+        3,
+        4
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two values",
+      "args": [
+        [
+          10,
+          1
+        ]
+      ],
+      "expected": [
+        0,
+        9
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "running_range_width",
+      "starterPath": "problems/arrays-strings-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/arrays-strings-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "runningRangeWidth",
+      "starterPath": "problems/arrays-strings-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/arrays-strings-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RunningRangeWidth",
+      "starterPath": "problems/arrays-strings-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/arrays-strings-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "runningRangeWidth",
+      "starterPath": "problems/arrays-strings-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/arrays-strings-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

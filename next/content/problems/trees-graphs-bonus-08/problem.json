@@ -1,0 +1,295 @@
+{
+  "id": "trees-graphs-bonus-08",
+  "kind": "problem",
+  "title": "Flood Fill A Grid",
+  "difficulty": "easy",
+  "concepts": [
+    "trees-graphs",
+    "DFS",
+    "connected components"
+  ],
+  "prompt": "You are given a 2-D grid of integer colors and a starting cell (sr, sc). Recolor the starting cell and every cell connected to it through up, down, left, or right moves that shares its original color, then return the grid.",
+  "signature": {
+    "name": "floodFill",
+    "inputs": [
+      {
+        "name": "grid",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "sr",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "sc",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "color",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "fill corner region",
+      "args": [
+        [
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        0,
+        0,
+        9
+      ],
+      "expected": [
+        [
+          9,
+          9,
+          0
+        ],
+        [
+          9,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single cell",
+      "args": [
+        [
+          [
+            0
+          ]
+        ],
+        0,
+        0,
+        3
+      ],
+      "expected": [
+        [
+          3
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "new color equals old",
+      "args": [
+        [
+          [
+            5,
+            5
+          ],
+          [
+            5,
+            5
+          ]
+        ],
+        0,
+        0,
+        5
+      ],
+      "expected": [
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          5
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "isolated cell only",
+      "args": [
+        [
+          [
+            1,
+            0,
+            1
+          ]
+        ],
+        0,
+        2,
+        7
+      ],
+      "expected": [
+        [
+          1,
+          0,
+          7
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "whole grid one region",
+      "args": [
+        [
+          [
+            2,
+            2
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        1,
+        1,
+        8
+      ],
+      "expected": [
+        [
+          8,
+          8
+        ],
+        [
+          8,
+          8
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "diagonal does not connect",
+      "args": [
+        [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        0,
+        0,
+        4
+      ],
+      "expected": [
+        [
+          4,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "fill from middle",
+      "args": [
+        [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        0,
+        0,
+        6
+      ],
+      "expected": [
+        [
+          6,
+          6,
+          6
+        ],
+        [
+          6,
+          1,
+          6
+        ],
+        [
+          6,
+          6,
+          6
+        ]
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "flood_fill",
+      "starterPath": "problems/trees-graphs-bonus-08/solutions/python/starter.py",
+      "referencePath": "problems/trees-graphs-bonus-08/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "floodFill",
+      "starterPath": "problems/trees-graphs-bonus-08/solutions/typescript/starter.ts",
+      "referencePath": "problems/trees-graphs-bonus-08/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "FloodFill",
+      "starterPath": "problems/trees-graphs-bonus-08/solutions/go/starter.go",
+      "referencePath": "problems/trees-graphs-bonus-08/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "floodFill",
+      "starterPath": "problems/trees-graphs-bonus-08/solutions/scala/starter.scala",
+      "referencePath": "problems/trees-graphs-bonus-08/solutions/scala/reference.scala"
+    }
+  }
+}

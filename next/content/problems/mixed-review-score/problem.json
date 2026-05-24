@@ -1,0 +1,207 @@
+{
+  "id": "mixed-review-score",
+  "kind": "problem",
+  "title": "Mixed Review Score",
+  "difficulty": "warmup",
+  "concepts": [
+    "aggregation",
+    "study planning"
+  ],
+  "prompt": "Each result is `[difficulty, passed]`, where difficulty is 1, 2, or 3. Return the sum of difficulty values for passed results only.",
+  "signature": {
+    "name": "mixedReviewScore",
+    "inputs": [
+      {
+        "name": "results",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "any"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "some pass",
+      "args": [
+        [
+          [
+            1,
+            true
+          ],
+          [
+            3,
+            false
+          ],
+          [
+            2,
+            true
+          ]
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "none",
+      "args": [
+        [
+          [
+            2,
+            false
+          ]
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all",
+      "args": [
+        [
+          [
+            3,
+            true
+          ],
+          [
+            3,
+            true
+          ]
+        ]
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "difficulty one passed",
+      "args": [
+        [
+          [
+            1,
+            true
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed difficulties",
+      "args": [
+        [
+          [
+            1,
+            true
+          ],
+          [
+            2,
+            false
+          ],
+          [
+            3,
+            true
+          ],
+          [
+            2,
+            true
+          ]
+        ]
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all false",
+      "args": [
+        [
+          [
+            1,
+            false
+          ],
+          [
+            2,
+            false
+          ],
+          [
+            3,
+            false
+          ]
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "only twos pass",
+      "args": [
+        [
+          [
+            2,
+            true
+          ],
+          [
+            2,
+            true
+          ],
+          [
+            2,
+            true
+          ]
+        ]
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single fail high",
+      "args": [
+        [
+          [
+            3,
+            false
+          ]
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "mixed_review_score",
+      "starterPath": "problems/mixed-review-score/solutions/python/starter.py",
+      "referencePath": "problems/mixed-review-score/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "mixedReviewScore",
+      "starterPath": "problems/mixed-review-score/solutions/typescript/starter.ts",
+      "referencePath": "problems/mixed-review-score/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MixedReviewScore",
+      "starterPath": "problems/mixed-review-score/solutions/go/starter.go",
+      "referencePath": "problems/mixed-review-score/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "mixedReviewScore",
+      "starterPath": "problems/mixed-review-score/solutions/scala/starter.scala",
+      "referencePath": "problems/mixed-review-score/solutions/scala/reference.scala"
+    }
+  }
+}

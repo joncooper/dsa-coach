@@ -1,0 +1,3 @@
+export function moveZeros(nums: number[]): number[] {
+  throw new Error("TODO");
+}

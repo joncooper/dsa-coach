@@ -1,0 +1,211 @@
+{
+  "id": "running-medians-local",
+  "kind": "problem",
+  "title": "Running Medians Local",
+  "difficulty": "hard",
+  "concepts": [
+    "two heaps",
+    "streaming"
+  ],
+  "prompt": "After each inserted number, return the median of all numbers seen so far. For an odd count the median is the middle value (returned as the integer itself); for an even count it is the average of the two middle values (returned as a float, even when the values are equal — e.g. `[0, 0]` yields `0.0`).",
+  "signature": {
+    "name": "runningMediansLocal",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "stream",
+      "args": [
+        [
+          2,
+          1,
+          5,
+          7
+        ]
+      ],
+      "expected": [
+        2,
+        1.5,
+        2,
+        3.5
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          4
+        ]
+      ],
+      "expected": [
+        4
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "duplicates",
+      "args": [
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative",
+      "args": [
+        [
+          -1,
+          -2,
+          -3
+        ]
+      ],
+      "expected": [
+        -1,
+        -1.5,
+        -2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "ascending",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": [
+        1,
+        1.5,
+        2,
+        2.5,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "descending",
+      "args": [
+        [
+          5,
+          4,
+          3,
+          2,
+          1
+        ]
+      ],
+      "expected": [
+        5,
+        4.5,
+        4,
+        3.5,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "zigzag",
+      "args": [
+        [
+          10,
+          0,
+          5,
+          5
+        ]
+      ],
+      "expected": [
+        10,
+        5,
+        5,
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "with zero",
+      "args": [
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "expected": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed signs",
+      "args": [
+        [
+          -5,
+          5,
+          -3,
+          3
+        ]
+      ],
+      "expected": [
+        -5,
+        0,
+        -3,
+        0
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "running_medians_local",
+      "starterPath": "problems/running-medians-local/solutions/python/starter.py",
+      "referencePath": "problems/running-medians-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "runningMediansLocal",
+      "starterPath": "problems/running-medians-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/running-medians-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RunningMediansLocal",
+      "starterPath": "problems/running-medians-local/solutions/go/starter.go",
+      "referencePath": "problems/running-medians-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "runningMediansLocal",
+      "starterPath": "problems/running-medians-local/solutions/scala/starter.scala",
+      "referencePath": "problems/running-medians-local/solutions/scala/reference.scala"
+    }
+  }
+}

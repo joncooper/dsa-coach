@@ -1,0 +1,230 @@
+{
+  "id": "lib-sc-sliding-window-median",
+  "kind": "problem",
+  "title": "Sliding Window Median",
+  "difficulty": "medium",
+  "concepts": [
+    "sliding window",
+    "sorted container",
+    "SortedList"
+  ],
+  "prompt": "Given an integer array `nums` and a window size `k`, return the median of every length-`k` window as the window slides from left to right by one position at a time. The output length is `len(nums) - k + 1`. For odd `k` the median is the middle value of the sorted window; for even `k` it is the mean of the two middle values (as a float).",
+  "signature": {
+    "name": "slidingWindowMedian",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "k=1 returns each element",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        1
+      ],
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "k=2 means of pairs",
+      "args": [
+        [
+          1,
+          3,
+          5,
+          7
+        ],
+        2
+      ],
+      "expected": [
+        2,
+        4,
+        6
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "classic k=3 window",
+      "args": [
+        [
+          1,
+          3,
+          -1,
+          -3,
+          5,
+          3,
+          6,
+          7
+        ],
+        3
+      ],
+      "expected": [
+        1,
+        -1,
+        -1,
+        3,
+        5,
+        6
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "window equals full array",
+      "args": [
+        [
+          5,
+          2,
+          1,
+          4,
+          3
+        ],
+        5
+      ],
+      "expected": [
+        3
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "duplicates inside a window",
+      "args": [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        2
+      ],
+      "expected": [
+        1,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "even window over signed values",
+      "args": [
+        [
+          -4,
+          -2,
+          0,
+          2,
+          4
+        ],
+        4
+      ],
+      "expected": [
+        -1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single element with k=1",
+      "args": [
+        [
+          42
+        ],
+        1
+      ],
+      "expected": [
+        42
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "remove correct end of window",
+      "args": [
+        [
+          7,
+          3,
+          5,
+          1,
+          4,
+          6,
+          2
+        ],
+        3
+      ],
+      "expected": [
+        5,
+        3,
+        4,
+        4,
+        4
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all identical large window",
+      "args": [
+        [
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        3
+      ],
+      "expected": [
+        5,
+        5,
+        5
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "sliding_window_median",
+      "starterPath": "problems/lib-sc-sliding-window-median/solutions/python/starter.py",
+      "referencePath": "problems/lib-sc-sliding-window-median/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "slidingWindowMedian",
+      "starterPath": "problems/lib-sc-sliding-window-median/solutions/typescript/starter.ts",
+      "referencePath": "problems/lib-sc-sliding-window-median/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SlidingWindowMedian",
+      "starterPath": "problems/lib-sc-sliding-window-median/solutions/go/starter.go",
+      "referencePath": "problems/lib-sc-sliding-window-median/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "slidingWindowMedian",
+      "starterPath": "problems/lib-sc-sliding-window-median/solutions/scala/starter.scala",
+      "referencePath": "problems/lib-sc-sliding-window-median/solutions/scala/reference.scala"
+    }
+  }
+}

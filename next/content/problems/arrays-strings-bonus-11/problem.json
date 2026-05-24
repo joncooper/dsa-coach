@@ -1,0 +1,141 @@
+{
+  "id": "arrays-strings-bonus-11",
+  "kind": "problem",
+  "title": "Longest Mountain",
+  "difficulty": "medium",
+  "concepts": [
+    "arrays-strings",
+    "array scan",
+    "two-sided expansion"
+  ],
+  "prompt": "A mountain is a contiguous run that strictly rises to a single peak and then strictly falls, with at least one step up and one step down. Return the length of the longest mountain, or 0 if there is none.",
+  "signature": {
+    "name": "longestMountain",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "mountain after dip",
+      "args": [
+        [
+          2,
+          1,
+          4,
+          7,
+          3,
+          2,
+          5
+        ]
+      ],
+      "expected": 5,
+      "visibility": "visible"
+    },
+    {
+      "name": "tiny mountain",
+      "args": [
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "no descent",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "plateau peak",
+      "args": [
+        [
+          0,
+          2,
+          2,
+          2,
+          0
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "long mountain",
+      "args": [
+        [
+          5,
+          0,
+          3,
+          8,
+          5,
+          2,
+          1
+        ]
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "longest_mountain",
+      "starterPath": "problems/arrays-strings-bonus-11/solutions/python/starter.py",
+      "referencePath": "problems/arrays-strings-bonus-11/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "longestMountain",
+      "starterPath": "problems/arrays-strings-bonus-11/solutions/typescript/starter.ts",
+      "referencePath": "problems/arrays-strings-bonus-11/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LongestMountain",
+      "starterPath": "problems/arrays-strings-bonus-11/solutions/go/starter.go",
+      "referencePath": "problems/arrays-strings-bonus-11/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "longestMountain",
+      "starterPath": "problems/arrays-strings-bonus-11/solutions/scala/starter.scala",
+      "referencePath": "problems/arrays-strings-bonus-11/solutions/scala/reference.scala"
+    }
+  }
+}

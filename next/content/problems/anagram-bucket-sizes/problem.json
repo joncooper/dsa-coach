@@ -1,0 +1,187 @@
+{
+  "id": "anagram-bucket-sizes",
+  "kind": "problem",
+  "title": "Anagram Bucket Sizes",
+  "difficulty": "medium",
+  "concepts": [
+    "canonical key",
+    "grouping"
+  ],
+  "prompt": "Group words by sorted-letter signature and return the bucket sizes sorted from smallest to largest.",
+  "signature": {
+    "name": "anagramBucketSizes",
+    "inputs": [
+      {
+        "name": "words",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "two buckets",
+      "args": [
+        [
+          "tea",
+          "eat",
+          "tan",
+          "ate"
+        ]
+      ],
+      "expected": [
+        1,
+        3
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "all unique",
+      "args": [
+        [
+          "ab",
+          "cd",
+          "ef"
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "one bucket",
+      "args": [
+        [
+          "abc",
+          "bca",
+          "cab"
+        ]
+      ],
+      "expected": [
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single word",
+      "args": [
+        [
+          "hello"
+        ]
+      ],
+      "expected": [
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two singletons one pair",
+      "args": [
+        [
+          "ab",
+          "ba",
+          "cd",
+          "ef"
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty strings",
+      "args": [
+        [
+          "",
+          "",
+          ""
+        ]
+      ],
+      "expected": [
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "varied lengths",
+      "args": [
+        [
+          "a",
+          "aa",
+          "aaa"
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed sizes",
+      "args": [
+        [
+          "listen",
+          "silent",
+          "enlist",
+          "google",
+          "gooegl",
+          "abc"
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "anagram_bucket_sizes",
+      "starterPath": "problems/anagram-bucket-sizes/solutions/python/starter.py",
+      "referencePath": "problems/anagram-bucket-sizes/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "anagramBucketSizes",
+      "starterPath": "problems/anagram-bucket-sizes/solutions/typescript/starter.ts",
+      "referencePath": "problems/anagram-bucket-sizes/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "AnagramBucketSizes",
+      "starterPath": "problems/anagram-bucket-sizes/solutions/go/starter.go",
+      "referencePath": "problems/anagram-bucket-sizes/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "anagramBucketSizes",
+      "starterPath": "problems/anagram-bucket-sizes/solutions/scala/starter.scala",
+      "referencePath": "problems/anagram-bucket-sizes/solutions/scala/reference.scala"
+    }
+  }
+}

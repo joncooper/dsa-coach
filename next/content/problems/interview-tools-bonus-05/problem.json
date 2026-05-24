@@ -1,0 +1,178 @@
+{
+  "id": "interview-tools-bonus-05",
+  "kind": "problem",
+  "title": "Count Islands",
+  "difficulty": "medium",
+  "concepts": [
+    "interview-tools",
+    "trees-graphs",
+    "DFS",
+    "connected components"
+  ],
+  "prompt": "A grid contains 0s (water) and 1s (land). An island is a group of 1s connected horizontally or vertically. Return the number of distinct islands.",
+  "signature": {
+    "name": "countIslands",
+    "inputs": [
+      {
+        "name": "grid",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two islands",
+      "args": [
+        [
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            1
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "all water",
+      "args": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty grid",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single land cell",
+      "args": [
+        [
+          [
+            1
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "one big island",
+      "args": [
+        [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "diagonal not connected",
+      "args": [
+        [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "u-shaped island",
+      "args": [
+        [
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_islands",
+      "starterPath": "problems/interview-tools-bonus-05/solutions/python/starter.py",
+      "referencePath": "problems/interview-tools-bonus-05/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "countIslands",
+      "starterPath": "problems/interview-tools-bonus-05/solutions/typescript/starter.ts",
+      "referencePath": "problems/interview-tools-bonus-05/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountIslands",
+      "starterPath": "problems/interview-tools-bonus-05/solutions/go/starter.go",
+      "referencePath": "problems/interview-tools-bonus-05/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "countIslands",
+      "starterPath": "problems/interview-tools-bonus-05/solutions/scala/starter.scala",
+      "referencePath": "problems/interview-tools-bonus-05/solutions/scala/reference.scala"
+    }
+  }
+}

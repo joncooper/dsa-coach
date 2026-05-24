@@ -1,0 +1,106 @@
+{
+  "id": "foundations-bonus-05",
+  "kind": "problem",
+  "title": "Count Vowels",
+  "difficulty": "warmup",
+  "concepts": [
+    "foundations",
+    "string scans",
+    "iteration"
+  ],
+  "prompt": "Return how many characters in the string are vowels. Count a, e, i, o, and u in either upper or lower case.",
+  "signature": {
+    "name": "countVowels",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "simple word",
+      "args": [
+        "hello"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "mixed case",
+      "args": [
+        "Programming"
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "no vowels",
+      "args": [
+        "rhythm"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all vowels upper",
+      "args": [
+        "AEIOU"
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "repeated vowels",
+      "args": [
+        "queue"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "y is not a vowel",
+      "args": [
+        "yyy"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_vowels",
+      "starterPath": "problems/foundations-bonus-05/solutions/python/starter.py",
+      "referencePath": "problems/foundations-bonus-05/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "countVowels",
+      "starterPath": "problems/foundations-bonus-05/solutions/typescript/starter.ts",
+      "referencePath": "problems/foundations-bonus-05/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountVowels",
+      "starterPath": "problems/foundations-bonus-05/solutions/go/starter.go",
+      "referencePath": "problems/foundations-bonus-05/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "countVowels",
+      "starterPath": "problems/foundations-bonus-05/solutions/scala/starter.scala",
+      "referencePath": "problems/foundations-bonus-05/solutions/scala/reference.scala"
+    }
+  }
+}

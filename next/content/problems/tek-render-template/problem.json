@@ -1,0 +1,237 @@
+{
+  "id": "tek-render-template",
+  "kind": "problem",
+  "title": "Render a `{{name}}` Template",
+  "difficulty": "easy",
+  "concepts": [
+    "string scan",
+    "tokenization",
+    "substitution"
+  ],
+  "prompt": "Implement a minimal template renderer. A placeholder has the exact shape `{{name}}` where `name` matches the identifier pattern `[a-zA-Z_][a-zA-Z0-9_]*`. When `name` is a key in `values`, replace the entire `{{name}}` span with `str(values[name])`. When `name` is not present, leave the literal `{{name}}` text in the output unchanged. Any other text — including stray `{` or `{{` that is not followed by a valid identifier and `}}` — must be copied to the output verbatim.",
+  "signature": {
+    "name": "renderTemplate",
+    "inputs": [
+      {
+        "name": "template",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "values",
+        "type": {
+          "type": "object"
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "empty template",
+      "args": [
+        "",
+        {
+          "a": 1
+        }
+      ],
+      "expected": "",
+      "visibility": "visible"
+    },
+    {
+      "name": "no placeholders",
+      "args": [
+        "just text",
+        {
+          "a": 1
+        }
+      ],
+      "expected": "just text",
+      "visibility": "visible"
+    },
+    {
+      "name": "basic substitution",
+      "args": [
+        "Hello {{name}}!",
+        {
+          "name": "World"
+        }
+      ],
+      "expected": "Hello World!",
+      "visibility": "visible"
+    },
+    {
+      "name": "multiple placeholders",
+      "args": [
+        "{{a}} + {{b}} = {{c}}",
+        {
+          "a": 1,
+          "b": 2,
+          "c": 3
+        }
+      ],
+      "expected": "1 + 2 = 3",
+      "visibility": "visible"
+    },
+    {
+      "name": "unknown key kept literal",
+      "args": [
+        "{{missing}} here",
+        {}
+      ],
+      "expected": "{{missing}} here",
+      "visibility": "visible"
+    },
+    {
+      "name": "back-to-back placeholders",
+      "args": [
+        "{{a}}{{b}}{{a}}",
+        {
+          "a": "X",
+          "b": "Y"
+        }
+      ],
+      "expected": "XYX",
+      "visibility": "hidden"
+    },
+    {
+      "name": "numeric value stringified",
+      "args": [
+        "value: {{n}}",
+        {
+          "n": 42
+        }
+      ],
+      "expected": "value: 42",
+      "visibility": "hidden"
+    },
+    {
+      "name": "malformed spans are literal",
+      "args": [
+        "{x} { y } {{!}} {{1bad}} {{}}",
+        {}
+      ],
+      "expected": "{x} { y } {{!}} {{1bad}} {{}}",
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed known and unknown",
+      "args": [
+        "{{a}}/{{b}}/{{c}}",
+        {
+          "a": "X",
+          "c": "Z"
+        }
+      ],
+      "expected": "X/{{b}}/Z",
+      "visibility": "hidden"
+    },
+    {
+      "name": "underscore and digits in name",
+      "args": [
+        "{{first_name_1}}",
+        {
+          "first_name_1": "Ada"
+        }
+      ],
+      "expected": "Ada",
+      "visibility": "hidden"
+    },
+    {
+      "name": "triple braces leave outer brace literal",
+      "args": [
+        "{{{a}}}",
+        {
+          "a": "X"
+        }
+      ],
+      "expected": "{X}",
+      "visibility": "hidden"
+    },
+    {
+      "name": "spaces inside braces invalidate placeholder",
+      "args": [
+        "{{ name }}",
+        {
+          "name": "Ada"
+        }
+      ],
+      "expected": "{{ name }}",
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty string value substitutes empty",
+      "args": [
+        "hello {{name}}!",
+        {
+          "name": ""
+        }
+      ],
+      "expected": "hello !",
+      "visibility": "hidden"
+    },
+    {
+      "name": "list value stringified via str",
+      "args": [
+        "items: {{x}}",
+        {
+          "x": [
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "expected": "items: [1, 2, 3]",
+      "visibility": "hidden"
+    },
+    {
+      "name": "single brace pair is literal",
+      "args": [
+        "{a} {b}",
+        {
+          "a": "X",
+          "b": "Y"
+        }
+      ],
+      "expected": "{a} {b}",
+      "visibility": "hidden"
+    },
+    {
+      "name": "unclosed placeholder is literal",
+      "args": [
+        "start {{name end",
+        {
+          "name": "Ada"
+        }
+      ],
+      "expected": "start {{name end",
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "render_template",
+      "starterPath": "problems/tek-render-template/solutions/python/starter.py",
+      "referencePath": "problems/tek-render-template/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "renderTemplate",
+      "starterPath": "problems/tek-render-template/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-render-template/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RenderTemplate",
+      "starterPath": "problems/tek-render-template/solutions/go/starter.go",
+      "referencePath": "problems/tek-render-template/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "render_template",
+      "starterPath": "problems/tek-render-template/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-render-template/solutions/scala/reference.scala"
+    }
+  }
+}

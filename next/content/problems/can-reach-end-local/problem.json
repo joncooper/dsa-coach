@@ -1,0 +1,164 @@
+{
+  "id": "can-reach-end-local",
+  "kind": "problem",
+  "title": "Can Reach End Local",
+  "difficulty": "easy",
+  "concepts": [
+    "greedy reach",
+    "array"
+  ],
+  "prompt": "Each value is the maximum jump length from that index. Return true if index 0 can reach the final index.",
+  "signature": {
+    "name": "canReachEndLocal",
+    "inputs": [
+      {
+        "name": "jumps",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "reachable",
+      "args": [
+        [
+          2,
+          3,
+          1,
+          0,
+          4
+        ]
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "blocked",
+      "args": [
+        [
+          1,
+          0,
+          2
+        ]
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          0
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "exact",
+      "args": [
+        [
+          1,
+          1,
+          0
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero start no reach",
+      "args": [
+        [
+          0,
+          1,
+          2
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "first stalls early",
+      "args": [
+        [
+          3,
+          2,
+          1,
+          0,
+          4
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "big first jump",
+      "args": [
+        [
+          5,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two element zero",
+      "args": [
+        [
+          0,
+          0
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "barely makes it",
+      "args": [
+        [
+          2,
+          0,
+          0
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "can_reach_end_local",
+      "starterPath": "problems/can-reach-end-local/solutions/python/starter.py",
+      "referencePath": "problems/can-reach-end-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "canReachEndLocal",
+      "starterPath": "problems/can-reach-end-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/can-reach-end-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CanReachEndLocal",
+      "starterPath": "problems/can-reach-end-local/solutions/go/starter.go",
+      "referencePath": "problems/can-reach-end-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "canReachEndLocal",
+      "starterPath": "problems/can-reach-end-local/solutions/scala/starter.scala",
+      "referencePath": "problems/can-reach-end-local/solutions/scala/reference.scala"
+    }
+  }
+}

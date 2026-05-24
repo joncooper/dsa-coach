@@ -1,0 +1,121 @@
+{
+  "id": "balanced-brackets-local",
+  "kind": "problem",
+  "title": "Balanced Brackets Local",
+  "difficulty": "easy",
+  "concepts": [
+    "stack",
+    "parsing"
+  ],
+  "prompt": "Return true if every bracket in the string is balanced and correctly nested. Bracket types are `()`, `[]`, and `{}`. Any non-bracket characters are ignored. An empty string is considered balanced.",
+  "signature": {
+    "name": "balancedBracketsLocal",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "balanced",
+      "args": [
+        "([]{})"
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "wrong order",
+      "args": [
+        "([)]"
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "extra opener",
+      "args": [
+        "((())"
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "plain",
+      "args": [
+        ""
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "only opener",
+      "args": [
+        "("
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "only closer",
+      "args": [
+        ")"
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mismatched types",
+      "args": [
+        "(]"
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "with letters",
+      "args": [
+        "a(b[c]d)e"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "nested deep",
+      "args": [
+        "{[()()]}"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "balanced_brackets_local",
+      "starterPath": "problems/balanced-brackets-local/solutions/python/starter.py",
+      "referencePath": "problems/balanced-brackets-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "balancedBracketsLocal",
+      "starterPath": "problems/balanced-brackets-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/balanced-brackets-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "BalancedBracketsLocal",
+      "starterPath": "problems/balanced-brackets-local/solutions/go/starter.go",
+      "referencePath": "problems/balanced-brackets-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "balancedBracketsLocal",
+      "starterPath": "problems/balanced-brackets-local/solutions/scala/starter.scala",
+      "referencePath": "problems/balanced-brackets-local/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,165 @@
+{
+  "id": "minimum-average-gap",
+  "kind": "problem",
+  "title": "Minimum Average Gap",
+  "difficulty": "medium",
+  "concepts": [
+    "prefix sum",
+    "averages"
+  ],
+  "prompt": "For every split after index `i`, compare the floor average of `nums[:i+1]` with the floor average of `nums[i+1:]`. Return the index `i` with the smallest absolute gap; if several indices tie, return the smallest such `i`. Empty right side has average 0.",
+  "signature": {
+    "name": "minimumAverageGapIndex",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "middle",
+      "args": [
+        [
+          2,
+          5,
+          3,
+          9,
+          5
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "tie earliest",
+      "args": [
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "falling",
+      "args": [
+        [
+          10,
+          1,
+          1,
+          1
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two element",
+      "args": [
+        [
+          3,
+          7
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "rising",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zeros mix",
+      "args": [
+        [
+          0,
+          0,
+          10,
+          0
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all same",
+      "args": [
+        [
+          4,
+          4,
+          4,
+          4
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "big jump",
+      "args": [
+        [
+          1,
+          100,
+          1,
+          1,
+          1
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "minimum_average_gap_index",
+      "starterPath": "problems/minimum-average-gap/solutions/python/starter.py",
+      "referencePath": "problems/minimum-average-gap/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "minimumAverageGapIndex",
+      "starterPath": "problems/minimum-average-gap/solutions/typescript/starter.ts",
+      "referencePath": "problems/minimum-average-gap/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MinimumAverageGapIndex",
+      "starterPath": "problems/minimum-average-gap/solutions/go/starter.go",
+      "referencePath": "problems/minimum-average-gap/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "minimumAverageGapIndex",
+      "starterPath": "problems/minimum-average-gap/solutions/scala/starter.scala",
+      "referencePath": "problems/minimum-average-gap/solutions/scala/reference.scala"
+    }
+  }
+}

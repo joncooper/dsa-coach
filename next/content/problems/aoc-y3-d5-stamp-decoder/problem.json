@@ -1,0 +1,262 @@
+{
+  "id": "aoc-y3-d5-stamp-decoder",
+  "kind": "problem",
+  "title": "Day 5: Stamp Decoder",
+  "difficulty": "medium",
+  "concepts": [
+    "encoding",
+    "decoding"
+  ],
+  "prompt": "Each non-empty line is a 6-character stamp code in base-36 (digits `0-9` then letters `a-z`, lowercase only). Decode each code as a base-36 integer. Return the maximum decoded value across all codes.",
+  "signature": {
+    "name": "max_stamp",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "single code",
+      "args": [
+        "000001"
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "letter at end",
+      "args": [
+        "00000a"
+      ],
+      "expected": 10,
+      "visibility": "visible"
+    },
+    {
+      "name": "all zero",
+      "args": [
+        "000000"
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": -1,
+      "visibility": "visible"
+    },
+    {
+      "name": "two codes pick max",
+      "args": [
+        "00000a\n00000b"
+      ],
+      "expected": 11,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all max",
+      "args": [
+        "zzzzzz"
+      ],
+      "expected": 2176782335,
+      "visibility": "hidden"
+    },
+    {
+      "name": "digits and letters",
+      "args": [
+        "1a2b3c\n0z0z0z"
+      ],
+      "expected": 77370024,
+      "visibility": "hidden"
+    },
+    {
+      "name": "blank lines ignored",
+      "args": [
+        "\n00000a\n\n00000b\n"
+      ],
+      "expected": 11,
+      "visibility": "hidden"
+    },
+    {
+      "name": "letter weight over digit weight",
+      "args": [
+        "000009\n00000a"
+      ],
+      "expected": 10,
+      "visibility": "hidden"
+    },
+    {
+      "name": "leading position dominates",
+      "args": [
+        "a00000\n9zzzzz"
+      ],
+      "expected": 604661760,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicate codes do not affect max",
+      "args": [
+        "00000a\n00000a\n00000a"
+      ],
+      "expected": 10,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-missing-stamp",
+      "title": "Part 2: Missing stamp",
+      "prompt": "Decode all codes to integers. Among the set of decoded values, find the smallest integer that is missing while both `value - 1` and `value + 1` are present. Return that integer, or `-1` if no such gap exists.",
+      "signature": {
+        "name": "find_missing_stamp",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "missing between 1 and 3",
+          "args": [
+            "000001\n000003"
+          ],
+          "expected": 2,
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": -1,
+          "visibility": "visible"
+        },
+        {
+          "name": "no gap",
+          "args": [
+            "000001\n000002"
+          ],
+          "expected": -1,
+          "visibility": "visible"
+        },
+        {
+          "name": "wide range with gap",
+          "args": [
+            "000001\n000002\n000003\n000005"
+          ],
+          "expected": 4,
+          "visibility": "visible"
+        },
+        {
+          "name": "two gaps return first",
+          "args": [
+            "000001\n000003\n000005"
+          ],
+          "expected": 2,
+          "visibility": "hidden"
+        },
+        {
+          "name": "single value",
+          "args": [
+            "00000a"
+          ],
+          "expected": -1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "gap larger than two",
+          "args": [
+            "000001\n000004"
+          ],
+          "expected": -1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "duplicates do not block detection",
+          "args": [
+            "000001\n000001\n000003"
+          ],
+          "expected": 2,
+          "visibility": "hidden"
+        },
+        {
+          "name": "unordered input still finds gap",
+          "args": [
+            "000005\n000001\n000003"
+          ],
+          "expected": 2,
+          "visibility": "hidden"
+        },
+        {
+          "name": "many values one gap",
+          "args": [
+            "000001\n000002\n000003\n000005\n000006\n000007"
+          ],
+          "expected": 4,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "find_missing_stamp",
+          "starterPath": "problems/aoc-y3-d5-stamp-decoder/parts/part-2-missing-stamp/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y3-d5-stamp-decoder/parts/part-2-missing-stamp/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "find_missing_stamp",
+          "starterPath": "problems/aoc-y3-d5-stamp-decoder/parts/part-2-missing-stamp/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y3-d5-stamp-decoder/parts/part-2-missing-stamp/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "FindMissingStamp",
+          "starterPath": "problems/aoc-y3-d5-stamp-decoder/parts/part-2-missing-stamp/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y3-d5-stamp-decoder/parts/part-2-missing-stamp/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "find_missing_stamp",
+          "starterPath": "problems/aoc-y3-d5-stamp-decoder/parts/part-2-missing-stamp/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y3-d5-stamp-decoder/parts/part-2-missing-stamp/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "max_stamp",
+      "starterPath": "problems/aoc-y3-d5-stamp-decoder/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y3-d5-stamp-decoder/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "max_stamp",
+      "starterPath": "problems/aoc-y3-d5-stamp-decoder/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y3-d5-stamp-decoder/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MaxStamp",
+      "starterPath": "problems/aoc-y3-d5-stamp-decoder/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y3-d5-stamp-decoder/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "max_stamp",
+      "starterPath": "problems/aoc-y3-d5-stamp-decoder/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y3-d5-stamp-decoder/solutions/scala/reference.scala"
+    }
+  }
+}

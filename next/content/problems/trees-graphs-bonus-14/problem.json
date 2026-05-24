@@ -1,0 +1,183 @@
+{
+  "id": "trees-graphs-bonus-14",
+  "kind": "problem",
+  "title": "Build Order From Dependencies",
+  "difficulty": "medium",
+  "concepts": [
+    "trees-graphs",
+    "topological order",
+    "BFS"
+  ],
+  "prompt": "You are given a dictionary mapping each task to the list of tasks that must be completed before it. Return any ordering of all the tasks in which every task appears after all of its prerequisites. Return None if no such ordering exists.",
+  "signature": {
+    "name": "buildOrder",
+    "inputs": [
+      {
+        "name": "dependencies",
+        "type": {
+          "type": "object"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "nullable": true
+    }
+  },
+  "tests": [
+    {
+      "name": "linear dependency chain",
+      "args": [
+        {
+          "shirt": [],
+          "tie": [
+            "shirt"
+          ],
+          "jacket": [
+            "tie",
+            "shirt"
+          ]
+        }
+      ],
+      "expected": [
+        "shirt",
+        "tie",
+        "jacket"
+      ],
+      "visibility": "visible",
+      "validator": "topological"
+    },
+    {
+      "name": "cycle has no order",
+      "args": [
+        {
+          "a": [
+            "b"
+          ],
+          "b": [
+            "a"
+          ]
+        }
+      ],
+      "expected": null,
+      "visibility": "visible",
+      "validator": "topological"
+    },
+    {
+      "name": "single task",
+      "args": [
+        {
+          "only": []
+        }
+      ],
+      "expected": [
+        "only"
+      ],
+      "visibility": "hidden",
+      "validator": "topological"
+    },
+    {
+      "name": "diamond dependency",
+      "args": [
+        {
+          "base": [],
+          "left": [
+            "base"
+          ],
+          "right": [
+            "base"
+          ],
+          "top": [
+            "left",
+            "right"
+          ]
+        }
+      ],
+      "expected": [
+        "base",
+        "left",
+        "right",
+        "top"
+      ],
+      "visibility": "hidden",
+      "validator": "topological"
+    },
+    {
+      "name": "prerequisite not a key",
+      "args": [
+        {
+          "build": [
+            "compile"
+          ]
+        }
+      ],
+      "expected": [
+        "compile",
+        "build"
+      ],
+      "visibility": "hidden",
+      "validator": "topological"
+    },
+    {
+      "name": "three way cycle",
+      "args": [
+        {
+          "a": [
+            "c"
+          ],
+          "b": [
+            "a"
+          ],
+          "c": [
+            "b"
+          ]
+        }
+      ],
+      "expected": null,
+      "visibility": "hidden",
+      "validator": "topological"
+    },
+    {
+      "name": "independent tasks",
+      "args": [
+        {
+          "a": [],
+          "b": [],
+          "c": []
+        }
+      ],
+      "expected": [
+        "a",
+        "b",
+        "c"
+      ],
+      "visibility": "hidden",
+      "validator": "topological"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "build_order",
+      "starterPath": "problems/trees-graphs-bonus-14/solutions/python/starter.py",
+      "referencePath": "problems/trees-graphs-bonus-14/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "buildOrder",
+      "starterPath": "problems/trees-graphs-bonus-14/solutions/typescript/starter.ts",
+      "referencePath": "problems/trees-graphs-bonus-14/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "BuildOrder",
+      "starterPath": "problems/trees-graphs-bonus-14/solutions/go/starter.go",
+      "referencePath": "problems/trees-graphs-bonus-14/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "buildOrder",
+      "starterPath": "problems/trees-graphs-bonus-14/solutions/scala/starter.scala",
+      "referencePath": "problems/trees-graphs-bonus-14/solutions/scala/reference.scala"
+    }
+  }
+}

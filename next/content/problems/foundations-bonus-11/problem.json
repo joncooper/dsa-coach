@@ -1,0 +1,137 @@
+{
+  "id": "foundations-bonus-11",
+  "kind": "problem",
+  "title": "Pivot Index",
+  "difficulty": "easy",
+  "concepts": [
+    "foundations",
+    "prefix sums",
+    "iteration"
+  ],
+  "prompt": "Return the leftmost index where the sum of all values to its left equals the sum of all values to its right. The pivot value itself is in neither sum. Return -1 if no such index exists.",
+  "signature": {
+    "name": "pivotIndex",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "pivot in middle",
+      "args": [
+        [
+          1,
+          7,
+          3,
+          6,
+          5,
+          6
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "no pivot",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": -1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single element",
+      "args": [
+        [
+          5
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "pivot at start",
+      "args": [
+        [
+          2,
+          1,
+          -1
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all zeros",
+      "args": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -1,
+          -1,
+          -1,
+          0,
+          1,
+          1
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "pivot_index",
+      "starterPath": "problems/foundations-bonus-11/solutions/python/starter.py",
+      "referencePath": "problems/foundations-bonus-11/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "pivotIndex",
+      "starterPath": "problems/foundations-bonus-11/solutions/typescript/starter.ts",
+      "referencePath": "problems/foundations-bonus-11/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "PivotIndex",
+      "starterPath": "problems/foundations-bonus-11/solutions/go/starter.go",
+      "referencePath": "problems/foundations-bonus-11/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "pivotIndex",
+      "starterPath": "problems/foundations-bonus-11/solutions/scala/starter.scala",
+      "referencePath": "problems/foundations-bonus-11/solutions/scala/reference.scala"
+    }
+  }
+}

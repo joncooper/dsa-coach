@@ -1,0 +1,132 @@
+{
+  "id": "heaps-bonus-04",
+  "kind": "problem",
+  "title": "Minimum Cost To Connect Ropes",
+  "difficulty": "easy",
+  "concepts": [
+    "heaps",
+    "min-heap",
+    "greedy"
+  ],
+  "prompt": "You have ropes of given lengths and want to join them all into one rope. Connecting two ropes costs the sum of their two lengths and produces a single rope of that combined length. Always cheapest first, return the minimum total cost to connect every rope into one.",
+  "signature": {
+    "name": "minConnectCost",
+    "inputs": [
+      {
+        "name": "ropes",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "four ropes",
+      "args": [
+        [
+          4,
+          3,
+          2,
+          6
+        ]
+      ],
+      "expected": 29,
+      "visibility": "visible"
+    },
+    {
+      "name": "three ropes",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": 9,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single rope",
+      "args": [
+        [
+          8
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two ropes",
+      "args": [
+        [
+          5,
+          7
+        ]
+      ],
+      "expected": 12,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "expected": 16,
+      "visibility": "hidden"
+    },
+    {
+      "name": "with zero length",
+      "args": [
+        [
+          0,
+          0,
+          4
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "min_connect_cost",
+      "starterPath": "problems/heaps-bonus-04/solutions/python/starter.py",
+      "referencePath": "problems/heaps-bonus-04/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "minConnectCost",
+      "starterPath": "problems/heaps-bonus-04/solutions/typescript/starter.ts",
+      "referencePath": "problems/heaps-bonus-04/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MinConnectCost",
+      "starterPath": "problems/heaps-bonus-04/solutions/go/starter.go",
+      "referencePath": "problems/heaps-bonus-04/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "minConnectCost",
+      "starterPath": "problems/heaps-bonus-04/solutions/scala/starter.scala",
+      "referencePath": "problems/heaps-bonus-04/solutions/scala/reference.scala"
+    }
+  }
+}

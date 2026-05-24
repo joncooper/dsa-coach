@@ -1,0 +1,1360 @@
+{
+  "id": "asm-in-memory-db",
+  "kind": "problem",
+  "title": "Progressive In-Memory Database",
+  "difficulty": "medium",
+  "concepts": [
+    "simulation",
+    "stateful design",
+    "hash map",
+    "snapshot"
+  ],
+  "prompt": "Implement an in-memory store driven by an operation list. `solution(queries)` receives a list of queries; each query is a list of strings `[OP, timestamp, ...args]`. Every query has a non-negative integer `timestamp` (string-encoded), even when this level doesn't use it. Return a list with one string result per query, in order.\n\nThe store is keyed two levels deep: `store[key][field] = value`. Keys and fields are case-sensitive strings.\n\n**Level 1 operations**\n\n- `[\"SET\", timestamp, key, field, value]` — set `store[key][field] = value`, creating `store[key]` if needed. Always return `\"true\"`.\n- `[\"GET\", timestamp, key, field]` — return the value if `key` and `field` both exist, else return `\"\"`.\n- `[\"DELETE\", timestamp, key, field]` — if both exist, remove the field (and the key itself if no fields remain) and return `\"true\"`. Otherwise return `\"false\"`.\n\nLater levels add filtering, TTL, and time-aware snapshots to this same function. Structure it as a clean per-op dispatcher so those extensions can slot in.",
+  "signature": {
+    "name": "solution",
+    "inputs": [
+      {
+        "name": "queries",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "l1-empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-set-then-get",
+      "args": [
+        [
+          [
+            "SET",
+            "1",
+            "user:1",
+            "name",
+            "alice"
+          ],
+          [
+            "GET",
+            "2",
+            "user:1",
+            "name"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "alice"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-get-missing",
+      "args": [
+        [
+          [
+            "GET",
+            "1",
+            "ghost",
+            "name"
+          ]
+        ]
+      ],
+      "expected": [
+        ""
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-set-then-delete-then-get",
+      "args": [
+        [
+          [
+            "SET",
+            "1",
+            "user:1",
+            "name",
+            "alice"
+          ],
+          [
+            "DELETE",
+            "2",
+            "user:1",
+            "name"
+          ],
+          [
+            "GET",
+            "3",
+            "user:1",
+            "name"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        ""
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-multiple-fields",
+      "args": [
+        [
+          [
+            "SET",
+            "1",
+            "user:1",
+            "name",
+            "alice"
+          ],
+          [
+            "SET",
+            "2",
+            "user:1",
+            "email",
+            "a@x"
+          ],
+          [
+            "GET",
+            "3",
+            "user:1",
+            "email"
+          ],
+          [
+            "GET",
+            "4",
+            "user:1",
+            "name"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "a@x",
+        "alice"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-delete-missing-field",
+      "args": [
+        [
+          [
+            "SET",
+            "1",
+            "user:1",
+            "name",
+            "alice"
+          ],
+          [
+            "DELETE",
+            "2",
+            "user:1",
+            "phone"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "false"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-set-overwrites",
+      "args": [
+        [
+          [
+            "SET",
+            "1",
+            "user:1",
+            "name",
+            "alice"
+          ],
+          [
+            "SET",
+            "2",
+            "user:1",
+            "name",
+            "bob"
+          ],
+          [
+            "GET",
+            "3",
+            "user:1",
+            "name"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "bob"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-delete-cleans-empty-key",
+      "args": [
+        [
+          [
+            "SET",
+            "1",
+            "user:1",
+            "name",
+            "alice"
+          ],
+          [
+            "DELETE",
+            "2",
+            "user:1",
+            "name"
+          ],
+          [
+            "GET",
+            "3",
+            "user:1",
+            "name"
+          ],
+          [
+            "SET",
+            "4",
+            "user:1",
+            "name",
+            "bob"
+          ],
+          [
+            "GET",
+            "5",
+            "user:1",
+            "name"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "",
+        "true",
+        "bob"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-case-sensitive",
+      "args": [
+        [
+          [
+            "SET",
+            "1",
+            "User",
+            "Name",
+            "alice"
+          ],
+          [
+            "GET",
+            "2",
+            "user",
+            "Name"
+          ],
+          [
+            "GET",
+            "3",
+            "User",
+            "name"
+          ],
+          [
+            "GET",
+            "4",
+            "User",
+            "Name"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "",
+        "",
+        "alice"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "l2-scan",
+      "title": "Level 2: Scan & prefix scan",
+      "prompt": "Extend the store with field-level scans. All Level 1 operations keep working.\n\n**New operations**\n\n- `[\"SCAN\", timestamp, key]` — return every field of `key` formatted as `field=value`, joined by commas, **sorted by field name ascending**. Return `\"\"` if the key has no fields (or does not exist).\n- `[\"SCAN_BY_PREFIX\", timestamp, key, prefix]` — same, but only fields whose name starts with `prefix`. Return `\"\"` if the key is absent or no field matches. An empty prefix matches every field.",
+      "signature": {
+        "name": "solution",
+        "inputs": [
+          {
+            "name": "queries",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "tests": [
+        {
+          "name": "l2-scan-single-field",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "name",
+                "alice"
+              ],
+              [
+                "SCAN",
+                "2",
+                "user:1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "name=alice"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-scan-multi-sorted",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "name",
+                "alice"
+              ],
+              [
+                "SET",
+                "2",
+                "user:1",
+                "email",
+                "a@x"
+              ],
+              [
+                "SET",
+                "3",
+                "user:1",
+                "age",
+                "30"
+              ],
+              [
+                "SCAN",
+                "4",
+                "user:1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "true",
+            "age=30,email=a@x,name=alice"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-scan-missing-key",
+          "args": [
+            [
+              [
+                "SCAN",
+                "1",
+                "ghost"
+              ]
+            ]
+          ],
+          "expected": [
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-scan-by-prefix",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "first_name",
+                "alice"
+              ],
+              [
+                "SET",
+                "2",
+                "user:1",
+                "last_name",
+                "smith"
+              ],
+              [
+                "SET",
+                "3",
+                "user:1",
+                "email",
+                "a@x"
+              ],
+              [
+                "SCAN_BY_PREFIX",
+                "4",
+                "user:1",
+                "first"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "true",
+            "first_name=alice"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-prefix-no-match",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "name",
+                "alice"
+              ],
+              [
+                "SCAN_BY_PREFIX",
+                "2",
+                "user:1",
+                "zzz"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-empty-prefix-matches-all",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "a",
+                "1"
+              ],
+              [
+                "SET",
+                "2",
+                "user:1",
+                "b",
+                "2"
+              ],
+              [
+                "SCAN_BY_PREFIX",
+                "3",
+                "user:1",
+                ""
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "a=1,b=2"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-scan-excludes-deleted",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "a",
+                "1"
+              ],
+              [
+                "SET",
+                "2",
+                "user:1",
+                "b",
+                "2"
+              ],
+              [
+                "DELETE",
+                "3",
+                "user:1",
+                "a"
+              ],
+              [
+                "SCAN",
+                "4",
+                "user:1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "true",
+            "b=2"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-prefix-case-sensitive",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "Name",
+                "alice"
+              ],
+              [
+                "SET",
+                "2",
+                "user:1",
+                "name",
+                "bob"
+              ],
+              [
+                "SCAN_BY_PREFIX",
+                "3",
+                "user:1",
+                "N"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "Name=alice"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-scan-after-clearing-key",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "a",
+                "1"
+              ],
+              [
+                "DELETE",
+                "2",
+                "user:1",
+                "a"
+              ],
+              [
+                "SCAN",
+                "3",
+                "user:1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            ""
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l2-scan/solutions/python/starter.py",
+          "referencePath": "problems/asm-in-memory-db/parts/l2-scan/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l2-scan/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-in-memory-db/parts/l2-scan/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l2-scan/solutions/go/starter.go",
+          "referencePath": "problems/asm-in-memory-db/parts/l2-scan/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l2-scan/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-in-memory-db/parts/l2-scan/solutions/scala/reference.scala"
+        }
+      }
+    },
+    {
+      "id": "l3-ttl",
+      "title": "Level 3: TTL",
+      "prompt": "Add time-to-live. All earlier operations keep working.\n\n**New operation**\n\n- `[\"SET_AT\", timestamp, key, field, value, ttl]` — set `store[key][field]` to `value` with an absolute expiration at `timestamp + ttl` (`ttl` is a positive integer string). Return `\"true\"`.\n\nA field is **expired** when the current query's timestamp is greater than or equal to its absolute expiration time. Expired fields are invisible to `GET`/`SCAN`/`SCAN_BY_PREFIX` (those return `\"\"` for them or skip them during a scan) and `DELETE` returns `\"false\"` for them (they are treated as already gone). A plain `SET` cancels any prior TTL on that field; a new `SET_AT` replaces both the value and the expiration.",
+      "signature": {
+        "name": "solution",
+        "inputs": [
+          {
+            "name": "queries",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "tests": [
+        {
+          "name": "l3-set-at-then-get-before-expiry",
+          "args": [
+            [
+              [
+                "SET_AT",
+                "1",
+                "user:1",
+                "name",
+                "alice",
+                "10"
+              ],
+              [
+                "GET",
+                "5",
+                "user:1",
+                "name"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "alice"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-get-after-expiry",
+          "args": [
+            [
+              [
+                "SET_AT",
+                "1",
+                "user:1",
+                "name",
+                "alice",
+                "10"
+              ],
+              [
+                "GET",
+                "15",
+                "user:1",
+                "name"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-get-at-boundary-is-expired",
+          "args": [
+            [
+              [
+                "SET_AT",
+                "1",
+                "user:1",
+                "name",
+                "alice",
+                "10"
+              ],
+              [
+                "GET",
+                "11",
+                "user:1",
+                "name"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-set-cancels-ttl",
+          "args": [
+            [
+              [
+                "SET_AT",
+                "1",
+                "user:1",
+                "name",
+                "alice",
+                "5"
+              ],
+              [
+                "SET",
+                "2",
+                "user:1",
+                "name",
+                "bob"
+              ],
+              [
+                "GET",
+                "20",
+                "user:1",
+                "name"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "bob"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-scan-excludes-expired",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "name",
+                "alice"
+              ],
+              [
+                "SET_AT",
+                "2",
+                "user:1",
+                "session",
+                "abc",
+                "5"
+              ],
+              [
+                "SCAN",
+                "20",
+                "user:1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "name=alice"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-delete-of-expired-is-false",
+          "args": [
+            [
+              [
+                "SET_AT",
+                "1",
+                "user:1",
+                "session",
+                "abc",
+                "5"
+              ],
+              [
+                "DELETE",
+                "20",
+                "user:1",
+                "session"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "false"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-prefix-scan-excludes-expired",
+          "args": [
+            [
+              [
+                "SET_AT",
+                "1",
+                "user:1",
+                "session_old",
+                "x",
+                "5"
+              ],
+              [
+                "SET",
+                "2",
+                "user:1",
+                "session_new",
+                "y"
+              ],
+              [
+                "SCAN_BY_PREFIX",
+                "20",
+                "user:1",
+                "session"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "session_new=y"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-set-at-overrides-prior-expiration",
+          "args": [
+            [
+              [
+                "SET_AT",
+                "1",
+                "user:1",
+                "name",
+                "alice",
+                "5"
+              ],
+              [
+                "SET_AT",
+                "2",
+                "user:1",
+                "name",
+                "bob",
+                "100"
+              ],
+              [
+                "GET",
+                "50",
+                "user:1",
+                "name"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "bob"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-scan-all-fields-expired-returns-empty",
+          "args": [
+            [
+              [
+                "SET_AT",
+                "1",
+                "user:1",
+                "a",
+                "1",
+                "5"
+              ],
+              [
+                "SET_AT",
+                "2",
+                "user:1",
+                "b",
+                "2",
+                "5"
+              ],
+              [
+                "SCAN",
+                "20",
+                "user:1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            ""
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l3-ttl/solutions/python/starter.py",
+          "referencePath": "problems/asm-in-memory-db/parts/l3-ttl/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l3-ttl/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-in-memory-db/parts/l3-ttl/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l3-ttl/solutions/go/starter.go",
+          "referencePath": "problems/asm-in-memory-db/parts/l3-ttl/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l3-ttl/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-in-memory-db/parts/l3-ttl/solutions/scala/reference.scala"
+        }
+      }
+    },
+    {
+      "id": "l4-backup-restore",
+      "title": "Level 4: Backup & restore",
+      "prompt": "Add time-aware snapshots. All earlier operations keep working.\n\n**New operations**\n\n- `[\"BACKUP\", timestamp]` — snapshot the current state, capturing every **currently live** field's value AND its absolute expiration (where one exists). Return the new backup id as `\"backup{N}\"` where `N` starts at 1 and increments per backup.\n- `[\"RESTORE\", timestamp, backup_id]` — replace the entire state with the snapshot. Backup fields with an absolute expiration **at or before** the restore timestamp are dropped immediately; surviving expiring fields keep their original absolute expiration. Return `\"true\"` on success, or `\"false\"` if the backup id is unknown.",
+      "signature": {
+        "name": "solution",
+        "inputs": [
+          {
+            "name": "queries",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "tests": [
+        {
+          "name": "l4-backup-then-restore",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "name",
+                "alice"
+              ],
+              [
+                "BACKUP",
+                "2"
+              ],
+              [
+                "SET",
+                "3",
+                "user:1",
+                "name",
+                "bob"
+              ],
+              [
+                "RESTORE",
+                "4",
+                "backup1"
+              ],
+              [
+                "GET",
+                "5",
+                "user:1",
+                "name"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "backup1",
+            "true",
+            "true",
+            "alice"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-restore-missing-backup",
+          "args": [
+            [
+              [
+                "RESTORE",
+                "1",
+                "ghost"
+              ]
+            ]
+          ],
+          "expected": [
+            "false"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-backup-skips-expired",
+          "args": [
+            [
+              [
+                "SET_AT",
+                "1",
+                "user:1",
+                "session",
+                "x",
+                "5"
+              ],
+              [
+                "BACKUP",
+                "20"
+              ],
+              [
+                "RESTORE",
+                "21",
+                "backup1"
+              ],
+              [
+                "GET",
+                "22",
+                "user:1",
+                "session"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "backup1",
+            "true",
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-restore-clears-newer-state",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "name",
+                "alice"
+              ],
+              [
+                "BACKUP",
+                "2"
+              ],
+              [
+                "SET",
+                "3",
+                "user:2",
+                "name",
+                "carol"
+              ],
+              [
+                "RESTORE",
+                "4",
+                "backup1"
+              ],
+              [
+                "GET",
+                "5",
+                "user:2",
+                "name"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "backup1",
+            "true",
+            "true",
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-backup-empty-state",
+          "args": [
+            [
+              [
+                "BACKUP",
+                "1"
+              ],
+              [
+                "SET",
+                "2",
+                "user:1",
+                "name",
+                "alice"
+              ],
+              [
+                "RESTORE",
+                "3",
+                "backup1"
+              ],
+              [
+                "GET",
+                "4",
+                "user:1",
+                "name"
+              ]
+            ]
+          ],
+          "expected": [
+            "backup1",
+            "true",
+            "true",
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-multiple-backups",
+          "args": [
+            [
+              [
+                "SET",
+                "1",
+                "user:1",
+                "name",
+                "alice"
+              ],
+              [
+                "BACKUP",
+                "2"
+              ],
+              [
+                "SET",
+                "3",
+                "user:1",
+                "name",
+                "bob"
+              ],
+              [
+                "BACKUP",
+                "4"
+              ],
+              [
+                "RESTORE",
+                "5",
+                "backup1"
+              ],
+              [
+                "GET",
+                "6",
+                "user:1",
+                "name"
+              ],
+              [
+                "RESTORE",
+                "7",
+                "backup2"
+              ],
+              [
+                "GET",
+                "8",
+                "user:1",
+                "name"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "backup1",
+            "true",
+            "backup2",
+            "true",
+            "alice",
+            "true",
+            "bob"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-restore-drops-expired-on-restore",
+          "args": [
+            [
+              [
+                "SET_AT",
+                "1",
+                "user:1",
+                "session",
+                "x",
+                "10"
+              ],
+              [
+                "BACKUP",
+                "2"
+              ],
+              [
+                "RESTORE",
+                "100",
+                "backup1"
+              ],
+              [
+                "GET",
+                "101",
+                "user:1",
+                "session"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "backup1",
+            "true",
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-restore-preserves-original-expiration",
+          "args": [
+            [
+              [
+                "SET_AT",
+                "1",
+                "user:1",
+                "session",
+                "x",
+                "10"
+              ],
+              [
+                "BACKUP",
+                "2"
+              ],
+              [
+                "RESTORE",
+                "5",
+                "backup1"
+              ],
+              [
+                "GET",
+                "10",
+                "user:1",
+                "session"
+              ],
+              [
+                "GET",
+                "12",
+                "user:1",
+                "session"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "backup1",
+            "true",
+            "x",
+            ""
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l4-backup-restore/solutions/python/starter.py",
+          "referencePath": "problems/asm-in-memory-db/parts/l4-backup-restore/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l4-backup-restore/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-in-memory-db/parts/l4-backup-restore/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l4-backup-restore/solutions/go/starter.go",
+          "referencePath": "problems/asm-in-memory-db/parts/l4-backup-restore/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-in-memory-db/parts/l4-backup-restore/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-in-memory-db/parts/l4-backup-restore/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-in-memory-db/solutions/python/starter.py",
+      "referencePath": "problems/asm-in-memory-db/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-in-memory-db/solutions/typescript/starter.ts",
+      "referencePath": "problems/asm-in-memory-db/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "Solution",
+      "starterPath": "problems/asm-in-memory-db/solutions/go/starter.go",
+      "referencePath": "problems/asm-in-memory-db/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-in-memory-db/solutions/scala/starter.scala",
+      "referencePath": "problems/asm-in-memory-db/solutions/scala/reference.scala"
+    }
+  }
+}

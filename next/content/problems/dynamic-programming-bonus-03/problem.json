@@ -1,0 +1,138 @@
+{
+  "id": "dynamic-programming-bonus-03",
+  "kind": "problem",
+  "title": "Decode Digit String",
+  "difficulty": "medium",
+  "concepts": [
+    "dynamic-programming",
+    "counting",
+    "tabulation"
+  ],
+  "prompt": "Letters A to Z map to the codes 1 to 26. Given a string of digits, return how many distinct letter strings could have produced it. A leading zero in any code is invalid (so '0' decodes nothing and '06' is not a valid '6').",
+  "signature": {
+    "name": "countDecodings",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two then six",
+      "args": [
+        "226"
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "single pair",
+      "args": [
+        "12"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "lone zero",
+      "args": [
+        "0"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "leading zero pair",
+      "args": [
+        "06"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "valid ten",
+      "args": [
+        "10"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "trailing zero unreachable",
+      "args": [
+        "100"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "out of range pair",
+      "args": [
+        "27"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "forced ten one",
+      "args": [
+        "2101"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all ones",
+      "args": [
+        "111111"
+      ],
+      "expected": 13,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed string",
+      "args": [
+        "11106"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_decodings",
+      "starterPath": "problems/dynamic-programming-bonus-03/solutions/python/starter.py",
+      "referencePath": "problems/dynamic-programming-bonus-03/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "countDecodings",
+      "starterPath": "problems/dynamic-programming-bonus-03/solutions/typescript/starter.ts",
+      "referencePath": "problems/dynamic-programming-bonus-03/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountDecodings",
+      "starterPath": "problems/dynamic-programming-bonus-03/solutions/go/starter.go",
+      "referencePath": "problems/dynamic-programming-bonus-03/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "countDecodings",
+      "starterPath": "problems/dynamic-programming-bonus-03/solutions/scala/starter.scala",
+      "referencePath": "problems/dynamic-programming-bonus-03/solutions/scala/reference.scala"
+    }
+  }
+}

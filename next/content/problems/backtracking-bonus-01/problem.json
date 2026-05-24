@@ -1,0 +1,189 @@
+{
+  "id": "backtracking-bonus-01",
+  "kind": "problem",
+  "title": "Subsets Of Size K",
+  "difficulty": "warmup",
+  "concepts": [
+    "backtracking",
+    "combinations",
+    "recursion tree"
+  ],
+  "prompt": "Given a list of distinct integers and an integer k, return every subset that contains exactly k of the values. Each subset keeps the values in their original list order, and the list of subsets is sorted ascending.",
+  "signature": {
+    "name": "subsetsOfSize",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "pairs from four",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        2
+      ],
+      "expected": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "size zero",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        0
+      ],
+      "expected": [
+        []
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "k equals length",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        3
+      ],
+      "expected": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "k too large",
+      "args": [
+        [
+          1,
+          2
+        ],
+        3
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative k",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        -1
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single element",
+      "args": [
+        [
+          5
+        ],
+        1
+      ],
+      "expected": [
+        [
+          5
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty list size zero",
+      "args": [
+        [],
+        0
+      ],
+      "expected": [
+        []
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "subsets_of_size",
+      "starterPath": "problems/backtracking-bonus-01/solutions/python/starter.py",
+      "referencePath": "problems/backtracking-bonus-01/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "subsetsOfSize",
+      "starterPath": "problems/backtracking-bonus-01/solutions/typescript/starter.ts",
+      "referencePath": "problems/backtracking-bonus-01/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SubsetsOfSize",
+      "starterPath": "problems/backtracking-bonus-01/solutions/go/starter.go",
+      "referencePath": "problems/backtracking-bonus-01/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "subsetsOfSize",
+      "starterPath": "problems/backtracking-bonus-01/solutions/scala/starter.scala",
+      "referencePath": "problems/backtracking-bonus-01/solutions/scala/reference.scala"
+    }
+  }
+}

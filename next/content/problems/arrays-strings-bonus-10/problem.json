@@ -1,0 +1,207 @@
+{
+  "id": "arrays-strings-bonus-10",
+  "kind": "problem",
+  "title": "Matrix Diagonal Sum",
+  "difficulty": "easy",
+  "concepts": [
+    "arrays-strings",
+    "indexing",
+    "2D traversal"
+  ],
+  "prompt": "Given a square matrix of integers, return the sum of the values on its two diagonals. If the matrix has an odd size, the centre element lies on both diagonals but must be counted only once.",
+  "signature": {
+    "name": "diagonalSum",
+    "inputs": [
+      {
+        "name": "matrix",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "three by three",
+      "args": [
+        [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5,
+            6
+          ],
+          [
+            7,
+            8,
+            9
+          ]
+        ]
+      ],
+      "expected": 25,
+      "visibility": "visible"
+    },
+    {
+      "name": "two by two",
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      ],
+      "expected": 10,
+      "visibility": "visible"
+    },
+    {
+      "name": "single cell",
+      "args": [
+        [
+          [
+            5
+          ]
+        ]
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "four by four",
+      "args": [
+        [
+          [
+            1,
+            2,
+            3,
+            4
+          ],
+          [
+            5,
+            6,
+            7,
+            8
+          ],
+          [
+            9,
+            10,
+            11,
+            12
+          ],
+          [
+            13,
+            14,
+            15,
+            16
+          ]
+        ]
+      ],
+      "expected": 68,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          [
+            -1,
+            0,
+            -1
+          ],
+          [
+            0,
+            -2,
+            0
+          ],
+          [
+            -1,
+            0,
+            -1
+          ]
+        ]
+      ],
+      "expected": -6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all zeros",
+      "args": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "odd centre once",
+      "args": [
+        [
+          [
+            2,
+            0,
+            2
+          ],
+          [
+            0,
+            9,
+            0
+          ],
+          [
+            2,
+            0,
+            2
+          ]
+        ]
+      ],
+      "expected": 17,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "diagonal_sum",
+      "starterPath": "problems/arrays-strings-bonus-10/solutions/python/starter.py",
+      "referencePath": "problems/arrays-strings-bonus-10/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "diagonalSum",
+      "starterPath": "problems/arrays-strings-bonus-10/solutions/typescript/starter.ts",
+      "referencePath": "problems/arrays-strings-bonus-10/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "DiagonalSum",
+      "starterPath": "problems/arrays-strings-bonus-10/solutions/go/starter.go",
+      "referencePath": "problems/arrays-strings-bonus-10/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "diagonalSum",
+      "starterPath": "problems/arrays-strings-bonus-10/solutions/scala/starter.scala",
+      "referencePath": "problems/arrays-strings-bonus-10/solutions/scala/reference.scala"
+    }
+  }
+}

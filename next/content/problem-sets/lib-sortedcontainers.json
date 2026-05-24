@@ -1,0 +1,18 @@
+{
+  "id": "lib-sortedcontainers",
+  "kind": "problem-set",
+  "title": "sortedcontainers · SortedList",
+  "summary": "Order-statistic problems that are awkward without a sorted container — O(log n) add/remove with O(1) indexed access.",
+  "entries": [
+    {
+      "problem": "lib-sc-running-median",
+      "category": "lib-sortedcontainers",
+      "note": "sorted container, online median, SortedList"
+    },
+    {
+      "problem": "lib-sc-sliding-window-median",
+      "category": "lib-sortedcontainers",
+      "note": "sliding window, sorted container, SortedList"
+    }
+  ]
+}

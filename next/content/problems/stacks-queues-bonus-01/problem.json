@@ -1,0 +1,156 @@
+{
+  "id": "stacks-queues-bonus-01",
+  "kind": "problem",
+  "title": "Reverse A Queue With A Stack",
+  "difficulty": "warmup",
+  "concepts": [
+    "stacks-queues",
+    "stack",
+    "queue"
+  ],
+  "prompt": "You are handed the items of a queue in front-to-back order. Return them in back-to-front order, using a stack to do the reversal.",
+  "signature": {
+    "name": "reverseQueue",
+    "inputs": [
+      {
+        "name": "items",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "any"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "any"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "four items",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": [
+        4,
+        3,
+        2,
+        1
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "strings",
+      "args": [
+        [
+          "a",
+          "b",
+          "c"
+        ]
+      ],
+      "expected": [
+        "c",
+        "b",
+        "a"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": [
+        7
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          5,
+          5,
+          5
+        ]
+      ],
+      "expected": [
+        5,
+        5,
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all negative",
+      "args": [
+        [
+          -1,
+          -2,
+          -3
+        ]
+      ],
+      "expected": [
+        -3,
+        -2,
+        -1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two items",
+      "args": [
+        [
+          8,
+          9
+        ]
+      ],
+      "expected": [
+        9,
+        8
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "reverse_queue",
+      "starterPath": "problems/stacks-queues-bonus-01/solutions/python/starter.py",
+      "referencePath": "problems/stacks-queues-bonus-01/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "reverseQueue",
+      "starterPath": "problems/stacks-queues-bonus-01/solutions/typescript/starter.ts",
+      "referencePath": "problems/stacks-queues-bonus-01/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ReverseQueue",
+      "starterPath": "problems/stacks-queues-bonus-01/solutions/go/starter.go",
+      "referencePath": "problems/stacks-queues-bonus-01/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "reverseQueue",
+      "starterPath": "problems/stacks-queues-bonus-01/solutions/scala/starter.scala",
+      "referencePath": "problems/stacks-queues-bonus-01/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,1505 @@
+{
+  "id": "asm-banking",
+  "kind": "problem",
+  "title": "Progressive Banking Ledger",
+  "difficulty": "medium",
+  "concepts": [
+    "simulation",
+    "stateful design",
+    "hash map",
+    "scheduling"
+  ],
+  "prompt": "Implement a small ledger driven by an operation list. `solution(queries)` receives a list of queries; each query is a list of strings `[OP, timestamp, ...args]`. Every query carries a non-negative integer `timestamp` (given as a string), even when this level doesn't use it. Return a list with one string result per query, in order. All amounts are non-negative integers in **cents** (given as strings).\n\n**Level 1 operations**\n\n- `[\"CREATE_ACCOUNT\", timestamp, account]` — create a new account with zero balance. Return `\"true\"`, or `\"false\"` if the account already exists.\n- `[\"DEPOSIT\", timestamp, account, amount]` — add `amount` cents to `account`. Return the new balance as a string, or `\"\"` if the account does not exist.\n- `[\"WITHDRAW\", timestamp, account, amount]` — subtract `amount` cents from `account`. Return the new balance as a string, or `\"\"` if the account does not exist or the withdrawal would overdraw it (no change in that case).\n- `[\"TRANSFER\", timestamp, source, target, amount]` — move `amount` cents from `source` to `target`. Return `source`'s new balance as a string, or `\"\"` if either account is missing, source equals target, or source would be overdrawn (no change in those cases).\n\nLater levels add operations to the same function, so structure it as a clean per-op dispatcher and keep all balances as integer cents.",
+  "signature": {
+    "name": "solution",
+    "inputs": [
+      {
+        "name": "queries",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "l1-empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-create-then-deposit",
+      "args": [
+        [
+          [
+            "CREATE_ACCOUNT",
+            "1",
+            "a"
+          ],
+          [
+            "DEPOSIT",
+            "2",
+            "a",
+            "100"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "100"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-duplicate-create",
+      "args": [
+        [
+          [
+            "CREATE_ACCOUNT",
+            "1",
+            "a"
+          ],
+          [
+            "CREATE_ACCOUNT",
+            "2",
+            "a"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "false"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-deposit-missing",
+      "args": [
+        [
+          [
+            "DEPOSIT",
+            "1",
+            "ghost",
+            "50"
+          ]
+        ]
+      ],
+      "expected": [
+        ""
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-withdraw-ok",
+      "args": [
+        [
+          [
+            "CREATE_ACCOUNT",
+            "1",
+            "a"
+          ],
+          [
+            "DEPOSIT",
+            "2",
+            "a",
+            "100"
+          ],
+          [
+            "WITHDRAW",
+            "3",
+            "a",
+            "40"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "100",
+        "60"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-withdraw-insufficient",
+      "args": [
+        [
+          [
+            "CREATE_ACCOUNT",
+            "1",
+            "a"
+          ],
+          [
+            "DEPOSIT",
+            "2",
+            "a",
+            "50"
+          ],
+          [
+            "WITHDRAW",
+            "3",
+            "a",
+            "100"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "50",
+        ""
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-transfer-ok",
+      "args": [
+        [
+          [
+            "CREATE_ACCOUNT",
+            "1",
+            "a"
+          ],
+          [
+            "CREATE_ACCOUNT",
+            "2",
+            "b"
+          ],
+          [
+            "DEPOSIT",
+            "3",
+            "a",
+            "100"
+          ],
+          [
+            "TRANSFER",
+            "4",
+            "a",
+            "b",
+            "30"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "100",
+        "70"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-transfer-to-self",
+      "args": [
+        [
+          [
+            "CREATE_ACCOUNT",
+            "1",
+            "a"
+          ],
+          [
+            "DEPOSIT",
+            "2",
+            "a",
+            "50"
+          ],
+          [
+            "TRANSFER",
+            "3",
+            "a",
+            "a",
+            "10"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "50",
+        ""
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-transfer-missing-target",
+      "args": [
+        [
+          [
+            "CREATE_ACCOUNT",
+            "1",
+            "a"
+          ],
+          [
+            "DEPOSIT",
+            "2",
+            "a",
+            "50"
+          ],
+          [
+            "TRANSFER",
+            "3",
+            "a",
+            "ghost",
+            "10"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "50",
+        ""
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-transfer-insufficient-no-change",
+      "args": [
+        [
+          [
+            "CREATE_ACCOUNT",
+            "1",
+            "a"
+          ],
+          [
+            "CREATE_ACCOUNT",
+            "2",
+            "b"
+          ],
+          [
+            "DEPOSIT",
+            "3",
+            "a",
+            "10"
+          ],
+          [
+            "TRANSFER",
+            "4",
+            "a",
+            "b",
+            "50"
+          ],
+          [
+            "DEPOSIT",
+            "5",
+            "b",
+            "0"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "10",
+        "",
+        "0"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "l2-top-spenders",
+      "title": "Level 2: Top spenders",
+      "prompt": "Extend Level 1 with activity tracking. All Level 1 operations keep working.\n\nTrack each account's **outgoing volume** — the total cents it has spent across successful `WITHDRAW` operations and the `source` side of successful `TRANSFER` operations. Deposits and the `target` side of transfers do NOT count. Failed operations do not count.\n\n**New operation**\n\n- `[\"TOP_SPENDERS\", timestamp, n]` — return the top `n` accounts by outgoing volume as a single string formatted `name(total)`, joined by commas, **sorted by total descending, breaking ties by account name ascending**. Include accounts with zero spending if and only if `n` would otherwise return fewer than `n` rows and accounts with zero spending exist; in that case, list non-zero spenders first, then zero-spenders by name. If `n` is 0 or no accounts exist, return `\"\"`.",
+      "signature": {
+        "name": "solution",
+        "inputs": [
+          {
+            "name": "queries",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "tests": [
+        {
+          "name": "l2-top1-simple",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "CREATE_ACCOUNT",
+                "2",
+                "b"
+              ],
+              [
+                "DEPOSIT",
+                "3",
+                "a",
+                "100"
+              ],
+              [
+                "TRANSFER",
+                "4",
+                "a",
+                "b",
+                "60"
+              ],
+              [
+                "TOP_SPENDERS",
+                "5",
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "100",
+            "40",
+            "a(60)"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-top2-tie-by-name",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "b"
+              ],
+              [
+                "CREATE_ACCOUNT",
+                "2",
+                "a"
+              ],
+              [
+                "DEPOSIT",
+                "3",
+                "a",
+                "100"
+              ],
+              [
+                "DEPOSIT",
+                "4",
+                "b",
+                "100"
+              ],
+              [
+                "WITHDRAW",
+                "5",
+                "a",
+                "20"
+              ],
+              [
+                "WITHDRAW",
+                "6",
+                "b",
+                "20"
+              ],
+              [
+                "TOP_SPENDERS",
+                "7",
+                "2"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "100",
+            "100",
+            "80",
+            "80",
+            "a(20),b(20)"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-n-larger-than-accounts",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "DEPOSIT",
+                "2",
+                "a",
+                "100"
+              ],
+              [
+                "WITHDRAW",
+                "3",
+                "a",
+                "30"
+              ],
+              [
+                "TOP_SPENDERS",
+                "4",
+                "10"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "100",
+            "70",
+            "a(30)"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-no-activity",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "TOP_SPENDERS",
+                "2",
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "a(0)"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-multiple-withdraws-accumulate",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "DEPOSIT",
+                "2",
+                "a",
+                "200"
+              ],
+              [
+                "WITHDRAW",
+                "3",
+                "a",
+                "30"
+              ],
+              [
+                "WITHDRAW",
+                "4",
+                "a",
+                "20"
+              ],
+              [
+                "TOP_SPENDERS",
+                "5",
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "200",
+            "170",
+            "150",
+            "a(50)"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-withdraw-counts-as-outgoing",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "CREATE_ACCOUNT",
+                "2",
+                "b"
+              ],
+              [
+                "DEPOSIT",
+                "3",
+                "a",
+                "100"
+              ],
+              [
+                "DEPOSIT",
+                "4",
+                "b",
+                "100"
+              ],
+              [
+                "WITHDRAW",
+                "5",
+                "a",
+                "70"
+              ],
+              [
+                "TRANSFER",
+                "6",
+                "b",
+                "a",
+                "10"
+              ],
+              [
+                "TOP_SPENDERS",
+                "7",
+                "2"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "100",
+            "100",
+            "30",
+            "90",
+            "a(70),b(10)"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-zero-n",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "DEPOSIT",
+                "2",
+                "a",
+                "100"
+              ],
+              [
+                "WITHDRAW",
+                "3",
+                "a",
+                "10"
+              ],
+              [
+                "TOP_SPENDERS",
+                "4",
+                "0"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "100",
+            "90",
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-no-accounts",
+          "args": [
+            [
+              [
+                "TOP_SPENDERS",
+                "1",
+                "5"
+              ]
+            ]
+          ],
+          "expected": [
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l2-failed-transfer-does-not-count",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "CREATE_ACCOUNT",
+                "2",
+                "b"
+              ],
+              [
+                "DEPOSIT",
+                "3",
+                "a",
+                "10"
+              ],
+              [
+                "TRANSFER",
+                "4",
+                "a",
+                "b",
+                "50"
+              ],
+              [
+                "TOP_SPENDERS",
+                "5",
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "10",
+            "",
+            "a(0)"
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-banking/parts/l2-top-spenders/solutions/python/starter.py",
+          "referencePath": "problems/asm-banking/parts/l2-top-spenders/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-banking/parts/l2-top-spenders/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-banking/parts/l2-top-spenders/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-banking/parts/l2-top-spenders/solutions/go/starter.go",
+          "referencePath": "problems/asm-banking/parts/l2-top-spenders/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-banking/parts/l2-top-spenders/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-banking/parts/l2-top-spenders/solutions/scala/reference.scala"
+        }
+      }
+    },
+    {
+      "id": "l3-scheduled-payments",
+      "title": "Level 3: Scheduled & cancellable payments",
+      "prompt": "Add scheduled payments. All earlier operations keep working.\n\nScheduled payments fire **before** the current query is processed: at the start of every query, all pending payments whose execution time is less than or equal to the current query's timestamp fire in chronological order of their execution time, breaking ties by the order they were scheduled. A fired payment behaves exactly like a successful `WITHDRAW` (it counts toward outgoing volume); if the account would be overdrawn or no longer exists, the payment is silently cancelled and nothing changes.\n\n**New operations**\n\n- `[\"SCHEDULE_PAYMENT\", timestamp, account, amount, delay]` — schedule a withdrawal of `amount` cents from `account` at `timestamp + delay` (both non-negative integer strings). Return the new payment id as `\"payment{N}\"` where `N` starts at 1 and increments per successful schedule, or `\"\"` if `account` does not exist (no change in that case).\n- `[\"CANCEL_PAYMENT\", timestamp, account, payment_id]` — cancel a payment that has not yet fired or been cancelled. Returns `\"true\"` on success, or `\"false\"` if the id is unknown, already fired, already cancelled, or owned by a different account.",
+      "signature": {
+        "name": "solution",
+        "inputs": [
+          {
+            "name": "queries",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "tests": [
+        {
+          "name": "l3-schedule-fires-before-later-query",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "DEPOSIT",
+                "2",
+                "a",
+                "100"
+              ],
+              [
+                "SCHEDULE_PAYMENT",
+                "3",
+                "a",
+                "30",
+                "10"
+              ],
+              [
+                "DEPOSIT",
+                "20",
+                "a",
+                "5"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "100",
+            "payment1",
+            "75"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-schedule-missing-account",
+          "args": [
+            [
+              [
+                "SCHEDULE_PAYMENT",
+                "1",
+                "ghost",
+                "10",
+                "5"
+              ]
+            ]
+          ],
+          "expected": [
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-cancel-before-exec",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "DEPOSIT",
+                "2",
+                "a",
+                "100"
+              ],
+              [
+                "SCHEDULE_PAYMENT",
+                "3",
+                "a",
+                "30",
+                "10"
+              ],
+              [
+                "CANCEL_PAYMENT",
+                "5",
+                "a",
+                "payment1"
+              ],
+              [
+                "DEPOSIT",
+                "20",
+                "a",
+                "0"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "100",
+            "payment1",
+            "true",
+            "100"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-cancel-after-exec-fails",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "DEPOSIT",
+                "2",
+                "a",
+                "100"
+              ],
+              [
+                "SCHEDULE_PAYMENT",
+                "3",
+                "a",
+                "30",
+                "10"
+              ],
+              [
+                "DEPOSIT",
+                "15",
+                "a",
+                "0"
+              ],
+              [
+                "CANCEL_PAYMENT",
+                "16",
+                "a",
+                "payment1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "100",
+            "payment1",
+            "70",
+            "false"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-multiple-fires-in-chronological-order",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "DEPOSIT",
+                "2",
+                "a",
+                "100"
+              ],
+              [
+                "SCHEDULE_PAYMENT",
+                "3",
+                "a",
+                "30",
+                "20"
+              ],
+              [
+                "SCHEDULE_PAYMENT",
+                "4",
+                "a",
+                "10",
+                "5"
+              ],
+              [
+                "DEPOSIT",
+                "30",
+                "a",
+                "0"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "100",
+            "payment1",
+            "payment2",
+            "60"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-insufficient-funds-silently-cancels",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "DEPOSIT",
+                "2",
+                "a",
+                "20"
+              ],
+              [
+                "SCHEDULE_PAYMENT",
+                "3",
+                "a",
+                "100",
+                "5"
+              ],
+              [
+                "DEPOSIT",
+                "20",
+                "a",
+                "0"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "20",
+            "payment1",
+            "20"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-cancel-wrong-account",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "CREATE_ACCOUNT",
+                "2",
+                "b"
+              ],
+              [
+                "DEPOSIT",
+                "3",
+                "a",
+                "100"
+              ],
+              [
+                "SCHEDULE_PAYMENT",
+                "4",
+                "a",
+                "30",
+                "10"
+              ],
+              [
+                "CANCEL_PAYMENT",
+                "5",
+                "b",
+                "payment1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "100",
+            "payment1",
+            "false"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-fired-payment-counts-for-top-spenders",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "DEPOSIT",
+                "2",
+                "a",
+                "100"
+              ],
+              [
+                "SCHEDULE_PAYMENT",
+                "3",
+                "a",
+                "30",
+                "5"
+              ],
+              [
+                "TOP_SPENDERS",
+                "20",
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "100",
+            "payment1",
+            "a(30)"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-delay-zero-fires-on-next-query",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "DEPOSIT",
+                "2",
+                "a",
+                "100"
+              ],
+              [
+                "SCHEDULE_PAYMENT",
+                "3",
+                "a",
+                "10",
+                "0"
+              ],
+              [
+                "DEPOSIT",
+                "4",
+                "a",
+                "0"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "100",
+            "payment1",
+            "90"
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-banking/parts/l3-scheduled-payments/solutions/python/starter.py",
+          "referencePath": "problems/asm-banking/parts/l3-scheduled-payments/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-banking/parts/l3-scheduled-payments/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-banking/parts/l3-scheduled-payments/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-banking/parts/l3-scheduled-payments/solutions/go/starter.go",
+          "referencePath": "problems/asm-banking/parts/l3-scheduled-payments/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-banking/parts/l3-scheduled-payments/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-banking/parts/l3-scheduled-payments/solutions/scala/reference.scala"
+        }
+      }
+    },
+    {
+      "id": "l4-merge-accounts",
+      "title": "Level 4: Merge accounts",
+      "prompt": "Add account consolidation. All earlier operations keep working.\n\n**New operation**\n\n- `[\"MERGE_ACCOUNTS\", timestamp, primary, secondary]` — fold the `secondary` account into `primary`. After a successful merge: `primary`'s balance equals the sum of both balances, `primary`'s outgoing volume equals the sum of both outgoing volumes, every pending scheduled payment owned by `secondary` is reassigned to `primary`, and `secondary` is removed (future operations targeting it return `\"\"` / `\"false\"` exactly as if it had never existed). Return `primary`'s new balance as a string on success, or `\"\"` if either account is missing or `primary == secondary` (no change in that case).",
+      "signature": {
+        "name": "solution",
+        "inputs": [
+          {
+            "name": "queries",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "tests": [
+        {
+          "name": "l4-simple-merge",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "CREATE_ACCOUNT",
+                "2",
+                "b"
+              ],
+              [
+                "DEPOSIT",
+                "3",
+                "a",
+                "100"
+              ],
+              [
+                "DEPOSIT",
+                "4",
+                "b",
+                "50"
+              ],
+              [
+                "MERGE_ACCOUNTS",
+                "5",
+                "a",
+                "b"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "100",
+            "50",
+            "150"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-secondary-removed",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "CREATE_ACCOUNT",
+                "2",
+                "b"
+              ],
+              [
+                "DEPOSIT",
+                "3",
+                "a",
+                "100"
+              ],
+              [
+                "DEPOSIT",
+                "4",
+                "b",
+                "50"
+              ],
+              [
+                "MERGE_ACCOUNTS",
+                "5",
+                "a",
+                "b"
+              ],
+              [
+                "DEPOSIT",
+                "6",
+                "b",
+                "10"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "100",
+            "50",
+            "150",
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-merge-missing-primary",
+          "args": [
+            [
+              [
+                "MERGE_ACCOUNTS",
+                "1",
+                "ghost",
+                "x"
+              ]
+            ]
+          ],
+          "expected": [
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-merge-self",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "MERGE_ACCOUNTS",
+                "2",
+                "a",
+                "a"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-preserves-top-spenders",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "CREATE_ACCOUNT",
+                "2",
+                "b"
+              ],
+              [
+                "DEPOSIT",
+                "3",
+                "a",
+                "100"
+              ],
+              [
+                "DEPOSIT",
+                "4",
+                "b",
+                "100"
+              ],
+              [
+                "WITHDRAW",
+                "5",
+                "a",
+                "30"
+              ],
+              [
+                "WITHDRAW",
+                "6",
+                "b",
+                "40"
+              ],
+              [
+                "MERGE_ACCOUNTS",
+                "7",
+                "a",
+                "b"
+              ],
+              [
+                "TOP_SPENDERS",
+                "8",
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "100",
+            "100",
+            "70",
+            "60",
+            "130",
+            "a(70)"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-inherits-pending-payments",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "CREATE_ACCOUNT",
+                "2",
+                "b"
+              ],
+              [
+                "DEPOSIT",
+                "3",
+                "a",
+                "100"
+              ],
+              [
+                "DEPOSIT",
+                "4",
+                "b",
+                "50"
+              ],
+              [
+                "SCHEDULE_PAYMENT",
+                "5",
+                "b",
+                "20",
+                "10"
+              ],
+              [
+                "MERGE_ACCOUNTS",
+                "6",
+                "a",
+                "b"
+              ],
+              [
+                "DEPOSIT",
+                "20",
+                "a",
+                "0"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "100",
+            "50",
+            "payment1",
+            "150",
+            "130"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-merge-missing-secondary",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "MERGE_ACCOUNTS",
+                "2",
+                "a",
+                "ghost"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-double-merge-secondary-gone",
+          "args": [
+            [
+              [
+                "CREATE_ACCOUNT",
+                "1",
+                "a"
+              ],
+              [
+                "CREATE_ACCOUNT",
+                "2",
+                "b"
+              ],
+              [
+                "MERGE_ACCOUNTS",
+                "3",
+                "a",
+                "b"
+              ],
+              [
+                "MERGE_ACCOUNTS",
+                "4",
+                "a",
+                "b"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "0",
+            ""
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-banking/parts/l4-merge-accounts/solutions/python/starter.py",
+          "referencePath": "problems/asm-banking/parts/l4-merge-accounts/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-banking/parts/l4-merge-accounts/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-banking/parts/l4-merge-accounts/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-banking/parts/l4-merge-accounts/solutions/go/starter.go",
+          "referencePath": "problems/asm-banking/parts/l4-merge-accounts/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-banking/parts/l4-merge-accounts/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-banking/parts/l4-merge-accounts/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-banking/solutions/python/starter.py",
+      "referencePath": "problems/asm-banking/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-banking/solutions/typescript/starter.ts",
+      "referencePath": "problems/asm-banking/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "Solution",
+      "starterPath": "problems/asm-banking/solutions/go/starter.go",
+      "referencePath": "problems/asm-banking/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-banking/solutions/scala/starter.scala",
+      "referencePath": "problems/asm-banking/solutions/scala/reference.scala"
+    }
+  }
+}

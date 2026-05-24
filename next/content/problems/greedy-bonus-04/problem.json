@@ -1,0 +1,146 @@
+{
+  "id": "greedy-bonus-04",
+  "kind": "problem",
+  "title": "Plant Flowers Without Crowding",
+  "difficulty": "warmup",
+  "concepts": [
+    "greedy",
+    "partitioning",
+    "scanning"
+  ],
+  "prompt": "A flower bed is a list of 0s and 1s, where 1 marks an occupied plot. No two flowers may sit in adjacent plots. Return True if `k` new flowers can be planted into the empty plots without ever placing two flowers side by side, otherwise False.",
+  "signature": {
+    "name": "canPlantFlowers",
+    "inputs": [
+      {
+        "name": "bed",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "fits two",
+      "args": [
+        [
+          1,
+          0,
+          0,
+          0,
+          1
+        ],
+        1
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "too many requested",
+      "args": [
+        [
+          1,
+          0,
+          0,
+          0,
+          1
+        ],
+        2
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty bed zero flowers",
+      "args": [
+        [],
+        0
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty bed one flower",
+      "args": [
+        [],
+        1
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all empty long bed",
+      "args": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        3
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all occupied",
+      "args": [
+        [
+          1,
+          0,
+          1
+        ],
+        1
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single empty plot",
+      "args": [
+        [
+          0
+        ],
+        1
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "can_plant_flowers",
+      "starterPath": "problems/greedy-bonus-04/solutions/python/starter.py",
+      "referencePath": "problems/greedy-bonus-04/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "canPlantFlowers",
+      "starterPath": "problems/greedy-bonus-04/solutions/typescript/starter.ts",
+      "referencePath": "problems/greedy-bonus-04/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CanPlantFlowers",
+      "starterPath": "problems/greedy-bonus-04/solutions/go/starter.go",
+      "referencePath": "problems/greedy-bonus-04/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "canPlantFlowers",
+      "starterPath": "problems/greedy-bonus-04/solutions/scala/starter.scala",
+      "referencePath": "problems/greedy-bonus-04/solutions/scala/reference.scala"
+    }
+  }
+}

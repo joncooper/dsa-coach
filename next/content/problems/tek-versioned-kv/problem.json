@@ -1,0 +1,1004 @@
+{
+  "id": "tek-versioned-kv",
+  "kind": "problem",
+  "title": "Versioned Key-Value Store",
+  "difficulty": "medium",
+  "concepts": [
+    "per-key sorted history",
+    "binary search",
+    "operation log"
+  ],
+  "prompt": "Given a list of operations against a versioned key-value store, return the result of each `GET` in order. Each operation is one of `[\"SET\", key, value, timestamp]` or `[\"GET\", key, timestamp]`. A `GET` returns the value of `key` with the largest timestamp less than or equal to the query timestamp, or `None` if no such write exists. Operations can arrive in any timestamp order, and the same `(key, timestamp)` can be written more than once — in that case the most recent write at that timestamp wins. Each key's history is independent.",
+  "signature": {
+    "name": "versionedKv",
+    "inputs": [
+      {
+        "name": "operations",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "any"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "any"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "empty operations",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "set then get",
+      "args": [
+        [
+          [
+            "SET",
+            "a",
+            "x",
+            5
+          ],
+          [
+            "GET",
+            "a",
+            10
+          ]
+        ]
+      ],
+      "expected": [
+        "x"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "get before any set",
+      "args": [
+        [
+          [
+            "GET",
+            "a",
+            5
+          ]
+        ]
+      ],
+      "expected": [
+        null
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "get before first set returns None",
+      "args": [
+        [
+          [
+            "SET",
+            "a",
+            "x",
+            10
+          ],
+          [
+            "GET",
+            "a",
+            5
+          ]
+        ]
+      ],
+      "expected": [
+        null
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "multiple timestamps",
+      "args": [
+        [
+          [
+            "SET",
+            "a",
+            "x",
+            5
+          ],
+          [
+            "SET",
+            "a",
+            "y",
+            10
+          ],
+          [
+            "GET",
+            "a",
+            7
+          ],
+          [
+            "GET",
+            "a",
+            10
+          ],
+          [
+            "GET",
+            "a",
+            100
+          ]
+        ]
+      ],
+      "expected": [
+        "x",
+        "y",
+        "y"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "exact match at set timestamp",
+      "args": [
+        [
+          [
+            "SET",
+            "k",
+            "v",
+            3
+          ],
+          [
+            "GET",
+            "k",
+            3
+          ]
+        ]
+      ],
+      "expected": [
+        "v"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "keys independent",
+      "args": [
+        [
+          [
+            "SET",
+            "a",
+            "alpha",
+            5
+          ],
+          [
+            "SET",
+            "b",
+            "beta",
+            5
+          ],
+          [
+            "GET",
+            "a",
+            10
+          ],
+          [
+            "GET",
+            "b",
+            10
+          ],
+          [
+            "GET",
+            "c",
+            10
+          ]
+        ]
+      ],
+      "expected": [
+        "alpha",
+        "beta",
+        null
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "out of order sets",
+      "args": [
+        [
+          [
+            "SET",
+            "a",
+            "later",
+            20
+          ],
+          [
+            "SET",
+            "a",
+            "earlier",
+            5
+          ],
+          [
+            "GET",
+            "a",
+            10
+          ],
+          [
+            "GET",
+            "a",
+            30
+          ]
+        ]
+      ],
+      "expected": [
+        "earlier",
+        "later"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "overwrite same timestamp",
+      "args": [
+        [
+          [
+            "SET",
+            "a",
+            "first",
+            5
+          ],
+          [
+            "SET",
+            "a",
+            "second",
+            5
+          ],
+          [
+            "GET",
+            "a",
+            5
+          ]
+        ]
+      ],
+      "expected": [
+        "second"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "interleaved sets and gets",
+      "args": [
+        [
+          [
+            "SET",
+            "a",
+            "v1",
+            1
+          ],
+          [
+            "GET",
+            "a",
+            1
+          ],
+          [
+            "SET",
+            "a",
+            "v2",
+            2
+          ],
+          [
+            "GET",
+            "a",
+            1
+          ],
+          [
+            "GET",
+            "a",
+            2
+          ]
+        ]
+      ],
+      "expected": [
+        "v1",
+        "v1",
+        "v2"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "get one tick before set returns none",
+      "args": [
+        [
+          [
+            "SET",
+            "a",
+            "x",
+            10
+          ],
+          [
+            "GET",
+            "a",
+            9
+          ]
+        ]
+      ],
+      "expected": [
+        null
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "get at each writepoint",
+      "args": [
+        [
+          [
+            "SET",
+            "a",
+            "v1",
+            5
+          ],
+          [
+            "SET",
+            "a",
+            "v2",
+            10
+          ],
+          [
+            "SET",
+            "a",
+            "v3",
+            15
+          ],
+          [
+            "GET",
+            "a",
+            5
+          ],
+          [
+            "GET",
+            "a",
+            10
+          ],
+          [
+            "GET",
+            "a",
+            15
+          ]
+        ]
+      ],
+      "expected": [
+        "v1",
+        "v2",
+        "v3"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "scattered writes scattered reads",
+      "args": [
+        [
+          [
+            "SET",
+            "a",
+            "v1",
+            100
+          ],
+          [
+            "SET",
+            "a",
+            "v2",
+            50
+          ],
+          [
+            "SET",
+            "a",
+            "v3",
+            200
+          ],
+          [
+            "GET",
+            "a",
+            49
+          ],
+          [
+            "GET",
+            "a",
+            50
+          ],
+          [
+            "GET",
+            "a",
+            99
+          ],
+          [
+            "GET",
+            "a",
+            100
+          ],
+          [
+            "GET",
+            "a",
+            150
+          ],
+          [
+            "GET",
+            "a",
+            200
+          ],
+          [
+            "GET",
+            "a",
+            500
+          ]
+        ]
+      ],
+      "expected": [
+        null,
+        "v2",
+        "v2",
+        "v1",
+        "v1",
+        "v3",
+        "v3"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "many keys stay isolated",
+      "args": [
+        [
+          [
+            "SET",
+            "a",
+            "1",
+            1
+          ],
+          [
+            "SET",
+            "b",
+            "2",
+            2
+          ],
+          [
+            "SET",
+            "c",
+            "3",
+            3
+          ],
+          [
+            "SET",
+            "a",
+            "4",
+            4
+          ],
+          [
+            "GET",
+            "a",
+            2
+          ],
+          [
+            "GET",
+            "b",
+            5
+          ],
+          [
+            "GET",
+            "c",
+            10
+          ],
+          [
+            "GET",
+            "a",
+            100
+          ]
+        ]
+      ],
+      "expected": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-delete-snapshot",
+      "title": "Part 2: Delete and snapshot",
+      "prompt": "Extend the store to support two new operations. `[\"DELETE\", key, timestamp]` tombstones a key at the given timestamp: any `GET` whose query timestamp is at or after a tombstone (and before any later `SET`) returns `None`. A later `SET` at a higher timestamp re-creates the key. `[\"SNAPSHOT\", timestamp]` returns a dict of every key whose latest non-tombstone write at or before `timestamp` is still live — that is, the most recent entry must be a `SET` (not a `DELETE`). The output list still contains one entry per `GET` and per `SNAPSHOT`, in input order; `DELETE` and `SET` produce no output entry.",
+      "signature": {
+        "name": "versioned_kv_with_snapshot",
+        "inputs": [
+          {
+            "name": "queries",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "any"
+                }
+              }
+            }
+          }
+        ],
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "any"
+          }
+        }
+      },
+      "tests": [
+        {
+          "name": "empty ops part2",
+          "args": [
+            []
+          ],
+          "expected": [],
+          "visibility": "visible"
+        },
+        {
+          "name": "delete tombstones key",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "x",
+                5
+              ],
+              [
+                "DELETE",
+                "a",
+                10
+              ],
+              [
+                "GET",
+                "a",
+                15
+              ]
+            ]
+          ],
+          "expected": [
+            null
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "get before delete still returns value",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "x",
+                5
+              ],
+              [
+                "DELETE",
+                "a",
+                10
+              ],
+              [
+                "GET",
+                "a",
+                7
+              ]
+            ]
+          ],
+          "expected": [
+            "x"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "set after delete revives key",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "x",
+                5
+              ],
+              [
+                "DELETE",
+                "a",
+                10
+              ],
+              [
+                "SET",
+                "a",
+                "y",
+                15
+              ],
+              [
+                "GET",
+                "a",
+                20
+              ]
+            ]
+          ],
+          "expected": [
+            "y"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "snapshot collects live keys",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "x",
+                1
+              ],
+              [
+                "SET",
+                "b",
+                "y",
+                2
+              ],
+              [
+                "SNAPSHOT",
+                3
+              ]
+            ]
+          ],
+          "expected": [
+            {
+              "a": "x",
+              "b": "y"
+            }
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "snapshot omits deleted",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "x",
+                1
+              ],
+              [
+                "DELETE",
+                "a",
+                2
+              ],
+              [
+                "SNAPSHOT",
+                5
+              ]
+            ]
+          ],
+          "expected": [
+            {}
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "snapshot at exact timestamp",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "x",
+                1
+              ],
+              [
+                "SNAPSHOT",
+                1
+              ]
+            ]
+          ],
+          "expected": [
+            {
+              "a": "x"
+            }
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "mixed operations sequence",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "1",
+                1
+              ],
+              [
+                "SET",
+                "b",
+                "2",
+                2
+              ],
+              [
+                "DELETE",
+                "a",
+                3
+              ],
+              [
+                "GET",
+                "a",
+                4
+              ],
+              [
+                "SET",
+                "a",
+                "3",
+                5
+              ],
+              [
+                "SNAPSHOT",
+                6
+              ]
+            ]
+          ],
+          "expected": [
+            null,
+            {
+              "a": "3",
+              "b": "2"
+            }
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "snapshot just before tombstone is live",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "x",
+                5
+              ],
+              [
+                "DELETE",
+                "a",
+                10
+              ],
+              [
+                "SNAPSHOT",
+                9
+              ],
+              [
+                "SNAPSHOT",
+                10
+              ]
+            ]
+          ],
+          "expected": [
+            {
+              "a": "x"
+            },
+            {}
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "multiple delete-resurrect cycles",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "v1",
+                5
+              ],
+              [
+                "DELETE",
+                "a",
+                10
+              ],
+              [
+                "SET",
+                "a",
+                "v2",
+                15
+              ],
+              [
+                "DELETE",
+                "a",
+                20
+              ],
+              [
+                "SET",
+                "a",
+                "v3",
+                25
+              ],
+              [
+                "GET",
+                "a",
+                7
+              ],
+              [
+                "GET",
+                "a",
+                12
+              ],
+              [
+                "GET",
+                "a",
+                17
+              ],
+              [
+                "GET",
+                "a",
+                22
+              ],
+              [
+                "GET",
+                "a",
+                30
+              ]
+            ]
+          ],
+          "expected": [
+            "v1",
+            null,
+            "v2",
+            null,
+            "v3"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "delete at out-of-order timestamp respected",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "x",
+                10
+              ],
+              [
+                "DELETE",
+                "a",
+                5
+              ],
+              [
+                "GET",
+                "a",
+                6
+              ],
+              [
+                "GET",
+                "a",
+                10
+              ]
+            ]
+          ],
+          "expected": [
+            null,
+            "x"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "snapshot with many keys some deleted",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "1",
+                1
+              ],
+              [
+                "SET",
+                "b",
+                "2",
+                1
+              ],
+              [
+                "SET",
+                "c",
+                "3",
+                1
+              ],
+              [
+                "DELETE",
+                "b",
+                5
+              ],
+              [
+                "SNAPSHOT",
+                10
+              ]
+            ]
+          ],
+          "expected": [
+            {
+              "a": "1",
+              "c": "3"
+            }
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "get at exact delete timestamp returns none",
+          "args": [
+            [
+              [
+                "SET",
+                "a",
+                "x",
+                5
+              ],
+              [
+                "DELETE",
+                "a",
+                10
+              ],
+              [
+                "GET",
+                "a",
+                10
+              ]
+            ]
+          ],
+          "expected": [
+            null
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "versioned_kv_with_snapshot",
+          "starterPath": "problems/tek-versioned-kv/parts/part-2-delete-snapshot/solutions/python/starter.py",
+          "referencePath": "problems/tek-versioned-kv/parts/part-2-delete-snapshot/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "versioned_kv_with_snapshot",
+          "starterPath": "problems/tek-versioned-kv/parts/part-2-delete-snapshot/solutions/typescript/starter.ts",
+          "referencePath": "problems/tek-versioned-kv/parts/part-2-delete-snapshot/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "VersionedKvWithSnapshot",
+          "starterPath": "problems/tek-versioned-kv/parts/part-2-delete-snapshot/solutions/go/starter.go",
+          "referencePath": "problems/tek-versioned-kv/parts/part-2-delete-snapshot/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "versioned_kv_with_snapshot",
+          "starterPath": "problems/tek-versioned-kv/parts/part-2-delete-snapshot/solutions/scala/starter.scala",
+          "referencePath": "problems/tek-versioned-kv/parts/part-2-delete-snapshot/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "versioned_kv",
+      "starterPath": "problems/tek-versioned-kv/solutions/python/starter.py",
+      "referencePath": "problems/tek-versioned-kv/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "versionedKv",
+      "starterPath": "problems/tek-versioned-kv/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-versioned-kv/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "VersionedKv",
+      "starterPath": "problems/tek-versioned-kv/solutions/go/starter.go",
+      "referencePath": "problems/tek-versioned-kv/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "versioned_kv",
+      "starterPath": "problems/tek-versioned-kv/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-versioned-kv/solutions/scala/reference.scala"
+    }
+  }
+}

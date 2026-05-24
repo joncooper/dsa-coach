@@ -1,0 +1,102 @@
+{
+  "id": "trees-graphs",
+  "kind": "module",
+  "title": "Trees & Graphs",
+  "order": 7,
+  "summary": "Practice binary tree traversals, grid search, BFS shortest paths, cycle checks, and topological order.",
+  "concepts": [
+    "trees",
+    "graphs",
+    "DFS",
+    "BFS",
+    "topological sort",
+    "grid traversal"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "tree-max-depth-local"
+    },
+    {
+      "kind": "problem",
+      "id": "tree-level-sums"
+    },
+    {
+      "kind": "problem",
+      "id": "tree-has-path-sum-local"
+    },
+    {
+      "kind": "problem",
+      "id": "count-grid-islands"
+    },
+    {
+      "kind": "problem",
+      "id": "shortest-edge-path"
+    },
+    {
+      "kind": "problem",
+      "id": "can-finish-local"
+    },
+    {
+      "kind": "problem",
+      "id": "connected-component-count"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-10"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-11"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-12"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-13"
+    },
+    {
+      "kind": "problem",
+      "id": "trees-graphs-bonus-14"
+    }
+  ],
+  "bonus": []
+}

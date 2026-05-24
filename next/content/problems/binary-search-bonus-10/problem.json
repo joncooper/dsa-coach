@@ -1,0 +1,197 @@
+{
+  "id": "binary-search-bonus-10",
+  "kind": "problem",
+  "title": "Search In Infinite Array",
+  "difficulty": "easy",
+  "concepts": [
+    "binary-search",
+    "exponential search"
+  ],
+  "prompt": "Given a list sorted in strictly increasing order whose length you are asked to treat as unknown, return the index of target, or -1. First find a bound that contains the target, then search inside it.",
+  "signature": {
+    "name": "searchUnknownSize",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "found far in",
+      "args": [
+        [
+          1,
+          3,
+          5,
+          7,
+          9,
+          11,
+          13,
+          15
+        ],
+        13
+      ],
+      "expected": 6,
+      "visibility": "visible"
+    },
+    {
+      "name": "absent",
+      "args": [
+        [
+          1,
+          3,
+          5,
+          7,
+          9
+        ],
+        8
+      ],
+      "expected": -1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        4
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single match",
+      "args": [
+        [
+          6
+        ],
+        6
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single miss",
+      "args": [
+        [
+          6
+        ],
+        2
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "first element",
+      "args": [
+        [
+          2,
+          4,
+          6,
+          8,
+          10
+        ],
+        2
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "last element",
+      "args": [
+        [
+          2,
+          4,
+          6,
+          8,
+          10
+        ],
+        10
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "below all",
+      "args": [
+        [
+          5,
+          6,
+          7,
+          8
+        ],
+        1
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "above all",
+      "args": [
+        [
+          5,
+          6,
+          7,
+          8
+        ],
+        99
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "second element",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        2
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "search_unknown_size",
+      "starterPath": "problems/binary-search-bonus-10/solutions/python/starter.py",
+      "referencePath": "problems/binary-search-bonus-10/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "searchUnknownSize",
+      "starterPath": "problems/binary-search-bonus-10/solutions/typescript/starter.ts",
+      "referencePath": "problems/binary-search-bonus-10/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SearchUnknownSize",
+      "starterPath": "problems/binary-search-bonus-10/solutions/go/starter.go",
+      "referencePath": "problems/binary-search-bonus-10/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "searchUnknownSize",
+      "starterPath": "problems/binary-search-bonus-10/solutions/scala/starter.scala",
+      "referencePath": "problems/binary-search-bonus-10/solutions/scala/reference.scala"
+    }
+  }
+}

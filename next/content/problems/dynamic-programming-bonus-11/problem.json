@@ -1,0 +1,210 @@
+{
+  "id": "dynamic-programming-bonus-11",
+  "kind": "problem",
+  "title": "Largest Square Of Ones",
+  "difficulty": "medium",
+  "concepts": [
+    "dynamic-programming",
+    "grid",
+    "optimization"
+  ],
+  "prompt": "Given a grid of 0s and 1s, return the area (number of cells) of the largest square submatrix that contains only 1s. If there is no 1 in the grid, return 0.",
+  "signature": {
+    "name": "largestSquare",
+    "inputs": [
+      {
+        "name": "grid",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two by two square",
+      "args": [
+        [
+          [
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            0
+          ]
+        ]
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "only single ones",
+      "args": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "all zeros",
+      "args": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty grid",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty row",
+      "args": [
+        [
+          []
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single one",
+      "args": [
+        [
+          [
+            1
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single zero",
+      "args": [
+        [
+          [
+            0
+          ]
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "full three by three",
+      "args": [
+        [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ]
+      ],
+      "expected": 9,
+      "visibility": "hidden"
+    },
+    {
+      "name": "full two by two",
+      "args": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "largest_square",
+      "starterPath": "problems/dynamic-programming-bonus-11/solutions/python/starter.py",
+      "referencePath": "problems/dynamic-programming-bonus-11/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "largestSquare",
+      "starterPath": "problems/dynamic-programming-bonus-11/solutions/typescript/starter.ts",
+      "referencePath": "problems/dynamic-programming-bonus-11/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LargestSquare",
+      "starterPath": "problems/dynamic-programming-bonus-11/solutions/go/starter.go",
+      "referencePath": "problems/dynamic-programming-bonus-11/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "largestSquare",
+      "starterPath": "problems/dynamic-programming-bonus-11/solutions/scala/starter.scala",
+      "referencePath": "problems/dynamic-programming-bonus-11/solutions/scala/reference.scala"
+    }
+  }
+}

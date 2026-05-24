@@ -1,0 +1,172 @@
+{
+  "id": "heaps-bonus-02",
+  "kind": "problem",
+  "title": "Heapsort Ascending",
+  "difficulty": "warmup",
+  "concepts": [
+    "heaps",
+    "heapsort",
+    "ordering"
+  ],
+  "prompt": "Return a new list containing every value of the input sorted in non-decreasing order. Implement the ordering yourself with a heap: push every value in, then pop them all out.",
+  "signature": {
+    "name": "heapsort",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "mixed order",
+      "args": [
+        [
+          3,
+          1,
+          4,
+          1,
+          5,
+          9,
+          2,
+          6
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        9
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "already sorted",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": [
+        7
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "reverse sorted",
+      "args": [
+        [
+          5,
+          4,
+          3,
+          2,
+          1
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          2,
+          2,
+          2
+        ]
+      ],
+      "expected": [
+        2,
+        2,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives and zero",
+      "args": [
+        [
+          0,
+          -3,
+          2,
+          -1
+        ]
+      ],
+      "expected": [
+        -3,
+        -1,
+        0,
+        2
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "heapsort",
+      "starterPath": "problems/heaps-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/heaps-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "heapsort",
+      "starterPath": "problems/heaps-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/heaps-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "Heapsort",
+      "starterPath": "problems/heaps-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/heaps-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "heapsort",
+      "starterPath": "problems/heaps-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/heaps-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

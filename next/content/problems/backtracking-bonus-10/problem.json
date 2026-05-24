@@ -1,0 +1,138 @@
+{
+  "id": "backtracking-bonus-10",
+  "kind": "problem",
+  "title": "Count Target Sign Assignments",
+  "difficulty": "easy",
+  "concepts": [
+    "backtracking",
+    "binary choice",
+    "counting"
+  ],
+  "prompt": "Given a list of non-negative integers, you must place a '+' or a '-' in front of every value and add the results. Return how many of the 2^n sign assignments produce a sum equal to target.",
+  "signature": {
+    "name": "countSignAssignments",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "five ones target three",
+      "args": [
+        [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        3
+      ],
+      "expected": 5,
+      "visibility": "visible"
+    },
+    {
+      "name": "single value hit",
+      "args": [
+        [
+          1
+        ],
+        1
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "single value miss",
+      "args": [
+        [
+          1
+        ],
+        2
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty list zero target",
+      "args": [
+        [],
+        0
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty list nonzero target",
+      "args": [
+        [],
+        5
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two ones cancel",
+      "args": [
+        [
+          1,
+          1
+        ],
+        0
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zeros all match",
+      "args": [
+        [
+          0,
+          0
+        ],
+        0
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_sign_assignments",
+      "starterPath": "problems/backtracking-bonus-10/solutions/python/starter.py",
+      "referencePath": "problems/backtracking-bonus-10/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "countSignAssignments",
+      "starterPath": "problems/backtracking-bonus-10/solutions/typescript/starter.ts",
+      "referencePath": "problems/backtracking-bonus-10/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountSignAssignments",
+      "starterPath": "problems/backtracking-bonus-10/solutions/go/starter.go",
+      "referencePath": "problems/backtracking-bonus-10/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "countSignAssignments",
+      "starterPath": "problems/backtracking-bonus-10/solutions/scala/starter.scala",
+      "referencePath": "problems/backtracking-bonus-10/solutions/scala/reference.scala"
+    }
+  }
+}

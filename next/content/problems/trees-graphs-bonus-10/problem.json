@@ -1,0 +1,192 @@
+{
+  "id": "trees-graphs-bonus-10",
+  "kind": "problem",
+  "title": "Route Between Two Nodes",
+  "difficulty": "easy",
+  "concepts": [
+    "trees-graphs",
+    "DFS",
+    "graph traversal"
+  ],
+  "prompt": "You are given a directed graph as an adjacency dictionary mapping each node name to a list of node names it points to. Return True if there is a path from the source node to the target node, following edge directions, and False otherwise.",
+  "signature": {
+    "name": "hasRoute",
+    "inputs": [
+      {
+        "name": "graph",
+        "type": {
+          "type": "object"
+        }
+      },
+      {
+        "name": "source",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "path exists",
+      "args": [
+        {
+          "a": [
+            "b",
+            "c"
+          ],
+          "b": [
+            "d"
+          ],
+          "c": [
+            "d"
+          ],
+          "d": []
+        },
+        "a",
+        "d"
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "no path against direction",
+      "args": [
+        {
+          "a": [
+            "b"
+          ],
+          "b": [],
+          "c": [
+            "a"
+          ]
+        },
+        "a",
+        "c"
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "source equals target",
+      "args": [
+        {
+          "a": []
+        },
+        "a",
+        "a"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "direct edge",
+      "args": [
+        {
+          "a": [
+            "b"
+          ],
+          "b": []
+        },
+        "a",
+        "b"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "cycle does not trap",
+      "args": [
+        {
+          "a": [
+            "b"
+          ],
+          "b": [
+            "c"
+          ],
+          "c": [
+            "a"
+          ]
+        },
+        "a",
+        "c"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "disconnected target",
+      "args": [
+        {
+          "a": [
+            "b"
+          ],
+          "b": [],
+          "c": [
+            "d"
+          ],
+          "d": []
+        },
+        "a",
+        "d"
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "longer chain",
+      "args": [
+        {
+          "a": [
+            "b"
+          ],
+          "b": [
+            "c"
+          ],
+          "c": [
+            "d"
+          ],
+          "d": [
+            "e"
+          ],
+          "e": []
+        },
+        "a",
+        "e"
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "has_route",
+      "starterPath": "problems/trees-graphs-bonus-10/solutions/python/starter.py",
+      "referencePath": "problems/trees-graphs-bonus-10/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "hasRoute",
+      "starterPath": "problems/trees-graphs-bonus-10/solutions/typescript/starter.ts",
+      "referencePath": "problems/trees-graphs-bonus-10/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "HasRoute",
+      "starterPath": "problems/trees-graphs-bonus-10/solutions/go/starter.go",
+      "referencePath": "problems/trees-graphs-bonus-10/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "hasRoute",
+      "starterPath": "problems/trees-graphs-bonus-10/solutions/scala/starter.scala",
+      "referencePath": "problems/trees-graphs-bonus-10/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "id": "heaps-bonus-09",
+  "kind": "problem",
+  "title": "K Closest Numbers To Target",
+  "difficulty": "easy",
+  "concepts": [
+    "heaps",
+    "top k",
+    "max-heap"
+  ],
+  "prompt": "Return the k values from the list whose absolute distance from a target number is smallest. When two values are equally distant, prefer the smaller value. Return the chosen values sorted in ascending order.",
+  "signature": {
+    "name": "kClosestNumbers",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "three closest",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        3,
+        3
+      ],
+      "expected": [
+        2,
+        3,
+        4
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single pick",
+      "args": [
+        [
+          10,
+          20,
+          30
+        ],
+        12,
+        1
+      ],
+      "expected": [
+        10
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "k equals length",
+      "args": [
+        [
+          4,
+          1,
+          8
+        ],
+        5,
+        3
+      ],
+      "expected": [
+        1,
+        4,
+        8
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "tie prefers smaller",
+      "args": [
+        [
+          2,
+          4
+        ],
+        3,
+        1
+      ],
+      "expected": [
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single element",
+      "args": [
+        [
+          7
+        ],
+        100,
+        1
+      ],
+      "expected": [
+        7
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives around target",
+      "args": [
+        [
+          -5,
+          -2,
+          0,
+          3
+        ],
+        -1,
+        2
+      ],
+      "expected": [
+        -2,
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "exact match included",
+      "args": [
+        [
+          1,
+          5,
+          9
+        ],
+        5,
+        2
+      ],
+      "expected": [
+        1,
+        5
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "k_closest_numbers",
+      "starterPath": "problems/heaps-bonus-09/solutions/python/starter.py",
+      "referencePath": "problems/heaps-bonus-09/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "kClosestNumbers",
+      "starterPath": "problems/heaps-bonus-09/solutions/typescript/starter.ts",
+      "referencePath": "problems/heaps-bonus-09/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "KClosestNumbers",
+      "starterPath": "problems/heaps-bonus-09/solutions/go/starter.go",
+      "referencePath": "problems/heaps-bonus-09/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "kClosestNumbers",
+      "starterPath": "problems/heaps-bonus-09/solutions/scala/starter.scala",
+      "referencePath": "problems/heaps-bonus-09/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,208 @@
+{
+  "id": "lib-sc-running-median",
+  "kind": "problem",
+  "title": "Running Median",
+  "difficulty": "medium",
+  "concepts": [
+    "sorted container",
+    "online median",
+    "SortedList"
+  ],
+  "prompt": "Given a stream of integers, return a list of medians — after each element is appended, record the median of all values seen so far. The output length equals the input length. For an odd count, the median is the middle value; for an even count, it is the mean of the two middle values (as a float).",
+  "signature": {
+    "name": "runningMedian",
+    "inputs": [
+      {
+        "name": "stream",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "empty stream",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "single value",
+      "args": [
+        [
+          5
+        ]
+      ],
+      "expected": [
+        5
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "two values average",
+      "args": [
+        [
+          5,
+          3
+        ]
+      ],
+      "expected": [
+        5,
+        4
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "small ascending stream",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": [
+        1,
+        1.5,
+        2,
+        2.5
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "repeated values",
+      "args": [
+        [
+          5,
+          5,
+          5,
+          5
+        ]
+      ],
+      "expected": [
+        5,
+        5,
+        5,
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative and zero",
+      "args": [
+        [
+          -5,
+          0,
+          5
+        ]
+      ],
+      "expected": [
+        -5,
+        -2.5,
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "interleaved order",
+      "args": [
+        [
+          2,
+          0,
+          4,
+          1,
+          3
+        ]
+      ],
+      "expected": [
+        2,
+        1,
+        2,
+        1.5,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "longer stream of mixed signs",
+      "args": [
+        [
+          1,
+          10,
+          -1,
+          4,
+          -3,
+          7,
+          -8,
+          2
+        ]
+      ],
+      "expected": [
+        1,
+        5.5,
+        1,
+        2.5,
+        1,
+        2.5,
+        1,
+        1.5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates with sorting",
+      "args": [
+        [
+          3,
+          3,
+          1,
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        3,
+        3,
+        3,
+        2,
+        2
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "running_median",
+      "starterPath": "problems/lib-sc-running-median/solutions/python/starter.py",
+      "referencePath": "problems/lib-sc-running-median/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "runningMedian",
+      "starterPath": "problems/lib-sc-running-median/solutions/typescript/starter.ts",
+      "referencePath": "problems/lib-sc-running-median/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RunningMedian",
+      "starterPath": "problems/lib-sc-running-median/solutions/go/starter.go",
+      "referencePath": "problems/lib-sc-running-median/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "runningMedian",
+      "starterPath": "problems/lib-sc-running-median/solutions/scala/starter.scala",
+      "referencePath": "problems/lib-sc-running-median/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "id": "trees-graphs-bonus-04",
+  "kind": "problem",
+  "title": "Diameter Of Binary Tree",
+  "difficulty": "medium",
+  "concepts": [
+    "trees-graphs",
+    "tree recursion",
+    "DFS"
+  ],
+  "prompt": "Given the root of a binary tree, return its diameter: the number of edges on the longest path between any two nodes. The path may or may not pass through the root.",
+  "signature": {
+    "name": "treeDiameter",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "nullable": true
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "path through root",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "single node",
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty tree",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two nodes",
+      "args": [
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "left chain",
+      "args": [
+        [
+          1,
+          2,
+          null,
+          3,
+          null,
+          4
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "full three levels",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "path off to one side",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          null,
+          null,
+          5
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "tree_diameter",
+      "starterPath": "problems/trees-graphs-bonus-04/solutions/python/starter.py",
+      "referencePath": "problems/trees-graphs-bonus-04/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "treeDiameter",
+      "starterPath": "problems/trees-graphs-bonus-04/solutions/typescript/starter.ts",
+      "referencePath": "problems/trees-graphs-bonus-04/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "TreeDiameter",
+      "starterPath": "problems/trees-graphs-bonus-04/solutions/go/starter.go",
+      "referencePath": "problems/trees-graphs-bonus-04/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "treeDiameter",
+      "starterPath": "problems/trees-graphs-bonus-04/solutions/scala/starter.scala",
+      "referencePath": "problems/trees-graphs-bonus-04/solutions/scala/reference.scala"
+    }
+  }
+}

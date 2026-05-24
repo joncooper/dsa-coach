@@ -1,0 +1,77 @@
+{
+  "id": "binary-search",
+  "kind": "module",
+  "title": "Binary Search",
+  "order": 10,
+  "summary": "Practice boundaries, rotated arrays, matrix search, and binary search over answer spaces.",
+  "concepts": [
+    "binary search",
+    "lower bound",
+    "upper bound",
+    "rotated arrays",
+    "answer search"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "lower-bound-local"
+    },
+    {
+      "kind": "problem",
+      "id": "first-day-for-bouquets"
+    },
+    {
+      "kind": "problem",
+      "id": "integer-square-root"
+    },
+    {
+      "kind": "problem",
+      "id": "search-rotated-local"
+    },
+    {
+      "kind": "problem",
+      "id": "ship-capacity-local"
+    },
+    {
+      "kind": "problem",
+      "id": "binary-search-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "binary-search-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "binary-search-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "binary-search-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "binary-search-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "binary-search-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "binary-search-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "binary-search-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "binary-search-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "binary-search-bonus-10"
+    }
+  ],
+  "bonus": []
+}

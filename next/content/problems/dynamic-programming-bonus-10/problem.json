@@ -1,0 +1,122 @@
+{
+  "id": "dynamic-programming-bonus-10",
+  "kind": "problem",
+  "title": "Longest Palindromic Substring Length",
+  "difficulty": "medium",
+  "concepts": [
+    "dynamic-programming",
+    "interval",
+    "tabulation"
+  ],
+  "prompt": "Return the length of the longest contiguous substring of the input string that reads the same forwards and backwards.",
+  "signature": {
+    "name": "longestPalindromeLength",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "odd palindrome",
+      "args": [
+        "babad"
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "even palindrome",
+      "args": [
+        "cbbd"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single character",
+      "args": [
+        "a"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "no repeat",
+      "args": [
+        "abcd"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all same",
+      "args": [
+        "aaaa"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "whole string palindrome",
+      "args": [
+        "racecar"
+      ],
+      "expected": 7,
+      "visibility": "hidden"
+    },
+    {
+      "name": "short palindrome inside",
+      "args": [
+        "abacdfgdcaba"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "long even palindrome",
+      "args": [
+        "forgeeksskeegfor"
+      ],
+      "expected": 10,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "longest_palindrome_length",
+      "starterPath": "problems/dynamic-programming-bonus-10/solutions/python/starter.py",
+      "referencePath": "problems/dynamic-programming-bonus-10/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "longestPalindromeLength",
+      "starterPath": "problems/dynamic-programming-bonus-10/solutions/typescript/starter.ts",
+      "referencePath": "problems/dynamic-programming-bonus-10/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LongestPalindromeLength",
+      "starterPath": "problems/dynamic-programming-bonus-10/solutions/go/starter.go",
+      "referencePath": "problems/dynamic-programming-bonus-10/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "longestPalindromeLength",
+      "starterPath": "problems/dynamic-programming-bonus-10/solutions/scala/starter.scala",
+      "referencePath": "problems/dynamic-programming-bonus-10/solutions/scala/reference.scala"
+    }
+  }
+}

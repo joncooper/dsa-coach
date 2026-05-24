@@ -1,0 +1,43 @@
+{
+  "id": "aoc-year-1",
+  "kind": "problem-set",
+  "title": "Year One: Field Survey",
+  "summary": "Seven AoC-shaped exercises ramping from a one-pass warmup to a recursive contains-graph.",
+  "entries": [
+    {
+      "problem": "aoc-y1-d1-elevation-pairs",
+      "category": "aoc-year-1",
+      "note": "parsing, hash set, pair sum"
+    },
+    {
+      "problem": "aoc-y1-d2-patrol-tags",
+      "category": "aoc-year-1",
+      "note": "parsing, validation, counting"
+    },
+    {
+      "problem": "aoc-y1-d3-slope-walk",
+      "category": "aoc-year-1",
+      "note": "grid traversal, modular arithmetic"
+    },
+    {
+      "problem": "aoc-y1-d4-manifest-records",
+      "category": "aoc-year-1",
+      "note": "multi-line records, field validation"
+    },
+    {
+      "problem": "aoc-y1-d5-seat-codes",
+      "category": "aoc-year-1",
+      "note": "binary encoding, scan, max"
+    },
+    {
+      "problem": "aoc-y1-d6-group-answers",
+      "category": "aoc-year-1",
+      "note": "multi-line records, set union"
+    },
+    {
+      "problem": "aoc-y1-d7-container-rules",
+      "category": "aoc-year-1",
+      "note": "graph, DFS, memoization"
+    }
+  ]
+}

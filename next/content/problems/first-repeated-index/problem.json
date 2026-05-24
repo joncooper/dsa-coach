@@ -1,0 +1,164 @@
+{
+  "id": "first-repeated-index",
+  "kind": "problem",
+  "title": "First Repeated Index",
+  "difficulty": "easy",
+  "concepts": [
+    "set",
+    "scan"
+  ],
+  "prompt": "Return the first index whose value has appeared earlier in the array. If every value is new when visited, return -1.",
+  "signature": {
+    "name": "firstRepeatedIndex",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "repeat in middle",
+      "args": [
+        [
+          5,
+          1,
+          4,
+          1,
+          9
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "unique",
+      "args": [
+        [
+          2,
+          4,
+          6
+        ]
+      ],
+      "expected": -1,
+      "visibility": "visible"
+    },
+    {
+      "name": "first pair",
+      "args": [
+        [
+          8,
+          8,
+          9
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "late repeat",
+      "args": [
+        [
+          3,
+          1,
+          2,
+          4,
+          3
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single element",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two unique",
+      "args": [
+        [
+          5,
+          9
+        ]
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "repeats at end",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          2
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zeros repeat",
+      "args": [
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives repeat",
+      "args": [
+        [
+          -3,
+          -1,
+          -3,
+          4
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "first_repeated_index",
+      "starterPath": "problems/first-repeated-index/solutions/python/starter.py",
+      "referencePath": "problems/first-repeated-index/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "firstRepeatedIndex",
+      "starterPath": "problems/first-repeated-index/solutions/typescript/starter.ts",
+      "referencePath": "problems/first-repeated-index/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "FirstRepeatedIndex",
+      "starterPath": "problems/first-repeated-index/solutions/go/starter.go",
+      "referencePath": "problems/first-repeated-index/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "firstRepeatedIndex",
+      "starterPath": "problems/first-repeated-index/solutions/scala/starter.scala",
+      "referencePath": "problems/first-repeated-index/solutions/scala/reference.scala"
+    }
+  }
+}

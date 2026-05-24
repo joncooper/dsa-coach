@@ -1,0 +1,162 @@
+{
+  "id": "arrays-strings-bonus-06",
+  "kind": "problem",
+  "title": "Plus One",
+  "difficulty": "easy",
+  "concepts": [
+    "arrays-strings",
+    "array transform",
+    "carry propagation"
+  ],
+  "prompt": "A non-negative integer is given as a list of decimal digits, most significant digit first. Return the digit list of that integer plus one.",
+  "signature": {
+    "name": "plusOne",
+    "inputs": [
+      {
+        "name": "digits",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "no carry",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        4
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "all nines",
+      "args": [
+        [
+          9,
+          9,
+          9
+        ]
+      ],
+      "expected": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single nine",
+      "args": [
+        [
+          9
+        ]
+      ],
+      "expected": [
+        1,
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single zero",
+      "args": [
+        [
+          0
+        ]
+      ],
+      "expected": [
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "partial carry",
+      "args": [
+        [
+          1,
+          9,
+          9
+        ]
+      ],
+      "expected": [
+        2,
+        0,
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "long no carry",
+      "args": [
+        [
+          4,
+          3,
+          2,
+          1
+        ]
+      ],
+      "expected": [
+        4,
+        3,
+        2,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "carry once",
+      "args": [
+        [
+          8,
+          9
+        ]
+      ],
+      "expected": [
+        9,
+        0
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "plus_one",
+      "starterPath": "problems/arrays-strings-bonus-06/solutions/python/starter.py",
+      "referencePath": "problems/arrays-strings-bonus-06/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "plusOne",
+      "starterPath": "problems/arrays-strings-bonus-06/solutions/typescript/starter.ts",
+      "referencePath": "problems/arrays-strings-bonus-06/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "PlusOne",
+      "starterPath": "problems/arrays-strings-bonus-06/solutions/go/starter.go",
+      "referencePath": "problems/arrays-strings-bonus-06/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "plusOne",
+      "starterPath": "problems/arrays-strings-bonus-06/solutions/scala/starter.scala",
+      "referencePath": "problems/arrays-strings-bonus-06/solutions/scala/reference.scala"
+    }
+  }
+}

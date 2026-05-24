@@ -1,0 +1,278 @@
+{
+  "id": "aoc-y2-d6-shelf-overlap",
+  "kind": "problem",
+  "title": "Day 6: Shelf Overlap",
+  "difficulty": "medium",
+  "concepts": [
+    "multi-line records",
+    "set intersection"
+  ],
+  "prompt": "Records are separated by blank lines. Within a record, each non-empty line is a comma-separated list of relic IDs (e.g., `7,12,42`). Each line represents one shelf. For each record, compute the set of relic IDs that appear on every shelf (intersection across the record's lines). Sum the sizes of those per-record intersections.",
+  "signature": {
+    "name": "shelf_overlap",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two records",
+      "args": [
+        "1,2,3\n2,3,4\n\n5,6\n5,6,7"
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "single shelf single record",
+      "args": [
+        "1,2,3"
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "no overlap",
+      "args": [
+        "1,2\n3,4"
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "complete overlap three shelves",
+      "args": [
+        "1,2\n1,2\n1,2"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicate within shelf",
+      "args": [
+        "1,1,2\n1,2,2"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "three records mixed",
+      "args": [
+        "1,2,3\n2,3\n\n5\n5\n5\n\n9,8\n7,6"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "blank trailing block",
+      "args": [
+        "1,2\n1,3\n\n\n"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "intersection of three shrinks to one",
+      "args": [
+        "1,2,3\n2,3,4\n3,4,5"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single shelf with duplicates dedups",
+      "args": [
+        "7,7,7,8"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "many records each contributes",
+      "args": [
+        "1,2\n1,3\n\n4,5\n4,6\n\n7\n7"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "leading blank block ignored",
+      "args": [
+        "\n\n1,2\n1,3"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-unique-shelf",
+      "title": "Part 2: Unique to one shelf",
+      "prompt": "Same input shape. Now count, per record, the relic IDs that appear on exactly one of the record's shelves. Sum across records. As before, duplicates within a single shelf count once. A record with one shelf contributes the size of that shelf.",
+      "signature": {
+        "name": "shelf_unique",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "two records",
+          "args": [
+            "1,2,3\n2,3,4\n\n5,6\n5,6,7"
+          ],
+          "expected": 3,
+          "visibility": "visible"
+        },
+        {
+          "name": "single shelf",
+          "args": [
+            "1,2,3"
+          ],
+          "expected": 3,
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "no uniques",
+          "args": [
+            "1,2\n1,2"
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "three shelves one unique each",
+          "args": [
+            "1,9\n2,9\n3,9"
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        },
+        {
+          "name": "duplicate within shelf counts once",
+          "args": [
+            "1,1,2\n2,3"
+          ],
+          "expected": 2,
+          "visibility": "hidden"
+        },
+        {
+          "name": "mixed records",
+          "args": [
+            "1,2\n1,3\n\n4,5,6\n4,5"
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        },
+        {
+          "name": "every relic on every shelf",
+          "args": [
+            "1,2,3\n1,2,3\n1,2,3"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "single shelf all unique",
+          "args": [
+            "1,2,3,4,5"
+          ],
+          "expected": 5,
+          "visibility": "hidden"
+        },
+        {
+          "name": "two shelves with overlap",
+          "args": [
+            "1,2,3\n3,4,5"
+          ],
+          "expected": 4,
+          "visibility": "hidden"
+        },
+        {
+          "name": "three records summed",
+          "args": [
+            "1\n\n1,2\n\n1,2,3"
+          ],
+          "expected": 6,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "shelf_unique",
+          "starterPath": "problems/aoc-y2-d6-shelf-overlap/parts/part-2-unique-shelf/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y2-d6-shelf-overlap/parts/part-2-unique-shelf/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "shelf_unique",
+          "starterPath": "problems/aoc-y2-d6-shelf-overlap/parts/part-2-unique-shelf/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y2-d6-shelf-overlap/parts/part-2-unique-shelf/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "ShelfUnique",
+          "starterPath": "problems/aoc-y2-d6-shelf-overlap/parts/part-2-unique-shelf/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y2-d6-shelf-overlap/parts/part-2-unique-shelf/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "shelf_unique",
+          "starterPath": "problems/aoc-y2-d6-shelf-overlap/parts/part-2-unique-shelf/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y2-d6-shelf-overlap/parts/part-2-unique-shelf/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "shelf_overlap",
+      "starterPath": "problems/aoc-y2-d6-shelf-overlap/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y2-d6-shelf-overlap/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "shelf_overlap",
+      "starterPath": "problems/aoc-y2-d6-shelf-overlap/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y2-d6-shelf-overlap/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ShelfOverlap",
+      "starterPath": "problems/aoc-y2-d6-shelf-overlap/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y2-d6-shelf-overlap/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "shelf_overlap",
+      "starterPath": "problems/aoc-y2-d6-shelf-overlap/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y2-d6-shelf-overlap/solutions/scala/reference.scala"
+    }
+  }
+}

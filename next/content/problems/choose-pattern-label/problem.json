@@ -1,0 +1,152 @@
+{
+  "id": "choose-pattern-label",
+  "kind": "problem",
+  "title": "Choose Pattern Label",
+  "difficulty": "easy",
+  "concepts": [
+    "pattern recognition"
+  ],
+  "prompt": "Given a list of feature strings, classify the problem. Lowercase the features, join them into one space-separated string, then test these keyword substrings against it in priority order, returning the first category that matches: `graph` if the string contains `node`, `edge`, `shortest`, or `connected`; otherwise `dp` for `subproblem`, `reuse`, `minimum`, or `optimal`; otherwise `binary-search` for `sorted`, `boundary`, or `answer`; otherwise `sliding-window` for `contiguous`, `window`, `at most`, or `positive`. If none match, return `hashing`.",
+  "signature": {
+    "name": "choosePatternLabel",
+    "inputs": [
+      {
+        "name": "features",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "graph",
+      "args": [
+        [
+          "nodes",
+          "edges",
+          "shortest"
+        ]
+      ],
+      "expected": "graph",
+      "visibility": "visible"
+    },
+    {
+      "name": "window",
+      "args": [
+        [
+          "contiguous",
+          "at most",
+          "positive"
+        ]
+      ],
+      "expected": "sliding-window",
+      "visibility": "visible"
+    },
+    {
+      "name": "dp",
+      "args": [
+        [
+          "minimum",
+          "subproblem",
+          "reuse"
+        ]
+      ],
+      "expected": "dp",
+      "visibility": "hidden"
+    },
+    {
+      "name": "hash",
+      "args": [
+        [
+          "frequency",
+          "lookup"
+        ]
+      ],
+      "expected": "hashing",
+      "visibility": "hidden"
+    },
+    {
+      "name": "binary search",
+      "args": [
+        [
+          "sorted",
+          "boundary"
+        ]
+      ],
+      "expected": "binary-search",
+      "visibility": "hidden"
+    },
+    {
+      "name": "graph wins over dp",
+      "args": [
+        [
+          "nodes",
+          "minimum"
+        ]
+      ],
+      "expected": "graph",
+      "visibility": "hidden"
+    },
+    {
+      "name": "dp over binary",
+      "args": [
+        [
+          "subproblem",
+          "sorted"
+        ]
+      ],
+      "expected": "dp",
+      "visibility": "hidden"
+    },
+    {
+      "name": "plain hashing",
+      "args": [
+        [
+          "lookup"
+        ]
+      ],
+      "expected": "hashing",
+      "visibility": "hidden"
+    },
+    {
+      "name": "window via at most",
+      "args": [
+        [
+          "at most",
+          "contiguous"
+        ]
+      ],
+      "expected": "sliding-window",
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "choose_pattern_label",
+      "starterPath": "problems/choose-pattern-label/solutions/python/starter.py",
+      "referencePath": "problems/choose-pattern-label/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "choosePatternLabel",
+      "starterPath": "problems/choose-pattern-label/solutions/typescript/starter.ts",
+      "referencePath": "problems/choose-pattern-label/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ChoosePatternLabel",
+      "starterPath": "problems/choose-pattern-label/solutions/go/starter.go",
+      "referencePath": "problems/choose-pattern-label/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "choosePatternLabel",
+      "starterPath": "problems/choose-pattern-label/solutions/scala/starter.scala",
+      "referencePath": "problems/choose-pattern-label/solutions/scala/reference.scala"
+    }
+  }
+}

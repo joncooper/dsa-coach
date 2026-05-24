@@ -1,0 +1,18 @@
+{
+  "id": "lib-ordered-dict",
+  "kind": "problem-set",
+  "title": "collections · OrderedDict",
+  "summary": "Cache and stream problems that lean on insertion-order semantics plus move-to-end and pop-oldest.",
+  "entries": [
+    {
+      "problem": "lib-od-lru-cache",
+      "category": "lib-ordered-dict",
+      "note": "LRU, OrderedDict, cache"
+    },
+    {
+      "problem": "lib-od-first-unique",
+      "category": "lib-ordered-dict",
+      "note": "streaming, OrderedDict"
+    }
+  ]
+}

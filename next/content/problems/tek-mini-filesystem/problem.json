@@ -1,0 +1,291 @@
+{
+  "id": "tek-mini-filesystem",
+  "kind": "problem",
+  "title": "An In-Memory Filesystem",
+  "difficulty": "medium",
+  "concepts": [
+    "tree",
+    "command interpreter",
+    "path resolution"
+  ],
+  "prompt": "Implement a tiny in-memory filesystem driven by a list of commands. Each command is a list. `[\"mkdir\", path]` creates a directory and any missing parent directories. `[\"addFile\", path, content]` writes a file (creating missing parent directories), overwriting any existing file at that path. `[\"ls\", path]` lists names directly under a directory, sorted; if the path is a file it returns just `[<basename>]`. `[\"cat\", path]` returns the file's content string. `[\"rm\", path]` removes the file or directory subtree at the path. Paths are absolute and `/`-separated. Return the list of outputs produced by the `ls` and `cat` commands, in order.",
+  "signature": {
+    "name": "runFs",
+    "inputs": [
+      {
+        "name": "commands",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "any"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "any"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "make list cat",
+      "args": [
+        [
+          [
+            "mkdir",
+            "/a/b"
+          ],
+          [
+            "addFile",
+            "/a/b/f.txt",
+            "hi"
+          ],
+          [
+            "ls",
+            "/a"
+          ],
+          [
+            "cat",
+            "/a/b/f.txt"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          "b"
+        ],
+        "hi"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "list root",
+      "args": [
+        [
+          [
+            "mkdir",
+            "/x"
+          ],
+          [
+            "mkdir",
+            "/y"
+          ],
+          [
+            "ls",
+            "/"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          "x",
+          "y"
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "no read commands",
+      "args": [
+        [
+          [
+            "mkdir",
+            "/a"
+          ],
+          [
+            "addFile",
+            "/a/f",
+            "z"
+          ]
+        ]
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "rm removes subtree",
+      "args": [
+        [
+          [
+            "mkdir",
+            "/a/b"
+          ],
+          [
+            "addFile",
+            "/a/b/f",
+            "z"
+          ],
+          [
+            "rm",
+            "/a/b"
+          ],
+          [
+            "ls",
+            "/a"
+          ]
+        ]
+      ],
+      "expected": [
+        []
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "addFile overwrites",
+      "args": [
+        [
+          [
+            "addFile",
+            "/a/f",
+            "1"
+          ],
+          [
+            "addFile",
+            "/a/f",
+            "2"
+          ],
+          [
+            "cat",
+            "/a/f"
+          ]
+        ]
+      ],
+      "expected": [
+        "2"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "ls on a file returns basename",
+      "args": [
+        [
+          [
+            "addFile",
+            "/a/f",
+            "x"
+          ],
+          [
+            "ls",
+            "/a/f"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          "f"
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "ls sorts dirs and files together",
+      "args": [
+        [
+          [
+            "addFile",
+            "/a/zeta",
+            "1"
+          ],
+          [
+            "mkdir",
+            "/a/alpha"
+          ],
+          [
+            "addFile",
+            "/a/mid",
+            "2"
+          ],
+          [
+            "ls",
+            "/a"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          "alpha",
+          "mid",
+          "zeta"
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "addFile creates parents",
+      "args": [
+        [
+          [
+            "addFile",
+            "/p/q/r.txt",
+            "data"
+          ],
+          [
+            "cat",
+            "/p/q/r.txt"
+          ]
+        ]
+      ],
+      "expected": [
+        "data"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "remove then recreate",
+      "args": [
+        [
+          [
+            "addFile",
+            "/a/f",
+            "old"
+          ],
+          [
+            "rm",
+            "/a/f"
+          ],
+          [
+            "addFile",
+            "/a/f",
+            "new"
+          ],
+          [
+            "cat",
+            "/a/f"
+          ]
+        ]
+      ],
+      "expected": [
+        "new"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "run_fs",
+      "starterPath": "problems/tek-mini-filesystem/solutions/python/starter.py",
+      "referencePath": "problems/tek-mini-filesystem/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "runFs",
+      "starterPath": "problems/tek-mini-filesystem/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-mini-filesystem/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RunFs",
+      "starterPath": "problems/tek-mini-filesystem/solutions/go/starter.go",
+      "referencePath": "problems/tek-mini-filesystem/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "run_fs",
+      "starterPath": "problems/tek-mini-filesystem/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-mini-filesystem/solutions/scala/reference.scala"
+    }
+  }
+}

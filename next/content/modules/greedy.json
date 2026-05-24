@@ -1,0 +1,77 @@
+{
+  "id": "greedy",
+  "kind": "module",
+  "title": "Greedy",
+  "order": 9,
+  "summary": "Practice interval choices, exchange arguments, matching, and one-pass reachability.",
+  "concepts": [
+    "greedy",
+    "intervals",
+    "sorting",
+    "matching",
+    "exchange arguments"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "max-compatible-meetings"
+    },
+    {
+      "kind": "problem",
+      "id": "assign-snacks"
+    },
+    {
+      "kind": "problem",
+      "id": "largest-one-swap"
+    },
+    {
+      "kind": "problem",
+      "id": "can-reach-end-local"
+    },
+    {
+      "kind": "problem",
+      "id": "partition-labels-local"
+    },
+    {
+      "kind": "problem",
+      "id": "greedy-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "greedy-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "greedy-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "greedy-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "greedy-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "greedy-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "greedy-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "greedy-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "greedy-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "greedy-bonus-10"
+    }
+  ],
+  "bonus": []
+}

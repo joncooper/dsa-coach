@@ -1,0 +1,191 @@
+{
+  "id": "trees-graphs-bonus-09",
+  "kind": "problem",
+  "title": "Island Perimeter",
+  "difficulty": "medium",
+  "concepts": [
+    "trees-graphs",
+    "grid scan",
+    "DFS"
+  ],
+  "prompt": "You are given a grid of 0s (water) and 1s (land) that contains exactly one island — a group of land cells connected horizontally or vertically. Return the perimeter of that island: the total length of its boundary edges.",
+  "signature": {
+    "name": "islandPerimeter",
+    "inputs": [
+      {
+        "name": "grid",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "irregular island",
+      "args": [
+        [
+          [
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": 16,
+      "visibility": "visible"
+    },
+    {
+      "name": "single land cell",
+      "args": [
+        [
+          [
+            1
+          ]
+        ]
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "no land",
+      "args": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two by two block",
+      "args": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      ],
+      "expected": 8,
+      "visibility": "hidden"
+    },
+    {
+      "name": "horizontal strip",
+      "args": [
+        [
+          [
+            1,
+            1,
+            1
+          ]
+        ]
+      ],
+      "expected": 8,
+      "visibility": "hidden"
+    },
+    {
+      "name": "vertical strip",
+      "args": [
+        [
+          [
+            1
+          ],
+          [
+            1
+          ],
+          [
+            1
+          ]
+        ]
+      ],
+      "expected": 8,
+      "visibility": "hidden"
+    },
+    {
+      "name": "plus shape",
+      "args": [
+        [
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            0,
+            1,
+            0
+          ]
+        ]
+      ],
+      "expected": 12,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "island_perimeter",
+      "starterPath": "problems/trees-graphs-bonus-09/solutions/python/starter.py",
+      "referencePath": "problems/trees-graphs-bonus-09/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "islandPerimeter",
+      "starterPath": "problems/trees-graphs-bonus-09/solutions/typescript/starter.ts",
+      "referencePath": "problems/trees-graphs-bonus-09/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "IslandPerimeter",
+      "starterPath": "problems/trees-graphs-bonus-09/solutions/go/starter.go",
+      "referencePath": "problems/trees-graphs-bonus-09/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "islandPerimeter",
+      "starterPath": "problems/trees-graphs-bonus-09/solutions/scala/starter.scala",
+      "referencePath": "problems/trees-graphs-bonus-09/solutions/scala/reference.scala"
+    }
+  }
+}

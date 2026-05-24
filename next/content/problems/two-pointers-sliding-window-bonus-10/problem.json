@@ -1,0 +1,188 @@
+{
+  "id": "two-pointers-sliding-window-bonus-10",
+  "kind": "problem",
+  "title": "Merge Two Sorted Lists",
+  "difficulty": "easy",
+  "concepts": [
+    "two-pointers-sliding-window",
+    "same-direction pointers",
+    "sorted array"
+  ],
+  "prompt": "Given two lists each sorted in non-decreasing order, return a single sorted list containing all of their values.",
+  "signature": {
+    "name": "mergeSorted",
+    "inputs": [
+      {
+        "name": "a",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "b",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "interleaved",
+      "args": [
+        [
+          1,
+          3,
+          5
+        ],
+        [
+          2,
+          4,
+          6
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "one empty",
+      "args": [
+        [],
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "both empty",
+      "args": [
+        [],
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "one runs out early",
+      "args": [
+        [
+          5
+        ],
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -5,
+          0
+        ],
+        [
+          -3,
+          2
+        ]
+      ],
+      "expected": [
+        -5,
+        -3,
+        0,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "second empty",
+      "args": [
+        [
+          1,
+          2
+        ],
+        []
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "merge_sorted",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-10/solutions/python/starter.py",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-10/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "mergeSorted",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-10/solutions/typescript/starter.ts",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-10/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MergeSorted",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-10/solutions/go/starter.go",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-10/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "mergeSorted",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-10/solutions/scala/starter.scala",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-10/solutions/scala/reference.scala"
+    }
+  }
+}

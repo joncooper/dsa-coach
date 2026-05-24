@@ -1,0 +1,77 @@
+{
+  "id": "linked-lists",
+  "kind": "module",
+  "title": "Linked Lists",
+  "order": 6,
+  "summary": "Practice list traversal, pointer-style updates, fast/slow scans, and position-based rewiring.",
+  "concepts": [
+    "linked lists",
+    "traversal",
+    "fast and slow pointers",
+    "dummy head",
+    "pointer rewiring"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "list-sum"
+    },
+    {
+      "kind": "problem",
+      "id": "remove-list-value"
+    },
+    {
+      "kind": "problem",
+      "id": "middle-list-value"
+    },
+    {
+      "kind": "problem",
+      "id": "merge-two-linked-lists"
+    },
+    {
+      "kind": "problem",
+      "id": "palindrome-linked-list-local"
+    },
+    {
+      "kind": "problem",
+      "id": "linked-lists-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "linked-lists-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "linked-lists-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "linked-lists-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "linked-lists-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "linked-lists-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "linked-lists-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "linked-lists-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "linked-lists-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "linked-lists-bonus-10"
+    }
+  ],
+  "bonus": []
+}

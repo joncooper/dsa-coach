@@ -1,0 +1,169 @@
+{
+  "id": "count-target-sum-subarrays",
+  "kind": "problem",
+  "title": "Count Target Sum Subarrays",
+  "difficulty": "medium",
+  "concepts": [
+    "prefix sum",
+    "hash counts"
+  ],
+  "prompt": "Return how many contiguous subarrays have sum exactly equal to `target`.",
+  "signature": {
+    "name": "countTargetSumSubarrays",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "three",
+      "args": [
+        [
+          1,
+          2,
+          1,
+          2,
+          1
+        ],
+        3
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "with zero",
+      "args": [
+        [
+          0,
+          0
+        ],
+        0
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "negative",
+      "args": [
+        [
+          3,
+          -1,
+          -2,
+          5
+        ],
+        2
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "none",
+      "args": [
+        [
+          5,
+          6
+        ],
+        1
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty array",
+      "args": [
+        [],
+        0
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single hit",
+      "args": [
+        [
+          5
+        ],
+        5
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single miss",
+      "args": [
+        [
+          5
+        ],
+        3
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all zeros target zero",
+      "args": [
+        [
+          0,
+          0,
+          0
+        ],
+        0
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero target nonzero array",
+      "args": [
+        [
+          1,
+          -1,
+          1,
+          -1
+        ],
+        0
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_target_sum_subarrays",
+      "starterPath": "problems/count-target-sum-subarrays/solutions/python/starter.py",
+      "referencePath": "problems/count-target-sum-subarrays/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "countTargetSumSubarrays",
+      "starterPath": "problems/count-target-sum-subarrays/solutions/typescript/starter.ts",
+      "referencePath": "problems/count-target-sum-subarrays/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountTargetSumSubarrays",
+      "starterPath": "problems/count-target-sum-subarrays/solutions/go/starter.go",
+      "referencePath": "problems/count-target-sum-subarrays/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "countTargetSumSubarrays",
+      "starterPath": "problems/count-target-sum-subarrays/solutions/scala/starter.scala",
+      "referencePath": "problems/count-target-sum-subarrays/solutions/scala/reference.scala"
+    }
+  }
+}

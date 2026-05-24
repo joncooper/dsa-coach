@@ -1,0 +1,270 @@
+{
+  "id": "aoc-y2-d4-shipment-blocks",
+  "kind": "problem",
+  "title": "Day 4: Shipment Blocks",
+  "difficulty": "medium",
+  "concepts": [
+    "multi-line records",
+    "aggregation"
+  ],
+  "prompt": "Shipment blocks are separated by blank lines. Each non-empty line within a block has the shape `key=value` with a single equals sign. Within a block, sum the values of every line whose value — after trimming spaces around it — is a run of one or more digits `0`-`9` (a plain non-negative integer: no sign, no decimal point). Ignore every other line. Return the largest per-block sum across all blocks.",
+  "signature": {
+    "name": "max_block_sum",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two blocks valid",
+      "args": [
+        "a=1\nb=2\n\nc=10\nd=garbage\ne=5"
+      ],
+      "expected": 15,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "single block",
+      "args": [
+        "x=4\ny=8"
+      ],
+      "expected": 12,
+      "visibility": "visible"
+    },
+    {
+      "name": "negative ignored",
+      "args": [
+        "a=-1\nb=2"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "all garbage",
+      "args": [
+        "a=foo\nb=bar"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "blank block",
+      "args": [
+        "\n\na=5\n\n\n"
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "three blocks middle wins",
+      "args": [
+        "a=1\n\na=100\nb=50\n\na=2"
+      ],
+      "expected": 150,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero value counted",
+      "args": [
+        "a=0\nb=0\nc=3"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "line without equals ignored",
+      "args": [
+        "a=10\nnopeval\nb=5"
+      ],
+      "expected": 15,
+      "visibility": "hidden"
+    },
+    {
+      "name": "floats rejected as garbage",
+      "args": [
+        "a=1.5\nb=2\nc=3"
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "explicit plus sign rejected",
+      "args": [
+        "a=+5\nb=10"
+      ],
+      "expected": 10,
+      "visibility": "hidden"
+    },
+    {
+      "name": "whitespace around value tolerated",
+      "args": [
+        "a=  7  \nb=3"
+      ],
+      "expected": 10,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-top-three",
+      "title": "Part 2: Top three sum",
+      "prompt": "Same parse rule. Return the sum of the three largest per-block sums. If fewer than three blocks exist, sum however many do exist.",
+      "signature": {
+        "name": "top_three_block_sum",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "single block",
+          "args": [
+            "a=5"
+          ],
+          "expected": 5,
+          "visibility": "visible"
+        },
+        {
+          "name": "two blocks",
+          "args": [
+            "a=3\n\nb=4"
+          ],
+          "expected": 7,
+          "visibility": "visible"
+        },
+        {
+          "name": "four blocks pick top three",
+          "args": [
+            "a=1\n\nb=100\n\nc=10\n\nd=50"
+          ],
+          "expected": 160,
+          "visibility": "visible"
+        },
+        {
+          "name": "five blocks",
+          "args": [
+            "a=1\n\nb=2\n\nc=3\n\nd=4\n\ne=5"
+          ],
+          "expected": 12,
+          "visibility": "hidden"
+        },
+        {
+          "name": "three blocks",
+          "args": [
+            "a=10\n\nb=20\n\nc=30"
+          ],
+          "expected": 60,
+          "visibility": "hidden"
+        },
+        {
+          "name": "blocks with garbage",
+          "args": [
+            "a=foo\n\nb=10\n\nc=garbage\nd=5"
+          ],
+          "expected": 15,
+          "visibility": "hidden"
+        },
+        {
+          "name": "two blocks only",
+          "args": [
+            "a=50\n\nb=30"
+          ],
+          "expected": 80,
+          "visibility": "hidden"
+        },
+        {
+          "name": "ties on top do not drop",
+          "args": [
+            "a=10\n\nb=10\n\nc=10\n\nd=10"
+          ],
+          "expected": 30,
+          "visibility": "hidden"
+        },
+        {
+          "name": "zero-sum blocks contribute zero",
+          "args": [
+            "a=0\n\nb=0\n\nc=0\n\nd=5"
+          ],
+          "expected": 5,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "top_three_block_sum",
+          "starterPath": "problems/aoc-y2-d4-shipment-blocks/parts/part-2-top-three/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y2-d4-shipment-blocks/parts/part-2-top-three/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "top_three_block_sum",
+          "starterPath": "problems/aoc-y2-d4-shipment-blocks/parts/part-2-top-three/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y2-d4-shipment-blocks/parts/part-2-top-three/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "TopThreeBlockSum",
+          "starterPath": "problems/aoc-y2-d4-shipment-blocks/parts/part-2-top-three/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y2-d4-shipment-blocks/parts/part-2-top-three/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "top_three_block_sum",
+          "starterPath": "problems/aoc-y2-d4-shipment-blocks/parts/part-2-top-three/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y2-d4-shipment-blocks/parts/part-2-top-three/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "max_block_sum",
+      "starterPath": "problems/aoc-y2-d4-shipment-blocks/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y2-d4-shipment-blocks/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "max_block_sum",
+      "starterPath": "problems/aoc-y2-d4-shipment-blocks/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y2-d4-shipment-blocks/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MaxBlockSum",
+      "starterPath": "problems/aoc-y2-d4-shipment-blocks/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y2-d4-shipment-blocks/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "max_block_sum",
+      "starterPath": "problems/aoc-y2-d4-shipment-blocks/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y2-d4-shipment-blocks/solutions/scala/reference.scala"
+    }
+  }
+}

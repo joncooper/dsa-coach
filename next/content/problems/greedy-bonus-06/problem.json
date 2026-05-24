@@ -1,0 +1,169 @@
+{
+  "id": "greedy-bonus-06",
+  "kind": "problem",
+  "title": "Complete The Fuel Circuit",
+  "difficulty": "medium",
+  "concepts": [
+    "greedy",
+    "reachability",
+    "running state"
+  ],
+  "prompt": "Stations sit on a circular route. Station i offers `fuel[i]` litres, and driving from station i to the next station burns `cost[i]` litres. A car with an empty tank must complete one full loop. Return the index of a station it can start from to finish the loop, or -1 if no such station exists.",
+  "signature": {
+    "name": "startStation",
+    "inputs": [
+      {
+        "name": "fuel",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "cost",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "start at index three",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        [
+          3,
+          4,
+          5,
+          1,
+          2
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "impossible loop",
+      "args": [
+        [
+          2,
+          3,
+          4
+        ],
+        [
+          3,
+          4,
+          3
+        ]
+      ],
+      "expected": -1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty route",
+      "args": [
+        [],
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single station enough",
+      "args": [
+        [
+          5
+        ],
+        [
+          3
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single station short",
+      "args": [
+        [
+          2
+        ],
+        [
+          5
+        ]
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "start at zero",
+      "args": [
+        [
+          3,
+          1,
+          1
+        ],
+        [
+          1,
+          2,
+          2
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "exact balance wraps",
+      "args": [
+        [
+          4,
+          0,
+          0
+        ],
+        [
+          0,
+          2,
+          2
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "start_station",
+      "starterPath": "problems/greedy-bonus-06/solutions/python/starter.py",
+      "referencePath": "problems/greedy-bonus-06/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "startStation",
+      "starterPath": "problems/greedy-bonus-06/solutions/typescript/starter.ts",
+      "referencePath": "problems/greedy-bonus-06/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "StartStation",
+      "starterPath": "problems/greedy-bonus-06/solutions/go/starter.go",
+      "referencePath": "problems/greedy-bonus-06/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "startStation",
+      "starterPath": "problems/greedy-bonus-06/solutions/scala/starter.scala",
+      "referencePath": "problems/greedy-bonus-06/solutions/scala/reference.scala"
+    }
+  }
+}

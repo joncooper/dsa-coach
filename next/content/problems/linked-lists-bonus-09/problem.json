@@ -1,0 +1,186 @@
+{
+  "id": "linked-lists-bonus-09",
+  "kind": "problem",
+  "title": "Odd Even Node Grouping",
+  "difficulty": "medium",
+  "concepts": [
+    "linked-lists",
+    "in-place updates",
+    "pointer rewiring"
+  ],
+  "prompt": "Given the head of a singly linked list, group all nodes at odd positions together followed by all nodes at even positions, and return the head. Positions are one-based, so the first node is odd. Preserve the relative order within each group.",
+  "signature": {
+    "name": "oddEvenList",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "six nodes",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      ],
+      "expected": [
+        1,
+        3,
+        5,
+        2,
+        4,
+        6
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "five nodes",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": [
+        1,
+        3,
+        5,
+        2,
+        4
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": [
+        7
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two nodes",
+      "args": [
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        1,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "three nodes",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        1,
+        3,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "four nodes",
+      "args": [
+        [
+          10,
+          20,
+          30,
+          40
+        ]
+      ],
+      "expected": [
+        10,
+        30,
+        20,
+        40
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          5,
+          5,
+          5,
+          5,
+          5
+        ]
+      ],
+      "expected": [
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "odd_even_list",
+      "starterPath": "problems/linked-lists-bonus-09/solutions/python/starter.py",
+      "referencePath": "problems/linked-lists-bonus-09/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "oddEvenList",
+      "starterPath": "problems/linked-lists-bonus-09/solutions/typescript/starter.ts",
+      "referencePath": "problems/linked-lists-bonus-09/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "OddEvenList",
+      "starterPath": "problems/linked-lists-bonus-09/solutions/go/starter.go",
+      "referencePath": "problems/linked-lists-bonus-09/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "oddEvenList",
+      "starterPath": "problems/linked-lists-bonus-09/solutions/scala/starter.scala",
+      "referencePath": "problems/linked-lists-bonus-09/solutions/scala/reference.scala"
+    }
+  }
+}

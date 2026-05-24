@@ -1,0 +1,90 @@
+{
+  "id": "dynamic-programming",
+  "kind": "module",
+  "title": "Dynamic Programming",
+  "order": 12,
+  "summary": "Practice one-dimensional state, grid DP, subsequences, knapsack, and state machines.",
+  "concepts": [
+    "dynamic programming",
+    "tabulation",
+    "rolling state",
+    "grid DP",
+    "knapsack",
+    "subsequences"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "climb-with-blocks"
+    },
+    {
+      "kind": "problem",
+      "id": "min-cost-steps-local"
+    },
+    {
+      "kind": "problem",
+      "id": "max-non-adjacent-local"
+    },
+    {
+      "kind": "problem",
+      "id": "coin-change-min-local"
+    },
+    {
+      "kind": "problem",
+      "id": "lis-length-local"
+    },
+    {
+      "kind": "problem",
+      "id": "grid-paths-with-blocks"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-10"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-11"
+    },
+    {
+      "kind": "problem",
+      "id": "dynamic-programming-bonus-12"
+    }
+  ],
+  "bonus": []
+}

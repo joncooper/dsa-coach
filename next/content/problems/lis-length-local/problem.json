@@ -1,0 +1,165 @@
+{
+  "id": "lis-length-local",
+  "kind": "problem",
+  "title": "LIS Length Local",
+  "difficulty": "medium",
+  "concepts": [
+    "DP",
+    "binary search optimization"
+  ],
+  "prompt": "Return the length of the longest strictly increasing subsequence.",
+  "signature": {
+    "name": "lisLengthLocal",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "mixed",
+      "args": [
+        [
+          10,
+          9,
+          2,
+          5,
+          3,
+          7
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "decreasing",
+      "args": [
+        [
+          5,
+          4,
+          3
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates",
+      "args": [
+        [
+          2,
+          2,
+          2
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "strict increase",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "plateau then climb",
+      "args": [
+        [
+          1,
+          1,
+          2,
+          2,
+          3,
+          3
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zigzag",
+      "args": [
+        [
+          3,
+          1,
+          4,
+          1,
+          5,
+          9,
+          2,
+          6
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two equal",
+      "args": [
+        [
+          5,
+          5
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "lis_length_local",
+      "starterPath": "problems/lis-length-local/solutions/python/starter.py",
+      "referencePath": "problems/lis-length-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "lisLengthLocal",
+      "starterPath": "problems/lis-length-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/lis-length-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LisLengthLocal",
+      "starterPath": "problems/lis-length-local/solutions/go/starter.go",
+      "referencePath": "problems/lis-length-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "lisLengthLocal",
+      "starterPath": "problems/lis-length-local/solutions/scala/starter.scala",
+      "referencePath": "problems/lis-length-local/solutions/scala/reference.scala"
+    }
+  }
+}

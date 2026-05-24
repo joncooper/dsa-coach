@@ -1,0 +1,120 @@
+{
+  "id": "halve-step-count",
+  "kind": "problem",
+  "title": "Halve Step Count",
+  "difficulty": "warmup",
+  "concepts": [
+    "logarithmic loop"
+  ],
+  "prompt": "Starting from positive integer `n`, repeatedly replace it with `n // 2` until it becomes 0. Return the number of replacements.",
+  "signature": {
+    "name": "halveStepCount",
+    "inputs": [
+      {
+        "name": "n",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "eight",
+      "args": [
+        8
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "one",
+      "args": [
+        1
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "fifteen",
+      "args": [
+        15
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "large power",
+      "args": [
+        1024
+      ],
+      "expected": 11,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two",
+      "args": [
+        2
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "three",
+      "args": [
+        3
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "seven",
+      "args": [
+        7
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "power minus one",
+      "args": [
+        31
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "odd large",
+      "args": [
+        99
+      ],
+      "expected": 7,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "halve_step_count",
+      "starterPath": "problems/halve-step-count/solutions/python/starter.py",
+      "referencePath": "problems/halve-step-count/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "halveStepCount",
+      "starterPath": "problems/halve-step-count/solutions/typescript/starter.ts",
+      "referencePath": "problems/halve-step-count/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "HalveStepCount",
+      "starterPath": "problems/halve-step-count/solutions/go/starter.go",
+      "referencePath": "problems/halve-step-count/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "halveStepCount",
+      "starterPath": "problems/halve-step-count/solutions/scala/starter.scala",
+      "referencePath": "problems/halve-step-count/solutions/scala/reference.scala"
+    }
+  }
+}

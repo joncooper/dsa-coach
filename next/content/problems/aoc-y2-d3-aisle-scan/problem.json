@@ -1,0 +1,270 @@
+{
+  "id": "aoc-y2-d3-aisle-scan",
+  "kind": "problem",
+  "title": "Day 3: Aisle Scan",
+  "difficulty": "easy",
+  "concepts": [
+    "grid traversal",
+    "step counting"
+  ],
+  "prompt": "The vault floor is a multi-line grid of cells. `.` is empty, `*` is a rare relic, `#` is a wall. Starting at row 0 column 0, walk through the grid moving one cell right per step. When you hit a wall `#` or the right edge, drop down one row and resume from column 0. Stop when there are no more rows. Count `*` cells visited. The starting cell counts if it is `*`.",
+  "signature": {
+    "name": "scan_aisle",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two relics two rows",
+      "args": [
+        ".*.\n#*.\n..*"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "no walls",
+      "args": [
+        "*.*\n.*."
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "wall first",
+      "args": [
+        "#**\n.**"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "all walls",
+      "args": [
+        "#\n#\n#"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single open row",
+      "args": [
+        "**.*"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "wall mid-row stops early",
+      "args": [
+        "**#**"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "many rows",
+      "args": [
+        "*.*.*\n#####\n*..**\n.*.#*\n*..*."
+      ],
+      "expected": 9,
+      "visibility": "hidden"
+    },
+    {
+      "name": "row starting with star",
+      "args": [
+        "*..*.."
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "trailing wall after relics",
+      "args": [
+        "**#"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "alternating relic wall rows",
+      "args": [
+        "*\n#\n*\n#\n*"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "no relics or walls",
+      "args": [
+        "......"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-checkpoint-counts",
+      "title": "Part 2: Checkpoint counts",
+      "prompt": "Same grid and walking rules. Now report the number of rows whose `*` count strictly exceeded the running median of all previous rows' `*` counts (using only rows already walked). Compare each row's relic count against the median of the multiset of prior counts (use the lower of the two middle elements when the count is even). The very first row is never counted (there is no prior history). Return the count of rows that exceeded.",
+      "signature": {
+        "name": "scan_checkpoints",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "single row never counts",
+          "args": [
+            "*.*."
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "second row exceeds first",
+          "args": [
+            "*\n**"
+          ],
+          "expected": 1,
+          "visibility": "visible"
+        },
+        {
+          "name": "third row matches median not exceeds",
+          "args": [
+            "**\n**\n**"
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "increasing rows",
+          "args": [
+            "*\n**\n***\n****"
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        },
+        {
+          "name": "decreasing then spike",
+          "args": [
+            "****\n***\n**\n*****"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "walls cap counts",
+          "args": [
+            "**#**\n*****\n*#***\n*****"
+          ],
+          "expected": 2,
+          "visibility": "hidden"
+        },
+        {
+          "name": "all equal rows zero exceedances",
+          "args": [
+            "**\n**\n**\n**\n**"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "two rows second equal does not exceed",
+          "args": [
+            "**\n**"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "lower median tie-break for even count",
+          "args": [
+            "*\n**\n***\n****\n**"
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "scan_checkpoints",
+          "starterPath": "problems/aoc-y2-d3-aisle-scan/parts/part-2-checkpoint-counts/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y2-d3-aisle-scan/parts/part-2-checkpoint-counts/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "scan_checkpoints",
+          "starterPath": "problems/aoc-y2-d3-aisle-scan/parts/part-2-checkpoint-counts/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y2-d3-aisle-scan/parts/part-2-checkpoint-counts/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "ScanCheckpoints",
+          "starterPath": "problems/aoc-y2-d3-aisle-scan/parts/part-2-checkpoint-counts/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y2-d3-aisle-scan/parts/part-2-checkpoint-counts/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "scan_checkpoints",
+          "starterPath": "problems/aoc-y2-d3-aisle-scan/parts/part-2-checkpoint-counts/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y2-d3-aisle-scan/parts/part-2-checkpoint-counts/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "scan_aisle",
+      "starterPath": "problems/aoc-y2-d3-aisle-scan/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y2-d3-aisle-scan/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "scan_aisle",
+      "starterPath": "problems/aoc-y2-d3-aisle-scan/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y2-d3-aisle-scan/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ScanAisle",
+      "starterPath": "problems/aoc-y2-d3-aisle-scan/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y2-d3-aisle-scan/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "scan_aisle",
+      "starterPath": "problems/aoc-y2-d3-aisle-scan/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y2-d3-aisle-scan/solutions/scala/reference.scala"
+    }
+  }
+}

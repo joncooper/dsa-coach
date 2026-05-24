@@ -1,0 +1,148 @@
+{
+  "id": "trees-graphs-bonus-07",
+  "kind": "problem",
+  "title": "Symmetric Binary Tree",
+  "difficulty": "medium",
+  "concepts": [
+    "trees-graphs",
+    "tree recursion",
+    "DFS"
+  ],
+  "prompt": "Given the root of a binary tree, return True if the tree is a mirror image of itself around its center, and False otherwise. Both structure and values must match in mirrored positions.",
+  "signature": {
+    "name": "isSymmetric",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "nullable": true
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "symmetric tree",
+      "args": [
+        [
+          1,
+          2,
+          2,
+          3,
+          4,
+          4,
+          3
+        ]
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "values break symmetry",
+      "args": [
+        [
+          1,
+          2,
+          2,
+          null,
+          3,
+          null,
+          3
+        ]
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty tree",
+      "args": [
+        []
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single node",
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "shape mismatch",
+      "args": [
+        [
+          1,
+          2,
+          2,
+          3,
+          null,
+          3,
+          null
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "value mismatch deep",
+      "args": [
+        [
+          1,
+          2,
+          2,
+          3,
+          4,
+          4,
+          5
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two equal children",
+      "args": [
+        [
+          1,
+          2,
+          2
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "is_symmetric",
+      "starterPath": "problems/trees-graphs-bonus-07/solutions/python/starter.py",
+      "referencePath": "problems/trees-graphs-bonus-07/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "isSymmetric",
+      "starterPath": "problems/trees-graphs-bonus-07/solutions/typescript/starter.ts",
+      "referencePath": "problems/trees-graphs-bonus-07/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "IsSymmetric",
+      "starterPath": "problems/trees-graphs-bonus-07/solutions/go/starter.go",
+      "referencePath": "problems/trees-graphs-bonus-07/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "isSymmetric",
+      "starterPath": "problems/trees-graphs-bonus-07/solutions/scala/starter.scala",
+      "referencePath": "problems/trees-graphs-bonus-07/solutions/scala/reference.scala"
+    }
+  }
+}

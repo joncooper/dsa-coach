@@ -1,0 +1,160 @@
+{
+  "id": "palindrome-linked-list-local",
+  "kind": "problem",
+  "title": "Palindrome Linked List Local",
+  "difficulty": "medium",
+  "concepts": [
+    "linked-list traversal",
+    "palindrome"
+  ],
+  "prompt": "Return true if the linked list values read the same forward and backward.",
+  "signature": {
+    "name": "palindromeLinkedListLocal",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "palindrome",
+      "args": [
+        [
+          1,
+          2,
+          2,
+          1
+        ]
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "not",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "odd",
+      "args": [
+        [
+          1,
+          2,
+          1
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two-equal",
+      "args": [
+        [
+          4,
+          4
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two-different",
+      "args": [
+        [
+          4,
+          5
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "even-not-palindrome",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "long-palindrome",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          4,
+          3,
+          2,
+          1
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "palindrome_linked_list_local",
+      "starterPath": "problems/palindrome-linked-list-local/solutions/python/starter.py",
+      "referencePath": "problems/palindrome-linked-list-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "palindromeLinkedListLocal",
+      "starterPath": "problems/palindrome-linked-list-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/palindrome-linked-list-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "PalindromeLinkedListLocal",
+      "starterPath": "problems/palindrome-linked-list-local/solutions/go/starter.go",
+      "referencePath": "problems/palindrome-linked-list-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "palindromeLinkedListLocal",
+      "starterPath": "problems/palindrome-linked-list-local/solutions/scala/starter.scala",
+      "referencePath": "problems/palindrome-linked-list-local/solutions/scala/reference.scala"
+    }
+  }
+}

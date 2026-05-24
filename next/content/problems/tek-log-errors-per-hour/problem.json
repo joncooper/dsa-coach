@@ -1,0 +1,197 @@
+{
+  "id": "tek-log-errors-per-hour",
+  "kind": "problem",
+  "title": "Error Counts Per Hour",
+  "difficulty": "easy",
+  "concepts": [
+    "string parsing",
+    "grouping",
+    "tokenization"
+  ],
+  "prompt": "You are given a list of log lines. Each well-formed line begins with an ISO-8601 timestamp `YYYY-MM-DDTHH:MM:SS`, then a single space, then a level token (`INFO`, `WARN`, or `ERROR`), then a space, then a free-text message. Return a dict mapping each hour string `YYYY-MM-DDTHH` to the number of `ERROR` lines whose timestamp falls in that hour. Skip lines that do not have at least a timestamp and a level token. Non-`ERROR` lines do not appear in the output.",
+  "signature": {
+    "name": "errorsPerHour",
+    "inputs": [
+      {
+        "name": "lines",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "object"
+    }
+  },
+  "tests": [
+    {
+      "name": "empty input",
+      "args": [
+        []
+      ],
+      "expected": {},
+      "visibility": "visible"
+    },
+    {
+      "name": "two errors one info",
+      "args": [
+        [
+          "2025-01-15T14:00:00 ERROR connect failed",
+          "2025-01-15T14:59:59 ERROR retry failed",
+          "2025-01-15T15:00:00 INFO healthy"
+        ]
+      ],
+      "expected": {
+        "2025-01-15T14": 2
+      },
+      "visibility": "visible"
+    },
+    {
+      "name": "only non-errors",
+      "args": [
+        [
+          "2025-01-15T14:00:00 INFO ok",
+          "2025-01-15T14:30:00 WARN slow"
+        ]
+      ],
+      "expected": {},
+      "visibility": "visible"
+    },
+    {
+      "name": "spans multiple hours",
+      "args": [
+        [
+          "2025-02-01T09:01:00 ERROR a",
+          "2025-02-01T09:55:00 ERROR b",
+          "2025-02-01T10:00:00 ERROR c",
+          "2025-02-01T11:59:59 WARN d"
+        ]
+      ],
+      "expected": {
+        "2025-02-01T09": 2,
+        "2025-02-01T10": 1
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "ignores malformed line",
+      "args": [
+        [
+          "garbage",
+          "2025-02-01T09:01:00 ERROR a"
+        ]
+      ],
+      "expected": {
+        "2025-02-01T09": 1
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "all errors same minute",
+      "args": [
+        [
+          "2026-05-15T08:00:00 ERROR x",
+          "2026-05-15T08:00:01 ERROR y",
+          "2026-05-15T08:00:02 ERROR z"
+        ]
+      ],
+      "expected": {
+        "2026-05-15T08": 3
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "level match is case sensitive",
+      "args": [
+        [
+          "2025-01-15T14:00:00 error lowercase",
+          "2025-01-15T14:00:00 Error mixed",
+          "2025-01-15T14:00:00 ERROR upper"
+        ]
+      ],
+      "expected": {
+        "2025-01-15T14": 1
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "ERROR appearing in message text is not a level",
+      "args": [
+        [
+          "2025-01-15T14:00:00 INFO request failed ERROR retry",
+          "2025-01-15T15:00:00 ERROR genuine"
+        ]
+      ],
+      "expected": {
+        "2025-01-15T15": 1
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "buckets across day boundary stay distinct",
+      "args": [
+        [
+          "2025-01-15T23:59:59 ERROR late",
+          "2025-01-16T00:00:00 ERROR early",
+          "2025-01-16T00:30:00 ERROR mid"
+        ]
+      ],
+      "expected": {
+        "2025-01-15T23": 1,
+        "2025-01-16T00": 2
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "single-token line is ignored",
+      "args": [
+        [
+          "2025-01-15T14:00:00",
+          "2025-01-15T14:01:00 ERROR good"
+        ]
+      ],
+      "expected": {
+        "2025-01-15T14": 1
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "non-ISO timestamp ignored",
+      "args": [
+        [
+          "15-01-2025 14:00:00 ERROR euro-format",
+          "2025-01-15T14:00:00 ERROR iso"
+        ]
+      ],
+      "expected": {
+        "2025-01-15T14": 1
+      },
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "errors_per_hour",
+      "starterPath": "problems/tek-log-errors-per-hour/solutions/python/starter.py",
+      "referencePath": "problems/tek-log-errors-per-hour/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "errorsPerHour",
+      "starterPath": "problems/tek-log-errors-per-hour/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-log-errors-per-hour/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ErrorsPerHour",
+      "starterPath": "problems/tek-log-errors-per-hour/solutions/go/starter.go",
+      "referencePath": "problems/tek-log-errors-per-hour/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "errors_per_hour",
+      "starterPath": "problems/tek-log-errors-per-hour/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-log-errors-per-hour/solutions/scala/reference.scala"
+    }
+  }
+}

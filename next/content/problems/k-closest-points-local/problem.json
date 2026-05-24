@@ -1,0 +1,286 @@
+{
+  "id": "k-closest-points-local",
+  "kind": "problem",
+  "title": "K Closest Points Local",
+  "difficulty": "medium",
+  "concepts": [
+    "heap",
+    "distance"
+  ],
+  "prompt": "Return the `k` points closest to the origin, sorted by distance, then x, then y. Distance can be compared using squared distance.",
+  "signature": {
+    "name": "kClosestPointsLocal",
+    "inputs": [
+      {
+        "name": "points",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "two",
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            0,
+            2
+          ]
+        ],
+        2
+      ],
+      "expected": [
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "k zero",
+      "args": [
+        [
+          [
+            1,
+            1
+          ]
+        ],
+        0
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "tie",
+      "args": [
+        [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            0
+          ]
+        ],
+        2
+      ],
+      "expected": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all",
+      "args": [
+        [
+          [
+            -1,
+            -1
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        [
+          -1,
+          -1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "origin included",
+      "args": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        1
+      ],
+      "expected": [
+        [
+          0,
+          0
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "tiebreak by x",
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            -1,
+            -2
+          ]
+        ],
+        2
+      ],
+      "expected": [
+        [
+          -1,
+          -2
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "k equals length",
+      "args": [
+        [
+          [
+            3,
+            4
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        3
+      ],
+      "expected": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives mix",
+      "args": [
+        [
+          [
+            -2,
+            0
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        2
+      ],
+      "expected": [
+        [
+          1,
+          1
+        ],
+        [
+          -2,
+          0
+        ]
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "k_closest_points_local",
+      "starterPath": "problems/k-closest-points-local/solutions/python/starter.py",
+      "referencePath": "problems/k-closest-points-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "kClosestPointsLocal",
+      "starterPath": "problems/k-closest-points-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/k-closest-points-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "KClosestPointsLocal",
+      "starterPath": "problems/k-closest-points-local/solutions/go/starter.go",
+      "referencePath": "problems/k-closest-points-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "kClosestPointsLocal",
+      "starterPath": "problems/k-closest-points-local/solutions/scala/starter.scala",
+      "referencePath": "problems/k-closest-points-local/solutions/scala/reference.scala"
+    }
+  }
+}

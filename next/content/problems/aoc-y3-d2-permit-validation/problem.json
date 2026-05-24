@@ -1,0 +1,287 @@
+{
+  "id": "aoc-y3-d2-permit-validation",
+  "kind": "problem",
+  "title": "Day 2: Permit Validation",
+  "difficulty": "easy",
+  "concepts": [
+    "parsing",
+    "validation",
+    "format check"
+  ],
+  "prompt": "Each non-empty line has the shape `STAGE LICENSE EXPIRES` (three space-separated tokens). `STAGE` is one of `main`, `side`, `late`. `LICENSE` is a string of digits and hyphens; valid licenses are exactly the pattern `NNN-NN-NNNN` (three digits, hyphen, two digits, hyphen, four digits — eleven characters total). A permit is valid when (a) the license matches the strict pattern and (b) `EXPIRES` is exactly four digits and, read as a year, is at least 2025. Return the count of valid permits.",
+  "signature": {
+    "name": "count_valid_permits",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two valid two invalid",
+      "args": [
+        "main 123-45-6789 2026\nside abc 2030\nlate 987-65-4321 2024\nlate 111-22-3333 2025"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "all expired",
+      "args": [
+        "main 111-22-3333 2020\nside 444-55-6666 2010"
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "all valid",
+      "args": [
+        "main 111-22-3333 2025\nside 444-55-6666 2030"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "wrong group length",
+      "args": [
+        "main 12-45-6789 2030"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "missing hyphen",
+      "args": [
+        "main 123456789 2030"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "expires too short",
+      "args": [
+        "main 123-45-6789 999"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "exact 2025 cutoff",
+      "args": [
+        "main 123-45-6789 2025"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "expires too long",
+      "args": [
+        "main 123-45-6789 20250"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "letter in license",
+      "args": [
+        "main 12a-45-6789 2030"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "expires 2024 rejected",
+      "args": [
+        "main 123-45-6789 2024"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "many lines mixed",
+      "args": [
+        "main 123-45-6789 2025\nside 111-22-3333 2024\nlate 999-88-7777 2026\nmain bad-shape 2025"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-permit-summary",
+      "title": "Part 2: Permits per stage",
+      "prompt": "Same line shape and validity rule. Now return a dict mapping each stage (`main`, `side`, `late`) to the number of valid permits in that stage. Stages with zero valid permits should still appear in the dict with value `0`. Ignore any line whose stage token is not one of the three.",
+      "signature": {
+        "name": "permit_counts_by_stage",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "object"
+        }
+      },
+      "tests": [
+        {
+          "name": "mixed stages",
+          "args": [
+            "main 111-22-3333 2026\nside 444-55-6666 2027\nside 444-55-6666 2020"
+          ],
+          "expected": {
+            "main": 1,
+            "side": 1,
+            "late": 0
+          },
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": {
+            "main": 0,
+            "side": 0,
+            "late": 0
+          },
+          "visibility": "visible"
+        },
+        {
+          "name": "all main",
+          "args": [
+            "main 111-22-3333 2025\nmain 222-33-4444 2030"
+          ],
+          "expected": {
+            "main": 2,
+            "side": 0,
+            "late": 0
+          },
+          "visibility": "visible"
+        },
+        {
+          "name": "unknown stage ignored",
+          "args": [
+            "spare 111-22-3333 2030\nmain 111-22-3333 2030"
+          ],
+          "expected": {
+            "main": 1,
+            "side": 0,
+            "late": 0
+          },
+          "visibility": "hidden"
+        },
+        {
+          "name": "invalid license still counted by stage zero",
+          "args": [
+            "late abc 2030"
+          ],
+          "expected": {
+            "main": 0,
+            "side": 0,
+            "late": 0
+          },
+          "visibility": "hidden"
+        },
+        {
+          "name": "all three stages",
+          "args": [
+            "main 111-22-3333 2025\nside 444-55-6666 2026\nlate 777-88-9999 2027"
+          ],
+          "expected": {
+            "main": 1,
+            "side": 1,
+            "late": 1
+          },
+          "visibility": "hidden"
+        },
+        {
+          "name": "many main permits one expired",
+          "args": [
+            "main 111-22-3333 2025\nmain 222-33-4444 2030\nmain 999-88-7777 2020"
+          ],
+          "expected": {
+            "main": 2,
+            "side": 0,
+            "late": 0
+          },
+          "visibility": "hidden"
+        },
+        {
+          "name": "two valid two invalid mixed stages",
+          "args": [
+            "main 111-22-3333 2025\nside abc 2030\nlate 999-88-7777 2026\nmain 222-33-4444 2024"
+          ],
+          "expected": {
+            "main": 1,
+            "side": 0,
+            "late": 1
+          },
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "permit_counts_by_stage",
+          "starterPath": "problems/aoc-y3-d2-permit-validation/parts/part-2-permit-summary/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y3-d2-permit-validation/parts/part-2-permit-summary/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "permit_counts_by_stage",
+          "starterPath": "problems/aoc-y3-d2-permit-validation/parts/part-2-permit-summary/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y3-d2-permit-validation/parts/part-2-permit-summary/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "PermitCountsByStage",
+          "starterPath": "problems/aoc-y3-d2-permit-validation/parts/part-2-permit-summary/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y3-d2-permit-validation/parts/part-2-permit-summary/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "permit_counts_by_stage",
+          "starterPath": "problems/aoc-y3-d2-permit-validation/parts/part-2-permit-summary/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y3-d2-permit-validation/parts/part-2-permit-summary/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_valid_permits",
+      "starterPath": "problems/aoc-y3-d2-permit-validation/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y3-d2-permit-validation/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "count_valid_permits",
+      "starterPath": "problems/aoc-y3-d2-permit-validation/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y3-d2-permit-validation/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountValidPermits",
+      "starterPath": "problems/aoc-y3-d2-permit-validation/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y3-d2-permit-validation/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "count_valid_permits",
+      "starterPath": "problems/aoc-y3-d2-permit-validation/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y3-d2-permit-validation/solutions/scala/reference.scala"
+    }
+  }
+}

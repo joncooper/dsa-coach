@@ -1,0 +1,122 @@
+{
+  "id": "interview-tools-bonus-01",
+  "kind": "problem",
+  "title": "Reverse Vowels In Place",
+  "difficulty": "easy",
+  "concepts": [
+    "interview-tools",
+    "two-pointers",
+    "in-place rearrange"
+  ],
+  "prompt": "Given a string, reverse only its vowels and leave every other character exactly where it is. Vowels are a, e, i, o, u in either case. For example \"basket\" becomes \"beskat\" — the e and a swap, the consonants do not move.",
+  "signature": {
+    "name": "reverseVowels",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "swap two vowels",
+      "args": [
+        "basket"
+      ],
+      "expected": "beskat",
+      "visibility": "visible"
+    },
+    {
+      "name": "vowels reorder",
+      "args": [
+        "hello"
+      ],
+      "expected": "holle",
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": "",
+      "visibility": "hidden"
+    },
+    {
+      "name": "no vowels",
+      "args": [
+        "rhythm"
+      ],
+      "expected": "rhythm",
+      "visibility": "hidden"
+    },
+    {
+      "name": "single vowel",
+      "args": [
+        "e"
+      ],
+      "expected": "e",
+      "visibility": "hidden"
+    },
+    {
+      "name": "all vowels",
+      "args": [
+        "aeiou"
+      ],
+      "expected": "uoiea",
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed case preserved",
+      "args": [
+        "AEIOU"
+      ],
+      "expected": "UOIEA",
+      "visibility": "hidden"
+    },
+    {
+      "name": "adjacent vowels",
+      "args": [
+        "queue"
+      ],
+      "expected": "qeueu",
+      "visibility": "hidden"
+    },
+    {
+      "name": "palindromic vowels",
+      "args": [
+        "racecar"
+      ],
+      "expected": "racecar",
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "reverse_vowels",
+      "starterPath": "problems/interview-tools-bonus-01/solutions/python/starter.py",
+      "referencePath": "problems/interview-tools-bonus-01/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "reverseVowels",
+      "starterPath": "problems/interview-tools-bonus-01/solutions/typescript/starter.ts",
+      "referencePath": "problems/interview-tools-bonus-01/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ReverseVowels",
+      "starterPath": "problems/interview-tools-bonus-01/solutions/go/starter.go",
+      "referencePath": "problems/interview-tools-bonus-01/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "reverseVowels",
+      "starterPath": "problems/interview-tools-bonus-01/solutions/scala/starter.scala",
+      "referencePath": "problems/interview-tools-bonus-01/solutions/scala/reference.scala"
+    }
+  }
+}

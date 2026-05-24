@@ -1,0 +1,149 @@
+{
+  "id": "hashing-bonus-02",
+  "kind": "problem",
+  "title": "Mode Of A List",
+  "difficulty": "easy",
+  "concepts": [
+    "hashing",
+    "frequency map",
+    "stable order"
+  ],
+  "prompt": "Return the value that appears most often in the list. If several values tie for the highest count, return the one whose first occurrence comes earliest. Return None for an empty list.",
+  "signature": {
+    "name": "mostFrequentValue",
+    "inputs": [
+      {
+        "name": "values",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number",
+      "nullable": true
+    }
+  },
+  "tests": [
+    {
+      "name": "clear winner",
+      "args": [
+        [
+          1,
+          3,
+          1,
+          3,
+          1
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "later value wins",
+      "args": [
+        [
+          4,
+          4,
+          5,
+          5,
+          5
+        ]
+      ],
+      "expected": 5,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": 7,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          2,
+          2,
+          2
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "tie picks earliest",
+      "args": [
+        [
+          9,
+          8,
+          9,
+          8
+        ]
+      ],
+      "expected": 9,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -1,
+          -1,
+          -2
+        ]
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all distinct picks first",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "most_frequent_value",
+      "starterPath": "problems/hashing-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/hashing-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "mostFrequentValue",
+      "starterPath": "problems/hashing-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/hashing-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MostFrequentValue",
+      "starterPath": "problems/hashing-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/hashing-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "mostFrequentValue",
+      "starterPath": "problems/hashing-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/hashing-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "id": "arrays-strings",
+  "kind": "module",
+  "title": "Arrays & Strings",
+  "order": 2,
+  "summary": "Practice index arithmetic, string scans, array transforms, and careful boundary handling.",
+  "concepts": [
+    "arrays",
+    "strings",
+    "indexing",
+    "run-length encoding"
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "rotate-left-local"
+    },
+    {
+      "kind": "problem",
+      "id": "compress-runs"
+    },
+    {
+      "kind": "problem",
+      "id": "merge-sorted-unique"
+    },
+    {
+      "kind": "problem",
+      "id": "minimum-average-gap"
+    },
+    {
+      "kind": "problem",
+      "id": "product-except-self-local"
+    },
+    {
+      "kind": "problem",
+      "id": "longest-balanced-prefix"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-01"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-02"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-03"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-04"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-05"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-06"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-07"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-08"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-09"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-10"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-11"
+    },
+    {
+      "kind": "problem",
+      "id": "arrays-strings-bonus-12"
+    }
+  ],
+  "bonus": []
+}

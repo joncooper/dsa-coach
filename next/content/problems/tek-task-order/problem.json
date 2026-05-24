@@ -1,0 +1,254 @@
+{
+  "id": "tek-task-order",
+  "kind": "problem",
+  "title": "Resolve a Task Run Order",
+  "difficulty": "medium",
+  "concepts": [
+    "topological sort",
+    "cycle detection",
+    "graph"
+  ],
+  "prompt": "You are given a dict mapping each task name to a list of tasks that must run before it (its prerequisites). Some tasks appear only as a prerequisite and never as a top-level key; they are still real tasks that must run. Return a list giving a valid run order: every task appears exactly once and only after all of its prerequisites. Any valid ordering is accepted (the grader checks the ordering, not one specific permutation). If the prerequisites contain a cycle and no valid order exists, return None.",
+  "signature": {
+    "name": "taskOrder",
+    "inputs": [
+      {
+        "name": "deps",
+        "type": {
+          "type": "object"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "nullable": true
+    }
+  },
+  "tests": [
+    {
+      "name": "empty graph",
+      "args": [
+        {}
+      ],
+      "expected": [],
+      "visibility": "visible",
+      "validator": "topological"
+    },
+    {
+      "name": "linear chain",
+      "args": [
+        {
+          "c": [
+            "b"
+          ],
+          "b": [
+            "a"
+          ],
+          "a": []
+        }
+      ],
+      "expected": [
+        "a",
+        "b",
+        "c"
+      ],
+      "visibility": "visible",
+      "validator": "topological"
+    },
+    {
+      "name": "simple cycle returns None",
+      "args": [
+        {
+          "a": [
+            "b"
+          ],
+          "b": [
+            "a"
+          ]
+        }
+      ],
+      "expected": null,
+      "visibility": "visible",
+      "validator": "topological"
+    },
+    {
+      "name": "single task no prereqs",
+      "args": [
+        {
+          "a": []
+        }
+      ],
+      "expected": [
+        "a"
+      ],
+      "visibility": "hidden",
+      "validator": "topological"
+    },
+    {
+      "name": "all roots in any order",
+      "args": [
+        {
+          "b": [],
+          "a": [],
+          "c": []
+        }
+      ],
+      "expected": [
+        "a",
+        "b",
+        "c"
+      ],
+      "visibility": "hidden",
+      "validator": "topological"
+    },
+    {
+      "name": "diamond ordering",
+      "args": [
+        {
+          "d": [
+            "b",
+            "c"
+          ],
+          "b": [
+            "a"
+          ],
+          "c": [
+            "a"
+          ],
+          "a": []
+        }
+      ],
+      "expected": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "visibility": "hidden",
+      "validator": "topological"
+    },
+    {
+      "name": "prerequisite never a key",
+      "args": [
+        {
+          "build": [
+            "compile"
+          ]
+        }
+      ],
+      "expected": [
+        "compile",
+        "build"
+      ],
+      "visibility": "hidden",
+      "validator": "topological"
+    },
+    {
+      "name": "self dependency is a cycle",
+      "args": [
+        {
+          "a": [
+            "a"
+          ]
+        }
+      ],
+      "expected": null,
+      "visibility": "hidden",
+      "validator": "topological"
+    },
+    {
+      "name": "cycle with an innocent bystander",
+      "args": [
+        {
+          "x": [],
+          "a": [
+            "b"
+          ],
+          "b": [
+            "c"
+          ],
+          "c": [
+            "a"
+          ]
+        }
+      ],
+      "expected": null,
+      "visibility": "hidden",
+      "validator": "topological"
+    },
+    {
+      "name": "shared prerequisite fans out",
+      "args": [
+        {
+          "a": [],
+          "b": [
+            "a"
+          ],
+          "c": [
+            "a"
+          ]
+        }
+      ],
+      "expected": [
+        "a",
+        "b",
+        "c"
+      ],
+      "visibility": "hidden",
+      "validator": "topological"
+    },
+    {
+      "name": "wide graph many valid orders",
+      "args": [
+        {
+          "a": [],
+          "b": [],
+          "c": [
+            "a",
+            "b"
+          ],
+          "d": [
+            "c"
+          ],
+          "e": [
+            "c"
+          ]
+        }
+      ],
+      "expected": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ],
+      "visibility": "hidden",
+      "validator": "topological"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "task_order",
+      "starterPath": "problems/tek-task-order/solutions/python/starter.py",
+      "referencePath": "problems/tek-task-order/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "taskOrder",
+      "starterPath": "problems/tek-task-order/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-task-order/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "TaskOrder",
+      "starterPath": "problems/tek-task-order/solutions/go/starter.go",
+      "referencePath": "problems/tek-task-order/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "task_order",
+      "starterPath": "problems/tek-task-order/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-task-order/solutions/scala/reference.scala"
+    }
+  }
+}

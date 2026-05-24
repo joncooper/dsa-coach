@@ -1,0 +1,217 @@
+{
+  "id": "can-finish-local",
+  "kind": "problem",
+  "title": "Can Finish Local",
+  "difficulty": "medium",
+  "concepts": [
+    "topological sort",
+    "cycle detection"
+  ],
+  "prompt": "There are `n` courses numbered `0..n-1`. Each pair `[course, before]` means `before` must be taken first. Return true if every course can be completed — i.e., the prerequisite relation has no cycle (including a self-prerequisite like `[a, a]`).",
+  "signature": {
+    "name": "canFinishLocal",
+    "inputs": [
+      {
+        "name": "n",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "prerequisites",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "acyclic",
+      "args": [
+        3,
+        [
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "cycle",
+      "args": [
+        2,
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ]
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "none",
+      "args": [
+        4,
+        []
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "diamond",
+      "args": [
+        4,
+        [
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            3,
+            2
+          ]
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single-course-no-prereq",
+      "args": [
+        1,
+        []
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "self-loop",
+      "args": [
+        2,
+        [
+          [
+            0,
+            0
+          ]
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "chain",
+      "args": [
+        4,
+        [
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            2
+          ]
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "cycle-among-three",
+      "args": [
+        3,
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            0
+          ]
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two-independent-chains",
+      "args": [
+        4,
+        [
+          [
+            1,
+            0
+          ],
+          [
+            3,
+            2
+          ]
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "can_finish_local",
+      "starterPath": "problems/can-finish-local/solutions/python/starter.py",
+      "referencePath": "problems/can-finish-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "canFinishLocal",
+      "starterPath": "problems/can-finish-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/can-finish-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CanFinishLocal",
+      "starterPath": "problems/can-finish-local/solutions/go/starter.go",
+      "referencePath": "problems/can-finish-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "canFinishLocal",
+      "starterPath": "problems/can-finish-local/solutions/scala/starter.scala",
+      "referencePath": "problems/can-finish-local/solutions/scala/reference.scala"
+    }
+  }
+}

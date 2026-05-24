@@ -1,0 +1,449 @@
+{
+  "id": "tek-bank-transactions",
+  "kind": "problem",
+  "title": "Apply a Stream of Bank Transactions",
+  "difficulty": "medium",
+  "concepts": [
+    "dispatch",
+    "validation",
+    "domain modeling"
+  ],
+  "prompt": "Apply a list of bank transactions to a set of starting balances. Starting balances is a dict `{account_id: integer balance}`. Each transaction is a dict with a `type` field, one of `DEPOSIT` (with `account`, `amount`), `WITHDRAW` (with `account`, `amount`), or `TRANSFER` (with `from`, `to`, `amount`). Apply them in order. A transaction is rejected (skipped, with no balance change) if any referenced account does not exist or if a `WITHDRAW` or `TRANSFER` would leave any account with a negative balance. Return a two-element list `[final_balances, rejected_indexes]` where `rejected_indexes` is a list of the input indexes that were rejected, in ascending order.",
+  "signature": {
+    "name": "applyTransactions",
+    "inputs": [
+      {
+        "name": "startingBalances",
+        "type": {
+          "type": "object"
+        }
+      },
+      {
+        "name": "transactions",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "any"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "no transactions",
+      "args": [
+        {
+          "a": 100
+        },
+        []
+      ],
+      "expected": [
+        {
+          "a": 100
+        },
+        []
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "simple deposit",
+      "args": [
+        {
+          "a": 0
+        },
+        [
+          {
+            "type": "DEPOSIT",
+            "account": "a",
+            "amount": 50
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 50
+        },
+        []
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "withdraw rejected",
+      "args": [
+        {
+          "a": 10
+        },
+        [
+          {
+            "type": "WITHDRAW",
+            "account": "a",
+            "amount": 50
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 10
+        },
+        [
+          0
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "transfer ok",
+      "args": [
+        {
+          "a": 100,
+          "b": 0
+        },
+        [
+          {
+            "type": "TRANSFER",
+            "from": "a",
+            "to": "b",
+            "amount": 30
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 70,
+          "b": 30
+        },
+        []
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "unknown account on deposit",
+      "args": [
+        {
+          "a": 50
+        },
+        [
+          {
+            "type": "DEPOSIT",
+            "account": "c",
+            "amount": 10
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 50
+        },
+        [
+          0
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed sequence with rejections",
+      "args": [
+        {
+          "a": 100,
+          "b": 50
+        },
+        [
+          {
+            "type": "WITHDRAW",
+            "account": "a",
+            "amount": 30
+          },
+          {
+            "type": "TRANSFER",
+            "from": "b",
+            "to": "a",
+            "amount": 100
+          },
+          {
+            "type": "DEPOSIT",
+            "account": "b",
+            "amount": 25
+          },
+          {
+            "type": "TRANSFER",
+            "from": "a",
+            "to": "b",
+            "amount": 20
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 50,
+          "b": 95
+        },
+        [
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "unknown transfer destination",
+      "args": [
+        {
+          "a": 100
+        },
+        [
+          {
+            "type": "TRANSFER",
+            "from": "a",
+            "to": "ghost",
+            "amount": 10
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 100
+        },
+        [
+          0
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "unknown type rejected",
+      "args": [
+        {
+          "a": 5
+        },
+        [
+          {
+            "type": "BURN",
+            "account": "a",
+            "amount": 1
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 5
+        },
+        [
+          0
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero-amount transfer ok",
+      "args": [
+        {
+          "a": 5,
+          "b": 5
+        },
+        [
+          {
+            "type": "TRANSFER",
+            "from": "a",
+            "to": "b",
+            "amount": 0
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 5,
+          "b": 5
+        },
+        []
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "self-transfer leaves balance unchanged",
+      "args": [
+        {
+          "a": 100
+        },
+        [
+          {
+            "type": "TRANSFER",
+            "from": "a",
+            "to": "a",
+            "amount": 30
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 100
+        },
+        []
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "withdraw that exactly empties account",
+      "args": [
+        {
+          "a": 50
+        },
+        [
+          {
+            "type": "WITHDRAW",
+            "account": "a",
+            "amount": 50
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 0
+        },
+        []
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "transfer that exactly empties source",
+      "args": [
+        {
+          "a": 100,
+          "b": 0
+        },
+        [
+          {
+            "type": "TRANSFER",
+            "from": "a",
+            "to": "b",
+            "amount": 100
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 0,
+          "b": 100
+        },
+        []
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "rejected transfer must not mutate source",
+      "args": [
+        {
+          "a": 100
+        },
+        [
+          {
+            "type": "TRANSFER",
+            "from": "a",
+            "to": "ghost",
+            "amount": 10
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 100
+        },
+        [
+          0
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "multiple rejections kept in input order",
+      "args": [
+        {
+          "a": 10
+        },
+        [
+          {
+            "type": "WITHDRAW",
+            "account": "a",
+            "amount": 100
+          },
+          {
+            "type": "DEPOSIT",
+            "account": "ghost",
+            "amount": 5
+          },
+          {
+            "type": "WITHDRAW",
+            "account": "a",
+            "amount": 5
+          },
+          {
+            "type": "TRANSFER",
+            "from": "a",
+            "to": "ghost",
+            "amount": 1
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 5
+        },
+        [
+          0,
+          1,
+          3
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "deposit at zero amount leaves balance",
+      "args": [
+        {
+          "a": 5
+        },
+        [
+          {
+            "type": "DEPOSIT",
+            "account": "a",
+            "amount": 0
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "a": 5
+        },
+        []
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "apply_transactions",
+      "starterPath": "problems/tek-bank-transactions/solutions/python/starter.py",
+      "referencePath": "problems/tek-bank-transactions/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "applyTransactions",
+      "starterPath": "problems/tek-bank-transactions/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-bank-transactions/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ApplyTransactions",
+      "starterPath": "problems/tek-bank-transactions/solutions/go/starter.go",
+      "referencePath": "problems/tek-bank-transactions/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "apply_transactions",
+      "starterPath": "problems/tek-bank-transactions/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-bank-transactions/solutions/scala/reference.scala"
+    }
+  }
+}

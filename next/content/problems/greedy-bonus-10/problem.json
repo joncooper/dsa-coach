@@ -1,0 +1,131 @@
+{
+  "id": "greedy-bonus-10",
+  "kind": "problem",
+  "title": "Largest Number From Pieces",
+  "difficulty": "medium",
+  "concepts": [
+    "greedy",
+    "sorting",
+    "exchange argument"
+  ],
+  "prompt": "Given a list of non-negative integers, arrange them in some order and concatenate their decimal digits into one number. Return that number as a string when the arrangement is chosen to make the value as large as possible.",
+  "signature": {
+    "name": "largestConcatenation",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "mixed lengths",
+      "args": [
+        [
+          3,
+          30,
+          34,
+          5,
+          9
+        ]
+      ],
+      "expected": "9534330",
+      "visibility": "visible"
+    },
+    {
+      "name": "two pieces",
+      "args": [
+        [
+          10,
+          2
+        ]
+      ],
+      "expected": "210",
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": "0",
+      "visibility": "hidden"
+    },
+    {
+      "name": "single number",
+      "args": [
+        [
+          42
+        ]
+      ],
+      "expected": "42",
+      "visibility": "hidden"
+    },
+    {
+      "name": "all zeros collapse",
+      "args": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "expected": "0",
+      "visibility": "hidden"
+    },
+    {
+      "name": "prefix tie break",
+      "args": [
+        [
+          12,
+          121
+        ]
+      ],
+      "expected": "12121",
+      "visibility": "hidden"
+    },
+    {
+      "name": "already descending",
+      "args": [
+        [
+          9,
+          8,
+          7
+        ]
+      ],
+      "expected": "987",
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "largest_concatenation",
+      "starterPath": "problems/greedy-bonus-10/solutions/python/starter.py",
+      "referencePath": "problems/greedy-bonus-10/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "largestConcatenation",
+      "starterPath": "problems/greedy-bonus-10/solutions/typescript/starter.ts",
+      "referencePath": "problems/greedy-bonus-10/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LargestConcatenation",
+      "starterPath": "problems/greedy-bonus-10/solutions/go/starter.go",
+      "referencePath": "problems/greedy-bonus-10/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "largestConcatenation",
+      "starterPath": "problems/greedy-bonus-10/solutions/scala/starter.scala",
+      "referencePath": "problems/greedy-bonus-10/solutions/scala/reference.scala"
+    }
+  }
+}

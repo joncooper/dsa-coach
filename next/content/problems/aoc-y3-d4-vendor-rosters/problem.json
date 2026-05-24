@@ -1,0 +1,255 @@
+{
+  "id": "aoc-y3-d4-vendor-rosters",
+  "kind": "problem",
+  "title": "Day 4: Vendor Rosters",
+  "difficulty": "medium",
+  "concepts": [
+    "multi-line records",
+    "validation",
+    "category aggregation"
+  ],
+  "prompt": "Vendor rosters are separated by blank lines. Each non-empty line in a roster has the shape `category:items` where `items` is a comma-separated list of item names (one or more items, no spaces inside names). A roster is valid only when it contains all three categories `food`, `craft`, and `music`. For each valid roster, the score is the total number of items across all its lines (so duplicates across categories or within a single line count toward the total). Return the sum of scores across valid rosters.",
+  "signature": {
+    "name": "valid_roster_total",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "one valid roster",
+      "args": [
+        "food:taco,burrito\ncraft:pottery\nmusic:drum,flute,harp"
+      ],
+      "expected": 6,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "missing category",
+      "args": [
+        "food:taco\ncraft:pottery"
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "two rosters",
+      "args": [
+        "food:taco\ncraft:art\nmusic:drum\n\nfood:burrito\ncraft:art\nmusic:guitar,bass"
+      ],
+      "expected": 7,
+      "visibility": "visible"
+    },
+    {
+      "name": "extra category counted",
+      "args": [
+        "food:taco\ncraft:art\nmusic:drum\nextra:foo,bar"
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single item categories",
+      "args": [
+        "food:taco\ncraft:art\nmusic:drum"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "blank trailing block",
+      "args": [
+        "food:taco\ncraft:art\nmusic:drum\n\n\n"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicate within roster category",
+      "args": [
+        "food:taco,taco\ncraft:art\nmusic:drum"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "invalid rosters do not contribute",
+      "args": [
+        "food:taco\ncraft:art\nmusic:drum\n\nfood:burrito\ncraft:pot"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "category repeated across lines aggregates items",
+      "args": [
+        "food:taco\nfood:burrito\ncraft:art\nmusic:drum"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "leading blank block ignored",
+      "args": [
+        "\n\nfood:taco\ncraft:art\nmusic:drum"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-largest-category",
+      "title": "Part 2: Heaviest category",
+      "prompt": "Across only valid rosters (same definition as Part 1), aggregate item counts by category. Return the name of the category with the largest total item count. Break ties alphabetically (the category whose name sorts first wins). Return the empty string `\"\"` if no roster is valid.",
+      "signature": {
+        "name": "heaviest_category",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "string"
+        }
+      },
+      "tests": [
+        {
+          "name": "single roster music wins",
+          "args": [
+            "food:taco\ncraft:art\nmusic:drum,flute,harp"
+          ],
+          "expected": "music",
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": "",
+          "visibility": "visible"
+        },
+        {
+          "name": "no valid rosters",
+          "args": [
+            "food:taco\ncraft:art"
+          ],
+          "expected": "",
+          "visibility": "visible"
+        },
+        {
+          "name": "tie broken alphabetically",
+          "args": [
+            "food:taco,burrito\ncraft:art,pot\nmusic:drum,harp"
+          ],
+          "expected": "craft",
+          "visibility": "visible"
+        },
+        {
+          "name": "two rosters food dominates",
+          "args": [
+            "food:a,b,c,d\ncraft:e\nmusic:f\n\nfood:g,h\ncraft:i\nmusic:j"
+          ],
+          "expected": "food",
+          "visibility": "hidden"
+        },
+        {
+          "name": "extra category wins",
+          "args": [
+            "food:a\ncraft:b\nmusic:c\nextra:d,e,f,g,h"
+          ],
+          "expected": "extra",
+          "visibility": "hidden"
+        },
+        {
+          "name": "invalid roster ignored",
+          "args": [
+            "food:x,y,z\ncraft:w\n\nfood:a\ncraft:b\nmusic:c"
+          ],
+          "expected": "craft",
+          "visibility": "hidden"
+        },
+        {
+          "name": "three-way tie alphabetical first",
+          "args": [
+            "food:a,b\ncraft:c,d\nmusic:e,f"
+          ],
+          "expected": "craft",
+          "visibility": "hidden"
+        },
+        {
+          "name": "same category across two valid rosters aggregates",
+          "args": [
+            "food:a,b\ncraft:c\nmusic:d\n\nfood:e,f,g\ncraft:h\nmusic:i"
+          ],
+          "expected": "food",
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "heaviest_category",
+          "starterPath": "problems/aoc-y3-d4-vendor-rosters/parts/part-2-largest-category/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y3-d4-vendor-rosters/parts/part-2-largest-category/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "heaviest_category",
+          "starterPath": "problems/aoc-y3-d4-vendor-rosters/parts/part-2-largest-category/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y3-d4-vendor-rosters/parts/part-2-largest-category/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "HeaviestCategory",
+          "starterPath": "problems/aoc-y3-d4-vendor-rosters/parts/part-2-largest-category/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y3-d4-vendor-rosters/parts/part-2-largest-category/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "heaviest_category",
+          "starterPath": "problems/aoc-y3-d4-vendor-rosters/parts/part-2-largest-category/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y3-d4-vendor-rosters/parts/part-2-largest-category/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "valid_roster_total",
+      "starterPath": "problems/aoc-y3-d4-vendor-rosters/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y3-d4-vendor-rosters/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "valid_roster_total",
+      "starterPath": "problems/aoc-y3-d4-vendor-rosters/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y3-d4-vendor-rosters/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ValidRosterTotal",
+      "starterPath": "problems/aoc-y3-d4-vendor-rosters/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y3-d4-vendor-rosters/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "valid_roster_total",
+      "starterPath": "problems/aoc-y3-d4-vendor-rosters/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y3-d4-vendor-rosters/solutions/scala/reference.scala"
+    }
+  }
+}

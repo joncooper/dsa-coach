@@ -1,0 +1,158 @@
+{
+  "id": "two-pointers-sliding-window-bonus-11",
+  "kind": "problem",
+  "title": "Longest Subarray Within A Sum Limit",
+  "difficulty": "medium",
+  "concepts": [
+    "two-pointers-sliding-window",
+    "variable window"
+  ],
+  "prompt": "Every value is a positive integer. Return the length of the longest contiguous subarray whose values sum to at most limit. If even a single value exceeds limit, the answer is 0.",
+  "signature": {
+    "name": "longestWithinLimit",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "limit",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "trims to fit",
+      "args": [
+        [
+          1,
+          2,
+          1,
+          3,
+          1
+        ],
+        5
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "whole array fits",
+      "args": [
+        [
+          1,
+          1,
+          1
+        ],
+        10
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        5
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single value over",
+      "args": [
+        [
+          8
+        ],
+        5
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single value fits",
+      "args": [
+        [
+          4
+        ],
+        5
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "every value over",
+      "args": [
+        [
+          6,
+          7,
+          8
+        ],
+        5
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "exact limit at end",
+      "args": [
+        [
+          5,
+          1,
+          2,
+          2
+        ],
+        5
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          2,
+          2,
+          2,
+          2
+        ],
+        6
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "longest_within_limit",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-11/solutions/python/starter.py",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-11/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "longestWithinLimit",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-11/solutions/typescript/starter.ts",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-11/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LongestWithinLimit",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-11/solutions/go/starter.go",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-11/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "longestWithinLimit",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-11/solutions/scala/starter.scala",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-11/solutions/scala/reference.scala"
+    }
+  }
+}

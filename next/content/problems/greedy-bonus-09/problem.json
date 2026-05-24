@@ -1,0 +1,149 @@
+{
+  "id": "greedy-bonus-09",
+  "kind": "problem",
+  "title": "Pair Riders Into Boats",
+  "difficulty": "easy",
+  "concepts": [
+    "greedy",
+    "two pointers",
+    "sorting"
+  ],
+  "prompt": "Each boat carries at most two riders and a combined weight of at most `limit`. Given each rider's weight in `weights`, return the fewest boats that carry everyone. Every individual weight is at most `limit`, so each rider can always be seated.",
+  "signature": {
+    "name": "countBoats",
+    "inputs": [
+      {
+        "name": "weights",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "limit",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two perfect pairs",
+      "args": [
+        [
+          3,
+          2,
+          2,
+          1
+        ],
+        3
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "nobody pairs",
+      "args": [
+        [
+          3,
+          5,
+          3,
+          4
+        ],
+        5
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        5
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single rider",
+      "args": [
+        [
+          4
+        ],
+        5
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "everyone pairs",
+      "args": [
+        [
+          1,
+          2,
+          2,
+          3
+        ],
+        4
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all at the limit",
+      "args": [
+        [
+          5,
+          5,
+          5
+        ],
+        5
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "odd count one pairs",
+      "args": [
+        [
+          1,
+          4,
+          2,
+          3,
+          5
+        ],
+        6
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_boats",
+      "starterPath": "problems/greedy-bonus-09/solutions/python/starter.py",
+      "referencePath": "problems/greedy-bonus-09/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "countBoats",
+      "starterPath": "problems/greedy-bonus-09/solutions/typescript/starter.ts",
+      "referencePath": "problems/greedy-bonus-09/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountBoats",
+      "starterPath": "problems/greedy-bonus-09/solutions/go/starter.go",
+      "referencePath": "problems/greedy-bonus-09/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "countBoats",
+      "starterPath": "problems/greedy-bonus-09/solutions/scala/starter.scala",
+      "referencePath": "problems/greedy-bonus-09/solutions/scala/reference.scala"
+    }
+  }
+}

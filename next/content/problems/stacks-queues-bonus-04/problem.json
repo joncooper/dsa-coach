@@ -1,0 +1,105 @@
+{
+  "id": "stacks-queues-bonus-04",
+  "kind": "problem",
+  "title": "Score Of Nested Parentheses",
+  "difficulty": "easy",
+  "concepts": [
+    "stacks-queues",
+    "stack"
+  ],
+  "prompt": "A balanced parenthesis string is scored by these rules: '()' is worth 1, two strings side by side add their scores, and a string wrapped in one pair of parentheses is worth double its inside. Return the total score.",
+  "signature": {
+    "name": "parenScore",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "single pair",
+      "args": [
+        "()"
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "wrapped once",
+      "args": [
+        "(())"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "two siblings",
+      "args": [
+        "()()"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "deep nest",
+      "args": [
+        "((()))"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed nest and siblings",
+      "args": [
+        "(()(()))"
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "siblings inside wrap",
+      "args": [
+        "(()())"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "nested then sibling",
+      "args": [
+        "(())()"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "paren_score",
+      "starterPath": "problems/stacks-queues-bonus-04/solutions/python/starter.py",
+      "referencePath": "problems/stacks-queues-bonus-04/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "parenScore",
+      "starterPath": "problems/stacks-queues-bonus-04/solutions/typescript/starter.ts",
+      "referencePath": "problems/stacks-queues-bonus-04/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ParenScore",
+      "starterPath": "problems/stacks-queues-bonus-04/solutions/go/starter.go",
+      "referencePath": "problems/stacks-queues-bonus-04/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "parenScore",
+      "starterPath": "problems/stacks-queues-bonus-04/solutions/scala/starter.scala",
+      "referencePath": "problems/stacks-queues-bonus-04/solutions/scala/reference.scala"
+    }
+  }
+}

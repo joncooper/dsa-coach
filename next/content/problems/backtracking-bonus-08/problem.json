@@ -1,0 +1,138 @@
+{
+  "id": "backtracking-bonus-08",
+  "kind": "problem",
+  "title": "Phone Keypad Words",
+  "difficulty": "warmup",
+  "concepts": [
+    "backtracking",
+    "combinations",
+    "recursion tree"
+  ],
+  "prompt": "On a phone keypad, 2 maps to \"abc\", 3 to \"def\", 4 to \"ghi\", 5 to \"jkl\", 6 to \"mno\", 7 to \"pqrs\", 8 to \"tuv\", and 9 to \"wxyz\". Given a string of digits, return every letter string it could spell, one letter per digit, sorted ascending.",
+  "signature": {
+    "name": "keypadLetterWords",
+    "inputs": [
+      {
+        "name": "digits",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "two digits",
+      "args": [
+        "23"
+      ],
+      "expected": [
+        "ad",
+        "ae",
+        "af",
+        "bd",
+        "be",
+        "bf",
+        "cd",
+        "ce",
+        "cf"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single digit",
+      "args": [
+        "2"
+      ],
+      "expected": [
+        "a",
+        "b",
+        "c"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty digits",
+      "args": [
+        ""
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "four letter digit",
+      "args": [
+        "9"
+      ],
+      "expected": [
+        "w",
+        "x",
+        "y",
+        "z"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "invalid digit one",
+      "args": [
+        "10"
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "repeated digit",
+      "args": [
+        "22"
+      ],
+      "expected": [
+        "aa",
+        "ab",
+        "ac",
+        "ba",
+        "bb",
+        "bc",
+        "ca",
+        "cb",
+        "cc"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "non digit char",
+      "args": [
+        "2x"
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "keypad_letter_words",
+      "starterPath": "problems/backtracking-bonus-08/solutions/python/starter.py",
+      "referencePath": "problems/backtracking-bonus-08/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "keypadLetterWords",
+      "starterPath": "problems/backtracking-bonus-08/solutions/typescript/starter.ts",
+      "referencePath": "problems/backtracking-bonus-08/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "KeypadLetterWords",
+      "starterPath": "problems/backtracking-bonus-08/solutions/go/starter.go",
+      "referencePath": "problems/backtracking-bonus-08/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "keypadLetterWords",
+      "starterPath": "problems/backtracking-bonus-08/solutions/scala/starter.scala",
+      "referencePath": "problems/backtracking-bonus-08/solutions/scala/reference.scala"
+    }
+  }
+}

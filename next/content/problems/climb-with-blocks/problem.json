@@ -1,0 +1,164 @@
+{
+  "id": "climb-with-blocks",
+  "kind": "problem",
+  "title": "Climb With Blocks",
+  "difficulty": "easy",
+  "concepts": [
+    "DP count",
+    "1D state"
+  ],
+  "prompt": "You can climb exactly `step` stairs for any value in `blocks`. Return the number of distinct ordered ways to reach stair `n`.",
+  "signature": {
+    "name": "climbWithBlocks",
+    "inputs": [
+      {
+        "name": "n",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "blocks",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "one or two",
+      "args": [
+        4,
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": 5,
+      "visibility": "visible"
+    },
+    {
+      "name": "exact block",
+      "args": [
+        3,
+        [
+          2,
+          3
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "zero",
+      "args": [
+        0,
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "unreachable",
+      "args": [
+        1,
+        [
+          2
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single-step n5",
+      "args": [
+        5,
+        [
+          1
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two-and-three n5",
+      "args": [
+        5,
+        [
+          2,
+          3
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "three-and-five n8",
+      "args": [
+        8,
+        [
+          3,
+          5
+        ]
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "n6 mixed",
+      "args": [
+        6,
+        [
+          1,
+          3
+        ]
+      ],
+      "expected": 6,
+      "visibility": "hidden"
+    },
+    {
+      "name": "blocks larger than n",
+      "args": [
+        3,
+        [
+          4,
+          5
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "climb_with_blocks",
+      "starterPath": "problems/climb-with-blocks/solutions/python/starter.py",
+      "referencePath": "problems/climb-with-blocks/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "climbWithBlocks",
+      "starterPath": "problems/climb-with-blocks/solutions/typescript/starter.ts",
+      "referencePath": "problems/climb-with-blocks/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ClimbWithBlocks",
+      "starterPath": "problems/climb-with-blocks/solutions/go/starter.go",
+      "referencePath": "problems/climb-with-blocks/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "climbWithBlocks",
+      "starterPath": "problems/climb-with-blocks/solutions/scala/starter.scala",
+      "referencePath": "problems/climb-with-blocks/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,217 @@
+{
+  "id": "lib-od-first-unique",
+  "kind": "problem",
+  "title": "First Unique String in a Stream",
+  "difficulty": "medium",
+  "concepts": [
+    "streaming",
+    "OrderedDict"
+  ],
+  "prompt": "Given a stream of strings, after each string is appended return the first string in insertion order that has so far appeared exactly once. If no such string exists, return `\"\"` for that step. The output length equals the input length.",
+  "signature": {
+    "name": "firstUnique",
+    "inputs": [
+      {
+        "name": "stream",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "empty stream",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "all unique",
+      "args": [
+        [
+          "a",
+          "b",
+          "c"
+        ]
+      ],
+      "expected": [
+        "a",
+        "a",
+        "a"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single repeat collapses then re-emerges",
+      "args": [
+        [
+          "a",
+          "b",
+          "a",
+          "c",
+          "b"
+        ]
+      ],
+      "expected": [
+        "a",
+        "a",
+        "b",
+        "b",
+        "c"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "all duplicates eventually clear",
+      "args": [
+        [
+          "x",
+          "x",
+          "y",
+          "y"
+        ]
+      ],
+      "expected": [
+        "x",
+        "",
+        "y",
+        ""
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "stream of length one",
+      "args": [
+        [
+          "solo"
+        ]
+      ],
+      "expected": [
+        "solo"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "repeat at the end resurrects nothing",
+      "args": [
+        [
+          "a",
+          "b",
+          "c",
+          "a"
+        ]
+      ],
+      "expected": [
+        "a",
+        "a",
+        "a",
+        "b"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "everything repeats immediately",
+      "args": [
+        [
+          "a",
+          "a",
+          "b",
+          "b",
+          "c",
+          "c"
+        ]
+      ],
+      "expected": [
+        "a",
+        "",
+        "b",
+        "",
+        "c",
+        ""
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "case-sensitive tokens",
+      "args": [
+        [
+          "A",
+          "a",
+          "A",
+          "B"
+        ]
+      ],
+      "expected": [
+        "A",
+        "A",
+        "a",
+        "a"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "longer interleaved stream",
+      "args": [
+        [
+          "k",
+          "i",
+          "t",
+          "t",
+          "e",
+          "n",
+          "s",
+          "i",
+          "n",
+          "k"
+        ]
+      ],
+      "expected": [
+        "k",
+        "k",
+        "k",
+        "k",
+        "k",
+        "k",
+        "k",
+        "k",
+        "k",
+        "e"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "first_unique",
+      "starterPath": "problems/lib-od-first-unique/solutions/python/starter.py",
+      "referencePath": "problems/lib-od-first-unique/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "firstUnique",
+      "starterPath": "problems/lib-od-first-unique/solutions/typescript/starter.ts",
+      "referencePath": "problems/lib-od-first-unique/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "FirstUnique",
+      "starterPath": "problems/lib-od-first-unique/solutions/go/starter.go",
+      "referencePath": "problems/lib-od-first-unique/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "firstUnique",
+      "starterPath": "problems/lib-od-first-unique/solutions/scala/starter.scala",
+      "referencePath": "problems/lib-od-first-unique/solutions/scala/reference.scala"
+    }
+  }
+}

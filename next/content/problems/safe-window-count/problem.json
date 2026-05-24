@@ -1,0 +1,197 @@
+{
+  "id": "safe-window-count",
+  "kind": "problem",
+  "title": "Safe Window Count",
+  "difficulty": "easy",
+  "concepts": [
+    "fixed window",
+    "running sum"
+  ],
+  "prompt": "Count how many contiguous windows of length `k` have a sum less than or equal to `limit`. Values in `nums` may be negative; return `0` if `k` is non-positive or larger than `len(nums)`.",
+  "signature": {
+    "name": "countSafeWindows",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      },
+      {
+        "name": "limit",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "three safe",
+      "args": [
+        [
+          2,
+          1,
+          5,
+          1,
+          1
+        ],
+        2,
+        6
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "none",
+      "args": [
+        [
+          9,
+          9,
+          9
+        ],
+        2,
+        10
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "whole array",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        3,
+        6
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "k too large",
+      "args": [
+        [
+          1,
+          2
+        ],
+        3,
+        5
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "k equals one",
+      "args": [
+        [
+          3,
+          7,
+          2,
+          8,
+          1
+        ],
+        1,
+        5
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all safe k two",
+      "args": [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        2,
+        2
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "limit zero",
+      "args": [
+        [
+          0,
+          0,
+          0
+        ],
+        2,
+        0
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives included",
+      "args": [
+        [
+          -1,
+          -2,
+          5,
+          -3,
+          4
+        ],
+        3,
+        2
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "first only",
+      "args": [
+        [
+          1,
+          1,
+          9,
+          9
+        ],
+        2,
+        3
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_safe_windows",
+      "starterPath": "problems/safe-window-count/solutions/python/starter.py",
+      "referencePath": "problems/safe-window-count/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "countSafeWindows",
+      "starterPath": "problems/safe-window-count/solutions/typescript/starter.ts",
+      "referencePath": "problems/safe-window-count/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountSafeWindows",
+      "starterPath": "problems/safe-window-count/solutions/go/starter.go",
+      "referencePath": "problems/safe-window-count/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "countSafeWindows",
+      "starterPath": "problems/safe-window-count/solutions/scala/starter.scala",
+      "referencePath": "problems/safe-window-count/solutions/scala/reference.scala"
+    }
+  }
+}

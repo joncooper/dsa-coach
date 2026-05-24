@@ -1,0 +1,302 @@
+{
+  "id": "aoc-y1-d4-manifest-records",
+  "kind": "problem",
+  "title": "Day 4: Manifest Records",
+  "difficulty": "medium",
+  "concepts": [
+    "multi-line records",
+    "field validation"
+  ],
+  "prompt": "The input is a list of records separated by blank lines. Within a record, fields are `key:value` tokens separated by spaces or single newlines. Count the records that contain all of these required keys: `id`, `name`, `age`, `grade`, `cohort`. Extra keys are allowed and ignored.",
+  "signature": {
+    "name": "count_complete_records",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "one valid one missing",
+      "args": [
+        "id:1 name:A age:20 grade:B cohort:fall\nextra:hi\n\nid:2 name:B age:21 grade:A"
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty input",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "all valid",
+      "args": [
+        "id:1 name:X age:30 grade:C cohort:fall\n\nid:2 name:Y age:31 grade:D cohort:spring"
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "extra fields ignored",
+      "args": [
+        "id:1 name:A age:20 grade:B cohort:fall hair:red eye:blue"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "fields across lines within block",
+      "args": [
+        "id:1 name:A\nage:20 grade:B\ncohort:fall"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "missing single key",
+      "args": [
+        "id:1 name:A age:20 grade:B"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "three records mixed",
+      "args": [
+        "id:1 name:A age:20 grade:B cohort:fall\n\nid:2 name:B age:21\n\nid:3 name:C age:22 grade:D cohort:spring"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single record missing each required key",
+      "args": [
+        "name:A age:20 grade:B cohort:fall"
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicate key still counts once",
+      "args": [
+        "id:1 id:2 name:A age:20 grade:B cohort:fall"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "trailing blank lines do not add fake records",
+      "args": [
+        "id:1 name:A age:20 grade:B cohort:fall\n\n\n\n"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "leading blank lines tolerated",
+      "args": [
+        "\n\nid:1 name:A age:20 grade:B cohort:fall"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "token without colon ignored",
+      "args": [
+        "id:1 name:A age:20 grade:B cohort:fall bareword anothertoken"
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-validated-values",
+      "title": "Part 2: Validate field values",
+      "prompt": "Same required keys. Now also validate each required field's value. Rules: `id` is exactly 9 digits. `name` has 1 to 32 letters or hyphens. `age` is an integer between 16 and 99 inclusive. `grade` is one of `A`, `B`, `C`, `D`, `F`. `cohort` is one of `fall`, `winter`, `spring`, `summer`. A record is valid only when every required key is present and every required value matches its rule. Return the count of valid records.",
+      "signature": {
+        "name": "count_strict_records",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "all rules pass",
+          "args": [
+            "id:123456789 name:Ada age:30 grade:A cohort:fall"
+          ],
+          "expected": 1,
+          "visibility": "visible"
+        },
+        {
+          "name": "bad id length",
+          "args": [
+            "id:12345 name:Ada age:30 grade:A cohort:fall"
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "age out of range",
+          "args": [
+            "id:123456789 name:Ada age:14 grade:A cohort:fall"
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "bad grade",
+          "args": [
+            "id:111222333 name:B age:20 grade:E cohort:spring"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "bad cohort",
+          "args": [
+            "id:111222333 name:B age:20 grade:A cohort:autumn"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "name with hyphen",
+          "args": [
+            "id:111222333 name:Ada-Lovelace age:30 grade:B cohort:winter"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "name with digits invalid",
+          "args": [
+            "id:111222333 name:Ada2 age:30 grade:B cohort:winter"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "age at lower bound",
+          "args": [
+            "id:111222333 name:B age:16 grade:A cohort:spring"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "age at upper bound",
+          "args": [
+            "id:111222333 name:B age:99 grade:A cohort:spring"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        },
+        {
+          "name": "age one over upper bound",
+          "args": [
+            "id:111222333 name:B age:100 grade:A cohort:spring"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "id with letter rejected",
+          "args": [
+            "id:11122233a name:B age:30 grade:A cohort:spring"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "name longer than 32 rejected",
+          "args": [
+            "id:111222333 name:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa age:30 grade:A cohort:spring"
+          ],
+          "expected": 0,
+          "visibility": "hidden"
+        },
+        {
+          "name": "two records one valid one missing key",
+          "args": [
+            "id:111222333 name:A age:30 grade:A cohort:spring\n\nname:B age:30 grade:A cohort:spring"
+          ],
+          "expected": 1,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "count_strict_records",
+          "starterPath": "problems/aoc-y1-d4-manifest-records/parts/part-2-validated-values/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y1-d4-manifest-records/parts/part-2-validated-values/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "count_strict_records",
+          "starterPath": "problems/aoc-y1-d4-manifest-records/parts/part-2-validated-values/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y1-d4-manifest-records/parts/part-2-validated-values/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "CountStrictRecords",
+          "starterPath": "problems/aoc-y1-d4-manifest-records/parts/part-2-validated-values/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y1-d4-manifest-records/parts/part-2-validated-values/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "count_strict_records",
+          "starterPath": "problems/aoc-y1-d4-manifest-records/parts/part-2-validated-values/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y1-d4-manifest-records/parts/part-2-validated-values/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_complete_records",
+      "starterPath": "problems/aoc-y1-d4-manifest-records/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y1-d4-manifest-records/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "count_complete_records",
+      "starterPath": "problems/aoc-y1-d4-manifest-records/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y1-d4-manifest-records/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountCompleteRecords",
+      "starterPath": "problems/aoc-y1-d4-manifest-records/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y1-d4-manifest-records/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "count_complete_records",
+      "starterPath": "problems/aoc-y1-d4-manifest-records/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y1-d4-manifest-records/solutions/scala/reference.scala"
+    }
+  }
+}

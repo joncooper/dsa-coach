@@ -1,0 +1,194 @@
+{
+  "id": "tek-resolve-path",
+  "kind": "problem",
+  "title": "Canonicalize a Unix Path",
+  "difficulty": "easy",
+  "concepts": [
+    "stack",
+    "string scan",
+    "normalization"
+  ],
+  "prompt": "Given an absolute Unix path, return its canonical form. Collapse repeated slashes, remove `.` segments, and resolve `..` segments by popping the previous real segment (no-op when already at the root). The result must start with `/` and must not have a trailing slash unless the result is the root `/`. Single-segment names that happen to contain dots beyond `.` or `..` (for example `...` or `..foo`) are ordinary directory names.",
+  "signature": {
+    "name": "resolvePath",
+    "inputs": [
+      {
+        "name": "path",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "root stays root",
+      "args": [
+        "/"
+      ],
+      "expected": "/",
+      "visibility": "visible"
+    },
+    {
+      "name": "single level",
+      "args": [
+        "/home"
+      ],
+      "expected": "/home",
+      "visibility": "visible"
+    },
+    {
+      "name": "trailing slash dropped",
+      "args": [
+        "/home/"
+      ],
+      "expected": "/home",
+      "visibility": "visible"
+    },
+    {
+      "name": "double-dot pops",
+      "args": [
+        "/a/b/c/../../d"
+      ],
+      "expected": "/a/d",
+      "visibility": "visible"
+    },
+    {
+      "name": "double slash collapses",
+      "args": [
+        "/home//user"
+      ],
+      "expected": "/home/user",
+      "visibility": "visible"
+    },
+    {
+      "name": "dot skipped",
+      "args": [
+        "/home/./user"
+      ],
+      "expected": "/home/user",
+      "visibility": "hidden"
+    },
+    {
+      "name": "pop past root no-op",
+      "args": [
+        "/.."
+      ],
+      "expected": "/",
+      "visibility": "hidden"
+    },
+    {
+      "name": "triple dot is a directory",
+      "args": [
+        "/a/.../b"
+      ],
+      "expected": "/a/.../b",
+      "visibility": "hidden"
+    },
+    {
+      "name": "many mixed",
+      "args": [
+        "/a//b/./c/"
+      ],
+      "expected": "/a/b/c",
+      "visibility": "hidden"
+    },
+    {
+      "name": "only dots and slashes",
+      "args": [
+        "/./../."
+      ],
+      "expected": "/",
+      "visibility": "hidden"
+    },
+    {
+      "name": "pop past root multiple times",
+      "args": [
+        "/../../../"
+      ],
+      "expected": "/",
+      "visibility": "hidden"
+    },
+    {
+      "name": "single dot dir then pop",
+      "args": [
+        "/foo/."
+      ],
+      "expected": "/foo",
+      "visibility": "hidden"
+    },
+    {
+      "name": "name starting with double-dot is literal",
+      "args": [
+        "/..foo/bar"
+      ],
+      "expected": "/..foo/bar",
+      "visibility": "hidden"
+    },
+    {
+      "name": "name ending with double-dot is literal",
+      "args": [
+        "/foo../bar"
+      ],
+      "expected": "/foo../bar",
+      "visibility": "hidden"
+    },
+    {
+      "name": "every slash collapsed",
+      "args": [
+        "//////"
+      ],
+      "expected": "/",
+      "visibility": "hidden"
+    },
+    {
+      "name": "alternating climb",
+      "args": [
+        "/a/../b/../c/../d"
+      ],
+      "expected": "/d",
+      "visibility": "hidden"
+    },
+    {
+      "name": "deep climb then descend",
+      "args": [
+        "/a/b/c/d/../../../e"
+      ],
+      "expected": "/a/e",
+      "visibility": "hidden"
+    },
+    {
+      "name": "dot files preserved",
+      "args": [
+        "/home/.config/app"
+      ],
+      "expected": "/home/.config/app",
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "resolve_path",
+      "starterPath": "problems/tek-resolve-path/solutions/python/starter.py",
+      "referencePath": "problems/tek-resolve-path/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "resolvePath",
+      "starterPath": "problems/tek-resolve-path/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-resolve-path/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ResolvePath",
+      "starterPath": "problems/tek-resolve-path/solutions/go/starter.go",
+      "referencePath": "problems/tek-resolve-path/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "resolve_path",
+      "starterPath": "problems/tek-resolve-path/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-resolve-path/solutions/scala/reference.scala"
+    }
+  }
+}

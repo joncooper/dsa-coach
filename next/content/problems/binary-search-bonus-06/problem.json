@@ -1,0 +1,245 @@
+{
+  "id": "binary-search-bonus-06",
+  "kind": "problem",
+  "title": "Search A 2D Matrix",
+  "difficulty": "medium",
+  "concepts": [
+    "binary-search",
+    "matrix"
+  ],
+  "prompt": "A matrix has each row sorted left to right, and the first value of every row is greater than the last value of the row above it. Return True if target appears in the matrix, otherwise False.",
+  "signature": {
+    "name": "searchMatrix",
+    "inputs": [
+      {
+        "name": "matrix",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "present",
+      "args": [
+        [
+          [
+            1,
+            3,
+            5
+          ],
+          [
+            7,
+            9,
+            11
+          ],
+          [
+            13,
+            15,
+            17
+          ]
+        ],
+        9
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "absent",
+      "args": [
+        [
+          [
+            1,
+            3,
+            5
+          ],
+          [
+            7,
+            9,
+            11
+          ],
+          [
+            13,
+            15,
+            17
+          ]
+        ],
+        8
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty matrix",
+      "args": [
+        [],
+        1
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty row",
+      "args": [
+        [
+          []
+        ],
+        1
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single cell match",
+      "args": [
+        [
+          [
+            4
+          ]
+        ],
+        4
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single cell miss",
+      "args": [
+        [
+          [
+            4
+          ]
+        ],
+        9
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "first cell",
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        1
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "last cell",
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        4
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "below all",
+      "args": [
+        [
+          [
+            5,
+            6
+          ],
+          [
+            7,
+            8
+          ]
+        ],
+        1
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "above all",
+      "args": [
+        [
+          [
+            5,
+            6
+          ],
+          [
+            7,
+            8
+          ]
+        ],
+        99
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single row",
+      "args": [
+        [
+          [
+            2,
+            4,
+            6,
+            8
+          ]
+        ],
+        6
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "search_matrix",
+      "starterPath": "problems/binary-search-bonus-06/solutions/python/starter.py",
+      "referencePath": "problems/binary-search-bonus-06/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "searchMatrix",
+      "starterPath": "problems/binary-search-bonus-06/solutions/typescript/starter.ts",
+      "referencePath": "problems/binary-search-bonus-06/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SearchMatrix",
+      "starterPath": "problems/binary-search-bonus-06/solutions/go/starter.go",
+      "referencePath": "problems/binary-search-bonus-06/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "searchMatrix",
+      "starterPath": "problems/binary-search-bonus-06/solutions/scala/starter.scala",
+      "referencePath": "problems/binary-search-bonus-06/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "id": "two-pointers-sliding-window-bonus-12",
+  "kind": "problem",
+  "title": "Sort A Binary Array",
+  "difficulty": "warmup",
+  "concepts": [
+    "two-pointers-sliding-window",
+    "opposite pointers"
+  ],
+  "prompt": "The input is a list containing only 0s and 1s. Return a new list with all 0s before all 1s, sorted by swapping from both ends.",
+  "signature": {
+    "name": "sortBinaryArray",
+    "inputs": [
+      {
+        "name": "bits",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "mixed bits",
+      "args": [
+        [
+          0,
+          1,
+          0,
+          1,
+          1,
+          0
+        ]
+      ],
+      "expected": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "already sorted",
+      "args": [
+        [
+          0,
+          0,
+          1,
+          1
+        ]
+      ],
+      "expected": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single zero",
+      "args": [
+        [
+          0
+        ]
+      ],
+      "expected": [
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single one",
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expected": [
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all ones",
+      "args": [
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "fully reversed",
+      "args": [
+        [
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0
+        ]
+      ],
+      "expected": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "sort_binary_array",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-12/solutions/python/starter.py",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-12/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "sortBinaryArray",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-12/solutions/typescript/starter.ts",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-12/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SortBinaryArray",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-12/solutions/go/starter.go",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-12/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "sortBinaryArray",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-12/solutions/scala/starter.scala",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-12/solutions/scala/reference.scala"
+    }
+  }
+}

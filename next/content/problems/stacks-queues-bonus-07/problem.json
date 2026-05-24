@@ -1,0 +1,149 @@
+{
+  "id": "stacks-queues-bonus-07",
+  "kind": "problem",
+  "title": "Hot Potato Survivor",
+  "difficulty": "easy",
+  "concepts": [
+    "stacks-queues",
+    "queue",
+    "simulation"
+  ],
+  "prompt": "Players stand in a circle holding a potato. The potato is passed `passes` times, then whoever holds it is eliminated. Passing and elimination repeat until one player remains. Return the surviving player.",
+  "signature": {
+    "name": "hotPotato",
+    "inputs": [
+      {
+        "name": "players",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "any"
+          }
+        }
+      },
+      {
+        "name": "passes",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "any"
+    }
+  },
+  "tests": [
+    {
+      "name": "five players two passes",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        2
+      ],
+      "expected": 4,
+      "visibility": "visible"
+    },
+    {
+      "name": "names one pass",
+      "args": [
+        [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        1
+      ],
+      "expected": "a",
+      "visibility": "visible"
+    },
+    {
+      "name": "single player",
+      "args": [
+        [
+          7
+        ],
+        3
+      ],
+      "expected": 7,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero passes pair",
+      "args": [
+        [
+          1,
+          2
+        ],
+        0
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero passes trio",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        0
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two players one pass",
+      "args": [
+        [
+          1,
+          2
+        ],
+        1
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "three players five passes",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        5
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "hot_potato",
+      "starterPath": "problems/stacks-queues-bonus-07/solutions/python/starter.py",
+      "referencePath": "problems/stacks-queues-bonus-07/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "hotPotato",
+      "starterPath": "problems/stacks-queues-bonus-07/solutions/typescript/starter.ts",
+      "referencePath": "problems/stacks-queues-bonus-07/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "HotPotato",
+      "starterPath": "problems/stacks-queues-bonus-07/solutions/go/starter.go",
+      "referencePath": "problems/stacks-queues-bonus-07/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "hotPotato",
+      "starterPath": "problems/stacks-queues-bonus-07/solutions/scala/starter.scala",
+      "referencePath": "problems/stacks-queues-bonus-07/solutions/scala/reference.scala"
+    }
+  }
+}

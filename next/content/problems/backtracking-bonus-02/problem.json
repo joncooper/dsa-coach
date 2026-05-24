@@ -1,0 +1,131 @@
+{
+  "id": "backtracking-bonus-02",
+  "kind": "problem",
+  "title": "Letter Case Combinations",
+  "difficulty": "warmup",
+  "concepts": [
+    "backtracking",
+    "binary choice",
+    "recursion tree"
+  ],
+  "prompt": "Given a string of letters and digits, return every string that can be formed by independently choosing lower or upper case for each letter. Digits are copied unchanged. Return the results sorted ascending.",
+  "signature": {
+    "name": "letterCaseCombinations",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "letter digit letter",
+      "args": [
+        "a1b"
+      ],
+      "expected": [
+        "A1B",
+        "A1b",
+        "a1B",
+        "a1b"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "single letter",
+      "args": [
+        "x"
+      ],
+      "expected": [
+        "X",
+        "x"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty string",
+      "args": [
+        ""
+      ],
+      "expected": [
+        ""
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "only a digit",
+      "args": [
+        "3"
+      ],
+      "expected": [
+        "3"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "only digits",
+      "args": [
+        "12"
+      ],
+      "expected": [
+        "12"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two letters",
+      "args": [
+        "ab"
+      ],
+      "expected": [
+        "AB",
+        "Ab",
+        "aB",
+        "ab"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "already upper",
+      "args": [
+        "Q"
+      ],
+      "expected": [
+        "Q",
+        "q"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "letter_case_combinations",
+      "starterPath": "problems/backtracking-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/backtracking-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "letterCaseCombinations",
+      "starterPath": "problems/backtracking-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/backtracking-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LetterCaseCombinations",
+      "starterPath": "problems/backtracking-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/backtracking-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "letterCaseCombinations",
+      "starterPath": "problems/backtracking-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/backtracking-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

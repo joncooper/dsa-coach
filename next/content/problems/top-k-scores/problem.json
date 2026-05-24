@@ -1,0 +1,201 @@
+{
+  "id": "top-k-scores",
+  "kind": "problem",
+  "title": "Top K Scores",
+  "difficulty": "easy",
+  "concepts": [
+    "heap",
+    "top k"
+  ],
+  "prompt": "Return the `k` largest scores in descending order. If `k` exceeds the number of scores, return all scores descending. If `k` is `0` or the input is empty, return an empty list.",
+  "signature": {
+    "name": "topKScores",
+    "inputs": [
+      {
+        "name": "scores",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "three",
+      "args": [
+        [
+          4,
+          9,
+          1,
+          7
+        ],
+        2
+      ],
+      "expected": [
+        9,
+        7
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "k large",
+      "args": [
+        [
+          3,
+          1
+        ],
+        5
+      ],
+      "expected": [
+        3,
+        1
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "duplicates",
+      "args": [
+        [
+          5,
+          5,
+          2
+        ],
+        2
+      ],
+      "expected": [
+        5,
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        3
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "k zero",
+      "args": [
+        [
+          3,
+          1,
+          4
+        ],
+        0
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "k one",
+      "args": [
+        [
+          8,
+          2,
+          5,
+          1
+        ],
+        1
+      ],
+      "expected": [
+        8
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all duplicates",
+      "args": [
+        [
+          7,
+          7,
+          7,
+          7
+        ],
+        3
+      ],
+      "expected": [
+        7,
+        7,
+        7
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "k equals length",
+      "args": [
+        [
+          2,
+          4,
+          1,
+          3
+        ],
+        4
+      ],
+      "expected": [
+        4,
+        3,
+        2,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -1,
+          -5,
+          -3,
+          -2
+        ],
+        2
+      ],
+      "expected": [
+        -1,
+        -2
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "top_k_scores",
+      "starterPath": "problems/top-k-scores/solutions/python/starter.py",
+      "referencePath": "problems/top-k-scores/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "topKScores",
+      "starterPath": "problems/top-k-scores/solutions/typescript/starter.ts",
+      "referencePath": "problems/top-k-scores/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "TopKScores",
+      "starterPath": "problems/top-k-scores/solutions/go/starter.go",
+      "referencePath": "problems/top-k-scores/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "topKScores",
+      "starterPath": "problems/top-k-scores/solutions/scala/starter.scala",
+      "referencePath": "problems/top-k-scores/solutions/scala/reference.scala"
+    }
+  }
+}

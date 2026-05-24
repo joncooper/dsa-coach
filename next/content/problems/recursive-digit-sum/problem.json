@@ -1,0 +1,121 @@
+{
+  "id": "recursive-digit-sum",
+  "kind": "problem",
+  "title": "Recursive Digit Sum",
+  "difficulty": "easy",
+  "concepts": [
+    "recursion",
+    "modulo"
+  ],
+  "prompt": "Return the sum of the decimal digits of a non-negative integer. Use recursion for the main reduction.",
+  "signature": {
+    "name": "recursiveDigitSum",
+    "inputs": [
+      {
+        "name": "n",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "several digits",
+      "args": [
+        4072
+      ],
+      "expected": 13,
+      "visibility": "visible"
+    },
+    {
+      "name": "zero",
+      "args": [
+        0
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "one digit",
+      "args": [
+        9
+      ],
+      "expected": 9,
+      "visibility": "hidden"
+    },
+    {
+      "name": "many zeros",
+      "args": [
+        1000200
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "ten boundary",
+      "args": [
+        10
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "two digits",
+      "args": [
+        99
+      ],
+      "expected": 18,
+      "visibility": "hidden"
+    },
+    {
+      "name": "ascending",
+      "args": [
+        12345
+      ],
+      "expected": 15,
+      "visibility": "hidden"
+    },
+    {
+      "name": "repeating digit",
+      "args": [
+        9999
+      ],
+      "expected": 36,
+      "visibility": "hidden"
+    },
+    {
+      "name": "trailing zero",
+      "args": [
+        120
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "recursive_digit_sum",
+      "starterPath": "problems/recursive-digit-sum/solutions/python/starter.py",
+      "referencePath": "problems/recursive-digit-sum/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "recursiveDigitSum",
+      "starterPath": "problems/recursive-digit-sum/solutions/typescript/starter.ts",
+      "referencePath": "problems/recursive-digit-sum/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RecursiveDigitSum",
+      "starterPath": "problems/recursive-digit-sum/solutions/go/starter.go",
+      "referencePath": "problems/recursive-digit-sum/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "recursiveDigitSum",
+      "starterPath": "problems/recursive-digit-sum/solutions/scala/starter.scala",
+      "referencePath": "problems/recursive-digit-sum/solutions/scala/reference.scala"
+    }
+  }
+}

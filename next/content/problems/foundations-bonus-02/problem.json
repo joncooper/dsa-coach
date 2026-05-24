@@ -1,0 +1,134 @@
+{
+  "id": "foundations-bonus-02",
+  "kind": "problem",
+  "title": "Is Sorted Ascending",
+  "difficulty": "warmup",
+  "concepts": [
+    "foundations",
+    "iteration",
+    "edge cases"
+  ],
+  "prompt": "Return True if the list is sorted in non-decreasing order (equal neighbours are allowed), and False otherwise.",
+  "signature": {
+    "name": "isSortedAscending",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "sorted with duplicates",
+      "args": [
+        [
+          1,
+          2,
+          2,
+          3
+        ]
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "out of order",
+      "args": [
+        [
+          1,
+          3,
+          2
+        ]
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all equal",
+      "args": [
+        [
+          5,
+          5,
+          5
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "drop at end",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          0
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives sorted",
+      "args": [
+        [
+          -3,
+          -1,
+          0,
+          2
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "is_sorted_ascending",
+      "starterPath": "problems/foundations-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/foundations-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "isSortedAscending",
+      "starterPath": "problems/foundations-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/foundations-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "IsSortedAscending",
+      "starterPath": "problems/foundations-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/foundations-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "isSortedAscending",
+      "starterPath": "problems/foundations-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/foundations-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

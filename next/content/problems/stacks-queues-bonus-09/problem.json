@@ -1,0 +1,105 @@
+{
+  "id": "stacks-queues-bonus-09",
+  "kind": "problem",
+  "title": "Decode Nested Repeats",
+  "difficulty": "medium",
+  "concepts": [
+    "stacks-queues",
+    "stack"
+  ],
+  "prompt": "A string is encoded with the rule k[inner], meaning the substring `inner` is repeated k times. Encodings may nest, as in 3[a2[c]]. Decode the string and return the expanded text.",
+  "signature": {
+    "name": "decodeString",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "simple repeat",
+      "args": [
+        "3[a]"
+      ],
+      "expected": "aaa",
+      "visibility": "visible"
+    },
+    {
+      "name": "nested repeat",
+      "args": [
+        "3[a2[c]]"
+      ],
+      "expected": "accaccacc",
+      "visibility": "visible"
+    },
+    {
+      "name": "no encoding",
+      "args": [
+        "abc"
+      ],
+      "expected": "abc",
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": "",
+      "visibility": "hidden"
+    },
+    {
+      "name": "two groups",
+      "args": [
+        "2[a]3[b]"
+      ],
+      "expected": "aabbb",
+      "visibility": "hidden"
+    },
+    {
+      "name": "multi digit count",
+      "args": [
+        "10[z]"
+      ],
+      "expected": "zzzzzzzzzz",
+      "visibility": "hidden"
+    },
+    {
+      "name": "multi char inner",
+      "args": [
+        "2[ab]"
+      ],
+      "expected": "abab",
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "decode_string",
+      "starterPath": "problems/stacks-queues-bonus-09/solutions/python/starter.py",
+      "referencePath": "problems/stacks-queues-bonus-09/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "decodeString",
+      "starterPath": "problems/stacks-queues-bonus-09/solutions/typescript/starter.ts",
+      "referencePath": "problems/stacks-queues-bonus-09/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "DecodeString",
+      "starterPath": "problems/stacks-queues-bonus-09/solutions/go/starter.go",
+      "referencePath": "problems/stacks-queues-bonus-09/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "decodeString",
+      "starterPath": "problems/stacks-queues-bonus-09/solutions/scala/starter.scala",
+      "referencePath": "problems/stacks-queues-bonus-09/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,247 @@
+{
+  "id": "aoc-y1-d7-container-rules",
+  "kind": "problem",
+  "title": "Day 7: Container Rules",
+  "difficulty": "medium",
+  "concepts": [
+    "graph",
+    "DFS",
+    "memoization"
+  ],
+  "prompt": "Each non-empty line is a rule describing what one container type holds. A container type is named by exactly two lowercase words (for example, `dim red`). A rule has the form:\n\n`NAME containers hold CONTENTS.`\n\n`CONTENTS` is either the literal words `no other containers`, or a comma-separated list of entries like `2 dim red containers` — a count followed by a two-word container name. The word is `container` when the count is 1 and `containers` otherwise.\n\nA container type can hold a `bright gold` container if it holds one directly, or if it holds some container type that can (recursively) hold a `bright gold` container. Return how many distinct container types can hold a `bright gold` container. `bright gold` itself does not count.",
+  "signature": {
+    "name": "count_containers_holding_gold",
+    "inputs": [
+      {
+        "name": "inputText",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "two ancestors",
+      "args": [
+        "dim red containers hold 1 bright gold container.\nplain blue containers hold 1 dim red container.\nbright gold containers hold no other containers."
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "no gold",
+      "args": [
+        "plain blue containers hold 1 dim red container.\ndim red containers hold no other containers."
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "diamond inheritance",
+      "args": [
+        "outer one containers hold 1 mid a container, 1 mid b container.\nmid a containers hold 1 bright gold container.\nmid b containers hold 1 bright gold container.\nbright gold containers hold no other containers."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "deep chain",
+      "args": [
+        "a one containers hold 1 b two container.\nb two containers hold 1 c three container.\nc three containers hold 1 bright gold container.\nbright gold containers hold no other containers."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "branching with extras",
+      "args": [
+        "alpha box containers hold 2 bright gold containers, 1 ignored leaf container.\nbeta box containers hold 1 alpha box container.\nignored leaf containers hold no other containers.\nbright gold containers hold no other containers."
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "gold contains things does not count itself",
+      "args": [
+        "bright gold containers hold 2 plain red containers.\nplain red containers hold no other containers."
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "irrelevant island ignored",
+      "args": [
+        "lone alpha containers hold 1 lone beta container.\nlone beta containers hold no other containers.\nshiny silver containers hold 1 bright gold container.\nbright gold containers hold no other containers."
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "multiple direct parents",
+      "args": [
+        "red one containers hold 1 bright gold container.\nblue two containers hold 1 bright gold container.\ngreen three containers hold 1 bright gold container.\nbright gold containers hold no other containers."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "cycle-free DAG with shared ancestor",
+      "args": [
+        "top root containers hold 1 mid one container, 1 mid two container.\nmid one containers hold 1 bright gold container.\nmid two containers hold 1 mid one container.\nbright gold containers hold no other containers."
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "part-2-total-bags-inside",
+      "title": "Part 2: Total contents",
+      "prompt": "Same input. Now compute the total number of containers that end up inside a single `bright gold` container, counted with multiplicities. If a `bright gold` contains 2 `dim red` and each `dim red` contains 3 `plain blue`, the total is `2 + 2 * 3 = 8`. The `bright gold` container itself is not counted. Return that integer.",
+      "signature": {
+        "name": "total_inside_gold",
+        "inputs": [
+          {
+            "name": "inputText",
+            "type": {
+              "type": "string"
+            }
+          }
+        ],
+        "output": {
+          "type": "number"
+        }
+      },
+      "tests": [
+        {
+          "name": "simple chain",
+          "args": [
+            "bright gold containers hold 2 dim red containers.\ndim red containers hold 3 plain blue containers.\nplain blue containers hold no other containers."
+          ],
+          "expected": 8,
+          "visibility": "visible"
+        },
+        {
+          "name": "gold has no children",
+          "args": [
+            "bright gold containers hold no other containers."
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "empty",
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visibility": "visible"
+        },
+        {
+          "name": "two child colors",
+          "args": [
+            "bright gold containers hold 1 dim red container, 2 plain blue containers.\ndim red containers hold no other containers.\nplain blue containers hold 1 tiny pink container.\ntiny pink containers hold no other containers."
+          ],
+          "expected": 5,
+          "visibility": "hidden"
+        },
+        {
+          "name": "shared subtree",
+          "args": [
+            "bright gold containers hold 2 stage a containers.\nstage a containers hold 2 stage b containers.\nstage b containers hold no other containers."
+          ],
+          "expected": 6,
+          "visibility": "hidden"
+        },
+        {
+          "name": "deep chain",
+          "args": [
+            "bright gold containers hold 1 first chamber container.\nfirst chamber containers hold 1 second chamber container.\nsecond chamber containers hold 1 third chamber container.\nthird chamber containers hold no other containers."
+          ],
+          "expected": 3,
+          "visibility": "hidden"
+        },
+        {
+          "name": "single child count multiplies down",
+          "args": [
+            "bright gold containers hold 3 sub one containers.\nsub one containers hold 4 sub two containers.\nsub two containers hold no other containers."
+          ],
+          "expected": 15,
+          "visibility": "hidden"
+        },
+        {
+          "name": "branching count multiplies cleanly",
+          "args": [
+            "bright gold containers hold 2 alpha box containers, 3 beta box containers.\nalpha box containers hold 1 inner one container.\nbeta box containers hold no other containers.\ninner one containers hold no other containers."
+          ],
+          "expected": 7,
+          "visibility": "hidden"
+        },
+        {
+          "name": "diamond pays both paths",
+          "args": [
+            "bright gold containers hold 2 mid one containers, 3 mid two containers.\nmid one containers hold 1 leaf alpha container.\nmid two containers hold 1 leaf alpha container.\nleaf alpha containers hold no other containers."
+          ],
+          "expected": 10,
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "total_inside_gold",
+          "starterPath": "problems/aoc-y1-d7-container-rules/parts/part-2-total-bags-inside/solutions/python/starter.py",
+          "referencePath": "problems/aoc-y1-d7-container-rules/parts/part-2-total-bags-inside/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "total_inside_gold",
+          "starterPath": "problems/aoc-y1-d7-container-rules/parts/part-2-total-bags-inside/solutions/typescript/starter.ts",
+          "referencePath": "problems/aoc-y1-d7-container-rules/parts/part-2-total-bags-inside/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "TotalInsideGold",
+          "starterPath": "problems/aoc-y1-d7-container-rules/parts/part-2-total-bags-inside/solutions/go/starter.go",
+          "referencePath": "problems/aoc-y1-d7-container-rules/parts/part-2-total-bags-inside/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "total_inside_gold",
+          "starterPath": "problems/aoc-y1-d7-container-rules/parts/part-2-total-bags-inside/solutions/scala/starter.scala",
+          "referencePath": "problems/aoc-y1-d7-container-rules/parts/part-2-total-bags-inside/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "count_containers_holding_gold",
+      "starterPath": "problems/aoc-y1-d7-container-rules/solutions/python/starter.py",
+      "referencePath": "problems/aoc-y1-d7-container-rules/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "count_containers_holding_gold",
+      "starterPath": "problems/aoc-y1-d7-container-rules/solutions/typescript/starter.ts",
+      "referencePath": "problems/aoc-y1-d7-container-rules/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "CountContainersHoldingGold",
+      "starterPath": "problems/aoc-y1-d7-container-rules/solutions/go/starter.go",
+      "referencePath": "problems/aoc-y1-d7-container-rules/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "count_containers_holding_gold",
+      "starterPath": "problems/aoc-y1-d7-container-rules/solutions/scala/starter.scala",
+      "referencePath": "problems/aoc-y1-d7-container-rules/solutions/scala/reference.scala"
+    }
+  }
+}

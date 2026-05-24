@@ -1,0 +1,162 @@
+{
+  "id": "first-unique-token",
+  "kind": "problem",
+  "title": "First Unique Token",
+  "difficulty": "easy",
+  "concepts": [
+    "frequency map",
+    "stable order"
+  ],
+  "prompt": "Return the first string that appears exactly once in the input list. Return an empty string if none exists.",
+  "signature": {
+    "name": "firstUniqueToken",
+    "inputs": [
+      {
+        "name": "tokens",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "middle unique",
+      "args": [
+        [
+          "go",
+          "to",
+          "go",
+          "run"
+        ]
+      ],
+      "expected": "to",
+      "visibility": "visible"
+    },
+    {
+      "name": "none",
+      "args": [
+        [
+          "a",
+          "a"
+        ]
+      ],
+      "expected": "",
+      "visibility": "visible"
+    },
+    {
+      "name": "first",
+      "args": [
+        [
+          "x",
+          "y",
+          "y"
+        ]
+      ],
+      "expected": "x",
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": "",
+      "visibility": "hidden"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          "only"
+        ]
+      ],
+      "expected": "only",
+      "visibility": "hidden"
+    },
+    {
+      "name": "all duplicates triple",
+      "args": [
+        [
+          "a",
+          "b",
+          "a",
+          "b",
+          "a",
+          "b"
+        ]
+      ],
+      "expected": "",
+      "visibility": "hidden"
+    },
+    {
+      "name": "last unique",
+      "args": [
+        [
+          "a",
+          "a",
+          "b",
+          "b",
+          "c"
+        ]
+      ],
+      "expected": "c",
+      "visibility": "hidden"
+    },
+    {
+      "name": "case sensitive",
+      "args": [
+        [
+          "Foo",
+          "foo",
+          "Foo"
+        ]
+      ],
+      "expected": "foo",
+      "visibility": "hidden"
+    },
+    {
+      "name": "longer list",
+      "args": [
+        [
+          "dog",
+          "cat",
+          "dog",
+          "fish",
+          "cat",
+          "owl"
+        ]
+      ],
+      "expected": "fish",
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "first_unique_token",
+      "starterPath": "problems/first-unique-token/solutions/python/starter.py",
+      "referencePath": "problems/first-unique-token/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "firstUniqueToken",
+      "starterPath": "problems/first-unique-token/solutions/typescript/starter.ts",
+      "referencePath": "problems/first-unique-token/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "FirstUniqueToken",
+      "starterPath": "problems/first-unique-token/solutions/go/starter.go",
+      "referencePath": "problems/first-unique-token/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "firstUniqueToken",
+      "starterPath": "problems/first-unique-token/solutions/scala/starter.scala",
+      "referencePath": "problems/first-unique-token/solutions/scala/reference.scala"
+    }
+  }
+}

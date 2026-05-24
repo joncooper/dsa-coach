@@ -1,0 +1,170 @@
+{
+  "id": "tek-eval-expression",
+  "kind": "problem",
+  "title": "Evaluate an Arithmetic Expression",
+  "difficulty": "medium",
+  "concepts": [
+    "tokenizer",
+    "recursive descent",
+    "operator precedence"
+  ],
+  "prompt": "Evaluate a string arithmetic expression and return the integer result. The expression contains non-negative integer literals, the binary operators `+ - * /`, parentheses, and arbitrary spaces. Standard precedence applies: `*` and `/` bind tighter than `+` and `-`, operators of equal precedence are left-associative, and parentheses override precedence. Division truncates toward zero. You may assume the input is well-formed and never divides by zero.",
+  "signature": {
+    "name": "evaluate",
+    "inputs": [
+      {
+        "name": "expr",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "single literal",
+      "args": [
+        "7"
+      ],
+      "expected": 7,
+      "visibility": "visible"
+    },
+    {
+      "name": "precedence",
+      "args": [
+        "2+3*4"
+      ],
+      "expected": 14,
+      "visibility": "visible"
+    },
+    {
+      "name": "parens override",
+      "args": [
+        "(2+3)*4"
+      ],
+      "expected": 20,
+      "visibility": "visible"
+    },
+    {
+      "name": "surrounding spaces",
+      "args": [
+        " 1 + 2 "
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "left associative subtraction",
+      "args": [
+        "100-20-30"
+      ],
+      "expected": 50,
+      "visibility": "hidden"
+    },
+    {
+      "name": "left associative division",
+      "args": [
+        "8/2/2"
+      ],
+      "expected": 2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "integer truncation",
+      "args": [
+        "10/3"
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "nested parens",
+      "args": [
+        "2*(3+(4-1))"
+      ],
+      "expected": 12,
+      "visibility": "hidden"
+    },
+    {
+      "name": "deep right nesting",
+      "args": [
+        "(1+(2+(3+4)))"
+      ],
+      "expected": 10,
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed precedence chain",
+      "args": [
+        "2+2*2-2"
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "spaces between every token",
+      "args": [
+        "3 * ( 4 + 5 )"
+      ],
+      "expected": 27,
+      "visibility": "hidden"
+    },
+    {
+      "name": "multi digit literals",
+      "args": [
+        "12*12+1"
+      ],
+      "expected": 145,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative numerator truncates toward zero",
+      "args": [
+        "(1-8)/2"
+      ],
+      "expected": -3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative divisor truncates toward zero",
+      "args": [
+        "8/(2-5)"
+      ],
+      "expected": -2,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative intermediate odd division",
+      "args": [
+        "(1-8)/3"
+      ],
+      "expected": -2,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "evaluate",
+      "starterPath": "problems/tek-eval-expression/solutions/python/starter.py",
+      "referencePath": "problems/tek-eval-expression/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "evaluate",
+      "starterPath": "problems/tek-eval-expression/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-eval-expression/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "Evaluate",
+      "starterPath": "problems/tek-eval-expression/solutions/go/starter.go",
+      "referencePath": "problems/tek-eval-expression/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "evaluate",
+      "starterPath": "problems/tek-eval-expression/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-eval-expression/solutions/scala/reference.scala"
+    }
+  }
+}

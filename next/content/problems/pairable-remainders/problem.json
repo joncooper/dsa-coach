@@ -1,0 +1,179 @@
+{
+  "id": "pairable-remainders",
+  "kind": "problem",
+  "title": "Pairable Remainders",
+  "difficulty": "medium",
+  "concepts": [
+    "hash counts",
+    "modulo"
+  ],
+  "prompt": "Return true if the numbers can be split into pairs where each pair sum is divisible by `k`. Every number must be used exactly once, so an odd-length list returns false. An empty list returns true (trivially split into zero pairs).",
+  "signature": {
+    "name": "pairableRemainders",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "pairable",
+      "args": [
+        [
+          1,
+          5,
+          9,
+          3
+        ],
+        6
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "not pairable",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        3
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "zero remainder",
+      "args": [
+        [
+          2,
+          4,
+          6,
+          8
+        ],
+        2
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative",
+      "args": [
+        [
+          -1,
+          1,
+          2,
+          4
+        ],
+        3
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "odd length",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        4
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        5
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "k=1 always pairable even",
+      "args": [
+        [
+          7,
+          11,
+          13,
+          17
+        ],
+        1
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "self-complement odd count",
+      "args": [
+        [
+          3,
+          3,
+          3,
+          6
+        ],
+        6
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "six elements pairable",
+      "args": [
+        [
+          1,
+          2,
+          4,
+          5,
+          7,
+          8
+        ],
+        3
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "pairable_remainders",
+      "starterPath": "problems/pairable-remainders/solutions/python/starter.py",
+      "referencePath": "problems/pairable-remainders/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "pairableRemainders",
+      "starterPath": "problems/pairable-remainders/solutions/typescript/starter.ts",
+      "referencePath": "problems/pairable-remainders/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "PairableRemainders",
+      "starterPath": "problems/pairable-remainders/solutions/go/starter.go",
+      "referencePath": "problems/pairable-remainders/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "pairableRemainders",
+      "starterPath": "problems/pairable-remainders/solutions/scala/starter.scala",
+      "referencePath": "problems/pairable-remainders/solutions/scala/reference.scala"
+    }
+  }
+}

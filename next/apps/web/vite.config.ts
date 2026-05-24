@@ -1,0 +1,19 @@
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  root: "apps/web",
+  plugins: [react()],
+  server: {
+    host: "127.0.0.1",
+    port: 5174
+  },
+  preview: {
+    host: "127.0.0.1",
+    port: 4175
+  },
+  build: {
+    outDir: "../../dist/web",
+    emptyOutDir: true
+  }
+});

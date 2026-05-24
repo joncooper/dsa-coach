@@ -1,0 +1,176 @@
+{
+  "id": "two-pointers-sliding-window-bonus-02",
+  "kind": "problem",
+  "title": "Two Sum In Sorted Array",
+  "difficulty": "easy",
+  "concepts": [
+    "two-pointers-sliding-window",
+    "opposite pointers",
+    "sorted array"
+  ],
+  "prompt": "Given a list sorted in non-decreasing order, return the indices [i, j] of two distinct positions whose values sum to target. If no such pair exists, return [-1, -1]. If several pairs work, any one is accepted by the tests below.",
+  "signature": {
+    "name": "twoSumSorted",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "target",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "pair found",
+      "args": [
+        [
+          2,
+          7,
+          11,
+          15
+        ],
+        9
+      ],
+      "expected": [
+        0,
+        1
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "no pair",
+      "args": [
+        [
+          1,
+          2
+        ],
+        100
+      ],
+      "expected": [
+        -1,
+        -1
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "middle pair",
+      "args": [
+        [
+          1,
+          3,
+          4,
+          6,
+          8
+        ],
+        10
+      ],
+      "expected": [
+        2,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -3,
+          -1,
+          2,
+          4
+        ],
+        1
+      ],
+      "expected": [
+        0,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "zeros",
+      "args": [
+        [
+          0,
+          0
+        ],
+        0
+      ],
+      "expected": [
+        0,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single element",
+      "args": [
+        [
+          5
+        ],
+        5
+      ],
+      "expected": [
+        -1,
+        -1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          4
+        ],
+        8
+      ],
+      "expected": [
+        3,
+        4
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "two_sum_sorted",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-02/solutions/python/starter.py",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-02/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "twoSumSorted",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-02/solutions/typescript/starter.ts",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-02/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "TwoSumSorted",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-02/solutions/go/starter.go",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-02/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "twoSumSorted",
+      "starterPath": "problems/two-pointers-sliding-window-bonus-02/solutions/scala/starter.scala",
+      "referencePath": "problems/two-pointers-sliding-window-bonus-02/solutions/scala/reference.scala"
+    }
+  }
+}

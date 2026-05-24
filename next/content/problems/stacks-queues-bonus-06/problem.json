@@ -1,0 +1,173 @@
+{
+  "id": "stacks-queues-bonus-06",
+  "kind": "problem",
+  "title": "Validate A Stack Sequence",
+  "difficulty": "easy",
+  "concepts": [
+    "stacks-queues",
+    "stack",
+    "simulation"
+  ],
+  "prompt": "Given a `pushed` order and a `popped` order of the same distinct values, decide whether one stack could produce that pop order if values are pushed strictly in the `pushed` order, with pops allowed at any time. Return True or False.",
+  "signature": {
+    "name": "validateStackSequence",
+    "inputs": [
+      {
+        "name": "pushed",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "popped",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "boolean"
+    }
+  },
+  "tests": [
+    {
+      "name": "valid order",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        [
+          4,
+          5,
+          3,
+          2,
+          1
+        ]
+      ],
+      "expected": true,
+      "visibility": "visible"
+    },
+    {
+      "name": "invalid order",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          3,
+          1,
+          2
+        ]
+      ],
+      "expected": false,
+      "visibility": "visible"
+    },
+    {
+      "name": "both empty",
+      "args": [
+        [],
+        []
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single value",
+      "args": [
+        [
+          1
+        ],
+        [
+          1
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "full reverse",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          3,
+          2,
+          1
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    },
+    {
+      "name": "buried value",
+      "args": [
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          3,
+          2,
+          0,
+          1
+        ]
+      ],
+      "expected": false,
+      "visibility": "hidden"
+    },
+    {
+      "name": "interleaved valid",
+      "args": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "expected": true,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "validate_stack_sequence",
+      "starterPath": "problems/stacks-queues-bonus-06/solutions/python/starter.py",
+      "referencePath": "problems/stacks-queues-bonus-06/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "validateStackSequence",
+      "starterPath": "problems/stacks-queues-bonus-06/solutions/typescript/starter.ts",
+      "referencePath": "problems/stacks-queues-bonus-06/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "ValidateStackSequence",
+      "starterPath": "problems/stacks-queues-bonus-06/solutions/go/starter.go",
+      "referencePath": "problems/stacks-queues-bonus-06/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "validateStackSequence",
+      "starterPath": "problems/stacks-queues-bonus-06/solutions/scala/starter.scala",
+      "referencePath": "problems/stacks-queues-bonus-06/solutions/scala/reference.scala"
+    }
+  }
+}

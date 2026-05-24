@@ -1,0 +1,233 @@
+{
+  "id": "backtracking-bonus-03",
+  "kind": "problem",
+  "title": "All Distinct Permutations",
+  "difficulty": "easy",
+  "concepts": [
+    "backtracking",
+    "permutations",
+    "duplicate pruning"
+  ],
+  "prompt": "Given a list of integers that may contain duplicates, return every distinct ordering of its elements. Return the orderings sorted ascending, with no ordering repeated.",
+  "signature": {
+    "name": "distinctPermutations",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "three distinct",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          3,
+          2
+        ],
+        [
+          2,
+          1,
+          3
+        ],
+        [
+          2,
+          3,
+          1
+        ],
+        [
+          3,
+          1,
+          2
+        ],
+        [
+          3,
+          2,
+          1
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "with a duplicate",
+      "args": [
+        [
+          1,
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          1,
+          2
+        ],
+        [
+          1,
+          2,
+          1
+        ],
+        [
+          2,
+          1,
+          1
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty list",
+      "args": [
+        []
+      ],
+      "expected": [
+        []
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "single element",
+      "args": [
+        [
+          7
+        ]
+      ],
+      "expected": [
+        [
+          7
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "all identical",
+      "args": [
+        [
+          2,
+          2
+        ]
+      ],
+      "expected": [
+        [
+          2,
+          2
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "unsorted input",
+      "args": [
+        [
+          3,
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          3,
+          2
+        ],
+        [
+          2,
+          1,
+          3
+        ],
+        [
+          2,
+          3,
+          1
+        ],
+        [
+          3,
+          1,
+          2
+        ],
+        [
+          3,
+          2,
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negatives",
+      "args": [
+        [
+          -1,
+          0
+        ]
+      ],
+      "expected": [
+        [
+          -1,
+          0
+        ],
+        [
+          0,
+          -1
+        ]
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "distinct_permutations",
+      "starterPath": "problems/backtracking-bonus-03/solutions/python/starter.py",
+      "referencePath": "problems/backtracking-bonus-03/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "distinctPermutations",
+      "starterPath": "problems/backtracking-bonus-03/solutions/typescript/starter.ts",
+      "referencePath": "problems/backtracking-bonus-03/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "DistinctPermutations",
+      "starterPath": "problems/backtracking-bonus-03/solutions/go/starter.go",
+      "referencePath": "problems/backtracking-bonus-03/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "distinctPermutations",
+      "starterPath": "problems/backtracking-bonus-03/solutions/scala/starter.scala",
+      "referencePath": "problems/backtracking-bonus-03/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "id": "arrays-strings-bonus-12",
+  "kind": "problem",
+  "title": "Maximum Subarray Sum",
+  "difficulty": "medium",
+  "concepts": [
+    "arrays-strings",
+    "running state",
+    "prefix sums"
+  ],
+  "prompt": "Return the largest sum obtainable from any contiguous non-empty run of values in the list.",
+  "signature": {
+    "name": "maxSubarraySum",
+    "inputs": [
+      {
+        "name": "nums",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "mixed signs",
+      "args": [
+        [
+          -2,
+          1,
+          -3,
+          4,
+          -1,
+          2,
+          1,
+          -5,
+          4
+        ]
+      ],
+      "expected": 6,
+      "visibility": "visible"
+    },
+    {
+      "name": "all positive",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": 10,
+      "visibility": "visible"
+    },
+    {
+      "name": "single",
+      "args": [
+        [
+          5
+        ]
+      ],
+      "expected": 5,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all negative",
+      "args": [
+        [
+          -1,
+          -2,
+          -3
+        ]
+      ],
+      "expected": -1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single negative",
+      "args": [
+        [
+          -7
+        ]
+      ],
+      "expected": -7,
+      "visibility": "hidden"
+    },
+    {
+      "name": "alternating",
+      "args": [
+        [
+          2,
+          -1,
+          2,
+          -1,
+          2
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "dip then climb",
+      "args": [
+        [
+          -3,
+          -1,
+          4,
+          5
+        ]
+      ],
+      "expected": 9,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "max_subarray_sum",
+      "starterPath": "problems/arrays-strings-bonus-12/solutions/python/starter.py",
+      "referencePath": "problems/arrays-strings-bonus-12/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "maxSubarraySum",
+      "starterPath": "problems/arrays-strings-bonus-12/solutions/typescript/starter.ts",
+      "referencePath": "problems/arrays-strings-bonus-12/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MaxSubarraySum",
+      "starterPath": "problems/arrays-strings-bonus-12/solutions/go/starter.go",
+      "referencePath": "problems/arrays-strings-bonus-12/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "maxSubarraySum",
+      "starterPath": "problems/arrays-strings-bonus-12/solutions/scala/starter.scala",
+      "referencePath": "problems/arrays-strings-bonus-12/solutions/scala/reference.scala"
+    }
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "id": "generate-parentheses-local",
+  "kind": "problem",
+  "title": "Generate Parentheses Local",
+  "difficulty": "medium",
+  "concepts": [
+    "backtracking",
+    "constraints"
+  ],
+  "prompt": "Return all valid strings containing `n` pairs of parentheses in lexicographic order.",
+  "signature": {
+    "name": "generateParenthesesLocal",
+    "inputs": [
+      {
+        "name": "n",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "two",
+      "args": [
+        2
+      ],
+      "expected": [
+        "(())",
+        "()()"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "one",
+      "args": [
+        1
+      ],
+      "expected": [
+        "()"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "zero",
+      "args": [
+        0
+      ],
+      "expected": [
+        ""
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "three",
+      "args": [
+        3
+      ],
+      "expected": [
+        "((()))",
+        "(()())",
+        "(())()",
+        "()(())",
+        "()()()"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "four",
+      "args": [
+        4
+      ],
+      "expected": [
+        "(((())))",
+        "((()()))",
+        "((())())",
+        "((()))()",
+        "(()(()))",
+        "(()()())",
+        "(()())()",
+        "(())(())",
+        "(())()()",
+        "()((()))",
+        "()(()())",
+        "()(())()",
+        "()()(())",
+        "()()()()"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "five count",
+      "args": [
+        5
+      ],
+      "expected": [
+        "((((()))))",
+        "(((()())))",
+        "(((())()))",
+        "(((()))())",
+        "(((())))()",
+        "((()(())))",
+        "((()()()))",
+        "((()())())",
+        "((()()))()",
+        "((())(()))",
+        "((())()())",
+        "((())())()",
+        "((()))(())",
+        "((()))()()",
+        "(()((())))",
+        "(()(()()))",
+        "(()(())())",
+        "(()(()))()",
+        "(()()(()))",
+        "(()()()())",
+        "(()()())()",
+        "(()())(())",
+        "(()())()()",
+        "(())((()))",
+        "(())(()())",
+        "(())(())()",
+        "(())()(())",
+        "(())()()()",
+        "()(((())))",
+        "()((()()))",
+        "()((())())",
+        "()((()))()",
+        "()(()(()))",
+        "()(()()())",
+        "()(()())()",
+        "()(())(())",
+        "()(())()()",
+        "()()((()))",
+        "()()(()())",
+        "()()(())()",
+        "()()()(())",
+        "()()()()()"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "generate_parentheses_local",
+      "starterPath": "problems/generate-parentheses-local/solutions/python/starter.py",
+      "referencePath": "problems/generate-parentheses-local/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "generateParenthesesLocal",
+      "starterPath": "problems/generate-parentheses-local/solutions/typescript/starter.ts",
+      "referencePath": "problems/generate-parentheses-local/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "GenerateParenthesesLocal",
+      "starterPath": "problems/generate-parentheses-local/solutions/go/starter.go",
+      "referencePath": "problems/generate-parentheses-local/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "generateParenthesesLocal",
+      "starterPath": "problems/generate-parentheses-local/solutions/scala/starter.scala",
+      "referencePath": "problems/generate-parentheses-local/solutions/scala/reference.scala"
+    }
+  }
+}

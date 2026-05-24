@@ -1,0 +1,163 @@
+{
+  "id": "longest-true-run",
+  "kind": "problem",
+  "title": "Longest True Run",
+  "difficulty": "warmup",
+  "concepts": [
+    "scan",
+    "state"
+  ],
+  "prompt": "Given booleans, return the length of the longest contiguous run of `True` values.",
+  "signature": {
+    "name": "longestTrueRun",
+    "inputs": [
+      {
+        "name": "flags",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "boolean"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "middle run",
+      "args": [
+        [
+          true,
+          true,
+          false,
+          true,
+          true,
+          true
+        ]
+      ],
+      "expected": 3,
+      "visibility": "visible"
+    },
+    {
+      "name": "all false",
+      "args": [
+        [
+          false,
+          false
+        ]
+      ],
+      "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "all true",
+      "args": [
+        [
+          true,
+          true,
+          true
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single true",
+      "args": [
+        [
+          true
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single false",
+      "args": [
+        [
+          false
+        ]
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "alternating",
+      "args": [
+        [
+          true,
+          false,
+          true,
+          false,
+          true
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "trailing run",
+      "args": [
+        [
+          false,
+          false,
+          true,
+          true,
+          true,
+          true
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    },
+    {
+      "name": "leading run wins",
+      "args": [
+        [
+          true,
+          true,
+          true,
+          true,
+          false,
+          true,
+          true
+        ]
+      ],
+      "expected": 4,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "longest_true_run",
+      "starterPath": "problems/longest-true-run/solutions/python/starter.py",
+      "referencePath": "problems/longest-true-run/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "longestTrueRun",
+      "starterPath": "problems/longest-true-run/solutions/typescript/starter.ts",
+      "referencePath": "problems/longest-true-run/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "LongestTrueRun",
+      "starterPath": "problems/longest-true-run/solutions/go/starter.go",
+      "referencePath": "problems/longest-true-run/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "longestTrueRun",
+      "starterPath": "problems/longest-true-run/solutions/scala/starter.scala",
+      "referencePath": "problems/longest-true-run/solutions/scala/reference.scala"
+    }
+  }
+}

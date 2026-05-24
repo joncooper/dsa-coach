@@ -1,0 +1,283 @@
+{
+  "id": "tek-top-k-words",
+  "kind": "problem",
+  "title": "Top-K Words by Frequency",
+  "difficulty": "easy",
+  "concepts": [
+    "tokenization",
+    "counting",
+    "stable tie-breaking"
+  ],
+  "prompt": "Given a string `text` and an integer `k`, return the `k` most frequent words as a list of `[word, count]` pairs. Tokenize by treating any run of letters as one word and lowercasing it; ignore every non-letter character. Order the result by descending count, breaking ties by ascending word. If fewer than `k` distinct words exist, return all of them.",
+  "signature": {
+    "name": "topKWords",
+    "inputs": [
+      {
+        "name": "text",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "k",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "any"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "empty text",
+      "args": [
+        "",
+        3
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "single word repeated",
+      "args": [
+        "the the the",
+        1
+      ],
+      "expected": [
+        [
+          "the",
+          3
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "alphabetical tie-break",
+      "args": [
+        "a b c a b c",
+        2
+      ],
+      "expected": [
+        [
+          "a",
+          2
+        ],
+        [
+          "b",
+          2
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "punctuation ignored",
+      "args": [
+        "Hello, hello! HELLO?",
+        1
+      ],
+      "expected": [
+        [
+          "hello",
+          3
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "k larger than vocabulary",
+      "args": [
+        "x y",
+        5
+      ],
+      "expected": [
+        [
+          "x",
+          1
+        ],
+        [
+          "y",
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "k zero",
+      "args": [
+        "a a b",
+        0
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed sentence",
+      "args": [
+        "apple banana apple cherry banana apple",
+        2
+      ],
+      "expected": [
+        [
+          "apple",
+          3
+        ],
+        [
+          "banana",
+          2
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "numbers excluded",
+      "args": [
+        "abc123 abc 999",
+        2
+      ],
+      "expected": [
+        [
+          "abc",
+          2
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "multi-way tie sorts alphabetically",
+      "args": [
+        "zebra apple banana zebra apple banana",
+        3
+      ],
+      "expected": [
+        [
+          "apple",
+          2
+        ],
+        [
+          "banana",
+          2
+        ],
+        [
+          "zebra",
+          2
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "hyphen splits words",
+      "args": [
+        "well-known well known",
+        3
+      ],
+      "expected": [
+        [
+          "known",
+          2
+        ],
+        [
+          "well",
+          2
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "apostrophe splits words",
+      "args": [
+        "don't do don do",
+        3
+      ],
+      "expected": [
+        [
+          "do",
+          2
+        ],
+        [
+          "don",
+          2
+        ],
+        [
+          "t",
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "whitespace only input",
+      "args": [
+        "   \t  \n  ",
+        5
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "tied counts more than k",
+      "args": [
+        "a b c d e",
+        3
+      ],
+      "expected": [
+        [
+          "a",
+          1
+        ],
+        [
+          "b",
+          1
+        ],
+        [
+          "c",
+          1
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "mixed case across input",
+      "args": [
+        "The THE the tHe",
+        1
+      ],
+      "expected": [
+        [
+          "the",
+          4
+        ]
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "top_k_words",
+      "starterPath": "problems/tek-top-k-words/solutions/python/starter.py",
+      "referencePath": "problems/tek-top-k-words/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "topKWords",
+      "starterPath": "problems/tek-top-k-words/solutions/typescript/starter.ts",
+      "referencePath": "problems/tek-top-k-words/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "TopKWords",
+      "starterPath": "problems/tek-top-k-words/solutions/go/starter.go",
+      "referencePath": "problems/tek-top-k-words/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "top_k_words",
+      "starterPath": "problems/tek-top-k-words/solutions/scala/starter.scala",
+      "referencePath": "problems/tek-top-k-words/solutions/scala/reference.scala"
+    }
+  }
+}

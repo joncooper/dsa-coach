@@ -1,0 +1,178 @@
+{
+  "id": "greedy-bonus-07",
+  "kind": "problem",
+  "title": "Rooms For Overlapping Meetings",
+  "difficulty": "easy",
+  "concepts": [
+    "greedy",
+    "intervals",
+    "sorting"
+  ],
+  "prompt": "Each meeting is a pair `[start, end]` with start < end. Two meetings need separate rooms only if their times truly overlap; a meeting ending exactly when another starts may reuse the room. Return the minimum number of rooms that holds every meeting.",
+  "signature": {
+    "name": "minRooms",
+    "inputs": [
+      {
+        "name": "intervals",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "number"
+    }
+  },
+  "tests": [
+    {
+      "name": "double booked",
+      "args": [
+        [
+          [
+            0,
+            30
+          ],
+          [
+            5,
+            10
+          ],
+          [
+            15,
+            20
+          ]
+        ]
+      ],
+      "expected": 2,
+      "visibility": "visible"
+    },
+    {
+      "name": "back to back",
+      "args": [
+        [
+          [
+            7,
+            10
+          ],
+          [
+            2,
+            4
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        []
+      ],
+      "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "single meeting",
+      "args": [
+        [
+          [
+            1,
+            9
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "touching reuses room",
+      "args": [
+        [
+          [
+            1,
+            5
+          ],
+          [
+            5,
+            9
+          ],
+          [
+            9,
+            12
+          ]
+        ]
+      ],
+      "expected": 1,
+      "visibility": "hidden"
+    },
+    {
+      "name": "triple overlap",
+      "args": [
+        [
+          [
+            1,
+            10
+          ],
+          [
+            2,
+            7
+          ],
+          [
+            3,
+            19
+          ]
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    },
+    {
+      "name": "all identical",
+      "args": [
+        [
+          [
+            4,
+            8
+          ],
+          [
+            4,
+            8
+          ],
+          [
+            4,
+            8
+          ]
+        ]
+      ],
+      "expected": 3,
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "min_rooms",
+      "starterPath": "problems/greedy-bonus-07/solutions/python/starter.py",
+      "referencePath": "problems/greedy-bonus-07/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "minRooms",
+      "starterPath": "problems/greedy-bonus-07/solutions/typescript/starter.ts",
+      "referencePath": "problems/greedy-bonus-07/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "MinRooms",
+      "starterPath": "problems/greedy-bonus-07/solutions/go/starter.go",
+      "referencePath": "problems/greedy-bonus-07/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "minRooms",
+      "starterPath": "problems/greedy-bonus-07/solutions/scala/starter.scala",
+      "referencePath": "problems/greedy-bonus-07/solutions/scala/reference.scala"
+    }
+  }
+}
