@@ -100,6 +100,7 @@ interface AssessmentSessionState {
   sessionId?: string;
   assessmentId: string;
   problemId: string;
+  language?: LanguageId;
   mode: AssessmentMode;
   status: AssessmentStatus;
   startedAt: string;
@@ -189,6 +190,7 @@ export function App() {
   const legacyImportInputRef = useRef<HTMLInputElement | null>(null);
   const problemNoteLoadSkipRef = useRef("");
   const scratchpadLoadSkipRef = useRef("");
+  const codeSelectionKeyRef = useRef("");
   const [recentRuns, setRecentRuns] = useState<Array<{ result: RunResult; at: string; includeHidden: boolean }>>([]);
   const [scratchpadCode, setScratchpadCode] = useState(() => defaultScratchpadCode("python"));
   const [scratchpadResult, setScratchpadResult] = useState<RunResult | null>(null);
@@ -463,6 +465,7 @@ export function App() {
     if (!selectedProblemId || !selectedLanguage) return;
     let alive = true;
     setResult(null);
+    codeSelectionKeyRef.current = "";
     void (async () => {
       const selection: WorkspaceSelection = {
         problemId: selectedProblemId,
@@ -470,9 +473,13 @@ export function App() {
         language: selectedLanguage,
         sourceKind
       };
+      const key = workspaceKey(selection);
       const savedBuffer = findWorkspaceBuffer(workspaceStateRef.current, selection);
       if (savedBuffer && !isGeneratedPythonStarter(savedBuffer.code, selectedLanguage)) {
-        if (alive) setCode(savedBuffer.code);
+        if (alive) {
+          codeSelectionKeyRef.current = key;
+          setCode(savedBuffer.code);
+        }
         return;
       }
       try {
@@ -480,7 +487,10 @@ export function App() {
         const source = await getJson<{ code: string }>(
           `/source?problemId=${encodeURIComponent(selectedProblemId)}${partParam}&language=${encodeURIComponent(selectedLanguage)}&kind=${sourceKind}`
         );
-        if (alive) setCode(source.code);
+        if (alive) {
+          codeSelectionKeyRef.current = key;
+          setCode(source.code);
+        }
       } catch (error) {
         if (alive) setCode(`// Could not load ${sourceKind} source: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -492,13 +502,17 @@ export function App() {
 
   useEffect(() => {
     if (!selectedProblemId || !selectedLanguage) return;
+    const selection: WorkspaceSelection = {
+      problemId: selectedProblemId,
+      partId: selectedPartId || undefined,
+      language: selectedLanguage,
+      sourceKind
+    };
+    if (workspaceKey(selection) !== codeSelectionKeyRef.current) return;
     const timer = window.setTimeout(() => {
       const now = new Date().toISOString();
       const nextState = upsertWorkspaceBuffer(workspaceStateRef.current, {
-        problemId: selectedProblemId,
-        partId: selectedPartId || undefined,
-        language: selectedLanguage,
-        sourceKind,
+        ...selection,
         code,
         updatedAt: now
       });
@@ -721,6 +735,12 @@ export function App() {
     const source = await getJson<{ code: string }>(
       `/source?problemId=${encodeURIComponent(selectedProblemId)}${partParam}&language=${encodeURIComponent(selectedLanguage)}&kind=starter`
     );
+    codeSelectionKeyRef.current = workspaceKey({
+      problemId: selectedProblemId,
+      partId: selectedPartId || undefined,
+      language: selectedLanguage,
+      sourceKind
+    });
     setCode(source.code);
     setResult(null);
   }
@@ -949,7 +969,10 @@ export function App() {
           language: selectedLanguage,
           sourceKind
         });
-        if (activeBuffer) setCode(activeBuffer.code);
+        if (activeBuffer) {
+          codeSelectionKeyRef.current = workspaceKey(activeBuffer);
+          setCode(activeBuffer.code);
+        }
       }
     } catch (error) {
       setMigrationError(error instanceof Error ? error.message : String(error));
@@ -2331,12 +2354,13 @@ function AssessmentFlowScreen({
   }
   const problem: Problem = problemOrMissing;
   const levels = assessmentLevelsForProblem(problem);
-  const language = assessmentLanguage(problem, selectedLanguage);
+  const restoredSession = assessmentSessionFor(userData, problem.id);
+  const [session, setSession] = useState<AssessmentSessionState | undefined>(() => restoredSession);
+  const [level, setLevel] = useState(() => restoredSession?.activeLevel ?? 1);
+  const language = assessmentLanguage(problem, session?.language ?? selectedLanguage);
   const pack = languages.find((candidate) => candidate.id === language);
   const runs = assessmentRuns(userData, problem.id);
   const scoreHistory = assessmentScorecardHistory(userData, problem.id);
-  const [session, setSession] = useState<AssessmentSessionState | undefined>(() => assessmentSessionFor(userData, problem.id));
-  const [level, setLevel] = useState(() => assessmentSessionFor(userData, problem.id)?.activeLevel ?? 1);
   const [code, setCode] = useState("");
   const [result, setResult] = useState<RunResult | null>(null);
   const [busy, setBusy] = useState(false);
@@ -2352,6 +2376,8 @@ function AssessmentFlowScreen({
   const [promptPaneCollapsed, setPromptPaneCollapsed] = useState(false);
   const assessmentWorkspaceRef = useRef<HTMLElement | null>(null);
   const assessmentDockDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+  const assessmentSessionRef = useRef<AssessmentSessionState | undefined>(session);
+  const assessmentCodeKeyRef = useRef("");
 
   useEffect(() => {
     const restored = assessmentSessionFor(userData, problem.id);
@@ -2361,7 +2387,11 @@ function AssessmentFlowScreen({
     setHintCount(0);
     setSolutionOpen(false);
     setSaveState("saved");
-  }, [problem.id]);
+  }, [problem.id, userData?.migratedAt]);
+
+  useEffect(() => {
+    assessmentSessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     setDockHeight(clampAssessmentDockHeight(numberPreference(userData, "workspace:bottomDockHeight", 260)));
@@ -2389,15 +2419,23 @@ function AssessmentFlowScreen({
   useEffect(() => {
     if (!session || session.status !== "in-progress") return;
     let alive = true;
+    const key = assessmentCodeKey(problem.id, session.sessionId, language, level);
+    assessmentCodeKeyRef.current = "";
     const load = async () => {
       const cached = session.buffers[level] ?? (level > 1 ? session.buffers[level - 1] : undefined);
       if (typeof cached === "string") {
-        setCode(cached);
+        if (alive) {
+          assessmentCodeKeyRef.current = key;
+          setCode(cached);
+        }
         return;
       }
       try {
         const source = await loadAssessmentStarter(level);
-        if (alive) setCode(source.code);
+        if (alive) {
+          assessmentCodeKeyRef.current = key;
+          setCode(source.code);
+        }
       } catch (error) {
         if (alive) setCode(`// Could not load starter source: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -2411,21 +2449,27 @@ function AssessmentFlowScreen({
     return () => {
       alive = false;
     };
-  }, [language, level, problem, session?.assessmentId, session?.status]);
+  }, [language, level, problem, session?.assessmentId, session?.sessionId, session?.status]);
 
   useEffect(() => {
-    if (!session || session.status !== "in-progress") return;
+    const activeSession = assessmentSessionRef.current;
+    if (!activeSession || activeSession.status !== "in-progress") return;
+    const key = assessmentCodeKey(problem.id, activeSession.sessionId, language, level);
+    if (key !== assessmentCodeKeyRef.current) return;
     const timer = window.setTimeout(() => {
+      const latestSession = assessmentSessionRef.current;
+      if (!latestSession || latestSession.status !== "in-progress") return;
+      if (assessmentCodeKey(problem.id, latestSession.sessionId, language, level) !== key) return;
       const next = {
-        ...session,
+        ...latestSession,
         activeLevel: level,
-        buffers: { ...session.buffers, [level]: code }
+        buffers: { ...latestSession.buffers, [level]: code }
       };
       setSession(next);
       void onSaveAssessmentState(problem.id, "session", next).then(() => setSaveState("saved"));
     }, 650);
     return () => window.clearTimeout(timer);
-  }, [code, level]);
+  }, [code, language, level, problem.id]);
 
   useEffect(() => {
     function handleAssessmentKeyDown(event: KeyboardEvent) {
@@ -2447,6 +2491,7 @@ function AssessmentFlowScreen({
 
   async function resetAssessmentStarter() {
     const source = await loadAssessmentStarter(level);
+    assessmentCodeKeyRef.current = assessmentCodeKey(problem.id, session?.sessionId, language, level);
     setCode(source.code);
     setSaveState("saving");
   }
@@ -2539,6 +2584,7 @@ function AssessmentFlowScreen({
       sessionId,
       assessmentId: problem.id,
       problemId: problem.id,
+      language,
       mode,
       status: "in-progress",
       startedAt,
@@ -5723,6 +5769,10 @@ function createAssessmentSessionId(assessmentId: string, startedAt: string): str
 
 function assessmentSessionId(session: AssessmentSessionState, assessmentId: string): string {
   return session.sessionId ?? `${assessmentId}:${new Date(session.startedAt).getTime() || session.startedAt}`;
+}
+
+function assessmentCodeKey(problemId: string, sessionId: string | undefined, language: LanguageId, level: number): string {
+  return [problemId, sessionId ?? "", language, String(level)].join("\u0000");
 }
 
 function assessmentEventId(type: AssessmentEventType, occurredAt: string): string {

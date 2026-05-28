@@ -162,7 +162,7 @@ export class GoProcessBackend {
       await mkdir(goPath, { recursive: true });
       await writeFile(join(workdir, "go.mod"), "module solution\n\ngo 1.22\n", "utf8");
       await writeFile(join(workdir, "solution.go"), request.code, "utf8");
-      await writeFile(join(workdir, "solution_test.go"), goHarness(support.entrypoint, target.tests[0]?.args.length ?? 0, problem, request, tests), "utf8");
+      await writeFile(join(workdir, "solution_test.go"), goHarness(support.entrypoint, activeSignature(problem, request).inputs.length, problem, request, tests), "utf8");
       const compileResult = await runSandboxedProcess({
         command: goRuntime.command,
         args: ["test", "-c", "-o", "runner.test", "."],

@@ -596,8 +596,7 @@ function lspBackedCompletionSource(
       from: completionRangeStart(response.items, offline?.from ?? context.pos),
       to: completionRangeEnd(response.items, offline?.to ?? context.pos),
       options: dedupeCompletions([...lspOptions, ...offlineOptions]),
-      validFor: /^[A-Za-z0-9_$]*$/,
-      filter: false
+      validFor: /^[A-Za-z0-9_$]*$/
     };
   };
 }

@@ -47,14 +47,16 @@ export function diagnosticsFromErrorText(text: string | undefined, context: Diag
     add(locationDiagnostic(stackMessage, context, Number(match[1]), Number(match[2])));
   }
 
-  const pythonPattern = new RegExp(`File "([^"]*${filePattern})", line (\\d+)(?:, [^\\n]+)?\\n(?:\\s*([^\\n]+)\\n)?(?:\\s*(\\^+)\\n)?`, "g");
+  const pythonPattern = new RegExp(`File "([^"]*${filePattern})", line (\\d+)(?:, [^\\n]+)?\\n(?:([^\\n]+)\\n)?(?:(\\s*\\^+)\\n)?`, "g");
   for (const match of normalized.matchAll(pythonPattern)) {
     const line = Number(match[2]);
     const sourceLine = match[3]?.trimEnd();
-    const caret = match[4];
+    const caretLine = match[4];
     const sourceColumn = sourceLine ? sourceLine.search(/\S|$/) + 1 : undefined;
-    const column = caret && sourceColumn ? sourceColumn + Math.max(0, match[0].lastIndexOf(caret) - match[0].lastIndexOf(sourceLine) - sourceLine.length - 1) : sourceColumn;
-    add(locationDiagnostic(errorSummary(normalized, fallbackMessage), context, line, column));
+    const caretColumn = caretLine?.indexOf("^");
+    const column = caretColumn !== undefined && caretColumn >= 0 ? caretColumn + 1 : sourceColumn;
+    const length = caretLine ? Math.max(1, caretLine.trim().length) : 1;
+    add(locationDiagnostic(errorSummary(normalized, fallbackMessage), context, line, column, length));
   }
 
   if (!diagnostics.length) {
@@ -115,7 +117,14 @@ function errorSummary(text: string, fallback?: string): string {
   const preferred = text
     .split("\n")
     .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith("at ") && !line.startsWith("File ") && !/^\d+\s*\|/.test(line));
+    .filter((line) =>
+      line &&
+      !line.startsWith("at ") &&
+      !line.startsWith("File ") &&
+      !line.startsWith("^") &&
+      !/^Node\.js v\d+/.test(line) &&
+      !/^\d+\s*\|/.test(line)
+    );
   return cleanMessage(preferred[preferred.length - 1] ?? fallback ?? "");
 }
 

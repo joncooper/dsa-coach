@@ -5,7 +5,8 @@ import type { RunDiagnostic, RunResult, ScratchpadRequest } from "../core/types.
 import { writableCacheRoot } from "../runtime/paths.js";
 import { resolveScalaToolchain } from "../toolchains/localToolchains.js";
 import { diagnosticsFromErrorText, formatDiagnosticsForStderr, locationDiagnostic, type DiagnosticContext } from "./errorDiagnostics.js";
-import { commandExists, commandOutput, runSandboxedProcess, withSandboxWorkdir } from "./processSandbox.js";
+import { resolveGoRuntime } from "./goRuntime.js";
+import { commandOutput, runSandboxedProcess, withSandboxWorkdir } from "./processSandbox.js";
 import { resolvePythonRuntime } from "./pythonRuntime.js";
 
 export class ScratchpadRunner {
@@ -96,14 +97,14 @@ async function runTypeScriptScratchpad(request: ScratchpadRequest): Promise<RunR
 
 async function runGoScratchpad(request: ScratchpadRequest): Promise<RunResult> {
   const started = performance.now();
-  if (!(await commandExists("go"))) return unsupported(started, "go is not installed");
+  const go = await resolveGoRuntime();
+  if (!go.runtime) return unsupported(started, go.message ?? "Go runner toolchain is not installed");
+  const goRuntime = go.runtime;
 
   return withSandboxWorkdir("dsa-scratch-go-", async (workdir) => {
     const cacheRoot = writableCacheRoot();
     const goCache = resolve(cacheRoot, "go-build");
     const goPath = resolve(cacheRoot, "gopath");
-    const goToolDir = await commandOutput("go", ["env", "GOTOOLDIR"], 1000);
-    const goCommand = await commandOutput("which", ["go"], 1000);
     await mkdir(goCache, { recursive: true });
     await mkdir(goPath, { recursive: true });
     await writeFile(join(workdir, "go.mod"), "module scratchpad\n\ngo 1.22\n", "utf8");
@@ -112,20 +113,21 @@ async function runGoScratchpad(request: ScratchpadRequest): Promise<RunResult> {
       cwd: workdir,
       timeoutMs: request.timeoutMs ?? 5000,
       env: {
+        ...(goRuntime.goRoot ? { GOROOT: goRuntime.goRoot } : {}),
         GOCACHE: goCache,
         GOPATH: goPath,
         CGO_ENABLED: "0",
         GOFLAGS: "-buildvcs=false"
       },
       writePaths: [goCache, goPath],
-      processExecPaths: [goToolDir, goCommand].filter((path): path is string => Boolean(path)),
+      processExecPaths: goRuntime.processExecPaths,
       allowProcessFork: true,
       allowAnyProcessExec: true,
       sandbox: true
     };
     const compileResult = await runSandboxedProcess({
       ...common,
-      command: "go",
+      command: goRuntime.command,
       args: ["build", "-o", "scratchpad", "."]
     });
     if (compileResult.timedOut) return timeout(started, compileResult.stdout, compileResult.stderr);

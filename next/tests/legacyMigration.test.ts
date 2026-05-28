@@ -84,8 +84,15 @@ describe("legacy backup migration", () => {
         value: expect.objectContaining({
           assessmentId: "asm-filesystem",
           problemId: "asm-filesystem",
-          activeLevel: 1,
-          buffers: {}
+          activeLevel: 2,
+          unlockedLevel: 2,
+          language: "python",
+          mode: "practice",
+          startedAt: "2026-05-23T12:05:00.000Z",
+          buffers: {
+            1: "def solution(queries):\n    return []",
+            2: "def solution(queries):\n    return []"
+          }
         })
       }),
       expect.objectContaining({
@@ -105,11 +112,64 @@ describe("legacy backup migration", () => {
       progress: 1,
       notes: 1,
       attempts: 1,
-        editorBuffers: 5,
+      editorBuffers: 5,
       scratchpads: 1,
       assessmentState: 2,
       preferences: 1,
       coachLogs: 1
+    });
+  });
+
+  test("creates a resumable assessment session when legacy code exists without session state", () => {
+    const migrated = migrateLegacyBackup({
+      settings: [
+        { key: "assessment:code:banking#L3", value: "def solution(queries):\n    return ['ok']" }
+      ]
+    }, { migratedAt: "2026-05-23T12:05:00.000Z" });
+
+    expect(migrated.assessmentState).toEqual([
+      expect.objectContaining({
+        assessmentId: "asm-banking",
+        kind: "session",
+        value: expect.objectContaining({
+          assessmentId: "asm-banking",
+          language: "python",
+          activeLevel: 3,
+          unlockedLevel: 3,
+          buffers: { 3: "def solution(queries):\n    return ['ok']" }
+        })
+      })
+    ]);
+    expect(migrated.migrationReport.counts.assessmentState).toBe(1);
+  });
+
+  test("preserves explicit assessment level state while merging legacy buffers", () => {
+    const migrated = migrateLegacyBackup({
+      settings: [
+        {
+          key: "assessment:session:filesystem",
+          value: {
+            status: "in-progress",
+            activeLevel: 1,
+            unlockedLevel: 4,
+            buffers: { 1: "def solution(queries):\n    return ['l1']" }
+          }
+        },
+        { key: "assessment:code:filesystem#L3", value: "def solution(queries):\n    return ['l3']" }
+      ]
+    }, { migratedAt: "2026-05-23T12:05:00.000Z" });
+
+    expect(migrated.assessmentState[0]).toMatchObject({
+      assessmentId: "asm-filesystem",
+      kind: "session",
+      value: {
+        activeLevel: 1,
+        unlockedLevel: 4,
+        buffers: {
+          1: "def solution(queries):\n    return ['l1']",
+          3: "def solution(queries):\n    return ['l3']"
+        }
+      }
     });
   });
 
