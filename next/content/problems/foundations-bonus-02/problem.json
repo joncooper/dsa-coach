@@ -8,7 +8,7 @@
     "iteration",
     "edge cases"
   ],
-  "prompt": "Return True if the list is sorted in non-decreasing order (equal neighbours are allowed), and False otherwise.",
+  "prompt": "Return `true` if the list is sorted in non-decreasing order (equal neighbours are allowed), and `false` otherwise.",
   "signature": {
     "name": "isSortedAscending",
     "inputs": [

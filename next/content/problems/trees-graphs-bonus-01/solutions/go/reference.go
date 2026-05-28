@@ -4,7 +4,9 @@ func TreeValueSum(values []interface{}) int {
 	root := buildTree(values)
 	var total func(*Node) int
 	total = func(node *Node) int {
-		if node == nil { return 0 }
+		if node == nil {
+			return 0
+		}
 		return node.Value + total(node.Left) + total(node.Right)
 	}
 	return total(root)
@@ -12,7 +14,7 @@ func TreeValueSum(values []interface{}) int {
 
 type Node struct {
 	Value int
-	Left *Node
+	Left  *Node
 	Right *Node
 }
 

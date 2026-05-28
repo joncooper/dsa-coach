@@ -1,43 +1,174 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strconv"
+	"strings"
+)
 
-func Solution(queries [][]string) []string {
-	key := referenceKey(queries)
-	if key == "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"40\"],[\"COMPRESS_FILE\",\"u\",\"f\"],[\"GET_FILE_SIZE\",\"f\"]]]" {
-		return []string{"true", "true", "20", "20"}
-	}
-	if key == "[[[\"COMPRESS_FILE\",\"u\",\"ghost\"]]]" {
-		return []string{""}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"40\"],[\"COMPRESS_FILE\",\"u\",\"f\"],[\"COMPRESS_FILE\",\"u\",\"f\"]]]" {
-		return []string{"true", "true", "20", ""}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"40\"],[\"COMPRESS_FILE\",\"u\",\"f\"],[\"DECOMPRESS_FILE\",\"u\",\"f\"],[\"GET_FILE_SIZE\",\"f\"]]]" {
-		return []string{"true", "true", "20", "40", "40"}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"80\"],[\"COMPRESS_FILE\",\"u\",\"a\"],[\"ADD_FILE_BY\",\"u\",\"b\",\"60\"],[\"GET_FILE_SIZE\",\"a\"],[\"GET_FILE_SIZE\",\"b\"]]]" {
-		return []string{"true", "true", "40", "true", "40", "60"}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"80\"],[\"COMPRESS_FILE\",\"u\",\"a\"],[\"ADD_FILE_BY\",\"u\",\"b\",\"60\"],[\"DECOMPRESS_FILE\",\"u\",\"a\"],[\"GET_FILE_SIZE\",\"a\"]]]" {
-		return []string{"true", "true", "40", "true", "", "40"}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"1\"],[\"COMPRESS_FILE\",\"u\",\"f\"],[\"GET_FILE_SIZE\",\"f\"]]]" {
-		return []string{"true", "true", "0", "0"}
-	}
-	if key == "[[[\"ADD_FILE\",\"s\",\"10\"],[\"ADD_USER\",\"u\",\"100\"],[\"COMPRESS_FILE\",\"u\",\"s\"]]]" {
-		return []string{"true", "true", ""}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"80\"],[\"COMPRESS_FILE\",\"u\",\"a\"],[\"ADD_FILE_BY\",\"u\",\"big\",\"100\"],[\"DECOMPRESS_FILE\",\"u\",\"a\"]]]" {
-		return []string{"true", "true", "40", "true", ""}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"40\"],[\"COMPRESS_FILE\",\"u\",\"a\"],[\"COPY_FILE\",\"a\",\"c\"],[\"GET_FILE_SIZE\",\"c\"]]]" {
-		return []string{"true", "true", "20", "true", "20"}
-	}
-	return []string{}
+const systemOwner = "$system"
+
+type fileRow struct {
+	name string
+	size int
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+type fileInfo struct {
+	size         int
+	owner        string
+	compressed   bool
+	originalSize int
+}
+
+type userInfo struct {
+	limit int
+	used  int
+}
+
+func Solution(queries [][]string) []string {
+	files := map[string]fileInfo{}
+	users := map[string]*userInfo{}
+	out := []string{}
+
+	for _, query := range queries {
+		switch query[0] {
+		case "ADD_FILE":
+			name := query[1]
+			size, _ := strconv.Atoi(query[2])
+			if _, exists := files[name]; exists {
+				out = append(out, "false")
+			} else {
+				files[name] = fileInfo{size: size, owner: systemOwner, originalSize: size}
+				out = append(out, "true")
+			}
+		case "GET_FILE_SIZE":
+			if file, exists := files[query[1]]; exists {
+				out = append(out, strconv.Itoa(file.size))
+			} else {
+				out = append(out, "")
+			}
+		case "COPY_FILE":
+			if source, exists := files[query[1]]; exists {
+				files[query[2]] = fileInfo{size: source.size, owner: systemOwner, originalSize: source.size}
+				out = append(out, "true")
+			} else {
+				out = append(out, "false")
+			}
+		case "FIND_BY_PREFIX":
+			rows := []fileRow{}
+			for name, file := range files {
+				if strings.HasPrefix(name, query[1]) {
+					rows = append(rows, fileRow{name, file.size})
+				}
+			}
+			out = append(out, renderFiles(rows))
+		case "FIND_BY_SUFFIX":
+			rows := []fileRow{}
+			for name, file := range files {
+				if strings.HasSuffix(name, query[1]) {
+					rows = append(rows, fileRow{name, file.size})
+				}
+			}
+			out = append(out, renderFiles(rows))
+		case "ADD_USER":
+			user := query[1]
+			limit, _ := strconv.Atoi(query[2])
+			if _, exists := users[user]; exists {
+				out = append(out, "false")
+			} else {
+				users[user] = &userInfo{limit: limit}
+				out = append(out, "true")
+			}
+		case "ADD_FILE_BY":
+			user, name := query[1], query[2]
+			size, _ := strconv.Atoi(query[3])
+			info, ok := users[user]
+			_, exists := files[name]
+			if !ok || exists || size > info.limit {
+				out = append(out, "false")
+				continue
+			}
+			if info.used+size > info.limit {
+				evictFor(files, info, user, size)
+			}
+			files[name] = fileInfo{size: size, owner: user, originalSize: size}
+			info.used += size
+			out = append(out, "true")
+		case "COMPRESS_FILE":
+			user, name := query[1], query[2]
+			file, exists := files[name]
+			if !exists || file.owner != user || file.compressed {
+				out = append(out, "")
+				continue
+			}
+			newSize := file.size / 2
+			if info, ok := users[user]; ok {
+				info.used -= file.size - newSize
+			}
+			file.originalSize = file.size
+			file.size = newSize
+			file.compressed = true
+			files[name] = file
+			out = append(out, strconv.Itoa(newSize))
+		case "DECOMPRESS_FILE":
+			user, name := query[1], query[2]
+			file, exists := files[name]
+			if !exists || file.owner != user || !file.compressed {
+				out = append(out, "")
+				continue
+			}
+			delta := file.originalSize - file.size
+			if info, ok := users[user]; ok {
+				if info.used+delta > info.limit {
+					out = append(out, "")
+					continue
+				}
+				info.used += delta
+			}
+			file.size = file.originalSize
+			file.compressed = false
+			files[name] = file
+			out = append(out, strconv.Itoa(file.size))
+		default:
+			out = append(out, "")
+		}
+	}
+
+	return out
+}
+
+func evictFor(files map[string]fileInfo, user *userInfo, owner string, size int) {
+	owned := []fileRow{}
+	for name, file := range files {
+		if file.owner == owner {
+			owned = append(owned, fileRow{name, file.size})
+		}
+	}
+	sort.Slice(owned, func(i, j int) bool {
+		if owned[i].size != owned[j].size {
+			return owned[i].size > owned[j].size
+		}
+		return owned[i].name < owned[j].name
+	})
+	for _, row := range owned {
+		if user.used+size <= user.limit {
+			break
+		}
+		delete(files, row.name)
+		user.used -= row.size
+	}
+}
+
+func renderFiles(rows []fileRow) string {
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].size != rows[j].size {
+			return rows[i].size > rows[j].size
+		}
+		return rows[i].name < rows[j].name
+	})
+	parts := make([]string, 0, len(rows))
+	for _, row := range rows {
+		parts = append(parts, row.name+"("+strconv.Itoa(row.size)+")")
+	}
+	return strings.Join(parts, ",")
 }

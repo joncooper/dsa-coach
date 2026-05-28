@@ -8,7 +8,7 @@
     "set membership",
     "first occurrence"
   ],
-  "prompt": "Return the first value whose copy has already appeared earlier in the list — that is, the value at the earliest index that closes a repeat. Return None if every value is unique.",
+  "prompt": "Return the first value whose copy has already appeared earlier in the list — that is, the value at the earliest index that closes a repeat. Return `null` if every value is unique.",
   "signature": {
     "name": "firstRepeatedValue",
     "inputs": [

@@ -3,7 +3,13 @@ package solution
 func CountBoats(weights []int, limit int) int {
 	sorted := sortInts(weights)
 	left, right, boats := 0, len(sorted)-1, 0
-	for left <= right { if sorted[left]+sorted[right] <= limit { left++ }; right--; boats++ }
+	for left <= right {
+		if sorted[left]+sorted[right] <= limit {
+			left++
+		}
+		right--
+		boats++
+	}
 	return boats
 }
 func sortInts(values []int) []int {
@@ -37,6 +43,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

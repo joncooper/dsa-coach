@@ -62,7 +62,7 @@
     {
       "problem": "tek-reconcile-inventory",
       "category": "aggregation",
-      "note": "dict diff, set union, sorted output"
+      "note": "object/map diff, set union, sorted output"
     },
     {
       "problem": "tek-revenue-by-region",
@@ -72,7 +72,7 @@
     {
       "problem": "tek-flatten-config",
       "category": "recursion",
-      "note": "recursion, tree traversal, dict manipulation"
+      "note": "recursion, tree traversal, object/map manipulation"
     },
     {
       "problem": "tek-versioned-kv",

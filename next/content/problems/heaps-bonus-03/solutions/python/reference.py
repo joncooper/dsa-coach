@@ -1,9 +1,14 @@
+import heapq
+
+
 def last_stone_weight(stones: list[int]) -> int:
-    heap = sorted(stones)
+    heap = [-stone for stone in stones]
+    heapq.heapify(heap)
+
     while len(heap) > 1:
-        y = heap.pop()
-        x = heap.pop()
+        y = -heapq.heappop(heap)
+        x = -heapq.heappop(heap)
         if x != y:
-            heap.append(y - x)
-            heap.sort()
-    return heap[0] if heap else 0
+            heapq.heappush(heap, -(y - x))
+
+    return -heap[0] if heap else 0

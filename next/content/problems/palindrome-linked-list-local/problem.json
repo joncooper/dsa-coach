@@ -7,7 +7,7 @@
     "linked-list traversal",
     "palindrome"
   ],
-  "prompt": "Return true if the linked list values read the same forward and backward.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Return `true` if the linked-list values read the same forward and backward, otherwise return `false`.",
   "signature": {
     "name": "palindromeLinkedListLocal",
     "inputs": [

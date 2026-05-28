@@ -1,14 +1,14 @@
 {
   "id": "heaps-bonus-10",
   "kind": "problem",
-  "title": "Maximize Score By Halving",
+  "title": "Minimize Sum By Halving",
   "difficulty": "medium",
   "concepts": [
     "heaps",
     "max-heap",
     "greedy simulation"
   ],
-  "prompt": "Your score starts as the sum of the list. You perform exactly k operations; each operation replaces a chosen value `v` with `ceil(v / 2)`, lowering the score by `v - ceil(v / 2)`. Choosing well loses as little as possible. Return the highest score remaining after exactly k operations.",
+  "prompt": "Your total starts as the sum of the list. Perform up to `k` operations; each operation chooses one current value `v` and replaces it with `ceil(v / 2)`, reducing the total by `v - ceil(v / 2)`. To reduce the total as much as possible, repeatedly halve the largest current value. Return the smallest total remaining.",
   "signature": {
     "name": "maxScoreAfterHalving",
     "inputs": [

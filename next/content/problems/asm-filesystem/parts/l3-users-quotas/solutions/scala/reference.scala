@@ -1,46 +1,66 @@
 object Solution {
+  private val SystemOwner = "$system"
+  private case class FileInfo(var size: Int, owner: String)
+  private case class UserInfo(limit: Int, var used: Int = 0)
+
   def solution(queries: Seq[Seq[String]]): Seq[String] = {
-    referenceKey(queries) match {
-      case "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"40\"],[\"GET_FILE_SIZE\",\"f\"]]]" => Seq("true", "true", "40")
-      case "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"big\",\"80\"],[\"ADD_FILE_BY\",\"u\",\"small\",\"30\"],[\"ADD_FILE_BY\",\"u\",\"new\",\"80\"],[\"GET_FILE_SIZE\",\"big\"],[\"GET_FILE_SIZE\",\"small\"],[\"GET_FILE_SIZE\",\"new\"]]]" => Seq("true", "true", "true", "true", "", "", "80")
-      case "[[[\"ADD_FILE_BY\",\"ghost\",\"f\",\"10\"]]]" => Seq("false")
-      case "[[[\"ADD_USER\",\"u\",\"50\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"50\"],[\"GET_FILE_SIZE\",\"f\"]]]" => Seq("true", "true", "50")
-      case "[[[\"ADD_USER\",\"u\",\"20\"],[\"ADD_FILE_BY\",\"u\",\"b\",\"10\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"10\"],[\"ADD_FILE_BY\",\"u\",\"c\",\"10\"],[\"GET_FILE_SIZE\",\"a\"],[\"GET_FILE_SIZE\",\"b\"],[\"GET_FILE_SIZE\",\"c\"]]]" => Seq("true", "true", "true", "true", "", "10", "10")
-      case "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f1\",\"30\"],[\"ADD_FILE_BY\",\"u\",\"f2\",\"30\"],[\"ADD_FILE_BY\",\"u\",\"f3\",\"30\"],[\"ADD_FILE_BY\",\"u\",\"big\",\"80\"],[\"GET_FILE_SIZE\",\"f1\"],[\"GET_FILE_SIZE\",\"f2\"],[\"GET_FILE_SIZE\",\"f3\"],[\"GET_FILE_SIZE\",\"big\"]]]" => Seq("true", "true", "true", "true", "true", "", "", "", "80")
-      case "[[[\"ADD_USER\",\"u\",\"50\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"20\"],[\"ADD_FILE_BY\",\"u\",\"toobig\",\"60\"],[\"GET_FILE_SIZE\",\"a\"],[\"GET_FILE_SIZE\",\"toobig\"]]]" => Seq("true", "true", "false", "20", "")
-      case "[[[\"ADD_FILE\",\"sys.txt\",\"90\"],[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"ufile\",\"80\"],[\"ADD_FILE_BY\",\"u\",\"ufile2\",\"80\"],[\"GET_FILE_SIZE\",\"sys.txt\"],[\"GET_FILE_SIZE\",\"ufile\"]]]" => Seq("true", "true", "true", "true", "90", "")
-      case "[[[\"ADD_USER\",\"u\",\"10\"],[\"ADD_USER\",\"u\",\"20\"]]]" => Seq("true", "false")
-      case "[[[\"ADD_FILE\",\"x\",\"5\"],[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"x\",\"10\"],[\"GET_FILE_SIZE\",\"x\"]]]" => Seq("true", "true", "false", "5")
-      case _ => Seq.empty
+    val files = scala.collection.mutable.Map.empty[String, FileInfo]
+    val users = scala.collection.mutable.Map.empty[String, UserInfo]
+    val out = scala.collection.mutable.ArrayBuffer.empty[String]
+
+    def render(rows: Iterable[(String, Int)]): String =
+      rows.toSeq.sortBy { case (name, size) => (-size, name) }.map { case (name, size) => s"$name($size)" }.mkString(",")
+
+    def evictFor(user: String, size: Int): Unit = {
+      val info = users(user)
+      val owned = files.collect { case (name, file) if file.owner == user => name -> file.size }.toSeq.sortBy { case (name, fileSize) => (-fileSize, name) }
+      for ((name, fileSize) <- owned if info.used + size > info.limit) {
+        files.remove(name)
+        info.used -= fileSize
+      }
     }
-  }
 
-  private def referenceKey(values: Any*): String = {
-    values.map(canonical).mkString("[", ",", "]")
-  }
-
-  private def canonical(value: Any): String = value match {
-    case s: String => quote(s)
-    case n: Int => n.toString
-    case n: Long => n.toString
-    case n: Double => if (n.isWhole) n.toInt.toString else n.toString
-    case b: Boolean => b.toString
-    case rows: Seq[_] => rows.map(canonical).mkString("[", ",", "]")
-    case map: scala.collection.Map[_, _] =>
-      map.toSeq.map { case (k, v) => quote(k.toString) + ":" + canonical(v) }.sortBy(identity).mkString("{", ",", "}")
-    case null => "null"
-    case other => quote(other.toString)
-  }
-
-  private def quote(value: String): String = {
-    val escaped = value.flatMap {
-      case char if char == 92.toChar => 92.toChar.toString + 92.toChar.toString
-      case char if char == 34.toChar => 92.toChar.toString + 34.toChar.toString
-      case '\n' => 92.toChar.toString + "n"
-      case '\r' => 92.toChar.toString + "r"
-      case '\t' => 92.toChar.toString + "t"
-      case char => char.toString
+    for (query <- queries) query.head match {
+      case "ADD_FILE" =>
+        val name = query(1)
+        if (files.contains(name)) out += "false"
+        else {
+          files(name) = FileInfo(query(2).toInt, SystemOwner)
+          out += "true"
+        }
+      case "GET_FILE_SIZE" => out += files.get(query(1)).map(_.size.toString).getOrElse("")
+      case "COPY_FILE" =>
+        files.get(query(1)) match {
+          case Some(source) =>
+            files(query(2)) = FileInfo(source.size, SystemOwner)
+            out += "true"
+          case None => out += "false"
+        }
+      case "FIND_BY_PREFIX" => out += render(files.collect { case (name, file) if name.startsWith(query(1)) => name -> file.size })
+      case "FIND_BY_SUFFIX" => out += render(files.collect { case (name, file) if name.endsWith(query(1)) => name -> file.size })
+      case "ADD_USER" =>
+        val user = query(1)
+        if (users.contains(user)) out += "false"
+        else {
+          users(user) = UserInfo(query(2).toInt)
+          out += "true"
+        }
+      case "ADD_FILE_BY" =>
+        val user = query(1)
+        val name = query(2)
+        val size = query(3).toInt
+        users.get(user) match {
+          case None => out += "false"
+          case Some(info) if files.contains(name) || size > info.limit => out += "false"
+          case Some(info) =>
+            if (info.used + size > info.limit) evictFor(user, size)
+            files(name) = FileInfo(size, user)
+            info.used += size
+            out += "true"
+        }
+      case _ => out += ""
     }
-    34.toChar.toString + escaped + 34.toChar.toString
+
+    out.toSeq
   }
 }

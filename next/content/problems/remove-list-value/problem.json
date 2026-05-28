@@ -7,7 +7,7 @@
     "dummy head",
     "pointer rewiring"
   ],
-  "prompt": "Remove every node whose value equals `target` and return the new head.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Remove every node whose value equals `target`, then return the resulting list serialized head-to-tail. If no nodes remain, return `[]`.",
   "signature": {
     "name": "removeListValue",
     "inputs": [
@@ -31,8 +31,7 @@
       "type": "array",
       "items": {
         "type": "number"
-      },
-      "nullable": true
+      }
     }
   },
   "tests": [
@@ -150,7 +149,7 @@
         ],
         4
       ],
-      "expected": null,
+      "expected": [],
       "visibility": "hidden"
     },
     {

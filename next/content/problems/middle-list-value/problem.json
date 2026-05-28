@@ -6,7 +6,7 @@
   "concepts": [
     "fast and slow pointers"
   ],
-  "prompt": "Return the value of the middle node. For an even-length list, return the second middle value. Return `None` for an empty list.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Return the value of the middle node. For an even-length list, return the second middle value. Return `null` for an empty list.",
   "signature": {
     "name": "middleListValue",
     "inputs": [

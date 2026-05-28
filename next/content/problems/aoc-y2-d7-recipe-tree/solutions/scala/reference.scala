@@ -1,46 +1,39 @@
 object Solution {
+  private case class Ingredient(amount: Int, name: String)
+  private val Recipe = raw"(\w+) requires (.+)\.".r
+  private val IngredientRule = raw"(\d+) (\w+)".r
+
   def count_dependents_on_paste(inputText: String): Int = {
-    referenceKey(inputText) match {
-      case "[\"core requires 1 binding_paste.\\nshell requires 1 core.\\nbinding_paste requires nothing.\"]" => 2
-      case "[\"alpha requires 1 beta.\\nbeta requires nothing.\"]" => 0
-      case "[\"\"]" => 0
-      case "[\"left requires 1 binding_paste.\\nright requires 1 binding_paste.\\ntop requires 1 left, 1 right.\\nbinding_paste requires nothing.\"]" => 3
-      case "[\"a requires 1 binding_paste.\\nb requires 1 a.\\nc requires 1 b.\\nd requires 1 c.\\nbinding_paste requires nothing.\"]" => 4
-      case "[\"core requires 1 binding_paste.\\nirrelevant requires 1 dust.\\ndust requires nothing.\\nbinding_paste requires nothing.\"]" => 1
-      case "[\"alpha requires 1 beta.\\nbeta requires 1 gamma.\\ngamma requires nothing.\\nbinding_paste requires nothing.\"]" => 0
-      case "[\"alpha requires 1 binding_paste.\\nbeta requires 1 binding_paste.\\ngamma requires 1 binding_paste.\\nbinding_paste requires nothing.\"]" => 3
-      case "[\"a requires 1 b.\\nb requires 1 c.\\nc requires 1 binding_paste.\\nbinding_paste requires nothing.\"]" => 3
-      case "[\"tonic requires 5 binding_paste, 3 herb.\\nherb requires nothing.\\nbinding_paste requires nothing.\"]" => 1
-      case _ => 0
+    val children = parseRecipes(inputText)
+    val parents = scala.collection.mutable.Map.empty[String, scala.collection.mutable.ArrayBuffer[String]]
+
+    for ((parent, ingredients) <- children; ingredient <- ingredients) {
+      parents.getOrElseUpdate(ingredient.name, scala.collection.mutable.ArrayBuffer.empty) += parent
     }
-  }
 
-  private def referenceKey(values: Any*): String = {
-    values.map(canonical).mkString("[", ",", "]")
-  }
+    val seen = scala.collection.mutable.Set.empty[String]
+    val stack = scala.collection.mutable.ArrayBuffer.empty[String]
+    stack ++= parents.getOrElse("binding_paste", Seq.empty)
 
-  private def canonical(value: Any): String = value match {
-    case s: String => quote(s)
-    case n: Int => n.toString
-    case n: Long => n.toString
-    case n: Double => if (n.isWhole) n.toInt.toString else n.toString
-    case b: Boolean => b.toString
-    case rows: Seq[_] => rows.map(canonical).mkString("[", ",", "]")
-    case map: scala.collection.Map[_, _] =>
-      map.toSeq.map { case (k, v) => quote(k.toString) + ":" + canonical(v) }.sortBy(identity).mkString("{", ",", "}")
-    case null => "null"
-    case other => quote(other.toString)
-  }
-
-  private def quote(value: String): String = {
-    val escaped = value.flatMap {
-      case char if char == 92.toChar => 92.toChar.toString + 92.toChar.toString
-      case char if char == 34.toChar => 92.toChar.toString + 34.toChar.toString
-      case '\n' => 92.toChar.toString + "n"
-      case '\r' => 92.toChar.toString + "r"
-      case '\t' => 92.toChar.toString + "t"
-      case char => char.toString
+    while (stack.nonEmpty) {
+      val item = stack.remove(stack.length - 1)
+      if (!seen(item)) {
+        seen += item
+        stack ++= parents.getOrElse(item, Seq.empty)
+      }
     }
-    34.toChar.toString + escaped + 34.toChar.toString
+
+    seen.size
   }
+
+  private def parseRecipes(inputText: String): Map[String, Vector[Ingredient]] =
+    inputText.linesIterator.map(_.trim).filter(_.nonEmpty).flatMap {
+      case Recipe(name, "nothing") => Some(name -> Vector.empty[Ingredient])
+      case Recipe(name, ingredientsText) =>
+        val ingredients = IngredientRule.findAllMatchIn(ingredientsText).map { m =>
+          Ingredient(m.group(1).toInt, m.group(2))
+        }.toVector
+        Some(name -> ingredients)
+      case _ => None
+    }.toMap
 }

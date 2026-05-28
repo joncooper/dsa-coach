@@ -1,43 +1,48 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strconv"
+	"strings"
+	"unicode"
+)
 
 func TopThreeBlockSum(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"\"]" {
-		return 0
+	sums := []int{}
+	for _, block := range strings.Split(inputText, "\n\n") {
+		sums = append(sums, blockSum(block))
 	}
-	if key == "[\"a=5\"]" {
-		return 5
+	sort.Sort(sort.Reverse(sort.IntSlice(sums)))
+	total := 0
+	for i := 0; i < len(sums) && i < 3; i++ {
+		total += sums[i]
 	}
-	if key == "[\"a=3\\n\\nb=4\"]" {
-		return 7
-	}
-	if key == "[\"a=1\\n\\nb=100\\n\\nc=10\\n\\nd=50\"]" {
-		return 160
-	}
-	if key == "[\"a=1\\n\\nb=2\\n\\nc=3\\n\\nd=4\\n\\ne=5\"]" {
-		return 12
-	}
-	if key == "[\"a=10\\n\\nb=20\\n\\nc=30\"]" {
-		return 60
-	}
-	if key == "[\"a=foo\\n\\nb=10\\n\\nc=garbage\\nd=5\"]" {
-		return 15
-	}
-	if key == "[\"a=50\\n\\nb=30\"]" {
-		return 80
-	}
-	if key == "[\"a=10\\n\\nb=10\\n\\nc=10\\n\\nd=10\"]" {
-		return 30
-	}
-	if key == "[\"a=0\\n\\nb=0\\n\\nc=0\\n\\nd=5\"]" {
-		return 5
-	}
-	return 0
+	return total
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func blockSum(block string) int {
+	total := 0
+	for _, raw := range strings.Split(block, "\n") {
+		line := strings.TrimSpace(raw)
+		idx := strings.IndexByte(line, '=')
+		if idx < 0 {
+			continue
+		}
+		value := strings.TrimSpace(line[idx+1:])
+		if allDigits(value) {
+			n, _ := strconv.Atoi(value)
+			total += n
+		}
+	}
+	return total
+}
+func allDigits(text string) bool {
+	if text == "" {
+		return false
+	}
+	for _, ch := range text {
+		if !unicode.IsDigit(ch) {
+			return false
+		}
+	}
+	return true
 }

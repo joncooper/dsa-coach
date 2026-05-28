@@ -37,6 +37,7 @@ describe("legacy backup migration", () => {
       settings: [
         { key: "code:running-maximum", value: "def running_maximum(nums):\n    return []" },
         { key: "code:multi-part#part-2", value: "def solve(x):\n    return x" },
+        { key: "code:filesystem#L1", value: "def solution(queries):\n    return []" },
         { key: "scratchpad:running-maximum", value: "print('notes')" },
         { key: "assessment:code:filesystem#L2", value: "def solution(queries):\n    return []" },
         { key: "assessment:finish-code:filesystem#L2", value: "def solution(queries):\n    return ['done']" },
@@ -68,13 +69,35 @@ describe("legacy backup migration", () => {
     expect(migrated.editorBuffers).toEqual([
       expect.objectContaining({ scope: "problem", contentId: "running-maximum", language: "python" }),
       expect.objectContaining({ scope: "problem-part", contentId: "multi-part", partId: "part-2" }),
-      expect.objectContaining({ scope: "assessment-level", contentId: "filesystem", level: 2 }),
-      expect.objectContaining({ scope: "assessment-finish-snapshot", contentId: "filesystem", level: 2 })
+      expect.objectContaining({ scope: "assessment-level", contentId: "asm-filesystem", level: 1 }),
+      expect.objectContaining({ scope: "assessment-level", contentId: "asm-filesystem", level: 2 }),
+      expect.objectContaining({ scope: "assessment-finish-snapshot", contentId: "asm-filesystem", level: 2 })
     ]);
     expect(migrated.scratchpads).toEqual([
       expect.objectContaining({ problemId: "running-maximum", language: "python" })
     ]);
     expect(migrated.assessmentState).toHaveLength(2);
+    expect(migrated.assessmentState).toEqual([
+      expect.objectContaining({
+        assessmentId: "asm-filesystem",
+        kind: "session",
+        value: expect.objectContaining({
+          assessmentId: "asm-filesystem",
+          problemId: "asm-filesystem",
+          activeLevel: 1,
+          buffers: {}
+        })
+      }),
+      expect.objectContaining({
+        assessmentId: "asm-filesystem",
+        kind: "scorecard",
+        value: expect.objectContaining({
+          assessmentId: "asm-filesystem",
+          problemId: "asm-filesystem",
+          totalScore: 420
+        })
+      })
+    ]);
     expect(migrated.preferences).toEqual([{ key: "workspace:splitRatio", value: 38 }]);
     expect(migrated.coachLogs).toMatchObject([{ conversationId: "conv-1", legacyId: 2 }]);
     expect(migrated.legacySnapshots).toHaveLength(1);
@@ -82,7 +105,7 @@ describe("legacy backup migration", () => {
       progress: 1,
       notes: 1,
       attempts: 1,
-      editorBuffers: 4,
+        editorBuffers: 5,
       scratchpads: 1,
       assessmentState: 2,
       preferences: 1,

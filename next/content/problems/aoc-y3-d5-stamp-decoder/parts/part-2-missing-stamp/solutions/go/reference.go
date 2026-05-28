@@ -1,43 +1,31 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strconv"
+	"strings"
+)
 
 func FindMissingStamp(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"000001\\n000003\"]" {
-		return 2
+	seen := map[int]bool{}
+	values := []int{}
+	for _, raw := range strings.Split(inputText, "\n") {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		value, _ := strconv.ParseInt(line, 36, 64)
+		n := int(value)
+		if !seen[n] {
+			seen[n] = true
+			values = append(values, n)
+		}
 	}
-	if key == "[\"\"]" {
-		return -1
+	sort.Ints(values)
+	for i := 0; i+1 < len(values); i++ {
+		if values[i+1]-values[i] == 2 {
+			return values[i] + 1
+		}
 	}
-	if key == "[\"000001\\n000002\"]" {
-		return -1
-	}
-	if key == "[\"000001\\n000002\\n000003\\n000005\"]" {
-		return 4
-	}
-	if key == "[\"000001\\n000003\\n000005\"]" {
-		return 2
-	}
-	if key == "[\"00000a\"]" {
-		return -1
-	}
-	if key == "[\"000001\\n000004\"]" {
-		return -1
-	}
-	if key == "[\"000001\\n000001\\n000003\"]" {
-		return 2
-	}
-	if key == "[\"000005\\n000001\\n000003\"]" {
-		return 2
-	}
-	if key == "[\"000001\\n000002\\n000003\\n000005\\n000006\\n000007\"]" {
-		return 4
-	}
-	return 0
-}
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+	return -1
 }

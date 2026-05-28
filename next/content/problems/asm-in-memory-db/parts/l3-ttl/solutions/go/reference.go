@@ -1,40 +1,108 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strconv"
+	"strings"
+)
 
-func Solution(queries [][]string) []string {
-	key := referenceKey(queries)
-	if key == "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"10\"],[\"GET\",\"5\",\"user:1\",\"name\"]]]" {
-		return []string{"true", "alice"}
-	}
-	if key == "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"10\"],[\"GET\",\"15\",\"user:1\",\"name\"]]]" {
-		return []string{"true", ""}
-	}
-	if key == "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"10\"],[\"GET\",\"11\",\"user:1\",\"name\"]]]" {
-		return []string{"true", ""}
-	}
-	if key == "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"5\"],[\"SET\",\"2\",\"user:1\",\"name\",\"bob\"],[\"GET\",\"20\",\"user:1\",\"name\"]]]" {
-		return []string{"true", "true", "bob"}
-	}
-	if key == "[[[\"SET\",\"1\",\"user:1\",\"name\",\"alice\"],[\"SET_AT\",\"2\",\"user:1\",\"session\",\"abc\",\"5\"],[\"SCAN\",\"20\",\"user:1\"]]]" {
-		return []string{"true", "true", "name=alice"}
-	}
-	if key == "[[[\"SET_AT\",\"1\",\"user:1\",\"session\",\"abc\",\"5\"],[\"DELETE\",\"20\",\"user:1\",\"session\"]]]" {
-		return []string{"true", "false"}
-	}
-	if key == "[[[\"SET_AT\",\"1\",\"user:1\",\"session_old\",\"x\",\"5\"],[\"SET\",\"2\",\"user:1\",\"session_new\",\"y\"],[\"SCAN_BY_PREFIX\",\"20\",\"user:1\",\"session\"]]]" {
-		return []string{"true", "true", "session_new=y"}
-	}
-	if key == "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"5\"],[\"SET_AT\",\"2\",\"user:1\",\"name\",\"bob\",\"100\"],[\"GET\",\"50\",\"user:1\",\"name\"]]]" {
-		return []string{"true", "true", "bob"}
-	}
-	if key == "[[[\"SET_AT\",\"1\",\"user:1\",\"a\",\"1\",\"5\"],[\"SET_AT\",\"2\",\"user:1\",\"b\",\"2\",\"5\"],[\"SCAN\",\"20\",\"user:1\"]]]" {
-		return []string{"true", "true", ""}
-	}
-	return []string{}
+type fieldKey struct {
+	key   string
+	field string
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+type fieldRow struct {
+	field string
+	value string
+}
+
+func Solution(queries [][]string) []string {
+	store := map[string]map[string]string{}
+	ttls := map[fieldKey]int{}
+	out := []string{}
+
+	alive := func(key, field string, timestamp int) bool {
+		fields := store[key]
+		if fields == nil {
+			return false
+		}
+		if _, exists := fields[field]; !exists {
+			return false
+		}
+		exp, hasTTL := ttls[fieldKey{key, field}]
+		return !hasTTL || timestamp < exp
+	}
+
+	deleteField := func(key, field string) {
+		if fields := store[key]; fields != nil {
+			delete(fields, field)
+			if len(fields) == 0 {
+				delete(store, key)
+			}
+		}
+		delete(ttls, fieldKey{key, field})
+	}
+
+	liveRows := func(key string, timestamp int, prefix string) []fieldRow {
+		rows := []fieldRow{}
+		for field, value := range store[key] {
+			if strings.HasPrefix(field, prefix) && alive(key, field, timestamp) {
+				rows = append(rows, fieldRow{field, value})
+			}
+		}
+		return rows
+	}
+
+	for _, query := range queries {
+		timestamp, _ := strconv.Atoi(query[1])
+		switch query[0] {
+		case "SET":
+			key, field, value := query[2], query[3], query[4]
+			if store[key] == nil {
+				store[key] = map[string]string{}
+			}
+			store[key][field] = value
+			delete(ttls, fieldKey{key, field})
+			out = append(out, "true")
+		case "SET_AT":
+			key, field, value := query[2], query[3], query[4]
+			ttl, _ := strconv.Atoi(query[5])
+			if store[key] == nil {
+				store[key] = map[string]string{}
+			}
+			store[key][field] = value
+			ttls[fieldKey{key, field}] = timestamp + ttl
+			out = append(out, "true")
+		case "GET":
+			if alive(query[2], query[3], timestamp) {
+				out = append(out, store[query[2]][query[3]])
+			} else {
+				out = append(out, "")
+			}
+		case "DELETE":
+			if alive(query[2], query[3], timestamp) {
+				deleteField(query[2], query[3])
+				out = append(out, "true")
+			} else {
+				out = append(out, "false")
+			}
+		case "SCAN":
+			out = append(out, renderFields(liveRows(query[2], timestamp, "")))
+		case "SCAN_BY_PREFIX":
+			out = append(out, renderFields(liveRows(query[2], timestamp, query[3])))
+		default:
+			out = append(out, "")
+		}
+	}
+
+	return out
+}
+
+func renderFields(rows []fieldRow) string {
+	sort.Slice(rows, func(i, j int) bool { return rows[i].field < rows[j].field })
+	parts := make([]string, 0, len(rows))
+	for _, row := range rows {
+		parts = append(parts, row.field+"="+row.value)
+	}
+	return strings.Join(parts, ",")
 }

@@ -1,11 +1,12 @@
 object Solution {
   def minConnectCost(ropes: Seq[Int]): Int = {
-    var heap = ropes.sorted
+    val heap = scala.collection.mutable.PriorityQueue.empty[Int](Ordering.Int.reverse)
+    heap.enqueue(ropes: _*)
     var cost = 0
-    while (heap.length > 1) {
-      val merged = heap.head + heap(1)
+    while (heap.size > 1) {
+      val merged = heap.dequeue() + heap.dequeue()
       cost += merged
-      heap = (heap.drop(2) :+ merged).sorted
+      heap.enqueue(merged)
     }
     cost
   }

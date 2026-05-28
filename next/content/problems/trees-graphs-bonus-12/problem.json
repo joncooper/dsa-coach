@@ -8,7 +8,7 @@
     "DFS",
     "cycle detection"
   ],
-  "prompt": "You are given a directed graph as an adjacency dictionary mapping each node name to a list of node names it points to. Return True if the graph contains a directed cycle, and False otherwise.",
+  "prompt": "You are given a directed graph as an adjacency map from each node name to a list of node names it points to. Return `true` if the graph contains a directed cycle, and `false` otherwise.",
   "signature": {
     "name": "hasCycle",
     "inputs": [

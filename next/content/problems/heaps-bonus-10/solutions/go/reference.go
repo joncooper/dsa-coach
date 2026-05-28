@@ -1,38 +1,48 @@
 package solution
 
+import "container/heap"
+
 func MaxScoreAfterHalving(nums []int, k int) int {
-	values := append([]int{}, nums...)
-	for count := 0; count < k; count++ {
-		values = sortInts(values); reverseInts(values)
-		if len(values) == 0 || values[0] <= 1 { break }
-		values[0] = (values[0] + 1) / 2
-	}
+	pq := &intHeap{less: func(a int, b int) bool { return a > b }}
+	heap.Init(pq)
 	total := 0
-	for _, value := range values { total += value }
+	for _, num := range nums {
+		total += num
+		heap.Push(pq, num)
+	}
+	for count := 0; count < k && pq.Len() > 0; count++ {
+		value := heap.Pop(pq).(int)
+		if value <= 1 {
+			heap.Push(pq, value)
+			break
+		}
+		reduced := (value + 1) / 2
+		total -= value - reduced
+		heap.Push(pq, reduced)
+	}
 	return total
 }
-func sortInts(values []int) []int {
-	result := append([]int{}, values...)
-	for i := 0; i < len(result); i++ {
-		for j := i + 1; j < len(result); j++ {
-			if result[j] < result[i] {
-				result[i], result[j] = result[j], result[i]
-			}
-		}
-	}
-	return result
+
+type intHeap struct {
+	values []int
+	less   func(a int, b int) bool
 }
 
-func reverseInts(values []int) {
-	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
-		values[left], values[right] = values[right], values[left]
-	}
+func (h intHeap) Len() int           { return len(h.values) }
+func (h intHeap) Less(i, j int) bool { return h.less(h.values[i], h.values[j]) }
+func (h intHeap) Swap(i, j int)      { h.values[i], h.values[j] = h.values[j], h.values[i] }
+
+func (h *intHeap) Push(x any) {
+	h.values = append(h.values, x.(int))
 }
 
-func countPairs(counts map[int]int) [][]int {
-	pairs := [][]int{}
-	for num, count := range counts {
-		pairs = append(pairs, []int{num, count})
-	}
-	return pairs
+func (h *intHeap) Pop() any {
+	old := h.values
+	value := old[len(old)-1]
+	h.values = old[:len(old)-1]
+	return value
+}
+
+func (h *intHeap) Peek() int {
+	return h.values[0]
 }

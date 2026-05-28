@@ -1,46 +1,44 @@
 package solution
 
-import "encoding/json"
+import (
+	"strconv"
+	"strings"
+)
 
 func RisingWindows(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"3\\n1\\n2\\n3\\n4\\n5\"]" {
-		return 2
-	}
-	if key == "[\"2\\n5\\n5\\n5\\n5\"]" {
+	lines := nonEmptyLines(inputText)
+	if len(lines) == 0 {
 		return 0
 	}
-	if key == "[\"\"]" {
+	k, _ := strconv.Atoi(lines[0])
+	days := []int{}
+	for _, line := range lines[1:] {
+		n, _ := strconv.Atoi(line)
+		days = append(days, n)
+	}
+	if len(days) <= k {
 		return 0
 	}
-	if key == "[\"3\\n1\\n2\\n3\"]" {
-		return 0
+	prev := 0
+	for _, day := range days[:k] {
+		prev += day
 	}
-	if key == "[\"2\\n1\\n2\\n0\\n5\"]" {
-		return 1
+	rising := 0
+	for i := k; i < len(days); i++ {
+		next := prev + days[i] - days[i-k]
+		if next > prev {
+			rising++
+		}
+		prev = next
 	}
-	if key == "[\"1\\n5\\n4\\n3\\n2\"]" {
-		return 0
-	}
-	if key == "[\"3\\n3\\n3\\n3\\n3\\n3\"]" {
-		return 0
-	}
-	if key == "[\"2\\n-10\\n0\\n5\\n-1\"]" {
-		return 1
-	}
-	if key == "[\"3\\n1\\n2\\n3\\n4\"]" {
-		return 1
-	}
-	if key == "[\"2\\n1\\n1\\n1\\n1\"]" {
-		return 0
-	}
-	if key == "[\"1\\n1\\n2\\n1\\n2\\n1\\n2\"]" {
-		return 3
-	}
-	return 0
+	return rising
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func nonEmptyLines(text string) []string {
+	out := []string{}
+	for _, line := range strings.Split(text, "\n") {
+		if strings.TrimSpace(line) != "" {
+			out = append(out, strings.TrimSpace(line))
+		}
+	}
+	return out
 }

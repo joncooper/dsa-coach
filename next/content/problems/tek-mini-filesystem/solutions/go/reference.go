@@ -1,40 +1,85 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strings"
+)
 
-func RunFs(queries [][]string) []any {
-	key := referenceKey(queries)
-	if key == "[[[\"mkdir\",\"/a/b\"],[\"addFile\",\"/a/b/f.txt\",\"hi\"],[\"ls\",\"/a\"],[\"cat\",\"/a/b/f.txt\"]]]" {
-		return []any{[]string{"b"}, "hi"}
+func RunFs(commands [][]any) []any {
+	root := &node{children: map[string]*node{}}
+	parts := func(path string) []string {
+		out := []string{}
+		for _, part := range strings.Split(path, "/") {
+			if part != "" {
+				out = append(out, part)
+			}
+		}
+		return out
 	}
-	if key == "[[[\"mkdir\",\"/x\"],[\"mkdir\",\"/y\"],[\"ls\",\"/\"]]]" {
-		return []any{[]string{"x", "y"}}
+	var nodeAt func([]string, bool) *node
+	nodeAt = func(segs []string, create bool) *node {
+		cur := root
+		for _, seg := range segs {
+			if cur.children == nil {
+				return nil
+			}
+			next := cur.children[seg]
+			if next == nil {
+				if !create {
+					return nil
+				}
+				next = &node{children: map[string]*node{}}
+				cur.children[seg] = next
+			}
+			cur = next
+		}
+		return cur
 	}
-	if key == "[[[\"mkdir\",\"/a\"],[\"addFile\",\"/a/f\",\"z\"]]]" {
-		return []any{}
+	out := []any{}
+	for _, cmd := range commands {
+		switch asString(cmd[0]) {
+		case "mkdir":
+			nodeAt(parts(asString(cmd[1])), true)
+		case "addFile":
+			segs := parts(asString(cmd[1]))
+			parent := nodeAt(segs[:len(segs)-1], true)
+			parent.children[segs[len(segs)-1]] = &node{content: asString(cmd[2])}
+		case "ls":
+			segs := parts(asString(cmd[1]))
+			cur := nodeAt(segs, false)
+			if cur.children == nil {
+				out = append(out, []string{segs[len(segs)-1]})
+			} else {
+				names := make([]string, 0, len(cur.children))
+				for name := range cur.children {
+					names = append(names, name)
+				}
+				sort.Strings(names)
+				out = append(out, names)
+			}
+		case "cat":
+			out = append(out, nodeAt(parts(asString(cmd[1])), false).content)
+		case "rm":
+			segs := parts(asString(cmd[1]))
+			if len(segs) > 0 {
+				parent := nodeAt(segs[:len(segs)-1], false)
+				if parent != nil && parent.children != nil {
+					delete(parent.children, segs[len(segs)-1])
+				}
+			}
+		}
 	}
-	if key == "[[[\"mkdir\",\"/a/b\"],[\"addFile\",\"/a/b/f\",\"z\"],[\"rm\",\"/a/b\"],[\"ls\",\"/a\"]]]" {
-		return []any{[]any{}}
-	}
-	if key == "[[[\"addFile\",\"/a/f\",\"1\"],[\"addFile\",\"/a/f\",\"2\"],[\"cat\",\"/a/f\"]]]" {
-		return []any{"2"}
-	}
-	if key == "[[[\"addFile\",\"/a/f\",\"x\"],[\"ls\",\"/a/f\"]]]" {
-		return []any{[]string{"f"}}
-	}
-	if key == "[[[\"addFile\",\"/a/zeta\",\"1\"],[\"mkdir\",\"/a/alpha\"],[\"addFile\",\"/a/mid\",\"2\"],[\"ls\",\"/a\"]]]" {
-		return []any{[]string{"alpha", "mid", "zeta"}}
-	}
-	if key == "[[[\"addFile\",\"/p/q/r.txt\",\"data\"],[\"cat\",\"/p/q/r.txt\"]]]" {
-		return []any{"data"}
-	}
-	if key == "[[[\"addFile\",\"/a/f\",\"old\"],[\"rm\",\"/a/f\"],[\"addFile\",\"/a/f\",\"new\"],[\"cat\",\"/a/f\"]]]" {
-		return []any{"new"}
-	}
-	return []any{}
+	return out
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+type node struct {
+	children map[string]*node
+	content  string
+}
+
+func asString(value any) string {
+	if s, ok := value.(string); ok {
+		return s
+	}
+	return ""
 }

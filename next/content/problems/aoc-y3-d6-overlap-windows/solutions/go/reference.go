@@ -1,49 +1,35 @@
 package solution
 
-import "encoding/json"
+import "strings"
 
 func OddTagCount(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"a,b\\nb,c\\n\\nx,y\\nx,y\\nx\"]" {
-		return 3
+	total := 0
+	for _, block := range strings.Split(inputText, "\n\n") {
+		counts := map[string]int{}
+		hadLine := false
+		for _, raw := range strings.Split(block, "\n") {
+			line := strings.TrimSpace(raw)
+			if line == "" {
+				continue
+			}
+			hadLine = true
+			tags := map[string]bool{}
+			for _, token := range strings.Split(line, ",") {
+				if token != "" {
+					tags[token] = true
+				}
+			}
+			for tag := range tags {
+				counts[tag]++
+			}
+		}
+		if hadLine {
+			for _, count := range counts {
+				if count%2 == 1 {
+					total++
+				}
+			}
+		}
 	}
-	if key == "[\"\"]" {
-		return 0
-	}
-	if key == "[\"a,b,c\"]" {
-		return 3
-	}
-	if key == "[\"a\\na\"]" {
-		return 0
-	}
-	if key == "[\"a,a,b\\nb,c\"]" {
-		return 2
-	}
-	if key == "[\"a,b\\nb,c\\nc,a\"]" {
-		return 0
-	}
-	if key == "[\"a\\na\\na\\n\\nx\\ny\\nx,y\"]" {
-		return 1
-	}
-	if key == "[\"a,b\\n\\n\\n\"]" {
-		return 2
-	}
-	if key == "[\"a\\na\"]" {
-		return 0
-	}
-	if key == "[\"a\\na\\na\"]" {
-		return 1
-	}
-	if key == "[\"a,a,a\\nb\"]" {
-		return 2
-	}
-	if key == "[\"a,b\\na\\nb\\nc\\nc,d\"]" {
-		return 1
-	}
-	return 0
-}
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+	return total
 }

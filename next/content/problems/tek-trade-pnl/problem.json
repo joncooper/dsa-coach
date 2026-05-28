@@ -8,7 +8,7 @@
     "FIFO matching",
     "domain modeling"
   ],
-  "prompt": "You are given a chronological list of trades for a single instrument. Each trade is a dict with keys `side` (`\"BUY\"` or `\"SELL\"`), `qty` (positive integer), and `price` (integer cents per share). Compute the total realized profit and loss in cents using FIFO lot matching: every SELL is matched against the oldest unsold BUY lots in order. Unmatched BUY quantity remains as open inventory and does not contribute to realized P&L. Trades are processed in input order; you may assume the input never sells more than has been bought.",
+  "prompt": "You are given a chronological list of trades for a single instrument. Each trade is an object/map with keys `side` (`\"BUY\"` or `\"SELL\"`), `qty` (positive integer), and `price` (integer cents per share). Compute the total realized profit and loss in cents using FIFO lot matching: every SELL is matched against the oldest unsold BUY lots in order. Unmatched BUY quantity remains as open inventory and does not contribute to realized P&L. Trades are processed in input order; you may assume the input never sells more than has been bought.",
   "signature": {
     "name": "realizedPnl",
     "inputs": [
@@ -304,7 +304,7 @@
     {
       "id": "part-2-multi-instrument",
       "title": "Part 2: Multiple instruments",
-      "prompt": "Now the tape contains trades for many instruments. Each trade has an additional `symbol` field (string). FIFO lots are tracked per symbol — a SELL in one symbol never consumes BUY lots from another. Return a dict mapping `symbol -> total realized P&L in cents`. Symbols that never had a SELL should not appear in the output. A symbol whose realized P&L is exactly zero (because of offsetting wins and losses) does appear.",
+      "prompt": "Now the tape contains trades for many instruments. Each trade has an additional `symbol` field (string). FIFO lots are tracked per symbol — a SELL in one symbol never consumes BUY lots from another. Return an object/map from `symbol -> total realized P&L in cents`. Symbols that never had a SELL should not appear in the output. A symbol whose realized P&L is exactly zero (because of offsetting wins and losses) does appear.",
       "signature": {
         "name": "realized_pnl_by_symbol",
         "inputs": [

@@ -1,43 +1,26 @@
 package solution
 
-import "encoding/json"
+import (
+	"strconv"
+	"strings"
+)
 
 func MaxSeatId(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"FBFBBFFRLR\\nBFFFBBFRRR\"]" {
-		return 567
+	best := -1
+	for _, raw := range strings.Split(inputText, "\n") {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		id := seatID(line)
+		if id > best {
+			best = id
+		}
 	}
-	if key == "[\"FFFBBBFRRR\\nBBFFBBFRLL\\nFBFBBFFRLR\"]" {
-		return 820
-	}
-	if key == "[\"\"]" {
-		return -1
-	}
-	if key == "[\"FBFBBFFRLR\"]" {
-		return 357
-	}
-	if key == "[\"FFFFFFFLLL\"]" {
-		return 0
-	}
-	if key == "[\"BBBBBBBRRR\"]" {
-		return 1023
-	}
-	if key == "[\"\\nFBFBBFFRLR\\n\\nBFFFBBFRRR\\n\"]" {
-		return 567
-	}
-	if key == "[\"FFFFFFFRLL\\nFFFFFFFLLR\"]" {
-		return 4
-	}
-	if key == "[\"FFFFFFBLLL\"]" {
-		return 8
-	}
-	if key == "[\"FFFFFFFLLL\\nBFFFFFFLLL\\nFBFFFFFLLL\"]" {
-		return 512
-	}
-	return 0
+	return best
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func seatID(code string) int {
+	bits := strings.NewReplacer("F", "0", "B", "1", "L", "0", "R", "1").Replace(code)
+	value, _ := strconv.ParseInt(bits, 2, 64)
+	return int(value)
 }

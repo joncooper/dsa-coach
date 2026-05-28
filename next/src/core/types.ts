@@ -157,6 +157,7 @@ export type RunStatus =
   | "compile-error"
   | "runtime-error"
   | "timeout"
+  | "stopped"
   | "unsupported";
 
 export interface TestResult {
@@ -167,6 +168,27 @@ export interface TestResult {
   expected: unknown;
   actual?: unknown;
   error?: string;
+  diagnostics?: RunDiagnostic[];
+}
+
+export interface RunDiagnosticSnippetLine {
+  line: number;
+  text: string;
+  markerStart?: number;
+  markerLength?: number;
+}
+
+export interface RunDiagnostic {
+  message: string;
+  severity: "error" | "warning" | "info";
+  source?: string;
+  file?: string;
+  line?: number;
+  column?: number;
+  endLine?: number;
+  endColumn?: number;
+  code?: string | number;
+  snippet?: RunDiagnosticSnippetLine[];
 }
 
 export interface RunResult {
@@ -176,6 +198,7 @@ export interface RunResult {
   durationMs: number;
   tests: TestResult[];
   message?: string;
+  diagnostics?: RunDiagnostic[];
 }
 
 export interface RunRequest {
@@ -184,5 +207,11 @@ export interface RunRequest {
   partId?: string;
   code: string;
   includeHidden: boolean;
+  timeoutMs?: number;
+}
+
+export interface ScratchpadRequest {
+  language: LanguageId;
+  code: string;
   timeoutMs?: number;
 }

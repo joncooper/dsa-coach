@@ -8,7 +8,7 @@
     "tree recursion",
     "DFS"
   ],
-  "prompt": "Given the root of a binary tree, return the sum of the values stored in every node of the tree.",
+  "prompt": "The input `values` encodes a binary tree in level order (breadth-first), not as a plain list to sum directly. `values[0]` is the root, then each following pair gives the left and right child of the next non-null node, and `null` means that child is missing.\n\nFor example, `[5,4,8,11,null,13,4]` represents root `5`, children `4` and `8`, child `11` under `4`, and children `13` and `4` under `8`. The tree's sum is `5 + 4 + 8 + 11 + 13 + 4 = 45`.\n\nReturn the sum of the values stored in every node of the tree. An empty tree has sum `0`.",
   "signature": {
     "name": "treeValueSum",
     "inputs": [
@@ -29,7 +29,7 @@
   },
   "tests": [
     {
-      "name": "balanced tree",
+      "name": "level-order tree",
       "args": [
         [
           5,
@@ -45,7 +45,7 @@
       "visibility": "visible"
     },
     {
-      "name": "single node",
+      "name": "single-node tree",
       "args": [
         [
           7

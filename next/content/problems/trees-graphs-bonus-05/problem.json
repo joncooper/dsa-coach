@@ -8,7 +8,7 @@
     "BFS",
     "level-order traversal"
   ],
-  "prompt": "Given the root of a binary tree, imagine standing to its right. Return the values of the nodes you can see, ordered from top to bottom — that is, the last node at each depth.",
+  "prompt": "The input `values` encodes a binary tree in level order (breadth-first): `values[0]` is the root, then each following pair gives the left and right child of the next non-null node, and `null` means that child is missing.\n\nImagine standing to the tree's right. Return the values of the nodes you can see, ordered from top to bottom: the last node at each depth.",
   "signature": {
     "name": "rightSideView",
     "inputs": [

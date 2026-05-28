@@ -1,43 +1,41 @@
 package solution
 
-import "encoding/json"
+import "strings"
 
 func MaxStepDistance(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"\"]" {
-		return 0
+	best := 0
+	for _, raw := range strings.Split(inputText, "\n") {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		row, col := 0, 0
+		for i := 0; i < len(line); i += 2 {
+			dr, dc := step(line[i : i+2])
+			row += dr
+			col += dc
+			if distance := abs(row) + abs(col); distance > best {
+				best = distance
+			}
+		}
 	}
-	if key == "[\"NNNNNNNN\"]" {
-		return 4
-	}
-	if key == "[\"NNNNSSSS\"]" {
-		return 2
-	}
-	if key == "[\"NNEESSWW\\nNNNNSSSS\"]" {
-		return 2
-	}
-	if key == "[\"NNNNNNSS\"]" {
-		return 3
-	}
-	if key == "[\"EEEEWWWW\"]" {
-		return 2
-	}
-	if key == "[\"NNSSEEWW\"]" {
-		return 1
-	}
-	if key == "[\"NNNNEEEE\"]" {
-		return 4
-	}
-	if key == "[\"NNSSEEWW\\nNNNNNNNN\"]" {
-		return 4
-	}
-	if key == "[\"NNEEEESS\"]" {
-		return 3
-	}
-	return 0
+	return best
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func step(pair string) (int, int) {
+	switch pair {
+	case "NN":
+		return 1, 0
+	case "SS":
+		return -1, 0
+	case "EE":
+		return 0, 1
+	default:
+		return 0, -1
+	}
+}
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
 }

@@ -1,45 +1,53 @@
 object Solution {
+  private case class FieldKey(key: String, field: String)
+
   def solution(queries: Seq[Seq[String]]): Seq[String] = {
-    referenceKey(queries) match {
-      case "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"10\"],[\"GET\",\"5\",\"user:1\",\"name\"]]]" => Seq("true", "alice")
-      case "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"10\"],[\"GET\",\"15\",\"user:1\",\"name\"]]]" => Seq("true", "")
-      case "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"10\"],[\"GET\",\"11\",\"user:1\",\"name\"]]]" => Seq("true", "")
-      case "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"5\"],[\"SET\",\"2\",\"user:1\",\"name\",\"bob\"],[\"GET\",\"20\",\"user:1\",\"name\"]]]" => Seq("true", "true", "bob")
-      case "[[[\"SET\",\"1\",\"user:1\",\"name\",\"alice\"],[\"SET_AT\",\"2\",\"user:1\",\"session\",\"abc\",\"5\"],[\"SCAN\",\"20\",\"user:1\"]]]" => Seq("true", "true", "name=alice")
-      case "[[[\"SET_AT\",\"1\",\"user:1\",\"session\",\"abc\",\"5\"],[\"DELETE\",\"20\",\"user:1\",\"session\"]]]" => Seq("true", "false")
-      case "[[[\"SET_AT\",\"1\",\"user:1\",\"session_old\",\"x\",\"5\"],[\"SET\",\"2\",\"user:1\",\"session_new\",\"y\"],[\"SCAN_BY_PREFIX\",\"20\",\"user:1\",\"session\"]]]" => Seq("true", "true", "session_new=y")
-      case "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"5\"],[\"SET_AT\",\"2\",\"user:1\",\"name\",\"bob\",\"100\"],[\"GET\",\"50\",\"user:1\",\"name\"]]]" => Seq("true", "true", "bob")
-      case "[[[\"SET_AT\",\"1\",\"user:1\",\"a\",\"1\",\"5\"],[\"SET_AT\",\"2\",\"user:1\",\"b\",\"2\",\"5\"],[\"SCAN\",\"20\",\"user:1\"]]]" => Seq("true", "true", "")
-      case _ => Seq.empty
+    val store = scala.collection.mutable.Map.empty[String, scala.collection.mutable.Map[String, String]]
+    val ttls = scala.collection.mutable.Map.empty[FieldKey, Int]
+    val out = scala.collection.mutable.ArrayBuffer.empty[String]
+
+    def render(rows: Iterable[(String, String)]): String =
+      rows.toSeq.sortBy(_._1).map { case (field, value) => s"$field=$value" }.mkString(",")
+
+    def alive(key: String, field: String, timestamp: Int): Boolean =
+      store.get(key).exists(_.contains(field)) && ttls.get(FieldKey(key, field)).forall(timestamp < _)
+
+    def deleteField(key: String, field: String): Unit = {
+      store.get(key).foreach { fields =>
+        fields.remove(field)
+        if (fields.isEmpty) store.remove(key)
+      }
+      ttls.remove(FieldKey(key, field))
     }
-  }
 
-  private def referenceKey(values: Any*): String = {
-    values.map(canonical).mkString("[", ",", "]")
-  }
+    def liveRows(key: String, timestamp: Int, prefix: String = ""): Seq[(String, String)] =
+      store.get(key).toSeq.flatMap(_.toSeq).filter { case (field, _) => field.startsWith(prefix) && alive(key, field, timestamp) }
 
-  private def canonical(value: Any): String = value match {
-    case s: String => quote(s)
-    case n: Int => n.toString
-    case n: Long => n.toString
-    case n: Double => if (n.isWhole) n.toInt.toString else n.toString
-    case b: Boolean => b.toString
-    case rows: Seq[_] => rows.map(canonical).mkString("[", ",", "]")
-    case map: scala.collection.Map[_, _] =>
-      map.toSeq.map { case (k, v) => quote(k.toString) + ":" + canonical(v) }.sortBy(identity).mkString("{", ",", "}")
-    case null => "null"
-    case other => quote(other.toString)
-  }
-
-  private def quote(value: String): String = {
-    val escaped = value.flatMap {
-      case char if char == 92.toChar => 92.toChar.toString + 92.toChar.toString
-      case char if char == 34.toChar => 92.toChar.toString + 34.toChar.toString
-      case '\n' => 92.toChar.toString + "n"
-      case '\r' => 92.toChar.toString + "r"
-      case '\t' => 92.toChar.toString + "t"
-      case char => char.toString
+    for (query <- queries) {
+      val timestamp = query(1).toInt
+      query.head match {
+        case "SET" =>
+          val fields = store.getOrElseUpdate(query(2), scala.collection.mutable.Map.empty[String, String])
+          fields(query(3)) = query(4)
+          ttls.remove(FieldKey(query(2), query(3)))
+          out += "true"
+        case "SET_AT" =>
+          val fields = store.getOrElseUpdate(query(2), scala.collection.mutable.Map.empty[String, String])
+          fields(query(3)) = query(4)
+          ttls(FieldKey(query(2), query(3))) = timestamp + query(5).toInt
+          out += "true"
+        case "GET" => out += (if (alive(query(2), query(3), timestamp)) store(query(2))(query(3)) else "")
+        case "DELETE" =>
+          if (alive(query(2), query(3), timestamp)) {
+            deleteField(query(2), query(3))
+            out += "true"
+          } else out += "false"
+        case "SCAN" => out += render(liveRows(query(2), timestamp))
+        case "SCAN_BY_PREFIX" => out += render(liveRows(query(2), timestamp, query(3)))
+        case _ => out += ""
+      }
     }
-    34.toChar.toString + escaped + 34.toChar.toString
+
+    out.toSeq
   }
 }

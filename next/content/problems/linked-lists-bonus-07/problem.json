@@ -8,7 +8,7 @@
     "traversal",
     "pairwise comparison"
   ],
-  "prompt": "Given the head of a singly linked list, return True if its values are in non-decreasing order (equal neighbours are allowed) and False otherwise.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Return `true` if its values are in non-decreasing order (equal neighbours are allowed), otherwise return `false`.",
   "signature": {
     "name": "isListSorted",
     "inputs": [

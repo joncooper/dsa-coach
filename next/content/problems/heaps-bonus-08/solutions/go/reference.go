@@ -1,34 +1,39 @@
 package solution
 
+import "container/heap"
+
+type jobEntry struct {
+	priority int
+	id       int
+}
+
+type jobHeap []jobEntry
+
+func (h jobHeap) Len() int      { return len(h) }
+func (h jobHeap) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+func (h jobHeap) Less(i, j int) bool {
+	if h[i].priority != h[j].priority {
+		return h[i].priority > h[j].priority
+	}
+	return h[i].id < h[j].id
+}
+func (h *jobHeap) Push(x any) { *h = append(*h, x.(jobEntry)) }
+func (h *jobHeap) Pop() any {
+	old := *h
+	value := old[len(old)-1]
+	*h = old[:len(old)-1]
+	return value
+}
+
 func PrintOrder(jobs [][]int) []int {
-	ordered := append([][]int{}, jobs...)
-	for i := 0; i < len(ordered); i++ { for j := i + 1; j < len(ordered); j++ { if ordered[j][0] > ordered[i][0] || (ordered[j][0] == ordered[i][0] && ordered[j][1] < ordered[i][1]) { ordered[i], ordered[j] = ordered[j], ordered[i] } } }
-	result := []int{}
-	for _, job := range ordered { result = append(result, job[1]) }
-	return result
-}
-func sortInts(values []int) []int {
-	result := append([]int{}, values...)
-	for i := 0; i < len(result); i++ {
-		for j := i + 1; j < len(result); j++ {
-			if result[j] < result[i] {
-				result[i], result[j] = result[j], result[i]
-			}
-		}
+	pq := &jobHeap{}
+	heap.Init(pq)
+	for _, job := range jobs {
+		heap.Push(pq, jobEntry{priority: job[0], id: job[1]})
 	}
-	return result
-}
-
-func reverseInts(values []int) {
-	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
-		values[left], values[right] = values[right], values[left]
+	order := []int{}
+	for pq.Len() > 0 {
+		order = append(order, heap.Pop(pq).(jobEntry).id)
 	}
-}
-
-func countPairs(counts map[int]int) [][]int {
-	pairs := [][]int{}
-	for num, count := range counts {
-		pairs = append(pairs, []int{num, count})
-	}
-	return pairs
+	return order
 }

@@ -42,8 +42,20 @@ describe("runner daemon API", () => {
       expect(result.status).toBe("passed");
       expect(result.tests).toHaveLength(graph.problems[0].tests.length);
 
+      const scratchpad = await fetch(`${base}/scratchpad`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          language: "typescript",
+          code: "console.log('scratch')",
+          timeoutMs: 1000
+        })
+      }).then((res) => res.json() as Promise<{ status: string; stdout: string }>);
+      expect(scratchpad.status).toBe("passed");
+      expect(scratchpad.stdout.trim()).toBe("scratch");
+
       const partSource = await fetch(
-        `${base}/source?problemId=aoc-y1-d1-elevation-pairs&partId=part-2-triples&language=typescript&kind=reference`
+        `${base}/source?problemId=aoc-y1-d1-elevation-pairs&partId=part-2-triples&language=python&kind=reference`
       ).then((res) => res.json() as Promise<{ code: string }>);
       expect(partSource.code).toContain("elevation_triples");
 
@@ -51,7 +63,7 @@ describe("runner daemon API", () => {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          language: "typescript",
+          language: "python",
           problemId: "aoc-y1-d1-elevation-pairs",
           partId: "part-2-triples",
           code: partSource.code,

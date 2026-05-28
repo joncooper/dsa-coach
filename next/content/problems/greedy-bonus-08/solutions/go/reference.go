@@ -3,15 +3,28 @@ package solution
 func MaxSumAfterFlips(nums []int, k int) int {
 	values := sortInts(nums)
 	remaining := k
-	for index := 0; index < len(values) && remaining > 0 && values[index] < 0; index++ { values[index] = -values[index]; remaining-- }
-	total := 0; smallestAbs := 1 << 60
-	for _, value := range values { total += value; if abs(value) < smallestAbs { smallestAbs = abs(value) } }
-	if remaining%2 == 1 { total -= 2 * smallestAbs }
+	for index := 0; index < len(values) && remaining > 0 && values[index] < 0; index++ {
+		values[index] = -values[index]
+		remaining--
+	}
+	total := 0
+	smallestAbs := 1 << 60
+	for _, value := range values {
+		total += value
+		if abs(value) < smallestAbs {
+			smallestAbs = abs(value)
+		}
+	}
+	if remaining%2 == 1 {
+		total -= 2 * smallestAbs
+	}
 	return total
 }
 
 func abs(value int) int {
-	if value < 0 { return -value }
+	if value < 0 {
+		return -value
+	}
 	return value
 }
 func sortInts(values []int) []int {
@@ -45,6 +58,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

@@ -6,7 +6,7 @@
   "concepts": [
     "linked-list traversal"
   ],
-  "prompt": "Given the head of a singly linked list of integers, return the sum of its values.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Return the sum of the values stored in the list.",
   "signature": {
     "name": "listSum",
     "inputs": [

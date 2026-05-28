@@ -1,46 +1,36 @@
 package solution
 
-import "encoding/json"
+import "strings"
 
 func MajorityTagCount(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"a,b\\nb,c\\n\\nx,y\\nx,y\\nx\"]" {
-		return 5
+	total := 0
+	for _, block := range strings.Split(inputText, "\n\n") {
+		counts := map[string]int{}
+		lines := 0
+		for _, raw := range strings.Split(block, "\n") {
+			line := strings.TrimSpace(raw)
+			if line == "" {
+				continue
+			}
+			lines++
+			tags := map[string]bool{}
+			for _, token := range strings.Split(line, ",") {
+				if token != "" {
+					tags[token] = true
+				}
+			}
+			for tag := range tags {
+				counts[tag]++
+			}
+		}
+		if lines > 0 {
+			threshold := (lines + 1) / 2
+			for _, count := range counts {
+				if count >= threshold {
+					total++
+				}
+			}
+		}
 	}
-	if key == "[\"\"]" {
-		return 0
-	}
-	if key == "[\"a,b,c\"]" {
-		return 3
-	}
-	if key == "[\"a\\nb\\na,b\"]" {
-		return 2
-	}
-	if key == "[\"a\\na\\nb\\nc\"]" {
-		return 1
-	}
-	if key == "[\"a\\na\\na\\nb\\nc\"]" {
-		return 1
-	}
-	if key == "[\"a\\nb\\nc\\nd\"]" {
-		return 0
-	}
-	if key == "[\"a\\na\\nb\\n\\n\\n\"]" {
-		return 1
-	}
-	if key == "[\"a,b\\na\\nb\\na\"]" {
-		return 2
-	}
-	if key == "[\"a,b\\na,c\\na,d\"]" {
-		return 1
-	}
-	if key == "[\"a\\na\\nb\\n\\nx\\nx\\ny\"]" {
-		return 2
-	}
-	return 0
-}
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+	return total
 }

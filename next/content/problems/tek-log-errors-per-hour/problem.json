@@ -8,7 +8,7 @@
     "grouping",
     "tokenization"
   ],
-  "prompt": "You are given a list of log lines. Each well-formed line begins with an ISO-8601 timestamp `YYYY-MM-DDTHH:MM:SS`, then a single space, then a level token (`INFO`, `WARN`, or `ERROR`), then a space, then a free-text message. Return a dict mapping each hour string `YYYY-MM-DDTHH` to the number of `ERROR` lines whose timestamp falls in that hour. Skip lines that do not have at least a timestamp and a level token. Non-`ERROR` lines do not appear in the output.",
+  "prompt": "You are given a list of log lines. Each well-formed line begins with an ISO-8601 timestamp `YYYY-MM-DDTHH:MM:SS`, then a single space, then a level token (`INFO`, `WARN`, or `ERROR`), then a space, then a free-text message. Return an object/map from each hour string `YYYY-MM-DDTHH` to the number of `ERROR` lines whose timestamp falls in that hour. Skip lines that do not have at least a timestamp and a level token. Non-`ERROR` lines do not appear in the output.",
   "signature": {
     "name": "errorsPerHour",
     "inputs": [

@@ -125,7 +125,7 @@
     {
       "id": "part-2-permit-summary",
       "title": "Part 2: Permits per stage",
-      "prompt": "Same line shape and validity rule. Now return a dict mapping each stage (`main`, `side`, `late`) to the number of valid permits in that stage. Stages with zero valid permits should still appear in the dict with value `0`. Ignore any line whose stage token is not one of the three.",
+      "prompt": "Same line shape and validity rule. Now return an object/map from each stage (`main`, `side`, `late`) to the number of valid permits in that stage. Stages with zero valid permits should still appear in the object/map with value `0`. Ignore any line whose stage token is not one of the three.",
       "signature": {
         "name": "permit_counts_by_stage",
         "inputs": [

@@ -8,7 +8,7 @@
     "tree recursion",
     "DFS"
   ],
-  "prompt": "Given the root of a binary tree, return True if the tree is a mirror image of itself around its center, and False otherwise. Both structure and values must match in mirrored positions.",
+  "prompt": "The input `values` encodes a binary tree in level order (breadth-first): `values[0]` is the root, then each following pair gives the left and right child of the next non-null node, and `null` means that child is missing.\n\nReturn `true` if the tree is a mirror image of itself around its center, and `false` otherwise. Both structure and values must match in mirrored positions.",
   "signature": {
     "name": "isSymmetric",
     "inputs": [

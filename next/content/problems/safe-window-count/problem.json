@@ -7,7 +7,7 @@
     "fixed window",
     "running sum"
   ],
-  "prompt": "Count how many contiguous windows of length `k` have a sum less than or equal to `limit`. Values in `nums` may be negative; return `0` if `k` is non-positive or larger than `len(nums)`.",
+  "prompt": "Count how many contiguous windows of length `k` have a sum less than or equal to `limit`. Values in `nums` may be negative; return `0` if `k` is non-positive or larger than the length of `nums`.",
   "signature": {
     "name": "countSafeWindows",
     "inputs": [

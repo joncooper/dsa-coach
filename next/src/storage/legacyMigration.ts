@@ -80,7 +80,7 @@ export function migrateLegacyBackup(payload: LegacyBackupPayload, options: Legac
 
   const progress: UserProgressRecord[] = (payload.progress ?? []).map((record) => ({
     contentKind: record.type,
-    contentId: record.id,
+    contentId: normalizeLegacyContentId(record.id),
     status: record.status,
     dueAt: record.dueAt,
     updatedAt: record.updatedAt,
@@ -97,7 +97,7 @@ export function migrateLegacyBackup(payload: LegacyBackupPayload, options: Legac
   }));
 
   const attempts: UserAttemptRecord[] = (payload.submissions ?? []).map((record) => ({
-    workspaceId: record.problemId,
+    workspaceId: normalizeLegacyWorkspaceId(record.problemId),
     language: "python",
     code: record.code,
     passed: record.passed,
@@ -191,9 +191,22 @@ function mapSetting(
       warnings.push(`Skipped non-string editor buffer ${setting.key}`);
       return true;
     }
+    const normalizedContentId = normalizeLegacyContentId(problemCode[1]);
+    const assessmentLevel = problemCode[2]?.match(/^L(\d+)$/);
+    if (normalizedContentId !== problemCode[1] && assessmentLevel) {
+      editorBuffers.push({
+        scope: "assessment-level",
+        contentId: normalizedContentId,
+        level: Number(assessmentLevel[1]),
+        language: "python",
+        code: setting.value,
+        sourceKey: setting.key
+      });
+      return true;
+    }
     editorBuffers.push({
       scope: problemCode[2] ? "problem-part" : "problem",
-      contentId: problemCode[1],
+      contentId: normalizedContentId,
       partId: problemCode[2],
       language: "python",
       code: setting.value,
@@ -225,7 +238,7 @@ function mapSetting(
     }
     editorBuffers.push({
       scope: assessmentCode[1] === "code" ? "assessment-level" : "assessment-finish-snapshot",
-      contentId: assessmentCode[2],
+      contentId: normalizeLegacyAssessmentId(assessmentCode[2]),
       level: Number(assessmentCode[3]),
       language: "python",
       code: setting.value,
@@ -236,14 +249,55 @@ function mapSetting(
 
   const assessmentRecord = setting.key.match(/^assessment:(session|scorecard|scorecard-history):(.+)$/);
   if (assessmentRecord) {
+    const assessmentId = normalizeLegacyAssessmentId(assessmentRecord[2]);
     assessmentState.push({
-      assessmentId: assessmentRecord[2],
+      assessmentId,
       kind: assessmentRecord[1] as "session" | "scorecard" | "scorecard-history",
-      value: setting.value,
+      value: normalizeLegacyAssessmentValue(setting.value, assessmentId),
       sourceKey: setting.key
     });
     return true;
   }
 
   return false;
+}
+
+const legacyAssessmentIds: Record<string, string> = {
+  filesystem: "asm-filesystem",
+  banking: "asm-banking",
+  "in-memory-db": "asm-in-memory-db"
+};
+
+function normalizeLegacyAssessmentId(id: string): string {
+  return legacyAssessmentIds[id] ?? id;
+}
+
+function normalizeLegacyContentId(id: string): string {
+  return normalizeLegacyAssessmentId(id);
+}
+
+function normalizeLegacyWorkspaceId(workspaceId: string): string {
+  for (const [legacyId, nextId] of Object.entries(legacyAssessmentIds)) {
+    if (workspaceId === legacyId) return nextId;
+    if (workspaceId.startsWith(`${legacyId}:`)) return `${nextId}:${workspaceId.slice(legacyId.length + 1)}`;
+  }
+  return workspaceId;
+}
+
+function normalizeLegacyAssessmentValue(value: unknown, assessmentId: string): unknown {
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeLegacyAssessmentValue(entry, assessmentId));
+  }
+  if (!value || typeof value !== "object") return value;
+
+  const record = { ...(value as Record<string, unknown>) };
+  record.assessmentId = assessmentId;
+  record.problemId ??= assessmentId;
+
+  if (typeof record.status === "string") {
+    record.activeLevel ??= record.unlockedLevel ?? 1;
+    record.buffers ??= {};
+  }
+
+  return record;
 }

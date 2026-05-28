@@ -3,7 +3,9 @@ package solution
 func FloodFill(grid [][]int, sr int, sc int, color int) [][]int {
 	result := copyGrid(grid)
 	original := result[sr][sc]
-	if original == color { return result }
+	if original == color {
+		return result
+	}
 	rows, cols := len(result), len(result[0])
 	stack := [][]int{{sr, sc}}
 	result[sr][sc] = color

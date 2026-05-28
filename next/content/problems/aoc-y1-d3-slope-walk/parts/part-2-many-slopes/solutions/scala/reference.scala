@@ -1,44 +1,21 @@
 object Solution {
   def slope_walk_product(inputText: String): Int = {
-    referenceKey(inputText) match {
-      case "[\"\"]" => 0
-      case "[\"..##.......\\n#...#...#..\\n.#....#..#.\\n..#.#...#.#\\n.#...##..#.\\n..#.##.....\\n.#.#.#....#\\n.#........#\\n#.##...#...\\n#...##....#\\n.#..#...#.#\"]" => 336
-      case "[\"###\"]" => 1
-      case "[\"....\\n....\\n....\\n....\\n....\"]" => 0
-      case "[\"####\\n####\"]" => 16
-      case "[\"....\\n#...\\n....\\n#...\\n....\\n#...\"]" => 0
-      case "[\"####\"]" => 1
-      case "[\"#\\n#\\n#\\n#\\n#\"]" => 1875
-      case _ => 0
-    }
-  }
+    val rows = inputText.linesIterator.filter(_.nonEmpty).toVector
+    if (rows.isEmpty) return 0
 
-  private def referenceKey(values: Any*): String = {
-    values.map(canonical).mkString("[", ",", "]")
-  }
+    val width = rows.head.length
+    val slopes = Vector((1, 1), (3, 1), (5, 1), (7, 1), (1, 2))
 
-  private def canonical(value: Any): String = value match {
-    case s: String => quote(s)
-    case n: Int => n.toString
-    case n: Long => n.toString
-    case n: Double => if (n.isWhole) n.toInt.toString else n.toString
-    case b: Boolean => b.toString
-    case rows: Seq[_] => rows.map(canonical).mkString("[", ",", "]")
-    case map: scala.collection.Map[_, _] =>
-      map.toSeq.map { case (k, v) => quote(k.toString) + ":" + canonical(v) }.sortBy(identity).mkString("{", ",", "}")
-    case null => "null"
-    case other => quote(other.toString)
-  }
-
-  private def quote(value: String): String = {
-    val escaped = value.flatMap {
-      case char if char == 92.toChar => 92.toChar.toString + 92.toChar.toString
-      case char if char == 34.toChar => 92.toChar.toString + 34.toChar.toString
-      case '\n' => 92.toChar.toString + "n"
-      case '\r' => 92.toChar.toString + "r"
-      case '\t' => 92.toChar.toString + "t"
-      case char => char.toString
-    }
-    34.toChar.toString + escaped + 34.toChar.toString
+    slopes.map { case (dx, dy) =>
+      var row = 0
+      var col = 0
+      var trees = 0
+      while (row < rows.length) {
+        if (rows(row).charAt(col % width) == '#') trees += 1
+        row += dy
+        col += dx
+      }
+      trees
+    }.product
   }
 }

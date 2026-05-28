@@ -8,7 +8,7 @@
     "stacks-queues",
     "stack"
   ],
-  "prompt": "A string contains only the bracket characters (), [], and {}. Return True if every bracket is closed by the matching type in the correct order, and False otherwise.",
+  "prompt": "A string contains only the bracket characters (), [], and {}. Return `true` if every bracket is closed by the matching type in the correct order, and `false` otherwise.",
   "signature": {
     "name": "isBalanced",
     "inputs": [

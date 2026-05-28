@@ -8,7 +8,7 @@
     "in-place updates",
     "pointer rewiring"
   ],
-  "prompt": "Given the head of a singly linked list, reverse it in place and return the head of the reversed list.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Reverse the list by rewiring pointers, then return the reversed list serialized head-to-tail.",
   "signature": {
     "name": "reverseList",
     "inputs": [

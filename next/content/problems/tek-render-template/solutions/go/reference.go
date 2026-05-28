@@ -1,61 +1,57 @@
 package solution
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+)
 
-func RenderTemplate(arg0 string, arg1 map[string]any) string {
-	key := referenceKey(arg0, arg1)
-	if key == "[\"\",{\"a\":1}]" {
-		return ""
-	}
-	if key == "[\"just text\",{\"a\":1}]" {
-		return "just text"
-	}
-	if key == "[\"Hello {{name}}!\",{\"name\":\"World\"}]" {
-		return "Hello World!"
-	}
-	if key == "[\"{{a}} + {{b}} = {{c}}\",{\"a\":1,\"b\":2,\"c\":3}]" {
-		return "1 + 2 = 3"
-	}
-	if key == "[\"{{missing}} here\",{}]" {
-		return "{{missing}} here"
-	}
-	if key == "[\"{{a}}{{b}}{{a}}\",{\"a\":\"X\",\"b\":\"Y\"}]" {
-		return "XYX"
-	}
-	if key == "[\"value: {{n}}\",{\"n\":42}]" {
-		return "value: 42"
-	}
-	if key == "[\"{x} { y } {{!}} {{1bad}} {{}}\",{}]" {
-		return "{x} { y } {{!}} {{1bad}} {{}}"
-	}
-	if key == "[\"{{a}}/{{b}}/{{c}}\",{\"a\":\"X\",\"c\":\"Z\"}]" {
-		return "X/{{b}}/Z"
-	}
-	if key == "[\"{{first_name_1}}\",{\"first_name_1\":\"Ada\"}]" {
-		return "Ada"
-	}
-	if key == "[\"{{{a}}}\",{\"a\":\"X\"}]" {
-		return "{X}"
-	}
-	if key == "[\"{{ name }}\",{\"name\":\"Ada\"}]" {
-		return "{{ name }}"
-	}
-	if key == "[\"hello {{name}}!\",{\"name\":\"\"}]" {
-		return "hello !"
-	}
-	if key == "[\"items: {{x}}\",{\"x\":[1,2,3]}]" {
-		return "items: [1, 2, 3]"
-	}
-	if key == "[\"{a} {b}\",{\"a\":\"X\",\"b\":\"Y\"}]" {
-		return "{a} {b}"
-	}
-	if key == "[\"start {{name end\",{\"name\":\"Ada\"}]" {
-		return "start {{name end"
-	}
-	return ""
+func RenderTemplate(template string, values map[string]any) string {
+	pattern := regexp.MustCompile(`{{([a-zA-Z_][a-zA-Z0-9_]*)}}`)
+	return pattern.ReplaceAllStringFunc(template, func(match string) string {
+		parts := pattern.FindStringSubmatch(match)
+		if len(parts) != 2 {
+			return match
+		}
+		value, ok := values[parts[1]]
+		if !ok {
+			return match
+		}
+		return pyString(value)
+	})
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func pyString(value any) string {
+	switch v := value.(type) {
+	case nil:
+		return "None"
+	case string:
+		return v
+	case bool:
+		if v {
+			return "True"
+		}
+		return "False"
+	case []any:
+		items := make([]string, len(v))
+		for i, item := range v {
+			items[i] = pyString(item)
+		}
+		return "[" + strings.Join(items, ", ") + "]"
+	case int:
+		return strconv.Itoa(v)
+	case int64:
+		return strconv.FormatInt(v, 10)
+	case float64:
+		if v == float64(int(v)) {
+			return strconv.Itoa(int(v))
+		}
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	case map[string]any:
+		payload, _ := json.Marshal(v)
+		return string(payload)
+	default:
+		return fmt.Sprint(v)
+	}
 }

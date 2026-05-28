@@ -1,48 +1,10 @@
 object Solution {
-  def max_block_sum(inputText: String): Int = {
-    referenceKey(inputText) match {
-      case "[\"a=1\\nb=2\\n\\nc=10\\nd=garbage\\ne=5\"]" => 15
-      case "[\"\"]" => 0
-      case "[\"x=4\\ny=8\"]" => 12
-      case "[\"a=-1\\nb=2\"]" => 2
-      case "[\"a=foo\\nb=bar\"]" => 0
-      case "[\"\\n\\na=5\\n\\n\\n\"]" => 5
-      case "[\"a=1\\n\\na=100\\nb=50\\n\\na=2\"]" => 150
-      case "[\"a=0\\nb=0\\nc=3\"]" => 3
-      case "[\"a=10\\nnopeval\\nb=5\"]" => 15
-      case "[\"a=1.5\\nb=2\\nc=3\"]" => 5
-      case "[\"a=+5\\nb=10\"]" => 10
-      case "[\"a=  7  \\nb=3\"]" => 10
-      case _ => 0
-    }
-  }
+  def max_block_sum(inputText: String): Int =
+    inputText.split("\n\n").map(blockSum).foldLeft(0)(math.max)
 
-  private def referenceKey(values: Any*): String = {
-    values.map(canonical).mkString("[", ",", "]")
-  }
-
-  private def canonical(value: Any): String = value match {
-    case s: String => quote(s)
-    case n: Int => n.toString
-    case n: Long => n.toString
-    case n: Double => if (n.isWhole) n.toInt.toString else n.toString
-    case b: Boolean => b.toString
-    case rows: Seq[_] => rows.map(canonical).mkString("[", ",", "]")
-    case map: scala.collection.Map[_, _] =>
-      map.toSeq.map { case (k, v) => quote(k.toString) + ":" + canonical(v) }.sortBy(identity).mkString("{", ",", "}")
-    case null => "null"
-    case other => quote(other.toString)
-  }
-
-  private def quote(value: String): String = {
-    val escaped = value.flatMap {
-      case char if char == 92.toChar => 92.toChar.toString + 92.toChar.toString
-      case char if char == 34.toChar => 92.toChar.toString + 34.toChar.toString
-      case '\n' => 92.toChar.toString + "n"
-      case '\r' => 92.toChar.toString + "r"
-      case '\t' => 92.toChar.toString + "t"
-      case char => char.toString
-    }
-    34.toChar.toString + escaped + 34.toChar.toString
-  }
+  private def blockSum(block: String): Int =
+    block.linesIterator.map(_.trim).filter(_.contains("=")).map { line =>
+      val value = line.substring(line.indexOf('=') + 1).trim
+      if (value.forall(_.isDigit)) value.toInt else 0
+    }.sum
 }

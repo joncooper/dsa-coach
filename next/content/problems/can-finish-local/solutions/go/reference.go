@@ -9,14 +9,20 @@ func CanFinishLocal(n int, prerequisites [][]int) bool {
 		indegree[course]++
 	}
 	queue := []int{}
-	for course := 0; course < n; course++ { if indegree[course] == 0 { queue = append(queue, course) } }
+	for course := 0; course < n; course++ {
+		if indegree[course] == 0 {
+			queue = append(queue, course)
+		}
+	}
 	seen := 0
 	for index := 0; index < len(queue); index++ {
 		course := queue[index]
 		seen++
 		for _, nextCourse := range graph[course] {
 			indegree[nextCourse]--
-			if indegree[nextCourse] == 0 { queue = append(queue, nextCourse) }
+			if indegree[nextCourse] == 0 {
+				queue = append(queue, nextCourse)
+			}
 		}
 	}
 	return seen == n

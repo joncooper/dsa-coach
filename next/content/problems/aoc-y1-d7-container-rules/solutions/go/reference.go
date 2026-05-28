@@ -1,43 +1,59 @@
 package solution
 
-import "encoding/json"
+import (
+	"regexp"
+	"strconv"
+	"strings"
+)
 
 func CountContainersHoldingGold(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"dim red containers hold 1 bright gold container.\\nplain blue containers hold 1 dim red container.\\nbright gold containers hold no other containers.\"]" {
-		return 2
+	contains := parseContainers(inputText)
+	parents := map[string][]string{}
+	for parent, children := range contains {
+		for _, child := range children {
+			parents[child.name] = append(parents[child.name], parent)
+		}
 	}
-	if key == "[\"plain blue containers hold 1 dim red container.\\ndim red containers hold no other containers.\"]" {
-		return 0
+	visited := map[string]bool{}
+	stack := append([]string{}, parents["bright gold"]...)
+	for len(stack) > 0 {
+		node := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if visited[node] {
+			continue
+		}
+		visited[node] = true
+		stack = append(stack, parents[node]...)
 	}
-	if key == "[\"\"]" {
-		return 0
-	}
-	if key == "[\"outer one containers hold 1 mid a container, 1 mid b container.\\nmid a containers hold 1 bright gold container.\\nmid b containers hold 1 bright gold container.\\nbright gold containers hold no other containers.\"]" {
-		return 3
-	}
-	if key == "[\"a one containers hold 1 b two container.\\nb two containers hold 1 c three container.\\nc three containers hold 1 bright gold container.\\nbright gold containers hold no other containers.\"]" {
-		return 3
-	}
-	if key == "[\"alpha box containers hold 2 bright gold containers, 1 ignored leaf container.\\nbeta box containers hold 1 alpha box container.\\nignored leaf containers hold no other containers.\\nbright gold containers hold no other containers.\"]" {
-		return 2
-	}
-	if key == "[\"bright gold containers hold 2 plain red containers.\\nplain red containers hold no other containers.\"]" {
-		return 0
-	}
-	if key == "[\"lone alpha containers hold 1 lone beta container.\\nlone beta containers hold no other containers.\\nshiny silver containers hold 1 bright gold container.\\nbright gold containers hold no other containers.\"]" {
-		return 1
-	}
-	if key == "[\"red one containers hold 1 bright gold container.\\nblue two containers hold 1 bright gold container.\\ngreen three containers hold 1 bright gold container.\\nbright gold containers hold no other containers.\"]" {
-		return 3
-	}
-	if key == "[\"top root containers hold 1 mid one container, 1 mid two container.\\nmid one containers hold 1 bright gold container.\\nmid two containers hold 1 mid one container.\\nbright gold containers hold no other containers.\"]" {
-		return 3
-	}
-	return 0
+	return len(visited)
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+type child struct {
+	count int
+	name  string
+}
+
+func parseContainers(inputText string) map[string][]child {
+	lineRE := regexp.MustCompile("^(\\w+ \\w+) containers hold (.+)\\.$")
+	childRE := regexp.MustCompile("(\\d+) (\\w+ \\w+) containers?")
+	contains := map[string][]child{}
+	for _, raw := range strings.Split(inputText, "\n") {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		m := lineRE.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		kids := []child{}
+		if m[2] != "no other containers" {
+			for _, item := range childRE.FindAllStringSubmatch(m[2], -1) {
+				n, _ := strconv.Atoi(item[1])
+				kids = append(kids, child{n, item[2]})
+			}
+		}
+		contains[m[1]] = kids
+	}
+	return contains
 }

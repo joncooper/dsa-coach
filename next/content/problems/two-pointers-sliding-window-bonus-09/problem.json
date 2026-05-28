@@ -8,7 +8,7 @@
     "same-direction pointers",
     "sorted array"
   ],
-  "prompt": "Given a list sorted in non-decreasing order, compact it so each distinct value appears once at the front, and return the count of distinct values. The values after that count do not matter.",
+  "prompt": "Given a list sorted in non-decreasing order, return how many distinct values it contains. Because equal values appear in runs, this can be solved with one forward scan.",
   "signature": {
     "name": "dedupeSortedLength",
     "inputs": [

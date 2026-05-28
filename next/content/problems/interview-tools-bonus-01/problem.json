@@ -1,12 +1,12 @@
 {
   "id": "interview-tools-bonus-01",
   "kind": "problem",
-  "title": "Reverse Vowels In Place",
+  "title": "Reverse Vowels",
   "difficulty": "easy",
   "concepts": [
     "interview-tools",
     "two-pointers",
-    "in-place rearrange"
+    "two-pointer rearrange"
   ],
   "prompt": "Given a string, reverse only its vowels and leave every other character exactly where it is. Vowels are a, e, i, o, u in either case. For example \"basket\" becomes \"beskat\" — the e and a swap, the consonants do not move.",
   "signature": {

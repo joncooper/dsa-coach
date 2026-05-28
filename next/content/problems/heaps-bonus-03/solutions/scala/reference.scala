@@ -1,11 +1,12 @@
 object Solution {
   def lastStoneWeight(stones: Seq[Int]): Int = {
-    var heap = stones.sorted
-    while (heap.length > 1) {
-      val y = heap.last; val x = heap(heap.length - 2)
-      heap = heap.dropRight(2)
-      if (x != y) heap = (heap :+ (y - x)).sorted
+    val heap = scala.collection.mutable.PriorityQueue.empty[Int]
+    heap.enqueue(stones: _*)
+    while (heap.size > 1) {
+      val y = heap.dequeue()
+      val x = heap.dequeue()
+      if (x != y) heap.enqueue(y - x)
     }
-    heap.headOption.getOrElse(0)
+    if (heap.isEmpty) 0 else heap.dequeue()
   }
 }

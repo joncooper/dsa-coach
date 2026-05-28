@@ -1,43 +1,137 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strconv"
+	"strings"
+)
 
-func Solution(queries [][]string) []string {
-	key := referenceKey(queries)
-	if key == "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"40\"],[\"GET_FILE_SIZE\",\"f\"]]]" {
-		return []string{"true", "true", "40"}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"big\",\"80\"],[\"ADD_FILE_BY\",\"u\",\"small\",\"30\"],[\"ADD_FILE_BY\",\"u\",\"new\",\"80\"],[\"GET_FILE_SIZE\",\"big\"],[\"GET_FILE_SIZE\",\"small\"],[\"GET_FILE_SIZE\",\"new\"]]]" {
-		return []string{"true", "true", "true", "true", "", "", "80"}
-	}
-	if key == "[[[\"ADD_FILE_BY\",\"ghost\",\"f\",\"10\"]]]" {
-		return []string{"false"}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"50\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"50\"],[\"GET_FILE_SIZE\",\"f\"]]]" {
-		return []string{"true", "true", "50"}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"20\"],[\"ADD_FILE_BY\",\"u\",\"b\",\"10\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"10\"],[\"ADD_FILE_BY\",\"u\",\"c\",\"10\"],[\"GET_FILE_SIZE\",\"a\"],[\"GET_FILE_SIZE\",\"b\"],[\"GET_FILE_SIZE\",\"c\"]]]" {
-		return []string{"true", "true", "true", "true", "", "10", "10"}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f1\",\"30\"],[\"ADD_FILE_BY\",\"u\",\"f2\",\"30\"],[\"ADD_FILE_BY\",\"u\",\"f3\",\"30\"],[\"ADD_FILE_BY\",\"u\",\"big\",\"80\"],[\"GET_FILE_SIZE\",\"f1\"],[\"GET_FILE_SIZE\",\"f2\"],[\"GET_FILE_SIZE\",\"f3\"],[\"GET_FILE_SIZE\",\"big\"]]]" {
-		return []string{"true", "true", "true", "true", "true", "", "", "", "80"}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"50\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"20\"],[\"ADD_FILE_BY\",\"u\",\"toobig\",\"60\"],[\"GET_FILE_SIZE\",\"a\"],[\"GET_FILE_SIZE\",\"toobig\"]]]" {
-		return []string{"true", "true", "false", "20", ""}
-	}
-	if key == "[[[\"ADD_FILE\",\"sys.txt\",\"90\"],[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"ufile\",\"80\"],[\"ADD_FILE_BY\",\"u\",\"ufile2\",\"80\"],[\"GET_FILE_SIZE\",\"sys.txt\"],[\"GET_FILE_SIZE\",\"ufile\"]]]" {
-		return []string{"true", "true", "true", "true", "90", ""}
-	}
-	if key == "[[[\"ADD_USER\",\"u\",\"10\"],[\"ADD_USER\",\"u\",\"20\"]]]" {
-		return []string{"true", "false"}
-	}
-	if key == "[[[\"ADD_FILE\",\"x\",\"5\"],[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"x\",\"10\"],[\"GET_FILE_SIZE\",\"x\"]]]" {
-		return []string{"true", "true", "false", "5"}
-	}
-	return []string{}
+const systemOwner = "$system"
+
+type fileRow struct {
+	name string
+	size int
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+type fileInfo struct {
+	size  int
+	owner string
+}
+
+type userInfo struct {
+	limit int
+	used  int
+}
+
+func Solution(queries [][]string) []string {
+	files := map[string]fileInfo{}
+	users := map[string]*userInfo{}
+	out := []string{}
+
+	for _, query := range queries {
+		switch query[0] {
+		case "ADD_FILE":
+			name := query[1]
+			size, _ := strconv.Atoi(query[2])
+			if _, exists := files[name]; exists {
+				out = append(out, "false")
+			} else {
+				files[name] = fileInfo{size: size, owner: systemOwner}
+				out = append(out, "true")
+			}
+		case "GET_FILE_SIZE":
+			if file, exists := files[query[1]]; exists {
+				out = append(out, strconv.Itoa(file.size))
+			} else {
+				out = append(out, "")
+			}
+		case "COPY_FILE":
+			if source, exists := files[query[1]]; exists {
+				files[query[2]] = fileInfo{size: source.size, owner: systemOwner}
+				out = append(out, "true")
+			} else {
+				out = append(out, "false")
+			}
+		case "FIND_BY_PREFIX":
+			rows := []fileRow{}
+			for name, file := range files {
+				if strings.HasPrefix(name, query[1]) {
+					rows = append(rows, fileRow{name, file.size})
+				}
+			}
+			out = append(out, renderFiles(rows))
+		case "FIND_BY_SUFFIX":
+			rows := []fileRow{}
+			for name, file := range files {
+				if strings.HasSuffix(name, query[1]) {
+					rows = append(rows, fileRow{name, file.size})
+				}
+			}
+			out = append(out, renderFiles(rows))
+		case "ADD_USER":
+			user := query[1]
+			limit, _ := strconv.Atoi(query[2])
+			if _, exists := users[user]; exists {
+				out = append(out, "false")
+			} else {
+				users[user] = &userInfo{limit: limit}
+				out = append(out, "true")
+			}
+		case "ADD_FILE_BY":
+			user, name := query[1], query[2]
+			size, _ := strconv.Atoi(query[3])
+			info, ok := users[user]
+			_, exists := files[name]
+			if !ok || exists || size > info.limit {
+				out = append(out, "false")
+				continue
+			}
+			if info.used+size > info.limit {
+				evictFor(files, info, user, size)
+			}
+			files[name] = fileInfo{size: size, owner: user}
+			info.used += size
+			out = append(out, "true")
+		default:
+			out = append(out, "")
+		}
+	}
+
+	return out
+}
+
+func evictFor(files map[string]fileInfo, user *userInfo, owner string, size int) {
+	owned := []fileRow{}
+	for name, file := range files {
+		if file.owner == owner {
+			owned = append(owned, fileRow{name, file.size})
+		}
+	}
+	sort.Slice(owned, func(i, j int) bool {
+		if owned[i].size != owned[j].size {
+			return owned[i].size > owned[j].size
+		}
+		return owned[i].name < owned[j].name
+	})
+	for _, row := range owned {
+		if user.used+size <= user.limit {
+			break
+		}
+		delete(files, row.name)
+		user.used -= row.size
+	}
+}
+
+func renderFiles(rows []fileRow) string {
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].size != rows[j].size {
+			return rows[i].size > rows[j].size
+		}
+		return rows[i].name < rows[j].name
+	})
+	parts := make([]string, 0, len(rows))
+	for _, row := range rows {
+		parts = append(parts, row.name+"("+strconv.Itoa(row.size)+")")
+	}
+	return strings.Join(parts, ",")
 }

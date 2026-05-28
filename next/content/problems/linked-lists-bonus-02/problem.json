@@ -8,7 +8,7 @@
     "traversal",
     "indexing"
   ],
-  "prompt": "Given the head of a singly linked list and a zero-based index, return the value stored at that index. If the index is out of range, return None.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Return the value stored at the zero-based `index`. If the index is out of range, return `null`.",
   "signature": {
     "name": "valueAtIndex",
     "inputs": [

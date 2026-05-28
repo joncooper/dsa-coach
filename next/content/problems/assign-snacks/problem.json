@@ -4,10 +4,11 @@
   "title": "Assign Snacks",
   "difficulty": "easy",
   "concepts": [
-    "two sorted lists",
+    "sorting",
+    "two pointers",
     "greedy matching"
   ],
-  "prompt": "Each child needs a snack size at least their appetite. Each snack can be used once. Return the maximum satisfied children.",
+  "prompt": "Each child needs a snack size at least their appetite. Each snack can be used once. You may assign snacks to children in any order, and the input arrays are not guaranteed to be sorted. Return the maximum number of satisfied children.",
   "signature": {
     "name": "assignSnacks",
     "inputs": [
@@ -64,6 +65,21 @@
         ]
       ],
       "expected": 0,
+      "visibility": "visible"
+    },
+    {
+      "name": "unsorted inputs",
+      "args": [
+        [
+          2,
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": 2,
       "visibility": "visible"
     },
     {
@@ -150,6 +166,23 @@
         ]
       ],
       "expected": 0,
+      "visibility": "hidden"
+    },
+    {
+      "name": "unsorted both lists",
+      "args": [
+        [
+          4,
+          2,
+          1
+        ],
+        [
+          2,
+          1,
+          3
+        ]
+      ],
+      "expected": 2,
       "visibility": "hidden"
     },
     {

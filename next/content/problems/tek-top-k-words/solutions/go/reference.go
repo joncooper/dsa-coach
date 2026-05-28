@@ -1,55 +1,36 @@
 package solution
 
-import "encoding/json"
+import (
+	"regexp"
+	"sort"
+	"strings"
+)
 
-func TopKWords(arg0 string, arg1 int) [][]any {
-	key := referenceKey(arg0, arg1)
-	if key == "[\"\",3]" {
+func TopKWords(text string, k int) [][]any {
+	if k <= 0 {
 		return [][]any{}
 	}
-	if key == "[\"the the the\",1]" {
-		return [][]any{[]any{"the", 3}}
+	pattern := regexp.MustCompile("[a-z]+")
+	counts := map[string]int{}
+	for _, word := range pattern.FindAllString(strings.ToLower(text), -1) {
+		counts[word]++
 	}
-	if key == "[\"a b c a b c\",2]" {
-		return [][]any{[]any{"a", 2}, []any{"b", 2}}
+	words := make([]string, 0, len(counts))
+	for word := range counts {
+		words = append(words, word)
 	}
-	if key == "[\"Hello, hello! HELLO?\",1]" {
-		return [][]any{[]any{"hello", 3}}
+	sort.Slice(words, func(i, j int) bool {
+		if counts[words[i]] != counts[words[j]] {
+			return counts[words[i]] > counts[words[j]]
+		}
+		return words[i] < words[j]
+	})
+	if k > len(words) {
+		k = len(words)
 	}
-	if key == "[\"x y\",5]" {
-		return [][]any{[]any{"x", 1}, []any{"y", 1}}
+	out := make([][]any, 0, k)
+	for _, word := range words[:k] {
+		out = append(out, []any{word, counts[word]})
 	}
-	if key == "[\"a a b\",0]" {
-		return [][]any{}
-	}
-	if key == "[\"apple banana apple cherry banana apple\",2]" {
-		return [][]any{[]any{"apple", 3}, []any{"banana", 2}}
-	}
-	if key == "[\"abc123 abc 999\",2]" {
-		return [][]any{[]any{"abc", 2}}
-	}
-	if key == "[\"zebra apple banana zebra apple banana\",3]" {
-		return [][]any{[]any{"apple", 2}, []any{"banana", 2}, []any{"zebra", 2}}
-	}
-	if key == "[\"well-known well known\",3]" {
-		return [][]any{[]any{"known", 2}, []any{"well", 2}}
-	}
-	if key == "[\"don't do don do\",3]" {
-		return [][]any{[]any{"do", 2}, []any{"don", 2}, []any{"t", 1}}
-	}
-	if key == "[\"   \\t  \\n  \",5]" {
-		return [][]any{}
-	}
-	if key == "[\"a b c d e\",3]" {
-		return [][]any{[]any{"a", 1}, []any{"b", 1}, []any{"c", 1}}
-	}
-	if key == "[\"The THE the tHe\",1]" {
-		return [][]any{[]any{"the", 4}}
-	}
-	return [][]any{}
-}
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+	return out
 }

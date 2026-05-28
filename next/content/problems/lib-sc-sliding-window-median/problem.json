@@ -8,7 +8,7 @@
     "sorted container",
     "SortedList"
   ],
-  "prompt": "Given an integer array `nums` and a window size `k`, return the median of every length-`k` window as the window slides from left to right by one position at a time. The output length is `len(nums) - k + 1`. For odd `k` the median is the middle value of the sorted window; for even `k` it is the mean of the two middle values (as a float).",
+  "prompt": "Given an integer array `nums` and a window size `k`, return the median of every length-`k` window as the window slides from left to right by one position at a time. The output has one median for each valid window. For odd `k` the median is the middle value of the sorted window; for even `k` it is the mean of the two middle values.",
   "signature": {
     "name": "slidingWindowMedian",
     "inputs": [

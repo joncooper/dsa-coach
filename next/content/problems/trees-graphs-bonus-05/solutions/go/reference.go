@@ -2,7 +2,9 @@ package solution
 
 func RightSideView(values []interface{}) []int {
 	root := buildTree(values)
-	if root == nil { return []int{} }
+	if root == nil {
+		return []int{}
+	}
 	view := []int{}
 	queue := []*Node{root}
 	for len(queue) > 0 {
@@ -10,9 +12,15 @@ func RightSideView(values []interface{}) []int {
 		for index := 0; index < levelSize; index++ {
 			node := queue[0]
 			queue = queue[1:]
-			if index == levelSize-1 { view = append(view, node.Value) }
-			if node.Left != nil { queue = append(queue, node.Left) }
-			if node.Right != nil { queue = append(queue, node.Right) }
+			if index == levelSize-1 {
+				view = append(view, node.Value)
+			}
+			if node.Left != nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right != nil {
+				queue = append(queue, node.Right)
+			}
 		}
 	}
 	return view
@@ -20,7 +28,7 @@ func RightSideView(values []interface{}) []int {
 
 type Node struct {
 	Value int
-	Left *Node
+	Left  *Node
 	Right *Node
 }
 

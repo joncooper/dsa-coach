@@ -8,7 +8,7 @@
     "traversal",
     "running state"
   ],
-  "prompt": "Given the head of a singly linked list of integers, return the largest value in the list. Return None if the list is empty.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Return the largest value in the list. Return `null` if the list is empty.",
   "signature": {
     "name": "maxListValue",
     "inputs": [

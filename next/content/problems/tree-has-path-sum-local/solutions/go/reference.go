@@ -4,9 +4,13 @@ func TreeHasPathSumLocal(values []interface{}, target int) bool {
 	root := buildTree(values)
 	var hasPath func(*Node, int) bool
 	hasPath = func(node *Node, remaining int) bool {
-		if node == nil { return false }
+		if node == nil {
+			return false
+		}
 		nextRemaining := remaining - node.Value
-		if node.Left == nil && node.Right == nil { return nextRemaining == 0 }
+		if node.Left == nil && node.Right == nil {
+			return nextRemaining == 0
+		}
 		return hasPath(node.Left, nextRemaining) || hasPath(node.Right, nextRemaining)
 	}
 	return hasPath(root, target)
@@ -14,7 +18,7 @@ func TreeHasPathSumLocal(values []interface{}, target int) bool {
 
 type Node struct {
 	Value int
-	Left *Node
+	Left  *Node
 	Right *Node
 }
 

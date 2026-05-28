@@ -150,7 +150,7 @@
       },
       "tests": [
         {
-          "name": "one triple",
+          "name": "two triples",
           "args": [
             "15\n2\n4\n3\n8\n5"
           ],

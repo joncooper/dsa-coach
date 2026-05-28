@@ -8,7 +8,7 @@
     "queue per key",
     "stream processing"
   ],
-  "prompt": "Process a stream of events `[[timestamp, user_id], ...]` already sorted by `timestamp` (integer seconds, non-decreasing). For each event, decide whether the request is accepted. The rule per user: a request is accepted only if strictly fewer than `limit` of that user's previously accepted requests have timestamps within the last `window` seconds (counting requests whose timestamp difference from the current one is strictly less than `window`). Rejected requests do not count toward the limit. Return a list of booleans with one entry per event, in input order, where `True` means accepted.",
+  "prompt": "Process a stream of events `[[timestamp, user_id], ...]` already sorted by `timestamp` (integer seconds, non-decreasing). For each event, decide whether the request is accepted. The rule per user: a request is accepted only if strictly fewer than `limit` of that user's previously accepted requests have timestamps within the last `window` seconds (counting requests whose timestamp difference from the current one is strictly less than `window`). Rejected requests do not count toward the limit. Return a list of booleans with one entry per event, in input order, where `true` means accepted.",
   "signature": {
     "name": "rateLimited",
     "inputs": [

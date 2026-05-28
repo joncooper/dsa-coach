@@ -25,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApplication.shared.setActivationPolicy(.regular)
+        createApplicationMenu()
         createWindow()
         showMessage(title: "Starting DSA Coach Next", body: "Starting the local runner and editor...")
         startHost()
@@ -39,21 +40,208 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         stopHost()
     }
 
+    private func createApplicationMenu() {
+        let mainMenu = NSMenu()
+        NSApp.mainMenu = mainMenu
+
+        let appMenu = addMenu(title: "DSA Coach Next", to: mainMenu)
+        appMenu.addItem(commandItem(title: "About DSA Coach Next", action: #selector(showAboutPanel(_:))))
+        appMenu.addItem(NSMenuItem.separator())
+        appMenu.addItem(commandItem(title: "Settings...", action: #selector(openSettings(_:)), keyEquivalent: ","))
+        appMenu.addItem(NSMenuItem.separator())
+
+        let servicesMenu = NSMenu(title: "Services")
+        NSApp.servicesMenu = servicesMenu
+        let servicesItem = NSMenuItem(title: "Services", action: nil, keyEquivalent: "")
+        servicesItem.submenu = servicesMenu
+        appMenu.addItem(servicesItem)
+        appMenu.addItem(NSMenuItem.separator())
+        appMenu.addItem(systemItem(title: "Hide DSA Coach Next", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"))
+        appMenu.addItem(systemItem(title: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h", modifiers: [.command, .option]))
+        appMenu.addItem(systemItem(title: "Show All", action: #selector(NSApplication.unhideAllApplications(_:))))
+        appMenu.addItem(NSMenuItem.separator())
+        appMenu.addItem(systemItem(title: "Quit DSA Coach Next", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+
+        let fileMenu = addMenu(title: "File", to: mainMenu)
+        fileMenu.addItem(commandItem(title: "Import Progress...", action: #selector(importProgress(_:)), keyEquivalent: "o"))
+        fileMenu.addItem(commandItem(title: "Export Progress...", action: #selector(exportProgress(_:)), keyEquivalent: "e"))
+        fileMenu.addItem(commandItem(title: "Export Coach Log...", action: #selector(exportCoachLog(_:)), keyEquivalent: "e", modifiers: [.command, .shift]))
+
+        let editMenu = addMenu(title: "Edit", to: mainMenu)
+        editMenu.addItem(responderItem(title: "Undo", action: Selector(("undo:")), keyEquivalent: "z"))
+        editMenu.addItem(responderItem(title: "Redo", action: Selector(("redo:")), keyEquivalent: "z", modifiers: [.command, .shift]))
+        editMenu.addItem(NSMenuItem.separator())
+        editMenu.addItem(responderItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
+        editMenu.addItem(responderItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
+        editMenu.addItem(responderItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
+        editMenu.addItem(responderItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
+
+        let viewMenu = addMenu(title: "View", to: mainMenu)
+        viewMenu.addItem(commandItem(title: "Reload", action: #selector(reloadWebView(_:)), keyEquivalent: "r"))
+        viewMenu.addItem(NSMenuItem.separator())
+        viewMenu.addItem(commandItem(title: "Toggle Sidebar", action: #selector(toggleSidebar(_:)), keyEquivalent: "s", modifiers: [.command, .option]))
+        viewMenu.addItem(commandItem(title: "Toggle Coach", action: #selector(toggleCoach(_:)), keyEquivalent: "c", modifiers: [.command, .option]))
+        viewMenu.addItem(commandItem(title: "Toggle Focus Mode", action: #selector(toggleFocusMode(_:)), keyEquivalent: "f", modifiers: [.command, .option]))
+        viewMenu.addItem(NSMenuItem.separator())
+        viewMenu.addItem(responderItem(title: "Enter Full Screen", action: #selector(NSWindow.toggleFullScreen(_:)), keyEquivalent: "f", modifiers: [.command, .control]))
+
+        let navigateMenu = addMenu(title: "Navigate", to: mainMenu)
+        navigateMenu.addItem(commandItem(title: "Dashboard", action: #selector(openDashboard(_:)), keyEquivalent: "1"))
+        navigateMenu.addItem(commandItem(title: "Search Course", action: #selector(focusSearch(_:)), keyEquivalent: "k"))
+        navigateMenu.addItem(NSMenuItem.separator())
+        navigateMenu.addItem(commandItem(title: "Back", action: #selector(goBack(_:)), keyEquivalent: "["))
+        navigateMenu.addItem(commandItem(title: "Forward", action: #selector(goForward(_:)), keyEquivalent: "]"))
+
+        let windowMenu = addMenu(title: "Window", to: mainMenu)
+        NSApp.windowsMenu = windowMenu
+        windowMenu.addItem(responderItem(title: "Minimize", action: #selector(NSWindow.miniaturize(_:)), keyEquivalent: "m"))
+        windowMenu.addItem(responderItem(title: "Zoom", action: #selector(NSWindow.zoom(_:))))
+        windowMenu.addItem(NSMenuItem.separator())
+        windowMenu.addItem(systemItem(title: "Bring All to Front", action: #selector(NSApplication.arrangeInFront(_:))))
+    }
+
     private func createWindow() {
         let configuration = WKWebViewConfiguration()
         webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.allowsBackForwardNavigationGestures = true
 
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1280, height: 860),
+            contentRect: initialWindowFrame(),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
-        window.center()
+        window.minSize = NSSize(width: 1120, height: 740)
+        window.tabbingMode = .preferred
+        window.setFrameAutosaveName("MainWindow")
+        if !window.setFrameUsingName("MainWindow") {
+            window.center()
+        }
         window.title = "DSA Coach Next"
         window.contentView = webView
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc private func showAboutPanel(_ sender: Any?) {
+        NSApp.orderFrontStandardAboutPanel(options: [
+            .applicationName: "DSA Coach Next",
+            .applicationVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0",
+            .credits: NSAttributedString(string: "Local, offline-first coding practice.")
+        ])
+    }
+
+    @objc private func openSettings(_ sender: Any?) {
+        sendWebCommand("open-settings")
+    }
+
+    @objc private func importProgress(_ sender: Any?) {
+        sendWebCommand("import-progress")
+    }
+
+    @objc private func exportProgress(_ sender: Any?) {
+        sendWebCommand("export-progress")
+    }
+
+    @objc private func exportCoachLog(_ sender: Any?) {
+        sendWebCommand("export-coach-log")
+    }
+
+    @objc private func openDashboard(_ sender: Any?) {
+        sendWebCommand("open-dashboard")
+    }
+
+    @objc private func focusSearch(_ sender: Any?) {
+        sendWebCommand("focus-search")
+    }
+
+    @objc private func toggleSidebar(_ sender: Any?) {
+        sendWebCommand("toggle-sidebar")
+    }
+
+    @objc private func toggleCoach(_ sender: Any?) {
+        sendWebCommand("toggle-coach")
+    }
+
+    @objc private func toggleFocusMode(_ sender: Any?) {
+        sendWebCommand("toggle-focus")
+    }
+
+    @objc private func reloadWebView(_ sender: Any?) {
+        webView.reload()
+    }
+
+    @objc private func goBack(_ sender: Any?) {
+        if webView.canGoBack { webView.goBack() }
+    }
+
+    @objc private func goForward(_ sender: Any?) {
+        if webView.canGoForward { webView.goForward() }
+    }
+
+    private func sendWebCommand(_ command: String) {
+        let escaped = command
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "'", with: "\\'")
+            .replacingOccurrences(of: "\n", with: "\\n")
+        webView.evaluateJavaScript("if (window.dsaCoachCommand) window.dsaCoachCommand('\(escaped)');")
+    }
+
+    private func initialWindowFrame() -> NSRect {
+        let visible = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+        let maxWidth = max(1120, visible.width - 80)
+        let maxHeight = max(740, visible.height - 80)
+        let width = min(max(1320, visible.width * 0.78), maxWidth)
+        let height = min(max(860, visible.height * 0.82), maxHeight)
+        return NSRect(
+            x: visible.minX + (visible.width - width) / 2,
+            y: visible.minY + (visible.height - height) / 2,
+            width: width,
+            height: height
+        )
+    }
+
+    private func addMenu(title: String, to mainMenu: NSMenu) -> NSMenu {
+        let item = NSMenuItem()
+        let menu = NSMenu(title: title)
+        item.submenu = menu
+        mainMenu.addItem(item)
+        return menu
+    }
+
+    private func commandItem(
+        title: String,
+        action: Selector?,
+        keyEquivalent: String = "",
+        modifiers: NSEvent.ModifierFlags = [.command]
+    ) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
+        item.target = self
+        item.keyEquivalentModifierMask = modifiers
+        return item
+    }
+
+    private func responderItem(
+        title: String,
+        action: Selector?,
+        keyEquivalent: String = "",
+        modifiers: NSEvent.ModifierFlags = [.command]
+    ) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
+        item.keyEquivalentModifierMask = modifiers
+        return item
+    }
+
+    private func systemItem(
+        title: String,
+        action: Selector?,
+        keyEquivalent: String = "",
+        modifiers: NSEvent.ModifierFlags = [.command]
+    ) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
+        item.target = NSApp
+        item.keyEquivalentModifierMask = modifiers
+        return item
     }
 
     private func startHost() {
@@ -274,9 +462,22 @@ private func locateBun() -> String? {
 }
 
 private func launchPath(appRoot: URL, existing: String?) -> String {
+    let home = NSHomeDirectory()
     var entries = [
         appRoot.appendingPathComponent("node_modules/.bin").path,
-        appRoot.appendingPathComponent(".runner-cache/lsp/bin").path
+        appRoot.appendingPathComponent(".runner-cache/lsp/bin").path,
+        appRoot.appendingPathComponent(".runner-cache/toolchains/python/bin").path,
+        appRoot.appendingPathComponent(".runner-cache/toolchains/go/bin").path,
+        appRoot.appendingPathComponent(".runner-cache/toolchains/java/bin").path,
+        "\(home)/.local/bin",
+        "\(home)/.pyenv/shims",
+        "\(home)/.bun/bin",
+        "/opt/homebrew/bin",
+        "/usr/local/bin",
+        "/usr/bin",
+        "/bin",
+        "/usr/sbin",
+        "/sbin"
     ]
     if let bundledBin = Bundle.main.resourceURL?.appendingPathComponent("bin").path {
         entries.append(bundledBin)

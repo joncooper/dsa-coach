@@ -1,0 +1,1057 @@
+{
+  "id": "asm-working-hours",
+  "kind": "problem",
+  "title": "Progressive Working Hours Register",
+  "difficulty": "medium",
+  "concepts": [
+    "simulation",
+    "stateful design",
+    "interval accounting",
+    "temporal state"
+  ],
+  "prompt": "Implement a small working-hours register driven by an operation list. `solution(queries)` receives a list of queries; each query is a list of strings `[OP, ...args]`. Return a list with one string result per query, in order. Worker ids and positions are case-sensitive strings. Timestamps and compensation values are non-negative integers given as strings. Compensation is a pay rate per timestamp unit, so a completed session from `start` to `end` at compensation `c` earns `(end - start) * c` before any later special-pay rules.\n\n**Level 1 operations**\n\n- `[\"ADD_WORKER\", workerId, position, compensation]` — add a worker who starts outside the office. Return `\"true\"`, or `\"false\"` if `workerId` already exists.\n- `[\"REGISTER\", workerId, timestamp]` — record that the worker entered or left the office. Register calls are given in increasing timestamp order. If the worker does not exist, return `\"invalid_request\"`. Otherwise toggle their office state and return `\"registered\"`.\n- `[\"GET\", workerId]` — return the total time spent in the office across completed sessions as a string, or `\"\"` if the worker does not exist. An open session does not count until it is closed.\n\nLater levels add rankings, promotions, salary calculation, and special pay periods. Structure the solution around workers and completed intervals so the later features do not require a rewrite.",
+  "signature": {
+    "name": "solution",
+    "inputs": [
+      {
+        "name": "queries",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "l1-empty",
+      "args": [
+        []
+      ],
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-add-and-get-zero",
+      "args": [
+        [
+          [
+            "ADD_WORKER",
+            "alice",
+            "engineer",
+            "50"
+          ],
+          [
+            "GET",
+            "alice"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "0"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-duplicate-and-completed-session",
+      "args": [
+        [
+          [
+            "ADD_WORKER",
+            "bob",
+            "dev",
+            "20"
+          ],
+          [
+            "ADD_WORKER",
+            "bob",
+            "qa",
+            "30"
+          ],
+          [
+            "REGISTER",
+            "bob",
+            "10"
+          ],
+          [
+            "REGISTER",
+            "bob",
+            "25"
+          ],
+          [
+            "GET",
+            "bob"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "false",
+        "registered",
+        "registered",
+        "15"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "l1-open-session-is-ignored",
+      "args": [
+        [
+          [
+            "REGISTER",
+            "ghost",
+            "5"
+          ],
+          [
+            "ADD_WORKER",
+            "ann",
+            "qa",
+            "10"
+          ],
+          [
+            "REGISTER",
+            "ann",
+            "10"
+          ],
+          [
+            "GET",
+            "ann"
+          ],
+          [
+            "REGISTER",
+            "ann",
+            "16"
+          ],
+          [
+            "GET",
+            "ann"
+          ],
+          [
+            "REGISTER",
+            "ann",
+            "20"
+          ],
+          [
+            "REGISTER",
+            "ann",
+            "23"
+          ],
+          [
+            "GET",
+            "ann"
+          ]
+        ]
+      ],
+      "expected": [
+        "invalid_request",
+        "true",
+        "registered",
+        "0",
+        "registered",
+        "6",
+        "registered",
+        "registered",
+        "9"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "l1-independent-workers",
+      "args": [
+        [
+          [
+            "ADD_WORKER",
+            "a",
+            "x",
+            "1"
+          ],
+          [
+            "ADD_WORKER",
+            "b",
+            "x",
+            "1"
+          ],
+          [
+            "REGISTER",
+            "a",
+            "1"
+          ],
+          [
+            "REGISTER",
+            "a",
+            "4"
+          ],
+          [
+            "REGISTER",
+            "b",
+            "5"
+          ],
+          [
+            "REGISTER",
+            "b",
+            "9"
+          ],
+          [
+            "GET",
+            "a"
+          ],
+          [
+            "GET",
+            "b"
+          ],
+          [
+            "GET",
+            "c"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "registered",
+        "registered",
+        "registered",
+        "registered",
+        "3",
+        "4",
+        ""
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "parts": [
+    {
+      "id": "l2-worker-statistics",
+      "title": "Worker Statistics",
+      "prompt": "Extend the register with rankings. All Level 1 operations keep working.\n\n**New operation**\n\n- `[\"TOP_N_WORKERS\", n, position]` — return up to `n` workers whose **current** position is `position`, formatted as `workerId(time)`, joined by commas. Sort by total completed time worked in that position descending, then by worker id ascending. Include matching workers with zero completed time if there are not enough non-zero workers. Return `\"\"` if `n` is `0` or no worker currently has that position.",
+      "tests": [
+        {
+          "name": "l2-ranks-workers-by-time",
+          "args": [
+            [
+              [
+                "ADD_WORKER",
+                "Ann",
+                "engineer",
+                "10"
+              ],
+              [
+                "ADD_WORKER",
+                "Bob",
+                "engineer",
+                "10"
+              ],
+              [
+                "ADD_WORKER",
+                "Cyd",
+                "qa",
+                "10"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "0"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "10"
+              ],
+              [
+                "REGISTER",
+                "Bob",
+                "15"
+              ],
+              [
+                "REGISTER",
+                "Bob",
+                "35"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "2",
+                "engineer"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "5",
+                "qa"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "true",
+            "registered",
+            "registered",
+            "registered",
+            "registered",
+            "Bob(20),Ann(10)",
+            "Cyd(0)"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-ties-and-empty-results",
+          "args": [
+            [
+              [
+                "ADD_WORKER",
+                "zoe",
+                "engineer",
+                "1"
+              ],
+              [
+                "ADD_WORKER",
+                "amy",
+                "engineer",
+                "1"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "5",
+                "engineer"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "0",
+                "engineer"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "2",
+                "qa"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "amy(0),zoe(0)",
+            "",
+            ""
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l2-position-filter",
+          "args": [
+            [
+              [
+                "ADD_WORKER",
+                "Ann",
+                "engineer",
+                "5"
+              ],
+              [
+                "ADD_WORKER",
+                "Ben",
+                "qa",
+                "5"
+              ],
+              [
+                "ADD_WORKER",
+                "Cal",
+                "engineer",
+                "5"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "0"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "5"
+              ],
+              [
+                "REGISTER",
+                "Cal",
+                "10"
+              ],
+              [
+                "REGISTER",
+                "Cal",
+                "20"
+              ],
+              [
+                "REGISTER",
+                "Ben",
+                "25"
+              ],
+              [
+                "REGISTER",
+                "Ben",
+                "40"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "3",
+                "engineer"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "1",
+                "qa"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "true",
+            "registered",
+            "registered",
+            "registered",
+            "registered",
+            "registered",
+            "registered",
+            "Cal(10),Ann(5)",
+            "Ben(15)"
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-working-hours/solutions/python/starter.py",
+          "referencePath": "problems/asm-working-hours/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-working-hours/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-working-hours/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-working-hours/solutions/go/starter.go",
+          "referencePath": "problems/asm-working-hours/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-working-hours/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-working-hours/solutions/scala/reference.scala"
+        }
+      }
+    },
+    {
+      "id": "l3-promotions-salary",
+      "title": "Promotions and Salary",
+      "prompt": "Extend the register with promotions and salary calculation. All earlier operations keep working.\n\n**New operations**\n\n- `[\"PROMOTE\", workerId, newPosition, newCompensation, startTimestamp]` — schedule a promotion for `workerId`. Return `\"success\"`, or `\"invalid_request\"` if the worker does not exist or already has a pending promotion. A pending promotion applies when that worker next enters the office at a timestamp greater than or equal to `startTimestamp`. It does not affect a session already in progress.\n- `[\"CALC_SALARY\", workerId, startTimestamp, endTimestamp]` — return the salary earned by that worker over the half-open interval `[startTimestamp, endTimestamp)`, or `\"\"` if the worker does not exist. Salary is calculated from completed sessions only, using the position and compensation active when each session began. If a completed session only partly overlaps the requested interval, count only the overlapping portion. Compensation is paid per timestamp unit, so the contribution of a session segment is `overlapDuration * compensation`.\n\n`TOP_N_WORKERS` has no timestamp argument. It reads the current register state after all previous queries have been processed: filter by each worker's current position, then rank by completed time worked in that same current position. Pending promotions do not change a worker's current position until they are applied by a later `REGISTER` entry event.",
+      "tests": [
+        {
+          "name": "l3-promotion-applies-on-next-entry",
+          "args": [
+            [
+              [
+                "ADD_WORKER",
+                "Ann",
+                "engineer",
+                "10"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "0"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "10"
+              ],
+              [
+                "PROMOTE",
+                "Ann",
+                "senior",
+                "20",
+                "15"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "12"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "18"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "20"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "25"
+              ],
+              [
+                "GET",
+                "Ann"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "2",
+                "engineer"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "2",
+                "senior"
+              ],
+              [
+                "CALC_SALARY",
+                "Ann",
+                "0",
+                "30"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "registered",
+            "registered",
+            "success",
+            "registered",
+            "registered",
+            "registered",
+            "registered",
+            "21",
+            "",
+            "Ann(5)",
+            "260"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-pending-promotion-and-windowed-salary",
+          "args": [
+            [
+              [
+                "ADD_WORKER",
+                "Bob",
+                "dev",
+                "5"
+              ],
+              [
+                "PROMOTE",
+                "ghost",
+                "lead",
+                "10",
+                "5"
+              ],
+              [
+                "PROMOTE",
+                "Bob",
+                "lead",
+                "10",
+                "5"
+              ],
+              [
+                "PROMOTE",
+                "Bob",
+                "staff",
+                "20",
+                "8"
+              ],
+              [
+                "REGISTER",
+                "Bob",
+                "10"
+              ],
+              [
+                "REGISTER",
+                "Bob",
+                "20"
+              ],
+              [
+                "PROMOTE",
+                "Bob",
+                "staff",
+                "20",
+                "21"
+              ],
+              [
+                "REGISTER",
+                "Bob",
+                "25"
+              ],
+              [
+                "REGISTER",
+                "Bob",
+                "35"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "2",
+                "lead"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "2",
+                "staff"
+              ],
+              [
+                "CALC_SALARY",
+                "Bob",
+                "15",
+                "30"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "invalid_request",
+            "success",
+            "invalid_request",
+            "registered",
+            "registered",
+            "success",
+            "registered",
+            "registered",
+            "",
+            "Bob(10)",
+            "150"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l3-salary-intersects-sessions",
+          "args": [
+            [
+              [
+                "ADD_WORKER",
+                "Eve",
+                "analyst",
+                "3"
+              ],
+              [
+                "REGISTER",
+                "Eve",
+                "0"
+              ],
+              [
+                "REGISTER",
+                "Eve",
+                "10"
+              ],
+              [
+                "PROMOTE",
+                "Eve",
+                "senior",
+                "7",
+                "12"
+              ],
+              [
+                "REGISTER",
+                "Eve",
+                "20"
+              ],
+              [
+                "REGISTER",
+                "Eve",
+                "40"
+              ],
+              [
+                "CALC_SALARY",
+                "Eve",
+                "5",
+                "25"
+              ],
+              [
+                "GET",
+                "Eve"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "1",
+                "senior"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "registered",
+            "registered",
+            "success",
+            "registered",
+            "registered",
+            "50",
+            "30",
+            "Eve(20)"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l3-promotion-waits-for-open-session-to-close",
+          "args": [
+            [
+              [
+                "ADD_WORKER",
+                "Ian",
+                "junior",
+                "4"
+              ],
+              [
+                "REGISTER",
+                "Ian",
+                "10"
+              ],
+              [
+                "PROMOTE",
+                "Ian",
+                "mid",
+                "9",
+                "15"
+              ],
+              [
+                "GET",
+                "Ian"
+              ],
+              [
+                "REGISTER",
+                "Ian",
+                "20"
+              ],
+              [
+                "REGISTER",
+                "Ian",
+                "25"
+              ],
+              [
+                "REGISTER",
+                "Ian",
+                "30"
+              ],
+              [
+                "CALC_SALARY",
+                "Ian",
+                "0",
+                "100"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "1",
+                "mid"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "registered",
+            "success",
+            "0",
+            "registered",
+            "registered",
+            "registered",
+            "85",
+            "Ian(5)"
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-working-hours/solutions/python/starter.py",
+          "referencePath": "problems/asm-working-hours/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-working-hours/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-working-hours/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-working-hours/solutions/go/starter.go",
+          "referencePath": "problems/asm-working-hours/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-working-hours/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-working-hours/solutions/scala/reference.scala"
+        }
+      }
+    },
+    {
+      "id": "l4-double-pay-periods",
+      "title": "Double Pay Periods",
+      "prompt": "Extend salary calculation with special pay periods. All earlier operations keep working.\n\n**New operation**\n\n- `[\"SET_DOUBLE_PAY\", startTimestamp, endTimestamp]` — mark the half-open interval `[startTimestamp, endTimestamp)` as double-paid and return `\"true\"`. Return `\"false\"` if `startTimestamp >= endTimestamp`. Double-pay periods may overlap, but overlapping coverage does not stack: covered time is paid at exactly 2x the session's active compensation.\n\n`CALC_SALARY` should include the currently registered double-pay periods when calculating salary over completed sessions.",
+      "tests": [
+        {
+          "name": "l4-simple-double-pay",
+          "args": [
+            [
+              [
+                "ADD_WORKER",
+                "Ann",
+                "engineer",
+                "10"
+              ],
+              [
+                "SET_DOUBLE_PAY",
+                "5",
+                "15"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "0"
+              ],
+              [
+                "REGISTER",
+                "Ann",
+                "20"
+              ],
+              [
+                "CALC_SALARY",
+                "Ann",
+                "0",
+                "20"
+              ],
+              [
+                "GET",
+                "Ann"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "registered",
+            "registered",
+            "300",
+            "20"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-overlapping-double-pay-does-not-stack",
+          "args": [
+            [
+              [
+                "ADD_WORKER",
+                "Bob",
+                "dev",
+                "2"
+              ],
+              [
+                "SET_DOUBLE_PAY",
+                "5",
+                "15"
+              ],
+              [
+                "SET_DOUBLE_PAY",
+                "10",
+                "25"
+              ],
+              [
+                "SET_DOUBLE_PAY",
+                "30",
+                "30"
+              ],
+              [
+                "REGISTER",
+                "Bob",
+                "0"
+              ],
+              [
+                "REGISTER",
+                "Bob",
+                "30"
+              ],
+              [
+                "CALC_SALARY",
+                "Bob",
+                "0",
+                "30"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "true",
+            "true",
+            "false",
+            "registered",
+            "registered",
+            "100"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "l4-promotions-and-double-pay",
+          "args": [
+            [
+              [
+                "ADD_WORKER",
+                "Cai",
+                "engineer",
+                "5"
+              ],
+              [
+                "REGISTER",
+                "Cai",
+                "0"
+              ],
+              [
+                "REGISTER",
+                "Cai",
+                "10"
+              ],
+              [
+                "PROMOTE",
+                "Cai",
+                "lead",
+                "10",
+                "12"
+              ],
+              [
+                "SET_DOUBLE_PAY",
+                "8",
+                "22"
+              ],
+              [
+                "REGISTER",
+                "Cai",
+                "15"
+              ],
+              [
+                "REGISTER",
+                "Cai",
+                "25"
+              ],
+              [
+                "CALC_SALARY",
+                "Cai",
+                "0",
+                "30"
+              ],
+              [
+                "CALC_SALARY",
+                "Cai",
+                "9",
+                "16"
+              ],
+              [
+                "TOP_N_WORKERS",
+                "1",
+                "lead"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "registered",
+            "registered",
+            "success",
+            "true",
+            "registered",
+            "registered",
+            "230",
+            "30",
+            "Cai(10)"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "l4-invalid-period-and-missing-worker",
+          "args": [
+            [
+              [
+                "SET_DOUBLE_PAY",
+                "10",
+                "5"
+              ],
+              [
+                "CALC_SALARY",
+                "missing",
+                "0",
+                "10"
+              ],
+              [
+                "ADD_WORKER",
+                "Dana",
+                "ops",
+                "6"
+              ],
+              [
+                "CALC_SALARY",
+                "Dana",
+                "0",
+                "10"
+              ]
+            ]
+          ],
+          "expected": [
+            "false",
+            "",
+            "true",
+            "0"
+          ],
+          "visibility": "hidden"
+        }
+      ],
+      "languages": {
+        "python": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-working-hours/solutions/python/starter.py",
+          "referencePath": "problems/asm-working-hours/solutions/python/reference.py"
+        },
+        "typescript": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-working-hours/solutions/typescript/starter.ts",
+          "referencePath": "problems/asm-working-hours/solutions/typescript/reference.ts"
+        },
+        "go": {
+          "entrypoint": "Solution",
+          "starterPath": "problems/asm-working-hours/solutions/go/starter.go",
+          "referencePath": "problems/asm-working-hours/solutions/go/reference.go"
+        },
+        "scala": {
+          "entrypoint": "solution",
+          "starterPath": "problems/asm-working-hours/solutions/scala/starter.scala",
+          "referencePath": "problems/asm-working-hours/solutions/scala/reference.scala"
+        }
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-working-hours/solutions/python/starter.py",
+      "referencePath": "problems/asm-working-hours/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-working-hours/solutions/typescript/starter.ts",
+      "referencePath": "problems/asm-working-hours/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "Solution",
+      "starterPath": "problems/asm-working-hours/solutions/go/starter.go",
+      "referencePath": "problems/asm-working-hours/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "solution",
+      "starterPath": "problems/asm-working-hours/solutions/scala/starter.scala",
+      "referencePath": "problems/asm-working-hours/solutions/scala/reference.scala"
+    }
+  }
+}

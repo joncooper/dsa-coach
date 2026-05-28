@@ -1,46 +1,24 @@
 object Solution {
   def three_paths_sum(inputText: String): Int = {
-    referenceKey(inputText) match {
-      case "[\"T..\\n.T.\\n..T\"]" => 5
-      case "[\"\"]" => 0
-      case "[\"...\\n...\\n...\"]" => 0
-      case "[\"TT\\nTT\\nTT\"]" => 5
-      case "[\"T.T.T\\n.T.T.\\nT.T.T\"]" => 6
-      case "[\"T..\\n.#.\\n..T\"]" => 3
-      case "[\"T.\\n.T\\nT.\\n.T\\nT.\"]" => 4
-      case "[\"#\"]" => 0
-      case "[\"T\"]" => 3
-      case "[\"TT\\nTT\"]" => 4
-      case _ => 0
+    val rows = inputText.linesIterator.filter(_.nonEmpty).toVector
+    if (rows.isEmpty) return 0
+
+    var total = 0
+    for ((dr, dc) <- Vector((1, 1), (1, 2), (2, 1))) {
+      var row = 0
+      var col = 0
+      var blocked = false
+      while (!blocked && row < rows.length && col < rows.head.length) {
+        rows(row).charAt(col) match {
+          case '#' => blocked = true
+          case 'T' => total += 1
+          case _ =>
+        }
+        row += dr
+        col += dc
+      }
     }
-  }
 
-  private def referenceKey(values: Any*): String = {
-    values.map(canonical).mkString("[", ",", "]")
-  }
-
-  private def canonical(value: Any): String = value match {
-    case s: String => quote(s)
-    case n: Int => n.toString
-    case n: Long => n.toString
-    case n: Double => if (n.isWhole) n.toInt.toString else n.toString
-    case b: Boolean => b.toString
-    case rows: Seq[_] => rows.map(canonical).mkString("[", ",", "]")
-    case map: scala.collection.Map[_, _] =>
-      map.toSeq.map { case (k, v) => quote(k.toString) + ":" + canonical(v) }.sortBy(identity).mkString("{", ",", "}")
-    case null => "null"
-    case other => quote(other.toString)
-  }
-
-  private def quote(value: String): String = {
-    val escaped = value.flatMap {
-      case char if char == 92.toChar => 92.toChar.toString + 92.toChar.toString
-      case char if char == 34.toChar => 92.toChar.toString + 34.toChar.toString
-      case '\n' => 92.toChar.toString + "n"
-      case '\r' => 92.toChar.toString + "r"
-      case '\t' => 92.toChar.toString + "t"
-      case char => char.toString
-    }
-    34.toChar.toString + escaped + 34.toChar.toString
+    total
   }
 }

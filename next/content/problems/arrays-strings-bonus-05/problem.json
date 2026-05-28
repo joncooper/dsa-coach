@@ -8,7 +8,7 @@
     "string scan",
     "frequency map"
   ],
-  "prompt": "Return the character that occurs most often in the string. If several characters tie for the highest count, return the one that appears earliest in the string. Return None for an empty string.",
+  "prompt": "Return the character that occurs most often in the string. If several characters tie for the highest count, return the one that appears earliest in the string. Return `null` for an empty string.",
   "signature": {
     "name": "mostFrequentCharacter",
     "inputs": [

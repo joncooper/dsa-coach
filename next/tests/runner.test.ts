@@ -56,13 +56,56 @@ describe("local runner", () => {
     expect(result.status).toBe("unsupported");
   });
 
-  test("runs Python and Go references when process runner verification is enabled", async () => {
+  test("returns line-numbered TypeScript compile diagnostics", async () => {
+    const graph = await loadContentGraph();
+    const result = await new LocalRunner(graph).run({
+      language: "typescript",
+      problemId: "sum-positive-readings",
+      code: `export function sumPositiveReadings(readings: number[]): number {
+  return readings.reduce((sum, value) => sum + value, 0);
+}
+}`,
+      includeHidden: false
+    });
+    expect(result.status).toBe("compile-error");
+    expect(result.diagnostics?.[0]).toMatchObject({
+      file: "solution.ts",
+      line: 4,
+      column: 1
+    });
+    expect(result.stderr).toContain("solution.ts:4:1");
+    expect(result.diagnostics?.[0]?.snippet?.some((line) => line.line === 4 && line.markerStart === 1)).toBe(true);
+  });
+
+  test("keeps TypeScript runtime stack traces and useful per-test diagnostics", async () => {
+    const graph = await loadContentGraph();
+    const result = await new LocalRunner(graph).run({
+      language: "typescript",
+      problemId: "sum-positive-readings",
+      code: `export function sumPositiveReadings(readings: number[]): number {
+  print(readings);
+  return 0;
+}`,
+      includeHidden: false
+    });
+    const erroredTest = result.tests.find((test) => test.error);
+    expect(result.status).toBe("failed");
+    expect(erroredTest?.error).toContain("ReferenceError: print is not defined");
+    expect(erroredTest?.error).toContain("solution.cjs");
+    expect(erroredTest?.diagnostics?.[0]).toMatchObject({
+      message: "ReferenceError: print is not defined",
+      file: "solution.cjs"
+    });
+    expect(erroredTest?.diagnostics?.[0]?.line).toBeGreaterThan(0);
+  });
+
+  test("runs non-TypeScript references when process runner verification is enabled", async () => {
     if (process.env.DSA_COACH_TEST_PROCESS_RUNNERS !== "1") return;
     const graph = await loadContentGraph();
     const runner = new LocalRunner(graph);
     const problem = graph.problems.find((candidate) => candidate.id === "sum-positive-readings");
     if (!problem) throw new Error("missing sum-positive-readings");
-    for (const language of ["python", "go"] as const) {
+    for (const language of ["python", "go", "scala"] as const) {
       const support = problem.languages[language];
       const code = await readFile(resolve(defaultContentRoot, support.referencePath), "utf8");
       const result = await runner.run({
@@ -70,7 +113,7 @@ describe("local runner", () => {
         problemId: problem.id,
         code,
         includeHidden: true,
-        timeoutMs: 10000
+        timeoutMs: language === "scala" ? 30000 : 10000
       });
       expect(result.status).toBe("passed");
     }

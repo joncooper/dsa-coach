@@ -8,7 +8,7 @@
     "running state",
     "simulation"
   ],
-  "prompt": "Each lemonade costs exactly 5. Customers pay in order with a 5, 10, or 20 bill, listed in `bills`. You start with no money and must give correct change from bills you have already collected. Return True if you can serve every customer, otherwise False.",
+  "prompt": "Each lemonade costs exactly 5. Customers pay in order with a 5, 10, or 20 bill, listed in `bills`. You start with no money and must give correct change from bills you have already collected. Return `true` if you can serve every customer, otherwise `false`.",
   "signature": {
     "name": "canMakeChange",
     "inputs": [

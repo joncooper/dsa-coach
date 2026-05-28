@@ -1,74 +1,132 @@
-export function solution(queries: string[][]): string[] {
-  const key = JSON.stringify([queries]);
-  const cases = {
-  "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"40\"],[\"COMPRESS_FILE\",\"u\",\"f\"],[\"GET_FILE_SIZE\",\"f\"]]]": [
-    "true",
-    "true",
-    "20",
-    "20"
-  ],
-  "[[[\"COMPRESS_FILE\",\"u\",\"ghost\"]]]": [
-    ""
-  ],
-  "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"40\"],[\"COMPRESS_FILE\",\"u\",\"f\"],[\"COMPRESS_FILE\",\"u\",\"f\"]]]": [
-    "true",
-    "true",
-    "20",
-    ""
-  ],
-  "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"40\"],[\"COMPRESS_FILE\",\"u\",\"f\"],[\"DECOMPRESS_FILE\",\"u\",\"f\"],[\"GET_FILE_SIZE\",\"f\"]]]": [
-    "true",
-    "true",
-    "20",
-    "40",
-    "40"
-  ],
-  "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"80\"],[\"COMPRESS_FILE\",\"u\",\"a\"],[\"ADD_FILE_BY\",\"u\",\"b\",\"60\"],[\"GET_FILE_SIZE\",\"a\"],[\"GET_FILE_SIZE\",\"b\"]]]": [
-    "true",
-    "true",
-    "40",
-    "true",
-    "40",
-    "60"
-  ],
-  "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"80\"],[\"COMPRESS_FILE\",\"u\",\"a\"],[\"ADD_FILE_BY\",\"u\",\"b\",\"60\"],[\"DECOMPRESS_FILE\",\"u\",\"a\"],[\"GET_FILE_SIZE\",\"a\"]]]": [
-    "true",
-    "true",
-    "40",
-    "true",
-    "",
-    "40"
-  ],
-  "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"f\",\"1\"],[\"COMPRESS_FILE\",\"u\",\"f\"],[\"GET_FILE_SIZE\",\"f\"]]]": [
-    "true",
-    "true",
-    "0",
-    "0"
-  ],
-  "[[[\"ADD_FILE\",\"s\",\"10\"],[\"ADD_USER\",\"u\",\"100\"],[\"COMPRESS_FILE\",\"u\",\"s\"]]]": [
-    "true",
-    "true",
-    ""
-  ],
-  "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"80\"],[\"COMPRESS_FILE\",\"u\",\"a\"],[\"ADD_FILE_BY\",\"u\",\"big\",\"100\"],[\"DECOMPRESS_FILE\",\"u\",\"a\"]]]": [
-    "true",
-    "true",
-    "40",
-    "true",
-    ""
-  ],
-  "[[[\"ADD_USER\",\"u\",\"100\"],[\"ADD_FILE_BY\",\"u\",\"a\",\"40\"],[\"COMPRESS_FILE\",\"u\",\"a\"],[\"COPY_FILE\",\"a\",\"c\"],[\"GET_FILE_SIZE\",\"c\"]]]": [
-    "true",
-    "true",
-    "20",
-    "true",
-    "20"
-  ]
-} as Record<string, string[]>;
-  if (!Object.hasOwn(cases, key)) throw new Error(`No migrated reference case for ${key}`);
-  return clone(cases[key]);
-}
+type FileInfo = { size: number; owner: string; compressed: boolean; originalSize: number };
+type UserInfo = { limit: number; used: number };
 
-function clone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+const SYSTEM = "$system";
+
+export function solution(queries: string[][]): string[] {
+  const files = new Map<string, FileInfo>();
+  const users = new Map<string, UserInfo>();
+  const out: string[] = [];
+
+  const render = (rows: Array<[string, number]>): string =>
+    rows
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([name, size]) => name + "(" + size + ")")
+      .join(",");
+
+  const evictFor = (user: string, size: number): void => {
+    const info = users.get(user)!;
+    const owned = [...files]
+      .filter(([, file]) => file.owner === user)
+      .map(([name, file]) => [name, file.size] as [string, number])
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+    for (const [name, fileSize] of owned) {
+      if (info.used + size <= info.limit) break;
+      files.delete(name);
+      info.used -= fileSize;
+    }
+  };
+
+  const sizedRows = (predicate: (name: string) => boolean): Array<[string, number]> =>
+    [...files]
+      .filter(([name]) => predicate(name))
+      .map(([name, file]) => [name, file.size] as [string, number]);
+
+  for (const query of queries) {
+    switch (query[0]) {
+      case "ADD_FILE": {
+        const name = query[1];
+        const size = Number(query[2]);
+        if (files.has(name)) out.push("false");
+        else {
+          files.set(name, { size, owner: SYSTEM, compressed: false, originalSize: size });
+          out.push("true");
+        }
+        break;
+      }
+      case "GET_FILE_SIZE": {
+        const file = files.get(query[1]);
+        out.push(file ? String(file.size) : "");
+        break;
+      }
+      case "COPY_FILE": {
+        const source = files.get(query[1]);
+        if (!source) out.push("false");
+        else {
+          files.set(query[2], { size: source.size, owner: SYSTEM, compressed: false, originalSize: source.size });
+          out.push("true");
+        }
+        break;
+      }
+      case "FIND_BY_PREFIX":
+        out.push(render(sizedRows((name) => name.startsWith(query[1]))));
+        break;
+      case "FIND_BY_SUFFIX":
+        out.push(render(sizedRows((name) => name.endsWith(query[1]))));
+        break;
+      case "ADD_USER": {
+        const user = query[1];
+        if (users.has(user)) out.push("false");
+        else {
+          users.set(user, { limit: Number(query[2]), used: 0 });
+          out.push("true");
+        }
+        break;
+      }
+      case "ADD_FILE_BY": {
+        const [user, name] = [query[1], query[2]];
+        const size = Number(query[3]);
+        const info = users.get(user);
+        if (!info || files.has(name) || size > info.limit) {
+          out.push("false");
+          break;
+        }
+        if (info.used + size > info.limit) evictFor(user, size);
+        files.set(name, { size, owner: user, compressed: false, originalSize: size });
+        info.used += size;
+        out.push("true");
+        break;
+      }
+      case "COMPRESS_FILE": {
+        const [user, name] = [query[1], query[2]];
+        const file = files.get(name);
+        if (!file || file.owner !== user || file.compressed) {
+          out.push("");
+          break;
+        }
+        const newSize = Math.floor(file.size / 2);
+        const info = users.get(user);
+        if (info) info.used -= file.size - newSize;
+        file.originalSize = file.size;
+        file.size = newSize;
+        file.compressed = true;
+        out.push(String(newSize));
+        break;
+      }
+      case "DECOMPRESS_FILE": {
+        const [user, name] = [query[1], query[2]];
+        const file = files.get(name);
+        if (!file || file.owner !== user || !file.compressed) {
+          out.push("");
+          break;
+        }
+        const delta = file.originalSize - file.size;
+        const info = users.get(user);
+        if (info && info.used + delta > info.limit) {
+          out.push("");
+          break;
+        }
+        if (info) info.used += delta;
+        file.size = file.originalSize;
+        file.compressed = false;
+        out.push(String(file.size));
+        break;
+      }
+      default:
+        out.push("");
+    }
+  }
+
+  return out;
 }

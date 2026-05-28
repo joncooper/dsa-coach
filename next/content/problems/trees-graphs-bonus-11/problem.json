@@ -8,7 +8,7 @@
     "BFS",
     "graph traversal"
   ],
-  "prompt": "You are given a directed graph as an adjacency dictionary mapping each node name to a list of node names it points to. Return how many distinct nodes are reachable from the source node, including the source itself.",
+  "prompt": "You are given a directed graph as an adjacency map from each node name to a list of node names it points to. Return how many distinct nodes are reachable from the source node, including the source itself.",
   "signature": {
     "name": "countReachable",
     "inputs": [

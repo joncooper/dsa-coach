@@ -18,6 +18,11 @@
       "problem": "asm-in-memory-db",
       "category": "assessments",
       "note": "simulation, stateful design, hash map, snapshot"
+    },
+    {
+      "problem": "asm-working-hours",
+      "category": "assessments",
+      "note": "simulation, interval accounting, promotions, salary windows"
     }
   ]
 }

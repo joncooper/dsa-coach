@@ -3,8 +3,12 @@ package solution
 func CanReachEndLocal(jumps []int) bool {
 	farthest := 0
 	for index, jump := range jumps {
-		if index > farthest { return false }
-		if index+jump > farthest { farthest = index + jump }
+		if index > farthest {
+			return false
+		}
+		if index+jump > farthest {
+			farthest = index + jump
+		}
 	}
 	return true
 }
@@ -39,6 +43,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

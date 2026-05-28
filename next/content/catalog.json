@@ -376,6 +376,7 @@
     "problems/aoc-y3-d7-task-dependencies/problem.json",
     "problems/asm-filesystem/problem.json",
     "problems/asm-banking/problem.json",
-    "problems/asm-in-memory-db/problem.json"
+    "problems/asm-in-memory-db/problem.json",
+    "problems/asm-working-hours/problem.json"
   ]
 }

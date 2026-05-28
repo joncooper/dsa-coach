@@ -7,7 +7,7 @@
     "binary-search",
     "matrix"
   ],
-  "prompt": "A matrix has each row sorted left to right, and the first value of every row is greater than the last value of the row above it. Return True if target appears in the matrix, otherwise False.",
+  "prompt": "A matrix has each row sorted left to right, and the first value of every row is greater than the last value of the row above it. Return `true` if target appears in the matrix, otherwise `false`.",
   "signature": {
     "name": "searchMatrix",
     "inputs": [

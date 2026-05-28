@@ -1,46 +1,38 @@
 object Solution {
+  private case class Child(count: Int, color: String)
+  private val Rule = raw"(\w+ \w+) containers hold (.+)\.".r
+  private val ChildRule = raw"(\d+) (\w+ \w+) containers?".r
+
   def count_containers_holding_gold(inputText: String): Int = {
-    referenceKey(inputText) match {
-      case "[\"dim red containers hold 1 bright gold container.\\nplain blue containers hold 1 dim red container.\\nbright gold containers hold no other containers.\"]" => 2
-      case "[\"plain blue containers hold 1 dim red container.\\ndim red containers hold no other containers.\"]" => 0
-      case "[\"\"]" => 0
-      case "[\"outer one containers hold 1 mid a container, 1 mid b container.\\nmid a containers hold 1 bright gold container.\\nmid b containers hold 1 bright gold container.\\nbright gold containers hold no other containers.\"]" => 3
-      case "[\"a one containers hold 1 b two container.\\nb two containers hold 1 c three container.\\nc three containers hold 1 bright gold container.\\nbright gold containers hold no other containers.\"]" => 3
-      case "[\"alpha box containers hold 2 bright gold containers, 1 ignored leaf container.\\nbeta box containers hold 1 alpha box container.\\nignored leaf containers hold no other containers.\\nbright gold containers hold no other containers.\"]" => 2
-      case "[\"bright gold containers hold 2 plain red containers.\\nplain red containers hold no other containers.\"]" => 0
-      case "[\"lone alpha containers hold 1 lone beta container.\\nlone beta containers hold no other containers.\\nshiny silver containers hold 1 bright gold container.\\nbright gold containers hold no other containers.\"]" => 1
-      case "[\"red one containers hold 1 bright gold container.\\nblue two containers hold 1 bright gold container.\\ngreen three containers hold 1 bright gold container.\\nbright gold containers hold no other containers.\"]" => 3
-      case "[\"top root containers hold 1 mid one container, 1 mid two container.\\nmid one containers hold 1 bright gold container.\\nmid two containers hold 1 mid one container.\\nbright gold containers hold no other containers.\"]" => 3
-      case _ => 0
+    val contains = parseContainers(inputText)
+    val parents = scala.collection.mutable.Map.empty[String, scala.collection.mutable.ArrayBuffer[String]]
+
+    for ((parent, children) <- contains; child <- children) {
+      parents.getOrElseUpdate(child.color, scala.collection.mutable.ArrayBuffer.empty) += parent
     }
-  }
 
-  private def referenceKey(values: Any*): String = {
-    values.map(canonical).mkString("[", ",", "]")
-  }
+    val seen = scala.collection.mutable.Set.empty[String]
+    val stack = scala.collection.mutable.Stack.from(parents.getOrElse("bright gold", Seq.empty))
 
-  private def canonical(value: Any): String = value match {
-    case s: String => quote(s)
-    case n: Int => n.toString
-    case n: Long => n.toString
-    case n: Double => if (n.isWhole) n.toInt.toString else n.toString
-    case b: Boolean => b.toString
-    case rows: Seq[_] => rows.map(canonical).mkString("[", ",", "]")
-    case map: scala.collection.Map[_, _] =>
-      map.toSeq.map { case (k, v) => quote(k.toString) + ":" + canonical(v) }.sortBy(identity).mkString("{", ",", "}")
-    case null => "null"
-    case other => quote(other.toString)
-  }
-
-  private def quote(value: String): String = {
-    val escaped = value.flatMap {
-      case char if char == 92.toChar => 92.toChar.toString + 92.toChar.toString
-      case char if char == 34.toChar => 92.toChar.toString + 34.toChar.toString
-      case '\n' => 92.toChar.toString + "n"
-      case '\r' => 92.toChar.toString + "r"
-      case '\t' => 92.toChar.toString + "t"
-      case char => char.toString
+    while (stack.nonEmpty) {
+      val color = stack.pop()
+      if (!seen(color)) {
+        seen += color
+        stack.pushAll(parents.getOrElse(color, Seq.empty))
+      }
     }
-    34.toChar.toString + escaped + 34.toChar.toString
+
+    seen.size
   }
+
+  private def parseContainers(inputText: String): Map[String, Vector[Child]] =
+    inputText.linesIterator.map(_.trim).filter(_.nonEmpty).flatMap {
+      case Rule(parent, "no other containers") => Some(parent -> Vector.empty[Child])
+      case Rule(parent, childrenText) =>
+        val children = ChildRule.findAllMatchIn(childrenText).map { m =>
+          Child(m.group(1).toInt, m.group(2))
+        }.toVector
+        Some(parent -> children)
+      case _ => None
+    }.toMap
 }

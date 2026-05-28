@@ -8,7 +8,7 @@
     "frequency map",
     "stable order"
   ],
-  "prompt": "Return the value that appears most often in the list. If several values tie for the highest count, return the one whose first occurrence comes earliest. Return None for an empty list.",
+  "prompt": "Return the value that appears most often in the list. If several values tie for the highest count, return the one whose first occurrence comes earliest. Return `null` for an empty list.",
   "signature": {
     "name": "mostFrequentValue",
     "inputs": [

@@ -1,55 +1,62 @@
 package solution
 
-import "encoding/json"
+import (
+	"strconv"
+	"strings"
+	"unicode"
+)
 
 func CountStrictRecords(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"id:123456789 name:Ada age:30 grade:A cohort:fall\"]" {
-		return 1
+	seasons := map[string]bool{"fall": true, "winter": true, "spring": true, "summer": true}
+	grades := map[string]bool{"A": true, "B": true, "C": true, "D": true, "F": true}
+	required := []string{"id", "name", "age", "grade", "cohort"}
+	valid := 0
+	for _, block := range strings.Split(inputText, "\n\n") {
+		if strings.TrimSpace(block) == "" {
+			continue
+		}
+		fields := map[string]string{}
+		for _, token := range strings.Fields(block) {
+			if idx := strings.IndexByte(token, ':'); idx >= 0 {
+				fields[token[:idx]] = token[idx+1:]
+			}
+		}
+		ok := true
+		for _, key := range required {
+			if _, exists := fields[key]; !exists {
+				ok = false
+			}
+		}
+		if !ok || !allDigits(fields["id"]) || len(fields["id"]) != 9 || !validName(fields["name"]) || !allDigits(fields["age"]) {
+			continue
+		}
+		age, _ := strconv.Atoi(fields["age"])
+		if age < 16 || age > 99 || !grades[fields["grade"]] || !seasons[fields["cohort"]] {
+			continue
+		}
+		valid++
 	}
-	if key == "[\"id:12345 name:Ada age:30 grade:A cohort:fall\"]" {
-		return 0
-	}
-	if key == "[\"id:123456789 name:Ada age:14 grade:A cohort:fall\"]" {
-		return 0
-	}
-	if key == "[\"\"]" {
-		return 0
-	}
-	if key == "[\"id:111222333 name:B age:20 grade:E cohort:spring\"]" {
-		return 0
-	}
-	if key == "[\"id:111222333 name:B age:20 grade:A cohort:autumn\"]" {
-		return 0
-	}
-	if key == "[\"id:111222333 name:Ada-Lovelace age:30 grade:B cohort:winter\"]" {
-		return 1
-	}
-	if key == "[\"id:111222333 name:Ada2 age:30 grade:B cohort:winter\"]" {
-		return 0
-	}
-	if key == "[\"id:111222333 name:B age:16 grade:A cohort:spring\"]" {
-		return 1
-	}
-	if key == "[\"id:111222333 name:B age:99 grade:A cohort:spring\"]" {
-		return 1
-	}
-	if key == "[\"id:111222333 name:B age:100 grade:A cohort:spring\"]" {
-		return 0
-	}
-	if key == "[\"id:11122233a name:B age:30 grade:A cohort:spring\"]" {
-		return 0
-	}
-	if key == "[\"id:111222333 name:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa age:30 grade:A cohort:spring\"]" {
-		return 0
-	}
-	if key == "[\"id:111222333 name:A age:30 grade:A cohort:spring\\n\\nname:B age:30 grade:A cohort:spring\"]" {
-		return 1
-	}
-	return 0
+	return valid
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func allDigits(text string) bool {
+	if text == "" {
+		return false
+	}
+	for _, ch := range text {
+		if !unicode.IsDigit(ch) {
+			return false
+		}
+	}
+	return true
+}
+func validName(text string) bool {
+	if len(text) < 1 || len(text) > 32 {
+		return false
+	}
+	for _, ch := range text {
+		if !unicode.IsLetter(ch) && ch != '-' {
+			return false
+		}
+	}
+	return true
 }

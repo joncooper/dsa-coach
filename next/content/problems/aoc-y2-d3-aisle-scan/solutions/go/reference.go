@@ -1,49 +1,21 @@
 package solution
 
-import "encoding/json"
+import "strings"
 
 func ScanAisle(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\".*.\\n#*.\\n..*\"]" {
-		return 2
+	relics := 0
+	for _, row := range strings.Split(inputText, "\n") {
+		if row == "" {
+			continue
+		}
+		for i := 0; i < len(row); i++ {
+			if row[i] == '#' {
+				break
+			}
+			if row[i] == '*' {
+				relics++
+			}
+		}
 	}
-	if key == "[\"\"]" {
-		return 0
-	}
-	if key == "[\"*.*\\n.*.\"]" {
-		return 3
-	}
-	if key == "[\"#**\\n.**\"]" {
-		return 2
-	}
-	if key == "[\"#\\n#\\n#\"]" {
-		return 0
-	}
-	if key == "[\"**.*\"]" {
-		return 3
-	}
-	if key == "[\"**#**\"]" {
-		return 2
-	}
-	if key == "[\"*.*.*\\n#####\\n*..**\\n.*.#*\\n*..*.\"]" {
-		return 9
-	}
-	if key == "[\"*..*..\"]" {
-		return 2
-	}
-	if key == "[\"**#\"]" {
-		return 2
-	}
-	if key == "[\"*\\n#\\n*\\n#\\n*\"]" {
-		return 3
-	}
-	if key == "[\"......\"]" {
-		return 0
-	}
-	return 0
-}
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+	return relics
 }

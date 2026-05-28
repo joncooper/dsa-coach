@@ -2,9 +2,22 @@ package solution
 
 func MaxTruckValue(boxes [][]int, capacity int) int {
 	sorted := append([][]int{}, boxes...)
-	for i := 0; i < len(sorted); i++ { for j := i + 1; j < len(sorted); j++ { if sorted[j][1] > sorted[i][1] { sorted[i], sorted[j] = sorted[j], sorted[i] } } }
+	for i := 0; i < len(sorted); i++ {
+		for j := i + 1; j < len(sorted); j++ {
+			if sorted[j][1] > sorted[i][1] {
+				sorted[i], sorted[j] = sorted[j], sorted[i]
+			}
+		}
+	}
 	remaining, total := capacity, 0
-	for _, box := range sorted { take := min(box[0], remaining); total += take * box[1]; remaining -= take; if remaining == 0 { break } }
+	for _, box := range sorted {
+		take := min(box[0], remaining)
+		total += take * box[1]
+		remaining -= take
+		if remaining == 0 {
+			break
+		}
+	}
 	return total
 }
 func sortInts(values []int) []int {
@@ -38,6 +51,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

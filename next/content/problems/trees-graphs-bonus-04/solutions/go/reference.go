@@ -5,11 +5,17 @@ func TreeDiameter(values []interface{}) int {
 	best := 0
 	var height func(*Node) int
 	height = func(node *Node) int {
-		if node == nil { return 0 }
+		if node == nil {
+			return 0
+		}
 		left := height(node.Left)
 		right := height(node.Right)
-		if left+right > best { best = left + right }
-		if left > right { return left + 1 }
+		if left+right > best {
+			best = left + right
+		}
+		if left > right {
+			return left + 1
+		}
 		return right + 1
 	}
 	height(root)
@@ -18,7 +24,7 @@ func TreeDiameter(values []interface{}) int {
 
 type Node struct {
 	Value int
-	Left *Node
+	Left  *Node
 	Right *Node
 }
 

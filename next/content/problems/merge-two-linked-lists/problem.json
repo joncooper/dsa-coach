@@ -7,7 +7,7 @@
     "merge",
     "dummy head"
   ],
-  "prompt": "Merge two sorted linked lists and return the head of one sorted linked list containing all nodes. Creating new nodes is allowed.",
+  "prompt": "The inputs `a` and `b` serialize two sorted singly linked lists in head-to-tail order. The starter code builds linked-list heads for both arrays. Merge the lists and return the merged list serialized head-to-tail. Creating new nodes is allowed.",
   "signature": {
     "name": "mergeTwoLinkedLists",
     "inputs": [

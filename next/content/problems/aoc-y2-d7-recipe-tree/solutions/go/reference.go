@@ -1,43 +1,64 @@
 package solution
 
-import "encoding/json"
+import (
+	"regexp"
+	"strings"
+)
 
 func CountDependentsOnPaste(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"core requires 1 binding_paste.\\nshell requires 1 core.\\nbinding_paste requires nothing.\"]" {
-		return 2
+	children := parseRecipes(inputText)
+	parents := map[string][]string{}
+	for parent, kids := range children {
+		for _, kid := range kids {
+			parents[kid.name] = append(parents[kid.name], parent)
+		}
 	}
-	if key == "[\"alpha requires 1 beta.\\nbeta requires nothing.\"]" {
-		return 0
+	visited := map[string]bool{}
+	stack := append([]string{}, parents["binding_paste"]...)
+	for len(stack) > 0 {
+		node := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if visited[node] {
+			continue
+		}
+		visited[node] = true
+		stack = append(stack, parents[node]...)
 	}
-	if key == "[\"\"]" {
-		return 0
-	}
-	if key == "[\"left requires 1 binding_paste.\\nright requires 1 binding_paste.\\ntop requires 1 left, 1 right.\\nbinding_paste requires nothing.\"]" {
-		return 3
-	}
-	if key == "[\"a requires 1 binding_paste.\\nb requires 1 a.\\nc requires 1 b.\\nd requires 1 c.\\nbinding_paste requires nothing.\"]" {
-		return 4
-	}
-	if key == "[\"core requires 1 binding_paste.\\nirrelevant requires 1 dust.\\ndust requires nothing.\\nbinding_paste requires nothing.\"]" {
-		return 1
-	}
-	if key == "[\"alpha requires 1 beta.\\nbeta requires 1 gamma.\\ngamma requires nothing.\\nbinding_paste requires nothing.\"]" {
-		return 0
-	}
-	if key == "[\"alpha requires 1 binding_paste.\\nbeta requires 1 binding_paste.\\ngamma requires 1 binding_paste.\\nbinding_paste requires nothing.\"]" {
-		return 3
-	}
-	if key == "[\"a requires 1 b.\\nb requires 1 c.\\nc requires 1 binding_paste.\\nbinding_paste requires nothing.\"]" {
-		return 3
-	}
-	if key == "[\"tonic requires 5 binding_paste, 3 herb.\\nherb requires nothing.\\nbinding_paste requires nothing.\"]" {
-		return 1
-	}
-	return 0
+	return len(visited)
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+type ingredient struct {
+	amount int
+	name   string
+}
+
+func parseRecipes(inputText string) map[string][]ingredient {
+	lineRE := regexp.MustCompile("^(\\w+) requires (.+)\\.$")
+	ingRE := regexp.MustCompile("(\\d+) (\\w+)")
+	children := map[string][]ingredient{}
+	for _, raw := range strings.Split(inputText, "\n") {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		m := lineRE.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		kids := []ingredient{}
+		if m[2] != "nothing" {
+			for _, item := range ingRE.FindAllStringSubmatch(m[2], -1) {
+				kids = append(kids, ingredient{atoi(item[1]), item[2]})
+			}
+		}
+		children[m[1]] = kids
+	}
+	return children
+}
+func atoi(text string) int {
+	n := 0
+	for _, ch := range text {
+		n = n*10 + int(ch-'0')
+	}
+	return n
 }

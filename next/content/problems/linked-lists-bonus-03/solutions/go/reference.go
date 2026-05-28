@@ -1,13 +1,50 @@
 package solution
 
+type ListNode struct {
+	Value int
+	Next  *ListNode
+}
+
+func buildList(values []int) *ListNode {
+	dummy := &ListNode{}
+	tail := dummy
+	for _, value := range values {
+		tail.Next = &ListNode{Value: value}
+		tail = tail.Next
+	}
+	return dummy.Next
+}
+
+func listToSlice(head *ListNode) []int {
+	result := []int{}
+	for node := head; node != nil; node = node.Next {
+		result = append(result, node.Value)
+	}
+	return result
+}
+
+func reverseNodes(head *ListNode) *ListNode {
+	var previous *ListNode
+	node := head
+	for node != nil {
+		next := node.Next
+		node.Next = previous
+		previous = node
+		node = next
+	}
+	return previous
+}
+
 func MaxListValue(values []int) interface{} {
-	if len(values) == 0 {
+	head := buildList(values)
+	if head == nil {
 		return nil
 	}
-	best := values[0]
-	for _, value := range values {
-		if value > best {
-			best = value
+
+	best := head.Value
+	for node := head.Next; node != nil; node = node.Next {
+		if node.Value > best {
+			best = node.Value
 		}
 	}
 	return best

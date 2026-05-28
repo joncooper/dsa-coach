@@ -2,16 +2,30 @@ package solution
 
 func LargestConcatenation(nums []int) string {
 	pieces := []string{}
-	for _, num := range nums { pieces = append(pieces, intToString(num)) }
-	for i := 0; i < len(pieces); i++ { for j := i + 1; j < len(pieces); j++ { if pieces[j]+pieces[i] > pieces[i]+pieces[j] { pieces[i], pieces[j] = pieces[j], pieces[i] } } }
+	for _, num := range nums {
+		pieces = append(pieces, intToString(num))
+	}
+	for i := 0; i < len(pieces); i++ {
+		for j := i + 1; j < len(pieces); j++ {
+			if pieces[j]+pieces[i] > pieces[i]+pieces[j] {
+				pieces[i], pieces[j] = pieces[j], pieces[i]
+			}
+		}
+	}
 	result := ""
-	for _, piece := range pieces { result += piece }
-	if result == "" || allZero(result) { return "0" }
+	for _, piece := range pieces {
+		result += piece
+	}
+	if result == "" || allZero(result) {
+		return "0"
+	}
 	return result
 }
 
 func intToString(value int) string {
-	if value == 0 { return "0" }
+	if value == 0 {
+		return "0"
+	}
 	digits := []byte{}
 	for value > 0 {
 		digits = append([]byte{byte('0' + value%10)}, digits...)
@@ -22,7 +36,9 @@ func intToString(value int) string {
 
 func allZero(value string) bool {
 	for _, char := range value {
-		if char != '0' { return false }
+		if char != '0' {
+			return false
+		}
 	}
 	return true
 }
@@ -57,6 +73,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

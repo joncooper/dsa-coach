@@ -8,7 +8,7 @@
     "frequency map",
     "multiset"
   ],
-  "prompt": "Given a target word and a list of available single-character letters, return True if the word can be spelled using those letters. Each letter may be used at most as many times as it appears in the list.",
+  "prompt": "Given a target word and a list of available single-character letters, return `true` if the word can be spelled using those letters. Each letter may be used at most as many times as it appears in the list.",
   "signature": {
     "name": "canFormWord",
     "inputs": [

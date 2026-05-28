@@ -8,7 +8,7 @@
     "bijection map",
     "canonical key"
   ],
-  "prompt": "Two strings are isomorphic if the characters of the first can be consistently replaced to produce the second: every occurrence of a character maps to the same character, and no two distinct characters map to the same one. Return True if the strings are isomorphic.",
+  "prompt": "Two strings are isomorphic if the characters of the first can be consistently replaced to produce the second: every occurrence of a character maps to the same character, and no two distinct characters map to the same one. Return `true` if the strings are isomorphic.",
   "signature": {
     "name": "isomorphicStrings",
     "inputs": [

@@ -1,2 +1,7 @@
+import heapq
+
+
 def print_order(jobs: list[list[int]]) -> list[int]:
-    return [job[1] for job in sorted(jobs, key=lambda job: (-job[0], job[1]))]
+    heap = [(-priority, job_id) for priority, job_id in jobs]
+    heapq.heapify(heap)
+    return [heapq.heappop(heap)[1] for _ in range(len(heap))]

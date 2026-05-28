@@ -1,40 +1,156 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strconv"
+	"strings"
+)
 
-func Solution(queries [][]string) []string {
-	key := referenceKey(queries)
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"100\"],[\"SCHEDULE_PAYMENT\",\"3\",\"a\",\"30\",\"10\"],[\"DEPOSIT\",\"20\",\"a\",\"5\"]]]" {
-		return []string{"true", "100", "payment1", "75"}
-	}
-	if key == "[[[\"SCHEDULE_PAYMENT\",\"1\",\"ghost\",\"10\",\"5\"]]]" {
-		return []string{""}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"100\"],[\"SCHEDULE_PAYMENT\",\"3\",\"a\",\"30\",\"10\"],[\"CANCEL_PAYMENT\",\"5\",\"a\",\"payment1\"],[\"DEPOSIT\",\"20\",\"a\",\"0\"]]]" {
-		return []string{"true", "100", "payment1", "true", "100"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"100\"],[\"SCHEDULE_PAYMENT\",\"3\",\"a\",\"30\",\"10\"],[\"DEPOSIT\",\"15\",\"a\",\"0\"],[\"CANCEL_PAYMENT\",\"16\",\"a\",\"payment1\"]]]" {
-		return []string{"true", "100", "payment1", "70", "false"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"100\"],[\"SCHEDULE_PAYMENT\",\"3\",\"a\",\"30\",\"20\"],[\"SCHEDULE_PAYMENT\",\"4\",\"a\",\"10\",\"5\"],[\"DEPOSIT\",\"30\",\"a\",\"0\"]]]" {
-		return []string{"true", "100", "payment1", "payment2", "60"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"20\"],[\"SCHEDULE_PAYMENT\",\"3\",\"a\",\"100\",\"5\"],[\"DEPOSIT\",\"20\",\"a\",\"0\"]]]" {
-		return []string{"true", "20", "payment1", "20"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"b\"],[\"DEPOSIT\",\"3\",\"a\",\"100\"],[\"SCHEDULE_PAYMENT\",\"4\",\"a\",\"30\",\"10\"],[\"CANCEL_PAYMENT\",\"5\",\"b\",\"payment1\"]]]" {
-		return []string{"true", "true", "100", "payment1", "false"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"100\"],[\"SCHEDULE_PAYMENT\",\"3\",\"a\",\"30\",\"5\"],[\"TOP_SPENDERS\",\"20\",\"1\"]]]" {
-		return []string{"true", "100", "payment1", "a(30)"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"100\"],[\"SCHEDULE_PAYMENT\",\"3\",\"a\",\"10\",\"0\"],[\"DEPOSIT\",\"4\",\"a\",\"0\"]]]" {
-		return []string{"true", "100", "payment1", "90"}
-	}
-	return []string{}
+type payment struct {
+	account string
+	amount  int
+	execAt  int
+	seq     int
+	status  string
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+type spendRow struct {
+	account string
+	total   int
+}
+
+func Solution(queries [][]string) []string {
+	balances := map[string]int{}
+	spent := map[string]int{}
+	payments := map[string]*payment{}
+	out := []string{}
+	scheduleSeq := 0
+
+	spend := func(account string, amount int) { spent[account] += amount }
+	fireDue := func(timestamp int) {
+		due := []*payment{}
+		for _, current := range payments {
+			if current.status == "pending" && current.execAt <= timestamp {
+				due = append(due, current)
+			}
+		}
+		sort.Slice(due, func(i, j int) bool {
+			if due[i].execAt != due[j].execAt {
+				return due[i].execAt < due[j].execAt
+			}
+			return due[i].seq < due[j].seq
+		})
+		for _, current := range due {
+			balance, exists := balances[current.account]
+			if !exists || balance < current.amount {
+				current.status = "cancelled"
+			} else {
+				balances[current.account] = balance - current.amount
+				spend(current.account, current.amount)
+				current.status = "fired"
+			}
+		}
+	}
+
+	for _, query := range queries {
+		timestamp, _ := strconv.Atoi(query[1])
+		fireDue(timestamp)
+		switch query[0] {
+		case "CREATE_ACCOUNT":
+			account := query[2]
+			if _, exists := balances[account]; exists {
+				out = append(out, "false")
+			} else {
+				balances[account] = 0
+				spent[account] = 0
+				out = append(out, "true")
+			}
+		case "DEPOSIT":
+			account := query[2]
+			amount, _ := strconv.Atoi(query[3])
+			balance, exists := balances[account]
+			if !exists {
+				out = append(out, "")
+			} else {
+				balances[account] = balance + amount
+				out = append(out, strconv.Itoa(balances[account]))
+			}
+		case "WITHDRAW":
+			account := query[2]
+			amount, _ := strconv.Atoi(query[3])
+			balance, exists := balances[account]
+			if !exists || balance < amount {
+				out = append(out, "")
+			} else {
+				balances[account] = balance - amount
+				spend(account, amount)
+				out = append(out, strconv.Itoa(balances[account]))
+			}
+		case "TRANSFER":
+			source, target := query[2], query[3]
+			amount, _ := strconv.Atoi(query[4])
+			sourceBalance, sourceExists := balances[source]
+			targetBalance, targetExists := balances[target]
+			if source == target || !sourceExists || !targetExists || sourceBalance < amount {
+				out = append(out, "")
+			} else {
+				balances[source] = sourceBalance - amount
+				balances[target] = targetBalance + amount
+				spend(source, amount)
+				out = append(out, strconv.Itoa(balances[source]))
+			}
+		case "TOP_SPENDERS":
+			count, _ := strconv.Atoi(query[2])
+			out = append(out, renderTop(balances, spent, count))
+		case "SCHEDULE_PAYMENT":
+			account := query[2]
+			_, exists := balances[account]
+			if !exists {
+				out = append(out, "")
+				continue
+			}
+			amount, _ := strconv.Atoi(query[3])
+			delay, _ := strconv.Atoi(query[4])
+			scheduleSeq++
+			id := "payment" + strconv.Itoa(scheduleSeq)
+			payments[id] = &payment{account: account, amount: amount, execAt: timestamp + delay, seq: scheduleSeq, status: "pending"}
+			out = append(out, id)
+		case "CANCEL_PAYMENT":
+			current := payments[query[3]]
+			if current == nil || current.status != "pending" || current.account != query[2] {
+				out = append(out, "false")
+			} else {
+				current.status = "cancelled"
+				out = append(out, "true")
+			}
+		default:
+			out = append(out, "")
+		}
+	}
+
+	return out
+}
+
+func renderTop(balances map[string]int, spent map[string]int, count int) string {
+	if count <= 0 || len(balances) == 0 {
+		return ""
+	}
+	rows := []spendRow{}
+	for account := range balances {
+		rows = append(rows, spendRow{account, spent[account]})
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].total != rows[j].total {
+			return rows[i].total > rows[j].total
+		}
+		return rows[i].account < rows[j].account
+	})
+	if count > len(rows) {
+		count = len(rows)
+	}
+	parts := make([]string, 0, count)
+	for _, row := range rows[:count] {
+		parts = append(parts, row.account+"("+strconv.Itoa(row.total)+")")
+	}
+	return strings.Join(parts, ",")
 }

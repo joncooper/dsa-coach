@@ -5,7 +5,7 @@
   "difficulty": "warmup",
   "concepts": [
     "arrays-strings",
-    "in-place thinking",
+    "write pointer",
     "adjacent compare"
   ],
   "prompt": "Given a list of integers already sorted in non-decreasing order, return a new list with consecutive duplicates removed so each value appears once.",

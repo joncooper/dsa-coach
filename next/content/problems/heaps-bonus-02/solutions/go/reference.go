@@ -1,30 +1,40 @@
 package solution
 
+import "container/heap"
+
 func Heapsort(nums []int) []int {
-	return sortInts(nums)
-}
-func sortInts(values []int) []int {
-	result := append([]int{}, values...)
-	for i := 0; i < len(result); i++ {
-		for j := i + 1; j < len(result); j++ {
-			if result[j] < result[i] {
-				result[i], result[j] = result[j], result[i]
-			}
-		}
+	pq := &intHeap{less: func(a int, b int) bool { return a < b }}
+	heap.Init(pq)
+	for _, num := range nums {
+		heap.Push(pq, num)
 	}
-	return result
+	sorted := []int{}
+	for pq.Len() > 0 {
+		sorted = append(sorted, heap.Pop(pq).(int))
+	}
+	return sorted
 }
 
-func reverseInts(values []int) {
-	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
-		values[left], values[right] = values[right], values[left]
-	}
+type intHeap struct {
+	values []int
+	less   func(a int, b int) bool
 }
 
-func countPairs(counts map[int]int) [][]int {
-	pairs := [][]int{}
-	for num, count := range counts {
-		pairs = append(pairs, []int{num, count})
-	}
-	return pairs
+func (h intHeap) Len() int           { return len(h.values) }
+func (h intHeap) Less(i, j int) bool { return h.less(h.values[i], h.values[j]) }
+func (h intHeap) Swap(i, j int)      { h.values[i], h.values[j] = h.values[j], h.values[i] }
+
+func (h *intHeap) Push(x any) {
+	h.values = append(h.values, x.(int))
+}
+
+func (h *intHeap) Pop() any {
+	old := h.values
+	value := old[len(old)-1]
+	h.values = old[:len(old)-1]
+	return value
+}
+
+func (h *intHeap) Peek() int {
+	return h.values[0]
 }

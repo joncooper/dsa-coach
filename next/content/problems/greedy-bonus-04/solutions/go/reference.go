@@ -3,7 +3,17 @@ package solution
 func CanPlantFlowers(bed []int, k int) bool {
 	plots := append([]int{}, bed...)
 	planted := 0
-	for index := range plots { leftEmpty := index == 0 || plots[index-1] == 0; rightEmpty := index == len(plots)-1 || plots[index+1] == 0; if plots[index] == 0 && leftEmpty && rightEmpty { plots[index] = 1; planted++; if planted >= k { return true } } }
+	for index := range plots {
+		leftEmpty := index == 0 || plots[index-1] == 0
+		rightEmpty := index == len(plots)-1 || plots[index+1] == 0
+		if plots[index] == 0 && leftEmpty && rightEmpty {
+			plots[index] = 1
+			planted++
+			if planted >= k {
+				return true
+			}
+		}
+	}
 	return planted >= k
 }
 func sortInts(values []int) []int {
@@ -37,6 +47,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

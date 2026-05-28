@@ -8,7 +8,7 @@
     "constraints",
     "bin packing"
   ],
-  "prompt": "Given a list of positive integers and an integer k, return True if the list can be split into exactly k groups whose sums are all equal. Every value must land in exactly one group.",
+  "prompt": "Given a list of positive integers and an integer k, return `true` if the list can be split into exactly k groups whose sums are all equal. Every value must land in exactly one group.",
   "signature": {
     "name": "canPartitionKSubsets",
     "inputs": [

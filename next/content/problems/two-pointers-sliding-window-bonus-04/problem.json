@@ -8,7 +8,7 @@
     "opposite pointers",
     "palindromes"
   ],
-  "prompt": "Return True if the string is a palindrome when only letters and digits are considered and letter case is ignored; otherwise return False.",
+  "prompt": "Return `true` if the string is a palindrome when only letters and digits are considered and letter case is ignored; otherwise return `false`.",
   "signature": {
     "name": "isLoosePalindrome",
     "inputs": [

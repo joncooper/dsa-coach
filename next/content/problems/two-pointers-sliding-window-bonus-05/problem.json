@@ -7,7 +7,7 @@
     "two-pointers-sliding-window",
     "fixed window"
   ],
-  "prompt": "Return a list of the averages of every contiguous window of length k. The result has len(nums) - k + 1 entries. If k is not a valid window length, return an empty list.",
+  "prompt": "Return a list of the averages of every contiguous window of length k. The result has the number of length-`k` windows entries. If k is not a valid window length, return an empty list.",
   "signature": {
     "name": "windowAverages",
     "inputs": [

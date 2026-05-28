@@ -1,49 +1,43 @@
 package solution
 
-import "encoding/json"
+import (
+	"strconv"
+	"strings"
+)
 
 func MaxRevenueWindow(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"3\\n1\\n2\\n3\\n4\\n5\"]" {
-		return 12
-	}
-	if key == "[\"1\\n5\\n9\\n3\"]" {
-		return 9
-	}
-	if key == "[\"\"]" {
+	lines := nonEmptyLines(inputText)
+	if len(lines) == 0 {
 		return 0
 	}
-	if key == "[\"5\\n1\\n2\"]" {
+	k, _ := strconv.Atoi(lines[0])
+	days := []int{}
+	for _, line := range lines[1:] {
+		n, _ := strconv.Atoi(line)
+		days = append(days, n)
+	}
+	if len(days) < k {
 		return 0
 	}
-	if key == "[\"2\\n-1\\n-2\\n-3\\n10\"]" {
-		return 7
+	current := 0
+	for _, day := range days[:k] {
+		current += day
 	}
-	if key == "[\"3\\n1\\n2\\n3\"]" {
-		return 6
+	best := current
+	for i := k; i < len(days); i++ {
+		current += days[i] - days[i-k]
+		if current > best {
+			best = current
+		}
 	}
-	if key == "[\"2\\n0\\n5\\n5\\n0\"]" {
-		return 10
-	}
-	if key == "[\"2\\n-5\\n-3\\n-9\\n-1\"]" {
-		return -8
-	}
-	if key == "[\"1\\n3\\n7\\n2\\n9\\n4\"]" {
-		return 9
-	}
-	if key == "[\"4\\n1\\n2\\n3\\n4\"]" {
-		return 10
-	}
-	if key == "[\"3\\n1\\n2\\n3\\n100\\n1\\n1\\n1\"]" {
-		return 105
-	}
-	if key == "[\"3\\n5\"]" {
-		return 0
-	}
-	return 0
+	return best
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func nonEmptyLines(text string) []string {
+	out := []string{}
+	for _, line := range strings.Split(text, "\n") {
+		if strings.TrimSpace(line) != "" {
+			out = append(out, strings.TrimSpace(line))
+		}
+	}
+	return out
 }

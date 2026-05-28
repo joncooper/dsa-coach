@@ -3,12 +3,19 @@ package solution
 func LargestOneSwap(digits string) string {
 	chars := []rune(digits)
 	last := make([]int, 10)
-	for index := range last { last[index] = -1 }
-	for index, char := range chars { last[int(char-'0')] = index }
+	for index := range last {
+		last[index] = -1
+	}
+	for index, char := range chars {
+		last[int(char-'0')] = index
+	}
 	for index, char := range chars {
 		current := int(char - '0')
 		for digit := 9; digit > current; digit-- {
-			if last[digit] > index { chars[index], chars[last[digit]] = chars[last[digit]], chars[index]; return string(chars) }
+			if last[digit] > index {
+				chars[index], chars[last[digit]] = chars[last[digit]], chars[index]
+				return string(chars)
+			}
 		}
 	}
 	return digits
@@ -44,6 +51,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

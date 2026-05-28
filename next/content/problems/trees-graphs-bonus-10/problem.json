@@ -8,7 +8,7 @@
     "DFS",
     "graph traversal"
   ],
-  "prompt": "You are given a directed graph as an adjacency dictionary mapping each node name to a list of node names it points to. Return True if there is a path from the source node to the target node, following edge directions, and False otherwise.",
+  "prompt": "You are given a directed graph as an adjacency map from each node name to a list of node names it points to. Return `true` if there is a path from the source node to the target node, following edge directions, and `false` otherwise.",
   "signature": {
     "name": "hasRoute",
     "inputs": [

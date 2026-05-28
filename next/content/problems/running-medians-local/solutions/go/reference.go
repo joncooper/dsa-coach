@@ -1,41 +1,53 @@
 package solution
 
+import "container/heap"
+
 func RunningMediansLocal(nums []int) []float64 {
-	seen := []int{}
+	lower := &intHeap{less: func(a int, b int) bool { return a > b }}
+	upper := &intHeap{less: func(a int, b int) bool { return a < b }}
+	heap.Init(lower)
+	heap.Init(upper)
 	medians := []float64{}
 	for _, num := range nums {
-		index := 0
-		for index < len(seen) && seen[index] < num { index++ }
-		seen = append(seen, 0)
-		copy(seen[index+1:], seen[index:])
-		seen[index] = num
-		middle := len(seen) / 2
-		if len(seen)%2 == 1 { medians = append(medians, float64(seen[middle])) } else { medians = append(medians, float64(seen[middle-1]+seen[middle])/2.0) }
+		if lower.Len() == 0 || num <= lower.Peek() {
+			heap.Push(lower, num)
+		} else {
+			heap.Push(upper, num)
+		}
+		if lower.Len() > upper.Len()+1 {
+			heap.Push(upper, heap.Pop(lower).(int))
+		} else if upper.Len() > lower.Len() {
+			heap.Push(lower, heap.Pop(upper).(int))
+		}
+		if (lower.Len()+upper.Len())%2 == 1 {
+			medians = append(medians, float64(lower.Peek()))
+		} else {
+			medians = append(medians, float64(lower.Peek()+upper.Peek())/2.0)
+		}
 	}
 	return medians
 }
-func sortInts(values []int) []int {
-	result := append([]int{}, values...)
-	for i := 0; i < len(result); i++ {
-		for j := i + 1; j < len(result); j++ {
-			if result[j] < result[i] {
-				result[i], result[j] = result[j], result[i]
-			}
-		}
-	}
-	return result
+
+type intHeap struct {
+	values []int
+	less   func(a int, b int) bool
 }
 
-func reverseInts(values []int) {
-	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
-		values[left], values[right] = values[right], values[left]
-	}
+func (h intHeap) Len() int           { return len(h.values) }
+func (h intHeap) Less(i, j int) bool { return h.less(h.values[i], h.values[j]) }
+func (h intHeap) Swap(i, j int)      { h.values[i], h.values[j] = h.values[j], h.values[i] }
+
+func (h *intHeap) Push(x any) {
+	h.values = append(h.values, x.(int))
 }
 
-func countPairs(counts map[int]int) [][]int {
-	pairs := [][]int{}
-	for num, count := range counts {
-		pairs = append(pairs, []int{num, count})
-	}
-	return pairs
+func (h *intHeap) Pop() any {
+	old := h.values
+	value := old[len(old)-1]
+	h.values = old[:len(old)-1]
+	return value
+}
+
+func (h *intHeap) Peek() int {
+	return h.values[0]
 }

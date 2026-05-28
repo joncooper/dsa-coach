@@ -8,7 +8,7 @@
     "dummy head",
     "pointer rewiring"
   ],
-  "prompt": "Given the head of a singly linked list, insert a new node holding `value` immediately after the node at the given zero-based index, and return the head. If the index is out of range, return the list unchanged.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Insert a new node holding `value` immediately after the node at the given zero-based `index`, then return the list serialized head-to-tail. If the index is out of range, return the list unchanged.",
   "signature": {
     "name": "insertAfterIndex",
     "inputs": [

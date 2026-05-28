@@ -1,40 +1,35 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strconv"
+	"strings"
+)
 
 func FindMissingSeat(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"FFFFFFFLLL\\nFFFFFFFLLR\\nFFFFFFFLRR\\nFFFFFFFRLL\"]" {
-		return 2
+	ids := []int{}
+	seen := map[int]bool{}
+	for _, raw := range strings.Split(inputText, "\n") {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		id := seatID(line)
+		if !seen[id] {
+			seen[id] = true
+			ids = append(ids, id)
+		}
 	}
-	if key == "[\"\"]" {
-		return -1
+	sort.Ints(ids)
+	for i := 0; i+1 < len(ids); i++ {
+		if ids[i+1]-ids[i] == 2 {
+			return ids[i] + 1
+		}
 	}
-	if key == "[\"FFFFFFFLLL\\nFFFFFFFLLR\"]" {
-		return -1
-	}
-	if key == "[\"FFFFFFFLLL\\nFFFFFFFLRL\\nFFFFFFFLRR\"]" {
-		return 1
-	}
-	if key == "[\"FFFFFFFLLR\\nFFFFFFFLRL\"]" {
-		return -1
-	}
-	if key == "[\"FBFBBFFRLR\"]" {
-		return -1
-	}
-	if key == "[\"FFFFFFFLLL\\nFFFFFFFLRL\\nFFFFFFFLRR\\nFFFFFFFRLR\\nFFFFFFFRRR\"]" {
-		return 1
-	}
-	if key == "[\"FFFFFFFLLL\\nFFFFFFFRLR\"]" {
-		return -1
-	}
-	if key == "[\"FFFFFFFLLL\\nFFFFFFFLLL\\nFFFFFFFLRL\"]" {
-		return 1
-	}
-	return 0
+	return -1
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func seatID(code string) int {
+	bits := strings.NewReplacer("F", "0", "B", "1", "L", "0", "R", "1").Replace(code)
+	value, _ := strconv.ParseInt(bits, 2, 64)
+	return int(value)
 }

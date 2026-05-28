@@ -8,7 +8,7 @@
     "tree recursion",
     "DFS"
   ],
-  "prompt": "Given the root of a binary tree, return the smallest value stored anywhere in the tree. Return None if the tree is empty. The tree is not a binary search tree, so values are unordered.",
+  "prompt": "The input `values` encodes a binary tree in level order (breadth-first): `values[0]` is the root, then each following pair gives the left and right child of the next non-null node, and `null` means that child is missing.\n\nReturn the smallest value stored anywhere in the tree. Return `null` if the tree is empty. The tree is not a binary search tree, so values are unordered.",
   "signature": {
     "name": "treeMinimum",
     "inputs": [

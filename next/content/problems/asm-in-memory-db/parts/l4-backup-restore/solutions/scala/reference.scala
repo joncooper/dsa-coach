@@ -1,44 +1,75 @@
 object Solution {
+  private case class FieldKey(key: String, field: String)
+  private case class Backup(store: Map[String, Map[String, String]], ttls: Map[FieldKey, Int])
+
   def solution(queries: Seq[Seq[String]]): Seq[String] = {
-    referenceKey(queries) match {
-      case "[[[\"SET\",\"1\",\"user:1\",\"name\",\"alice\"],[\"BACKUP\",\"2\"],[\"SET\",\"3\",\"user:1\",\"name\",\"bob\"],[\"RESTORE\",\"4\",\"backup1\"],[\"GET\",\"5\",\"user:1\",\"name\"]]]" => Seq("true", "backup1", "true", "true", "alice")
-      case "[[[\"RESTORE\",\"1\",\"ghost\"]]]" => Seq("false")
-      case "[[[\"SET_AT\",\"1\",\"user:1\",\"session\",\"x\",\"5\"],[\"BACKUP\",\"20\"],[\"RESTORE\",\"21\",\"backup1\"],[\"GET\",\"22\",\"user:1\",\"session\"]]]" => Seq("true", "backup1", "true", "")
-      case "[[[\"SET\",\"1\",\"user:1\",\"name\",\"alice\"],[\"BACKUP\",\"2\"],[\"SET\",\"3\",\"user:2\",\"name\",\"carol\"],[\"RESTORE\",\"4\",\"backup1\"],[\"GET\",\"5\",\"user:2\",\"name\"]]]" => Seq("true", "backup1", "true", "true", "")
-      case "[[[\"BACKUP\",\"1\"],[\"SET\",\"2\",\"user:1\",\"name\",\"alice\"],[\"RESTORE\",\"3\",\"backup1\"],[\"GET\",\"4\",\"user:1\",\"name\"]]]" => Seq("backup1", "true", "true", "")
-      case "[[[\"SET\",\"1\",\"user:1\",\"name\",\"alice\"],[\"BACKUP\",\"2\"],[\"SET\",\"3\",\"user:1\",\"name\",\"bob\"],[\"BACKUP\",\"4\"],[\"RESTORE\",\"5\",\"backup1\"],[\"GET\",\"6\",\"user:1\",\"name\"],[\"RESTORE\",\"7\",\"backup2\"],[\"GET\",\"8\",\"user:1\",\"name\"]]]" => Seq("true", "backup1", "true", "backup2", "true", "alice", "true", "bob")
-      case "[[[\"SET_AT\",\"1\",\"user:1\",\"session\",\"x\",\"10\"],[\"BACKUP\",\"2\"],[\"RESTORE\",\"100\",\"backup1\"],[\"GET\",\"101\",\"user:1\",\"session\"]]]" => Seq("true", "backup1", "true", "")
-      case "[[[\"SET_AT\",\"1\",\"user:1\",\"session\",\"x\",\"10\"],[\"BACKUP\",\"2\"],[\"RESTORE\",\"5\",\"backup1\"],[\"GET\",\"10\",\"user:1\",\"session\"],[\"GET\",\"12\",\"user:1\",\"session\"]]]" => Seq("true", "backup1", "true", "x", "")
-      case _ => Seq.empty
+    var store = scala.collection.mutable.Map.empty[String, scala.collection.mutable.Map[String, String]]
+    var ttls = scala.collection.mutable.Map.empty[FieldKey, Int]
+    val backups = scala.collection.mutable.Map.empty[String, Backup]
+    val out = scala.collection.mutable.ArrayBuffer.empty[String]
+    var backupSeq = 0
+
+    def render(rows: Iterable[(String, String)]): String =
+      rows.toSeq.sortBy(_._1).map { case (field, value) => s"$field=$value" }.mkString(",")
+
+    def alive(key: String, field: String, timestamp: Int): Boolean =
+      store.get(key).exists(_.contains(field)) && ttls.get(FieldKey(key, field)).forall(timestamp < _)
+
+    def deleteField(key: String, field: String): Unit = {
+      store.get(key).foreach { fields =>
+        fields.remove(field)
+        if (fields.isEmpty) store.remove(key)
+      }
+      ttls.remove(FieldKey(key, field))
     }
-  }
 
-  private def referenceKey(values: Any*): String = {
-    values.map(canonical).mkString("[", ",", "]")
-  }
+    def liveRows(key: String, timestamp: Int, prefix: String = ""): Seq[(String, String)] =
+      store.get(key).toSeq.flatMap(_.toSeq).filter { case (field, _) => field.startsWith(prefix) && alive(key, field, timestamp) }
 
-  private def canonical(value: Any): String = value match {
-    case s: String => quote(s)
-    case n: Int => n.toString
-    case n: Long => n.toString
-    case n: Double => if (n.isWhole) n.toInt.toString else n.toString
-    case b: Boolean => b.toString
-    case rows: Seq[_] => rows.map(canonical).mkString("[", ",", "]")
-    case map: scala.collection.Map[_, _] =>
-      map.toSeq.map { case (k, v) => quote(k.toString) + ":" + canonical(v) }.sortBy(identity).mkString("{", ",", "}")
-    case null => "null"
-    case other => quote(other.toString)
-  }
-
-  private def quote(value: String): String = {
-    val escaped = value.flatMap {
-      case char if char == 92.toChar => 92.toChar.toString + 92.toChar.toString
-      case char if char == 34.toChar => 92.toChar.toString + 34.toChar.toString
-      case '\n' => 92.toChar.toString + "n"
-      case '\r' => 92.toChar.toString + "r"
-      case '\t' => 92.toChar.toString + "t"
-      case char => char.toString
+    for (query <- queries) {
+      val timestamp = query(1).toInt
+      query.head match {
+        case "SET" =>
+          val fields = store.getOrElseUpdate(query(2), scala.collection.mutable.Map.empty[String, String])
+          fields(query(3)) = query(4)
+          ttls.remove(FieldKey(query(2), query(3)))
+          out += "true"
+        case "SET_AT" =>
+          val fields = store.getOrElseUpdate(query(2), scala.collection.mutable.Map.empty[String, String])
+          fields(query(3)) = query(4)
+          ttls(FieldKey(query(2), query(3))) = timestamp + query(5).toInt
+          out += "true"
+        case "GET" => out += (if (alive(query(2), query(3), timestamp)) store(query(2))(query(3)) else "")
+        case "DELETE" =>
+          if (alive(query(2), query(3), timestamp)) {
+            deleteField(query(2), query(3))
+            out += "true"
+          } else out += "false"
+        case "SCAN" => out += render(liveRows(query(2), timestamp))
+        case "SCAN_BY_PREFIX" => out += render(liveRows(query(2), timestamp, query(3)))
+        case "BACKUP" =>
+          backupSeq += 1
+          val id = s"backup$backupSeq"
+          val snapStore = store.flatMap { case (key, fields) =>
+            val live = fields.collect { case (field, value) if alive(key, field, timestamp) => field -> value }.toMap
+            if (live.nonEmpty) Some(key -> live) else None
+          }.toMap
+          val snapTtls = ttls.collect { case (pair, expiresAt) if snapStore.get(pair.key).exists(_.contains(pair.field)) => pair -> expiresAt }.toMap
+          backups(id) = Backup(snapStore, snapTtls)
+          out += id
+        case "RESTORE" =>
+          backups.get(query(2)) match {
+            case None => out += "false"
+            case Some(snapshot) =>
+              store = scala.collection.mutable.Map(snapshot.store.map { case (key, fields) => key -> scala.collection.mutable.Map(fields.toSeq: _*) }.toSeq: _*)
+              ttls = scala.collection.mutable.Map(snapshot.ttls.toSeq: _*)
+              for ((pair, expiresAt) <- ttls.toSeq if expiresAt <= timestamp) deleteField(pair.key, pair.field)
+              out += "true"
+          }
+        case _ => out += ""
+      }
     }
-    34.toChar.toString + escaped + 34.toChar.toString
+
+    out.toSeq
   }
 }

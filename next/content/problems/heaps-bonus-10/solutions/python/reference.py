@@ -1,8 +1,20 @@
+import heapq
+
+
 def max_score_after_halving(nums: list[int], k: int) -> int:
-    values = nums[:]
+    heap = [-num for num in nums]
+    heapq.heapify(heap)
+    total = sum(nums)
+
     for _ in range(k):
-        values.sort(reverse=True)
-        if not values or values[0] <= 1:
+        if not heap:
             break
-        values[0] = (values[0] + 1) // 2
-    return sum(values)
+        value = -heapq.heappop(heap)
+        if value <= 1:
+            heapq.heappush(heap, -value)
+            break
+        reduced = (value + 1) // 2
+        total -= value - reduced
+        heapq.heappush(heap, -reduced)
+
+    return total

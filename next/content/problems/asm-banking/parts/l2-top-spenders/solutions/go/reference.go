@@ -1,40 +1,99 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strconv"
+	"strings"
+)
 
-func Solution(queries [][]string) []string {
-	key := referenceKey(queries)
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"b\"],[\"DEPOSIT\",\"3\",\"a\",\"100\"],[\"TRANSFER\",\"4\",\"a\",\"b\",\"60\"],[\"TOP_SPENDERS\",\"5\",\"1\"]]]" {
-		return []string{"true", "true", "100", "40", "a(60)"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"b\"],[\"CREATE_ACCOUNT\",\"2\",\"a\"],[\"DEPOSIT\",\"3\",\"a\",\"100\"],[\"DEPOSIT\",\"4\",\"b\",\"100\"],[\"WITHDRAW\",\"5\",\"a\",\"20\"],[\"WITHDRAW\",\"6\",\"b\",\"20\"],[\"TOP_SPENDERS\",\"7\",\"2\"]]]" {
-		return []string{"true", "true", "100", "100", "80", "80", "a(20),b(20)"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"100\"],[\"WITHDRAW\",\"3\",\"a\",\"30\"],[\"TOP_SPENDERS\",\"4\",\"10\"]]]" {
-		return []string{"true", "100", "70", "a(30)"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"TOP_SPENDERS\",\"2\",\"1\"]]]" {
-		return []string{"true", "a(0)"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"200\"],[\"WITHDRAW\",\"3\",\"a\",\"30\"],[\"WITHDRAW\",\"4\",\"a\",\"20\"],[\"TOP_SPENDERS\",\"5\",\"1\"]]]" {
-		return []string{"true", "200", "170", "150", "a(50)"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"b\"],[\"DEPOSIT\",\"3\",\"a\",\"100\"],[\"DEPOSIT\",\"4\",\"b\",\"100\"],[\"WITHDRAW\",\"5\",\"a\",\"70\"],[\"TRANSFER\",\"6\",\"b\",\"a\",\"10\"],[\"TOP_SPENDERS\",\"7\",\"2\"]]]" {
-		return []string{"true", "true", "100", "100", "30", "90", "a(70),b(10)"}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"100\"],[\"WITHDRAW\",\"3\",\"a\",\"10\"],[\"TOP_SPENDERS\",\"4\",\"0\"]]]" {
-		return []string{"true", "100", "90", ""}
-	}
-	if key == "[[[\"TOP_SPENDERS\",\"1\",\"5\"]]]" {
-		return []string{""}
-	}
-	if key == "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"b\"],[\"DEPOSIT\",\"3\",\"a\",\"10\"],[\"TRANSFER\",\"4\",\"a\",\"b\",\"50\"],[\"TOP_SPENDERS\",\"5\",\"1\"]]]" {
-		return []string{"true", "true", "10", "", "a(0)"}
-	}
-	return []string{}
+type spendRow struct {
+	account string
+	total   int
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func Solution(queries [][]string) []string {
+	balances := map[string]int{}
+	spent := map[string]int{}
+	out := []string{}
+
+	spend := func(account string, amount int) { spent[account] += amount }
+
+	for _, query := range queries {
+		switch query[0] {
+		case "CREATE_ACCOUNT":
+			account := query[2]
+			if _, exists := balances[account]; exists {
+				out = append(out, "false")
+			} else {
+				balances[account] = 0
+				spent[account] = 0
+				out = append(out, "true")
+			}
+		case "DEPOSIT":
+			account := query[2]
+			amount, _ := strconv.Atoi(query[3])
+			balance, exists := balances[account]
+			if !exists {
+				out = append(out, "")
+			} else {
+				balances[account] = balance + amount
+				out = append(out, strconv.Itoa(balances[account]))
+			}
+		case "WITHDRAW":
+			account := query[2]
+			amount, _ := strconv.Atoi(query[3])
+			balance, exists := balances[account]
+			if !exists || balance < amount {
+				out = append(out, "")
+			} else {
+				balances[account] = balance - amount
+				spend(account, amount)
+				out = append(out, strconv.Itoa(balances[account]))
+			}
+		case "TRANSFER":
+			source, target := query[2], query[3]
+			amount, _ := strconv.Atoi(query[4])
+			sourceBalance, sourceExists := balances[source]
+			targetBalance, targetExists := balances[target]
+			if source == target || !sourceExists || !targetExists || sourceBalance < amount {
+				out = append(out, "")
+			} else {
+				balances[source] = sourceBalance - amount
+				balances[target] = targetBalance + amount
+				spend(source, amount)
+				out = append(out, strconv.Itoa(balances[source]))
+			}
+		case "TOP_SPENDERS":
+			count, _ := strconv.Atoi(query[2])
+			out = append(out, renderTop(balances, spent, count))
+		default:
+			out = append(out, "")
+		}
+	}
+
+	return out
+}
+
+func renderTop(balances map[string]int, spent map[string]int, count int) string {
+	if count <= 0 || len(balances) == 0 {
+		return ""
+	}
+	rows := []spendRow{}
+	for account := range balances {
+		rows = append(rows, spendRow{account, spent[account]})
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].total != rows[j].total {
+			return rows[i].total > rows[j].total
+		}
+		return rows[i].account < rows[j].account
+	})
+	if count > len(rows) {
+		count = len(rows)
+	}
+	parts := make([]string, 0, count)
+	for _, row := range rows[:count] {
+		parts = append(parts, row.account+"("+strconv.Itoa(row.total)+")")
+	}
+	return strings.Join(parts, ",")
 }

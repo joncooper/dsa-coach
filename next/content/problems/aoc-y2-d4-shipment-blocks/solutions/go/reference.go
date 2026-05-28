@@ -1,49 +1,45 @@
 package solution
 
-import "encoding/json"
+import (
+	"strconv"
+	"strings"
+	"unicode"
+)
 
 func MaxBlockSum(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"a=1\\nb=2\\n\\nc=10\\nd=garbage\\ne=5\"]" {
-		return 15
+	best := 0
+	for _, block := range strings.Split(inputText, "\n\n") {
+		total := blockSum(block)
+		if total > best {
+			best = total
+		}
 	}
-	if key == "[\"\"]" {
-		return 0
-	}
-	if key == "[\"x=4\\ny=8\"]" {
-		return 12
-	}
-	if key == "[\"a=-1\\nb=2\"]" {
-		return 2
-	}
-	if key == "[\"a=foo\\nb=bar\"]" {
-		return 0
-	}
-	if key == "[\"\\n\\na=5\\n\\n\\n\"]" {
-		return 5
-	}
-	if key == "[\"a=1\\n\\na=100\\nb=50\\n\\na=2\"]" {
-		return 150
-	}
-	if key == "[\"a=0\\nb=0\\nc=3\"]" {
-		return 3
-	}
-	if key == "[\"a=10\\nnopeval\\nb=5\"]" {
-		return 15
-	}
-	if key == "[\"a=1.5\\nb=2\\nc=3\"]" {
-		return 5
-	}
-	if key == "[\"a=+5\\nb=10\"]" {
-		return 10
-	}
-	if key == "[\"a=  7  \\nb=3\"]" {
-		return 10
-	}
-	return 0
+	return best
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func blockSum(block string) int {
+	total := 0
+	for _, raw := range strings.Split(block, "\n") {
+		line := strings.TrimSpace(raw)
+		idx := strings.IndexByte(line, '=')
+		if idx < 0 {
+			continue
+		}
+		value := strings.TrimSpace(line[idx+1:])
+		if allDigits(value) {
+			n, _ := strconv.Atoi(value)
+			total += n
+		}
+	}
+	return total
+}
+func allDigits(text string) bool {
+	if text == "" {
+		return false
+	}
+	for _, ch := range text {
+		if !unicode.IsDigit(ch) {
+			return false
+		}
+	}
+	return true
 }

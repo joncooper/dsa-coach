@@ -1,49 +1,32 @@
 package solution
 
-import "encoding/json"
+import "strings"
 
 func DiagonalCount(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"T..\\n.T.\\n..T\"]" {
-		return 3
-	}
-	if key == "[\"T..\\n.#.\\n..T\"]" {
-		return 1
-	}
-	if key == "[\"\"]" {
+	rows := nonEmptyRows(inputText)
+	if len(rows) == 0 {
 		return 0
 	}
-	if key == "[\"...\\n...\\n...\"]" {
-		return 0
+	r, c, count := 0, 0, 0
+	for r < len(rows) && c < len(rows[0]) {
+		cell := rows[r][c]
+		if cell == '#' {
+			break
+		}
+		if cell == 'T' {
+			count++
+		}
+		r++
+		c++
 	}
-	if key == "[\"T...\\n.T..\\n..T.\"]" {
-		return 3
-	}
-	if key == "[\"T..\\n.T.\\n..T\\n...\"]" {
-		return 3
-	}
-	if key == "[\"#TT\\nTTT\\nTTT\"]" {
-		return 0
-	}
-	if key == "[\"T...\\n....\\n....\\n....\"]" {
-		return 1
-	}
-	if key == "[\"T..\\nT#.\\n..T\"]" {
-		return 1
-	}
-	if key == "[\"T\"]" {
-		return 1
-	}
-	if key == "[\"#\"]" {
-		return 0
-	}
-	if key == "[\".T.\\nT.T\\n.T.\"]" {
-		return 0
-	}
-	return 0
+	return count
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func nonEmptyRows(text string) []string {
+	out := []string{}
+	for _, line := range strings.Split(text, "\n") {
+		if line != "" {
+			out = append(out, line)
+		}
+	}
+	return out
 }

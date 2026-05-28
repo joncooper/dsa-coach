@@ -8,7 +8,7 @@
     "frequency map",
     "string scans"
   ],
-  "prompt": "Return a dictionary mapping each character of the string to the number of times it occurs. Characters that never appear are simply absent from the dictionary.",
+  "prompt": "Return an object/map from each character of the string to the number of times it occurs. Characters that never appear are simply absent from the map.",
   "signature": {
     "name": "charFrequencyTable",
     "inputs": [

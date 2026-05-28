@@ -2,22 +2,30 @@ package solution
 
 func TreeMinimum(values []interface{}) interface{} {
 	root := buildTree(values)
-	if root == nil { return nil }
+	if root == nil {
+		return nil
+	}
 	best := root.Value
 	stack := []*Node{root}
 	for len(stack) > 0 {
 		node := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		if node.Value < best { best = node.Value }
-		if node.Left != nil { stack = append(stack, node.Left) }
-		if node.Right != nil { stack = append(stack, node.Right) }
+		if node.Value < best {
+			best = node.Value
+		}
+		if node.Left != nil {
+			stack = append(stack, node.Left)
+		}
+		if node.Right != nil {
+			stack = append(stack, node.Right)
+		}
 	}
 	return best
 }
 
 type Node struct {
 	Value int
-	Left *Node
+	Left  *Node
 	Right *Node
 }
 

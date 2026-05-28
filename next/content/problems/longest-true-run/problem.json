@@ -7,7 +7,7 @@
     "scan",
     "state"
   ],
-  "prompt": "Given booleans, return the length of the longest contiguous run of `True` values.",
+  "prompt": "Given booleans, return the length of the longest contiguous run of `true` values.",
   "signature": {
     "name": "longestTrueRun",
     "inputs": [

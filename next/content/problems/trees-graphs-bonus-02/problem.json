@@ -8,7 +8,7 @@
     "BFS",
     "level-order traversal"
   ],
-  "prompt": "Given the root of a binary tree, return the total number of nodes it contains. Solve it iteratively with a breadth-first traversal.",
+  "prompt": "The input `values` encodes a binary tree in level order (breadth-first): `values[0]` is the root, then each following pair gives the left and right child of the next non-null node, and `null` means that child is missing.\n\nReturn the total number of nodes in the tree. Solve it iteratively with a breadth-first traversal.",
   "signature": {
     "name": "countTreeNodes",
     "inputs": [

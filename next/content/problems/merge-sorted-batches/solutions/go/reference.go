@@ -1,32 +1,51 @@
 package solution
 
-func MergeSortedBatches(batches [][]int) []int {
-	merged := []int{}
-	for _, batch := range batches { merged = append(merged, batch...) }
-	return sortInts(merged)
+import "container/heap"
+
+type batchEntry struct {
+	value int
+	batch int
+	index int
 }
-func sortInts(values []int) []int {
-	result := append([]int{}, values...)
-	for i := 0; i < len(result); i++ {
-		for j := i + 1; j < len(result); j++ {
-			if result[j] < result[i] {
-				result[i], result[j] = result[j], result[i]
-			}
+
+type batchHeap []batchEntry
+
+func (h batchHeap) Len() int      { return len(h) }
+func (h batchHeap) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+func (h batchHeap) Less(i, j int) bool {
+	if h[i].value != h[j].value {
+		return h[i].value < h[j].value
+	}
+	if h[i].batch != h[j].batch {
+		return h[i].batch < h[j].batch
+	}
+	return h[i].index < h[j].index
+}
+func (h *batchHeap) Push(x any) { *h = append(*h, x.(batchEntry)) }
+func (h *batchHeap) Pop() any {
+	old := *h
+	value := old[len(old)-1]
+	*h = old[:len(old)-1]
+	return value
+}
+
+func MergeSortedBatches(batches [][]int) []int {
+	pq := &batchHeap{}
+	heap.Init(pq)
+	for batchIndex, batch := range batches {
+		if len(batch) > 0 {
+			heap.Push(pq, batchEntry{value: batch[0], batch: batchIndex, index: 0})
 		}
 	}
-	return result
-}
-
-func reverseInts(values []int) {
-	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
-		values[left], values[right] = values[right], values[left]
+	merged := []int{}
+	for pq.Len() > 0 {
+		next := heap.Pop(pq).(batchEntry)
+		merged = append(merged, next.value)
+		next.index++
+		if next.index < len(batches[next.batch]) {
+			next.value = batches[next.batch][next.index]
+			heap.Push(pq, next)
+		}
 	}
-}
-
-func countPairs(counts map[int]int) [][]int {
-	pairs := [][]int{}
-	for num, count := range counts {
-		pairs = append(pairs, []int{num, count})
-	}
-	return pairs
+	return merged
 }

@@ -1,43 +1,66 @@
 package solution
 
-import "encoding/json"
+import (
+	"regexp"
+	"strings"
+)
 
 func BindingPasteCost(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"final_product requires 3 binding_paste.\\nbinding_paste requires nothing.\"]" {
-		return 3
-	}
-	if key == "[\"final_product requires 2 core.\\ncore requires 5 binding_paste.\\nbinding_paste requires nothing.\"]" {
-		return 10
-	}
-	if key == "[\"\"]" {
+	children := parseRecipes(inputText)
+	if _, ok := children["final_product"]; !ok {
 		return 0
 	}
-	if key == "[\"final_product requires 1 dust.\\ndust requires nothing.\\nbinding_paste requires nothing.\"]" {
-		return 0
+	memo := map[string]int{}
+	var cost func(string) int
+	cost = func(node string) int {
+		if node == "binding_paste" {
+			return 1
+		}
+		if value, ok := memo[node]; ok {
+			return value
+		}
+		total := 0
+		for _, child := range children[node] {
+			total += child.amount * cost(child.name)
+		}
+		memo[node] = total
+		return total
 	}
-	if key == "[\"final_product requires 2 left, 3 right.\\nleft requires 1 binding_paste.\\nright requires 4 binding_paste.\\nbinding_paste requires nothing.\"]" {
-		return 14
-	}
-	if key == "[\"final_product requires 2 a.\\na requires 3 b.\\nb requires 5 binding_paste.\\nbinding_paste requires nothing.\"]" {
-		return 30
-	}
-	if key == "[\"binding_paste requires nothing.\"]" {
-		return 0
-	}
-	if key == "[\"final_product requires 2 a, 2 b.\\na requires 3 base.\\nb requires 3 base.\\nbase requires 2 binding_paste.\\nbinding_paste requires nothing.\"]" {
-		return 24
-	}
-	if key == "[\"final_product requires 2 binding_paste, 1 sleeve.\\nsleeve requires 3 binding_paste, 4 leather.\\nleather requires nothing.\\nbinding_paste requires nothing.\"]" {
-		return 5
-	}
-	if key == "[\"final_product requires 10 sand.\\nsand requires nothing.\\nbinding_paste requires nothing.\"]" {
-		return 0
-	}
-	return 0
+	return cost("final_product")
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+type ingredient struct {
+	amount int
+	name   string
+}
+
+func parseRecipes(inputText string) map[string][]ingredient {
+	lineRE := regexp.MustCompile("^(\\w+) requires (.+)\\.$")
+	ingRE := regexp.MustCompile("(\\d+) (\\w+)")
+	children := map[string][]ingredient{}
+	for _, raw := range strings.Split(inputText, "\n") {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		m := lineRE.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		kids := []ingredient{}
+		if m[2] != "nothing" {
+			for _, item := range ingRE.FindAllStringSubmatch(m[2], -1) {
+				kids = append(kids, ingredient{atoi(item[1]), item[2]})
+			}
+		}
+		children[m[1]] = kids
+	}
+	return children
+}
+func atoi(text string) int {
+	n := 0
+	for _, ch := range text {
+		n = n*10 + int(ch-'0')
+	}
+	return n
 }

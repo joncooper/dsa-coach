@@ -1,10 +1,7 @@
 export function removeElement(nums: number[], value: number): number {
-  let write = 0;
+  let count = 0;
   for (const num of nums) {
-    if (num !== value) {
-      nums[write] = num;
-      write += 1;
-    }
+    if (num !== value) count += 1;
   }
-  return write;
+  return count;
 }

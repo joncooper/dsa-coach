@@ -8,7 +8,7 @@
     "last seen map",
     "iteration"
   ],
-  "prompt": "Return True if the list contains two equal values whose indices differ by at most k, and False otherwise. The two occurrences must be distinct positions.",
+  "prompt": "Return `true` if the list contains two equal values whose indices differ by at most k, and `false` otherwise. The two occurrences must be distinct positions.",
   "signature": {
     "name": "containsDuplicateWithinK",
     "inputs": [

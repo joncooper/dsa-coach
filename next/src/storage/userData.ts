@@ -85,7 +85,7 @@ export interface ScratchpadRecord {
 
 export interface AssessmentStateRecord {
   assessmentId: string;
-  kind: "session" | "scorecard" | "scorecard-history";
+  kind: "session" | "scorecard" | "scorecard-history" | "event-log";
   value: unknown;
   sourceKey: string;
 }

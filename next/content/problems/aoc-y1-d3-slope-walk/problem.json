@@ -116,7 +116,7 @@
     {
       "id": "part-2-many-slopes",
       "title": "Part 2: Multiple slopes",
-      "prompt": "Walk five slopes — `(1,1)`, `(3,1)`, `(5,1)`, `(7,1)`, `(1,2)` (each as `right, down`) — over the same grid. Count trees hit by each slope, then return the product of those five counts. The starting tile counts if it is a tree. The walk for a slope ends as soon as the row index reaches `len(rows)`.",
+      "prompt": "Walk five slopes: `(1,1)`, `(3,1)`, `(5,1)`, `(7,1)`, `(1,2)` (each as `right, down`) over the same grid. Count trees hit by each slope, then return the product of those five counts. The starting tile counts if it is a tree. The walk for a slope ends as soon as the row index reaches the number of rows.",
       "signature": {
         "name": "slope_walk_product",
         "inputs": [

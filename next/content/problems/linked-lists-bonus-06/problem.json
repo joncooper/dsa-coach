@@ -8,7 +8,7 @@
     "in-place updates",
     "pointer rewiring"
   ],
-  "prompt": "Given the head of a sorted singly linked list, remove the nodes so each value appears only once, keeping one node per value, and return the head.",
+  "prompt": "The input `values` serializes a sorted singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Remove duplicate-value nodes so each value appears once, then return the list serialized head-to-tail.",
   "signature": {
     "name": "dedupSortedList",
     "inputs": [

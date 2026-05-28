@@ -8,7 +8,7 @@
     "binary search",
     "operation log"
   ],
-  "prompt": "Given a list of operations against a versioned key-value store, return the result of each `GET` in order. Each operation is one of `[\"SET\", key, value, timestamp]` or `[\"GET\", key, timestamp]`. A `GET` returns the value of `key` with the largest timestamp less than or equal to the query timestamp, or `None` if no such write exists. Operations can arrive in any timestamp order, and the same `(key, timestamp)` can be written more than once — in that case the most recent write at that timestamp wins. Each key's history is independent.",
+  "prompt": "Given a list of operations against a versioned key-value store, return the result of each `GET` in order. Each operation is one of `[\"SET\", key, value, timestamp]` or `[\"GET\", key, timestamp]`. A `GET` returns the value of `key` with the largest timestamp less than or equal to the query timestamp, or `null` if no such write exists. Operations can arrive in any timestamp order, and the same `(key, timestamp)` can be written more than once — in that case the most recent write at that timestamp wins. Each key's history is independent.",
   "signature": {
     "name": "versionedKv",
     "inputs": [
@@ -80,7 +80,7 @@
       "visibility": "visible"
     },
     {
-      "name": "get before first set returns None",
+      "name": "get before first set returns null",
       "args": [
         [
           [
@@ -506,7 +506,7 @@
     {
       "id": "part-2-delete-snapshot",
       "title": "Part 2: Delete and snapshot",
-      "prompt": "Extend the store to support two new operations. `[\"DELETE\", key, timestamp]` tombstones a key at the given timestamp: any `GET` whose query timestamp is at or after a tombstone (and before any later `SET`) returns `None`. A later `SET` at a higher timestamp re-creates the key. `[\"SNAPSHOT\", timestamp]` returns a dict of every key whose latest non-tombstone write at or before `timestamp` is still live — that is, the most recent entry must be a `SET` (not a `DELETE`). The output list still contains one entry per `GET` and per `SNAPSHOT`, in input order; `DELETE` and `SET` produce no output entry.",
+      "prompt": "Extend the store to support two new operations. `[\"DELETE\", key, timestamp]` tombstones a key at the given timestamp: any `GET` whose query timestamp is at or after a tombstone (and before any later `SET`) returns `null`. A later `SET` at a higher timestamp re-creates the key. `[\"SNAPSHOT\", timestamp]` returns an object/map of every key whose latest non-tombstone write at or before `timestamp` is still live — that is, the most recent entry must be a `SET` (not a `DELETE`). The output list still contains one entry per `GET` and per `SNAPSHOT`, in input order; `DELETE` and `SET` produce no output entry.",
       "signature": {
         "name": "versioned_kv_with_snapshot",
         "inputs": [

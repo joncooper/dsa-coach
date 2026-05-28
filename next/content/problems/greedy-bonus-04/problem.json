@@ -8,7 +8,7 @@
     "partitioning",
     "scanning"
   ],
-  "prompt": "A flower bed is a list of 0s and 1s, where 1 marks an occupied plot. No two flowers may sit in adjacent plots. Return True if `k` new flowers can be planted into the empty plots without ever placing two flowers side by side, otherwise False.",
+  "prompt": "A flower bed is a list of 0s and 1s, where 1 marks an occupied plot. No two flowers may sit in adjacent plots. Return `true` if `k` new flowers can be planted into the empty plots without ever placing two flowers side by side, otherwise `false`.",
   "signature": {
     "name": "canPlantFlowers",
     "inputs": [

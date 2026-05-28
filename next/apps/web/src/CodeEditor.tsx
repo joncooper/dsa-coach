@@ -1,11 +1,14 @@
 import {
+  acceptCompletion,
   autocompletion,
   closeBrackets,
   closeBracketsKeymap,
-  completionKeymap,
+  closeCompletion,
+  moveCompletionSelection,
   nextSnippetField,
   prevSnippetField,
   snippet,
+  startCompletion,
   type Completion,
   type CompletionContext,
   type CompletionResult,
@@ -23,7 +26,7 @@ import {
   StreamLanguage,
   syntaxHighlighting
 } from "@codemirror/language";
-import { type Diagnostic as CodeMirrorDiagnostic, lintGutter, linter } from "@codemirror/lint";
+import { type Diagnostic as CodeMirrorDiagnostic, linter } from "@codemirror/lint";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
 import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import {
@@ -34,7 +37,9 @@ import {
   highlightActiveLineGutter,
   hoverTooltip,
   keymap,
-  lineNumbers
+  lineNumbers,
+  tooltips,
+  type Rect
 } from "@codemirror/view";
 import { scala } from "@codemirror/legacy-modes/mode/clike";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -64,6 +69,66 @@ interface CodeEditorProps {
   signature?: FunctionSignature;
   support?: ProblemLanguageSupport;
   onChange: (value: string) => void;
+}
+
+interface BasicCodeEditorProps {
+  value: string;
+  language: LanguageId;
+  ariaLabel: string;
+  onChange: (value: string) => void;
+}
+
+export function BasicCodeEditor({ value, language, ariaLabel, onChange }: BasicCodeEditorProps) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null);
+  const onChangeRef = useRef(onChange);
+  const languageSlot = useMemo(() => new Compartment(), []);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    if (!hostRef.current) return;
+    const view = new EditorView({
+      parent: hostRef.current,
+      state: EditorState.create({
+        doc: value,
+        extensions: [
+          ...basicEditorExtensions,
+          languageSlot.of(languageExtension(language)),
+          EditorView.lineWrapping,
+          EditorView.contentAttributes.of({ "aria-label": ariaLabel }),
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged) onChangeRef.current(update.state.doc.toString());
+          })
+        ]
+      })
+    });
+    viewRef.current = view;
+    return () => {
+      view.destroy();
+      viewRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const current = view.state.doc.toString();
+    if (current === value) return;
+    view.dispatch({
+      changes: { from: 0, to: current.length, insert: value }
+    });
+  }, [value]);
+
+  useEffect(() => {
+    viewRef.current?.dispatch({
+      effects: languageSlot.reconfigure(languageExtension(language))
+    });
+  }, [language, languageSlot]);
+
+  return <div ref={hostRef} />;
 }
 
 export function CodeEditor({ value, language, problemId, partId, signature, support, onChange }: CodeEditorProps) {
@@ -335,8 +400,12 @@ const editorTheme = EditorView.theme({
     backgroundColor: "#fffdf8",
     color: "#1d2528",
     borderRadius: "6px",
+    maxWidth: "min(520px, calc(100vw - 32px))",
     overflow: "hidden",
     boxShadow: "0 18px 40px rgba(36, 38, 35, 0.16)"
+  },
+  ".cm-tooltip-lint": {
+    maxWidth: "min(520px, calc(100vw - 32px))"
   },
   ".cm-tooltip-autocomplete ul": {
     fontFamily: "\"SFMono-Regular\", Consolas, monospace",
@@ -370,10 +439,16 @@ const editorBaseExtensions: Extension[] = [
   highlightActiveLine(),
   highlightActiveLineGutter(),
   syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-  lintGutter(),
   highlightSelectionMatches(),
+  tooltips({ tooltipSpace: editorTooltipSpace }),
   keymap.of([
-    ...completionKeymap,
+    { key: "Ctrl-Space", run: startCompletion },
+    { key: "Escape", run: closeCompletion },
+    { key: "ArrowDown", run: moveCompletionSelection(true) },
+    { key: "ArrowUp", run: moveCompletionSelection(false) },
+    { key: "PageDown", run: moveCompletionSelection(true, "page") },
+    { key: "PageUp", run: moveCompletionSelection(false, "page") },
+    { key: "Tab", run: acceptCompletion },
     { key: "Tab", run: nextSnippetField },
     { key: "Shift-Tab", run: prevSnippetField },
     indentWithTab,
@@ -382,9 +457,37 @@ const editorBaseExtensions: Extension[] = [
     ...defaultKeymap,
     ...historyKeymap
   ]),
-  EditorView.lineWrapping,
   editorTheme
 ];
+
+const basicEditorExtensions: Extension[] = [
+  lineNumbers(),
+  history(),
+  drawSelection(),
+  dropCursor(),
+  indentOnInput(),
+  bracketMatching(),
+  closeBrackets(),
+  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+  keymap.of([
+    indentWithTab,
+    ...closeBracketsKeymap,
+    ...defaultKeymap,
+    ...historyKeymap
+  ]),
+  editorTheme
+];
+
+function editorTooltipSpace(view: EditorView): Rect {
+  const rect = view.scrollDOM.getBoundingClientRect();
+  const inset = 8;
+  return {
+    top: rect.top + inset,
+    left: rect.left + inset,
+    right: rect.right - inset,
+    bottom: rect.bottom - inset
+  };
+}
 
 interface IdeExtensionOptions {
   language: LanguageId;
@@ -403,6 +506,8 @@ function ideExtensions(options: IdeExtensionOptions): Extension[] {
   return [
     autocompletion({
       activateOnTyping: true,
+      activateOnTypingDelay: 250,
+      defaultKeymap: false,
       maxRenderedOptions: 12,
       override: [lspBackedCompletionSource(options.language, options.problemId, options.partId, options.signature, options.support)]
     }),

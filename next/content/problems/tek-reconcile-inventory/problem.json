@@ -4,11 +4,11 @@
   "title": "Reconcile Expected vs Observed Inventory",
   "difficulty": "easy",
   "concepts": [
-    "dict diff",
+    "map diff",
     "set union",
     "sorted output"
   ],
-  "prompt": "You are given two dicts: `expected` and `observed`, each mapping `sku -> quantity` (non-negative integers). Produce a sorted list of discrepancy rows. For each sku that appears in either dict, classify the row as: `missing` if the sku is in `expected` but not `observed`, `extra` if in `observed` but not `expected`, `short` if `observed[sku] < expected[sku]`, `over` if `observed[sku] > expected[sku]`. Exact matches do not appear in the output. Each row is `[sku, status, expected_qty, observed_qty, delta]` where `delta = observed_qty - expected_qty` (missing sku contributes 0 for the missing side). Return the rows sorted by sku ascending.",
+  "prompt": "You are given two objects/maps: `expected` and `observed`, each mapping `sku -> quantity` (non-negative integers). Produce a sorted list of discrepancy rows. For each sku that appears in either object/map, classify the row as: `missing` if the sku is in `expected` but not `observed`, `extra` if in `observed` but not `expected`, `short` if `observed[sku] < expected[sku]`, `over` if `observed[sku] > expected[sku]`. Exact matches do not appear in the output. Each row is `[sku, status, expected_qty, observed_qty, delta]` where `delta = observed_qty - expected_qty` (missing sku contributes 0 for the missing side). Return the rows sorted by sku ascending.",
   "signature": {
     "name": "reconcileInventory",
     "inputs": [
@@ -206,7 +206,7 @@
       "visibility": "hidden"
     },
     {
-      "name": "input dicts are not mutated",
+      "name": "input maps are not mutated",
       "args": [
         {
           "a": 5

@@ -14,8 +14,12 @@ func TreeLevelSums(values []interface{}) []int {
 			node := queue[0]
 			queue = queue[1:]
 			total += node.Value
-			if node.Left != nil { queue = append(queue, node.Left) }
-			if node.Right != nil { queue = append(queue, node.Right) }
+			if node.Left != nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right != nil {
+				queue = append(queue, node.Right)
+			}
 		}
 		sums = append(sums, total)
 	}
@@ -24,7 +28,7 @@ func TreeLevelSums(values []interface{}) []int {
 
 type Node struct {
 	Value int
-	Left *Node
+	Left  *Node
 	Right *Node
 }
 

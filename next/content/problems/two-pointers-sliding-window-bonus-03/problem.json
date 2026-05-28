@@ -1,13 +1,13 @@
 {
   "id": "two-pointers-sliding-window-bonus-03",
   "kind": "problem",
-  "title": "Remove Element In Place",
+  "title": "Count After Removing Value",
   "difficulty": "easy",
   "concepts": [
     "two-pointers-sliding-window",
-    "same-direction pointers"
+    "single-pass"
   ],
-  "prompt": "Compact the list in place so that every occurrence of val is dropped and the surviving values fill the front of the list in their original order. Return the count of surviving values; whatever sits past that count does not matter.",
+  "prompt": "Return how many values would remain after removing every occurrence of `value` from the list. Preserve order conceptually, but only the surviving count is returned.",
   "signature": {
     "name": "removeElement",
     "inputs": [

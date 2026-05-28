@@ -1,37 +1,46 @@
 package solution
 
-import "encoding/json"
+import (
+	"strconv"
+	"strings"
+	"unicode"
+)
 
-func PermitCountsByStage(inputText string) map[string]any {
-	key := referenceKey(inputText)
-	if key == "[\"main 111-22-3333 2026\\nside 444-55-6666 2027\\nside 444-55-6666 2020\"]" {
-		return map[string]any{"main": 1, "side": 1, "late": 0}
+func PermitCountsByStage(inputText string) map[string]int {
+	out := map[string]int{"main": 0, "side": 0, "late": 0}
+	for _, raw := range strings.Split(inputText, "\n") {
+		parts := strings.Fields(raw)
+		if len(parts) != 3 {
+			continue
+		}
+		stage := parts[0]
+		if _, ok := out[stage]; ok && validPermit(parts[1], parts[2]) {
+			out[stage]++
+		}
 	}
-	if key == "[\"\"]" {
-		return map[string]any{"main": 0, "side": 0, "late": 0}
-	}
-	if key == "[\"main 111-22-3333 2025\\nmain 222-33-4444 2030\"]" {
-		return map[string]any{"main": 2, "side": 0, "late": 0}
-	}
-	if key == "[\"spare 111-22-3333 2030\\nmain 111-22-3333 2030\"]" {
-		return map[string]any{"main": 1, "side": 0, "late": 0}
-	}
-	if key == "[\"late abc 2030\"]" {
-		return map[string]any{"main": 0, "side": 0, "late": 0}
-	}
-	if key == "[\"main 111-22-3333 2025\\nside 444-55-6666 2026\\nlate 777-88-9999 2027\"]" {
-		return map[string]any{"main": 1, "side": 1, "late": 1}
-	}
-	if key == "[\"main 111-22-3333 2025\\nmain 222-33-4444 2030\\nmain 999-88-7777 2020\"]" {
-		return map[string]any{"main": 2, "side": 0, "late": 0}
-	}
-	if key == "[\"main 111-22-3333 2025\\nside abc 2030\\nlate 999-88-7777 2026\\nmain 222-33-4444 2024\"]" {
-		return map[string]any{"main": 1, "side": 0, "late": 1}
-	}
-	return map[string]any{}
+	return out
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func validPermit(license string, expires string) bool {
+	groups := strings.Split(license, "-")
+	if len(groups) != 3 || len(groups[0]) != 3 || len(groups[1]) != 2 || len(groups[2]) != 4 {
+		return false
+	}
+	for _, group := range groups {
+		if !allDigits(group) {
+			return false
+		}
+	}
+	year, err := strconv.Atoi(expires)
+	return err == nil && len(expires) == 4 && year >= 2025
+}
+func allDigits(text string) bool {
+	if text == "" {
+		return false
+	}
+	for _, ch := range text {
+		if !unicode.IsDigit(ch) {
+			return false
+		}
+	}
+	return true
 }

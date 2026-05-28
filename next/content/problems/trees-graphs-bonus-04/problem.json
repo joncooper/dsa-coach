@@ -8,7 +8,7 @@
     "tree recursion",
     "DFS"
   ],
-  "prompt": "Given the root of a binary tree, return its diameter: the number of edges on the longest path between any two nodes. The path may or may not pass through the root.",
+  "prompt": "The input `values` encodes a binary tree in level order (breadth-first): `values[0]` is the root, then each following pair gives the left and right child of the next non-null node, and `null` means that child is missing.\n\nReturn the tree's diameter: the number of edges on the longest path between any two nodes. The path may or may not pass through the root.",
   "signature": {
     "name": "treeDiameter",
     "inputs": [

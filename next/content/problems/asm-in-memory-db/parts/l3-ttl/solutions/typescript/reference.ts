@@ -1,52 +1,84 @@
 export function solution(queries: string[][]): string[] {
-  const key = JSON.stringify([queries]);
-  const cases = {
-  "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"10\"],[\"GET\",\"5\",\"user:1\",\"name\"]]]": [
-    "true",
-    "alice"
-  ],
-  "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"10\"],[\"GET\",\"15\",\"user:1\",\"name\"]]]": [
-    "true",
-    ""
-  ],
-  "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"10\"],[\"GET\",\"11\",\"user:1\",\"name\"]]]": [
-    "true",
-    ""
-  ],
-  "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"5\"],[\"SET\",\"2\",\"user:1\",\"name\",\"bob\"],[\"GET\",\"20\",\"user:1\",\"name\"]]]": [
-    "true",
-    "true",
-    "bob"
-  ],
-  "[[[\"SET\",\"1\",\"user:1\",\"name\",\"alice\"],[\"SET_AT\",\"2\",\"user:1\",\"session\",\"abc\",\"5\"],[\"SCAN\",\"20\",\"user:1\"]]]": [
-    "true",
-    "true",
-    "name=alice"
-  ],
-  "[[[\"SET_AT\",\"1\",\"user:1\",\"session\",\"abc\",\"5\"],[\"DELETE\",\"20\",\"user:1\",\"session\"]]]": [
-    "true",
-    "false"
-  ],
-  "[[[\"SET_AT\",\"1\",\"user:1\",\"session_old\",\"x\",\"5\"],[\"SET\",\"2\",\"user:1\",\"session_new\",\"y\"],[\"SCAN_BY_PREFIX\",\"20\",\"user:1\",\"session\"]]]": [
-    "true",
-    "true",
-    "session_new=y"
-  ],
-  "[[[\"SET_AT\",\"1\",\"user:1\",\"name\",\"alice\",\"5\"],[\"SET_AT\",\"2\",\"user:1\",\"name\",\"bob\",\"100\"],[\"GET\",\"50\",\"user:1\",\"name\"]]]": [
-    "true",
-    "true",
-    "bob"
-  ],
-  "[[[\"SET_AT\",\"1\",\"user:1\",\"a\",\"1\",\"5\"],[\"SET_AT\",\"2\",\"user:1\",\"b\",\"2\",\"5\"],[\"SCAN\",\"20\",\"user:1\"]]]": [
-    "true",
-    "true",
-    ""
-  ]
-} as Record<string, string[]>;
-  if (!Object.hasOwn(cases, key)) throw new Error(`No migrated reference case for ${key}`);
-  return clone(cases[key]);
-}
+  const store = new Map<string, Map<string, string>>();
+  const ttls = new Map<string, Map<string, number>>();
+  const out: string[] = [];
 
-function clone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+  const render = (rows: Array<[string, string]>): string =>
+    rows.sort((a, b) => a[0].localeCompare(b[0])).map(([field, value]) => field + "=" + value).join(",");
+
+  const ensureFields = (key: string): Map<string, string> => {
+    if (!store.has(key)) store.set(key, new Map());
+    return store.get(key)!;
+  };
+
+  const setExpiration = (key: string, field: string, expiresAt: number): void => {
+    if (!ttls.has(key)) ttls.set(key, new Map());
+    ttls.get(key)!.set(field, expiresAt);
+  };
+
+  const clearExpiration = (key: string, field: string): void => {
+    const fields = ttls.get(key);
+    if (!fields) return;
+    fields.delete(field);
+    if (fields.size === 0) ttls.delete(key);
+  };
+
+  const expiration = (key: string, field: string): number | undefined => ttls.get(key)?.get(field);
+  const alive = (key: string, field: string, timestamp: number): boolean => {
+    if (!store.get(key)?.has(field)) return false;
+    const expiresAt = expiration(key, field);
+    return expiresAt === undefined || timestamp < expiresAt;
+  };
+
+  const deleteField = (key: string, field: string): void => {
+    const fields = store.get(key);
+    fields?.delete(field);
+    if (fields?.size === 0) store.delete(key);
+    clearExpiration(key, field);
+  };
+
+  const liveRows = (key: string, timestamp: number, prefix = ""): Array<[string, string]> => {
+    const fields = store.get(key);
+    if (!fields) return [];
+    return [...fields].filter(([field]) => field.startsWith(prefix) && alive(key, field, timestamp));
+  };
+
+  for (const query of queries) {
+    const timestamp = Number(query[1]);
+    switch (query[0]) {
+      case "SET": {
+        const [key, field, value] = [query[2], query[3], query[4]];
+        ensureFields(key).set(field, value);
+        clearExpiration(key, field);
+        out.push("true");
+        break;
+      }
+      case "SET_AT": {
+        const [key, field, value] = [query[2], query[3], query[4]];
+        ensureFields(key).set(field, value);
+        setExpiration(key, field, timestamp + Number(query[5]));
+        out.push("true");
+        break;
+      }
+      case "GET":
+        out.push(alive(query[2], query[3], timestamp) ? store.get(query[2])!.get(query[3])! : "");
+        break;
+      case "DELETE":
+        if (alive(query[2], query[3], timestamp)) {
+          deleteField(query[2], query[3]);
+          out.push("true");
+        } else out.push("false");
+        break;
+      case "SCAN":
+        out.push(render(liveRows(query[2], timestamp)));
+        break;
+      case "SCAN_BY_PREFIX":
+        out.push(render(liveRows(query[2], timestamp, query[3])));
+        break;
+      default:
+        out.push("");
+    }
+  }
+
+  return out;
 }

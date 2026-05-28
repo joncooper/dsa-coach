@@ -68,6 +68,10 @@ export async function scalaToolchainAvailable(): Promise<boolean> {
 }
 
 async function resolveJava(): Promise<string | undefined> {
+  for (const root of toolchainRoots()) {
+    const bundledJava = join(root, "java", "bin", "java");
+    if (await fileExists(bundledJava)) return bundledJava;
+  }
   const javaHome = await commandOutput("/usr/libexec/java_home", [], 1000);
   if (javaHome) {
     const javaFromHome = join(javaHome, "bin", "java");

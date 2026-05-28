@@ -1,9 +1,73 @@
-export function maxScoreAfterHalving(nums: number[], k: number): number {
-  const values = [...nums];
-  for (let count = 0; count < k; count += 1) {
-    values.sort((a, b) => b - a);
-    if (values.length === 0 || values[0] <= 1) break;
-    values[0] = Math.ceil(values[0] / 2);
+class BinaryHeap<T> {
+  private values: T[] = [];
+
+  constructor(private readonly compare: (a: T, b: T) => number) {}
+
+  get size(): number {
+    return this.values.length;
   }
-  return values.reduce((sum, value) => sum + value, 0);
+
+  peek(): T | undefined {
+    return this.values[0];
+  }
+
+  push(value: T): void {
+    this.values.push(value);
+    this.bubbleUp(this.values.length - 1);
+  }
+
+  pop(): T | undefined {
+    if (this.values.length === 0) return undefined;
+    const top = this.values[0];
+    const last = this.values.pop()!;
+    if (this.values.length > 0) {
+      this.values[0] = last;
+      this.sinkDown(0);
+    }
+    return top;
+  }
+
+  private bubbleUp(index: number): void {
+    while (index > 0) {
+      const parent = Math.floor((index - 1) / 2);
+      if (this.compare(this.values[index], this.values[parent]) >= 0) break;
+      [this.values[index], this.values[parent]] = [this.values[parent], this.values[index]];
+      index = parent;
+    }
+  }
+
+  private sinkDown(index: number): void {
+    while (true) {
+      const left = index * 2 + 1;
+      const right = left + 1;
+      let best = index;
+      if (left < this.values.length && this.compare(this.values[left], this.values[best]) < 0) best = left;
+      if (right < this.values.length && this.compare(this.values[right], this.values[best]) < 0) best = right;
+      if (best === index) break;
+      [this.values[index], this.values[best]] = [this.values[best], this.values[index]];
+      index = best;
+    }
+  }
+}
+
+export function maxScoreAfterHalving(nums: number[], k: number): number {
+  const heap = new BinaryHeap<number>((a, b) => b - a);
+  let total = 0;
+  for (const num of nums) {
+    total += num;
+    heap.push(num);
+  }
+
+  for (let count = 0; count < k && heap.size > 0; count += 1) {
+    const value = heap.pop()!;
+    if (value <= 1) {
+      heap.push(value);
+      break;
+    }
+    const reduced = Math.ceil(value / 2);
+    total -= value - reduced;
+    heap.push(reduced);
+  }
+
+  return total;
 }

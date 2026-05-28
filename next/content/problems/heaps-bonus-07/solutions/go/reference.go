@@ -1,36 +1,47 @@
 package solution
 
+import "container/heap"
+
+type rowEntry struct {
+	strength int
+	index    int
+}
+
+type rowHeap []rowEntry
+
+func (h rowHeap) Len() int      { return len(h) }
+func (h rowHeap) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+func (h rowHeap) Less(i, j int) bool {
+	if h[i].strength != h[j].strength {
+		return h[i].strength < h[j].strength
+	}
+	return h[i].index < h[j].index
+}
+func (h *rowHeap) Push(x any) { *h = append(*h, x.(rowEntry)) }
+func (h *rowHeap) Pop() any {
+	old := *h
+	value := old[len(old)-1]
+	*h = old[:len(old)-1]
+	return value
+}
+
 func KWeakestRows(grid [][]int, k int) []int {
-	ranked := [][]int{}
-	for index, row := range grid { total := 0; for _, value := range row { total += value }; ranked = append(ranked, []int{total, index}) }
-	for i := 0; i < len(ranked); i++ { for j := i + 1; j < len(ranked); j++ { if ranked[j][0] < ranked[i][0] || (ranked[j][0] == ranked[i][0] && ranked[j][1] < ranked[i][1]) { ranked[i], ranked[j] = ranked[j], ranked[i] } } }
-	if k > len(ranked) { k = len(ranked) }
-	result := []int{}
-	for _, entry := range ranked[:k] { result = append(result, entry[1]) }
-	return result
-}
-func sortInts(values []int) []int {
-	result := append([]int{}, values...)
-	for i := 0; i < len(result); i++ {
-		for j := i + 1; j < len(result); j++ {
-			if result[j] < result[i] {
-				result[i], result[j] = result[j], result[i]
-			}
+	pq := &rowHeap{}
+	heap.Init(pq)
+	for index, row := range grid {
+		strength := 0
+		for _, value := range row {
+			strength += value
 		}
+		heap.Push(pq, rowEntry{strength: strength, index: index})
+	}
+	limit := k
+	if limit > len(grid) {
+		limit = len(grid)
+	}
+	result := []int{}
+	for count := 0; count < limit; count++ {
+		result = append(result, heap.Pop(pq).(rowEntry).index)
 	}
 	return result
-}
-
-func reverseInts(values []int) {
-	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
-		values[left], values[right] = values[right], values[left]
-	}
-}
-
-func countPairs(counts map[int]int) [][]int {
-	pairs := [][]int{}
-	for num, count := range counts {
-		pairs = append(pairs, []int{num, count})
-	}
-	return pairs
 }

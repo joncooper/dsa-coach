@@ -1,9 +1,14 @@
+import heapq
+
+
 def min_connect_cost(ropes: list[int]) -> int:
-    heap = sorted(ropes)
+    heap = ropes[:]
+    heapq.heapify(heap)
     cost = 0
+
     while len(heap) > 1:
-        merged = heap.pop(0) + heap.pop(0)
+        merged = heapq.heappop(heap) + heapq.heappop(heap)
         cost += merged
-        heap.append(merged)
-        heap.sort()
+        heapq.heappush(heap, merged)
+
     return cost

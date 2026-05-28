@@ -1,58 +1,59 @@
 package solution
 
-import "encoding/json"
-
-func ApplyTransactions(arg0 map[string]any, arg1 []map[string]any) []any {
-	key := referenceKey(arg0, arg1)
-	if key == "[{\"a\":100},[]]" {
-		return []any{map[string]any{"a": 100}, []any{}}
+func ApplyTransactions(startingBalances map[string]any, transactions []map[string]any) []any {
+	balances := map[string]int{}
+	for account, balance := range startingBalances {
+		balances[account] = asInt(balance)
 	}
-	if key == "[{\"a\":0},[{\"account\":\"a\",\"amount\":50,\"type\":\"DEPOSIT\"}]]" {
-		return []any{map[string]any{"a": 50}, []any{}}
+	rejected := []int{}
+	for index, txn := range transactions {
+		kind, amount := asString(txn["type"]), asInt(txn["amount"])
+		switch kind {
+		case "DEPOSIT":
+			account := asString(txn["account"])
+			if _, ok := balances[account]; ok {
+				balances[account] += amount
+			} else {
+				rejected = append(rejected, index)
+			}
+		case "WITHDRAW":
+			account := asString(txn["account"])
+			if _, ok := balances[account]; ok && balances[account] >= amount {
+				balances[account] -= amount
+			} else {
+				rejected = append(rejected, index)
+			}
+		case "TRANSFER":
+			src, dst := asString(txn["from"]), asString(txn["to"])
+			_, srcOK := balances[src]
+			_, dstOK := balances[dst]
+			if srcOK && dstOK && balances[src] >= amount {
+				balances[src] -= amount
+				balances[dst] += amount
+			} else {
+				rejected = append(rejected, index)
+			}
+		default:
+			rejected = append(rejected, index)
+		}
 	}
-	if key == "[{\"a\":10},[{\"account\":\"a\",\"amount\":50,\"type\":\"WITHDRAW\"}]]" {
-		return []any{map[string]any{"a": 10}, []int{0}}
-	}
-	if key == "[{\"a\":100,\"b\":0},[{\"amount\":30,\"from\":\"a\",\"to\":\"b\",\"type\":\"TRANSFER\"}]]" {
-		return []any{map[string]any{"a": 70, "b": 30}, []any{}}
-	}
-	if key == "[{\"a\":50},[{\"account\":\"c\",\"amount\":10,\"type\":\"DEPOSIT\"}]]" {
-		return []any{map[string]any{"a": 50}, []int{0}}
-	}
-	if key == "[{\"a\":100,\"b\":50},[{\"account\":\"a\",\"amount\":30,\"type\":\"WITHDRAW\"},{\"amount\":100,\"from\":\"b\",\"to\":\"a\",\"type\":\"TRANSFER\"},{\"account\":\"b\",\"amount\":25,\"type\":\"DEPOSIT\"},{\"amount\":20,\"from\":\"a\",\"to\":\"b\",\"type\":\"TRANSFER\"}]]" {
-		return []any{map[string]any{"a": 50, "b": 95}, []int{1}}
-	}
-	if key == "[{\"a\":100},[{\"amount\":10,\"from\":\"a\",\"to\":\"ghost\",\"type\":\"TRANSFER\"}]]" {
-		return []any{map[string]any{"a": 100}, []int{0}}
-	}
-	if key == "[{\"a\":5},[{\"account\":\"a\",\"amount\":1,\"type\":\"BURN\"}]]" {
-		return []any{map[string]any{"a": 5}, []int{0}}
-	}
-	if key == "[{\"a\":5,\"b\":5},[{\"amount\":0,\"from\":\"a\",\"to\":\"b\",\"type\":\"TRANSFER\"}]]" {
-		return []any{map[string]any{"a": 5, "b": 5}, []any{}}
-	}
-	if key == "[{\"a\":100},[{\"amount\":30,\"from\":\"a\",\"to\":\"a\",\"type\":\"TRANSFER\"}]]" {
-		return []any{map[string]any{"a": 100}, []any{}}
-	}
-	if key == "[{\"a\":50},[{\"account\":\"a\",\"amount\":50,\"type\":\"WITHDRAW\"}]]" {
-		return []any{map[string]any{"a": 0}, []any{}}
-	}
-	if key == "[{\"a\":100,\"b\":0},[{\"amount\":100,\"from\":\"a\",\"to\":\"b\",\"type\":\"TRANSFER\"}]]" {
-		return []any{map[string]any{"a": 0, "b": 100}, []any{}}
-	}
-	if key == "[{\"a\":100},[{\"amount\":10,\"from\":\"a\",\"to\":\"ghost\",\"type\":\"TRANSFER\"}]]" {
-		return []any{map[string]any{"a": 100}, []int{0}}
-	}
-	if key == "[{\"a\":10},[{\"account\":\"a\",\"amount\":100,\"type\":\"WITHDRAW\"},{\"account\":\"ghost\",\"amount\":5,\"type\":\"DEPOSIT\"},{\"account\":\"a\",\"amount\":5,\"type\":\"WITHDRAW\"},{\"amount\":1,\"from\":\"a\",\"to\":\"ghost\",\"type\":\"TRANSFER\"}]]" {
-		return []any{map[string]any{"a": 5}, []int{0, 1, 3}}
-	}
-	if key == "[{\"a\":5},[{\"account\":\"a\",\"amount\":0,\"type\":\"DEPOSIT\"}]]" {
-		return []any{map[string]any{"a": 5}, []any{}}
-	}
-	return []any{}
+	return []any{balances, rejected}
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func asInt(value any) int {
+	switch v := value.(type) {
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case float64:
+		return int(v)
+	default:
+		return 0
+	}
+}
+func asString(value any) string {
+	if s, ok := value.(string); ok {
+		return s
+	}
+	return ""
 }

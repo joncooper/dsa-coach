@@ -1,37 +1,34 @@
 package solution
 
-import "encoding/json"
+import "strings"
 
 func SlopeWalkProduct(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"\"]" {
+	rows := nonEmptyRows(inputText)
+	if len(rows) == 0 {
 		return 0
 	}
-	if key == "[\"..##.......\\n#...#...#..\\n.#....#..#.\\n..#.#...#.#\\n.#...##..#.\\n..#.##.....\\n.#.#.#....#\\n.#........#\\n#.##...#...\\n#...##....#\\n.#..#...#.#\"]" {
-		return 336
+	width := len(rows[0])
+	slopes := [][2]int{{1, 1}, {3, 1}, {5, 1}, {7, 1}, {1, 2}}
+	product := 1
+	for _, slope := range slopes {
+		trees, r, c := 0, 0, 0
+		for r < len(rows) {
+			if rows[r][c%width] == '#' {
+				trees++
+			}
+			r += slope[1]
+			c += slope[0]
+		}
+		product *= trees
 	}
-	if key == "[\"###\"]" {
-		return 1
-	}
-	if key == "[\"....\\n....\\n....\\n....\\n....\"]" {
-		return 0
-	}
-	if key == "[\"####\\n####\"]" {
-		return 16
-	}
-	if key == "[\"....\\n#...\\n....\\n#...\\n....\\n#...\"]" {
-		return 0
-	}
-	if key == "[\"####\"]" {
-		return 1
-	}
-	if key == "[\"#\\n#\\n#\\n#\\n#\"]" {
-		return 1875
-	}
-	return 0
+	return product
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func nonEmptyRows(text string) []string {
+	rows := []string{}
+	for _, line := range strings.Split(text, "\n") {
+		if line != "" {
+			rows = append(rows, line)
+		}
+	}
+	return rows
 }

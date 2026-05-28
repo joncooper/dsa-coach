@@ -4,7 +4,12 @@ func MinArrows(intervals [][]int) int {
 	sorted := sortIntervalsByEnd(intervals)
 	arrows := 0
 	arrow := -1 << 60
-	for _, interval := range sorted { if interval[0] > arrow { arrows++; arrow = interval[1] } }
+	for _, interval := range sorted {
+		if interval[0] > arrow {
+			arrows++
+			arrow = interval[1]
+		}
+	}
 	return arrows
 }
 func sortInts(values []int) []int {
@@ -38,6 +43,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

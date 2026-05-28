@@ -8,7 +8,7 @@
     "stack",
     "simulation"
   ],
-  "prompt": "Given a `pushed` order and a `popped` order of the same distinct values, decide whether one stack could produce that pop order if values are pushed strictly in the `pushed` order, with pops allowed at any time. Return True or False.",
+  "prompt": "Given a `pushed` order and a `popped` order of the same distinct values, decide whether one stack could produce that pop order if values are pushed strictly in the `pushed` order, with pops allowed at any time. Return `true` or `false`.",
   "signature": {
     "name": "validateStackSequence",
     "inputs": [

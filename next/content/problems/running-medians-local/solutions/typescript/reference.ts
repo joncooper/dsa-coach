@@ -1,13 +1,70 @@
-export function runningMediansLocal(nums: number[]): number[] {
-  const seen: number[] = [];
-  const medians: number[] = [];
-  for (const num of nums) {
-    let index = 0;
-    while (index < seen.length && seen[index] < num) index += 1;
-    seen.splice(index, 0, num);
-    const middle = Math.floor(seen.length / 2);
-    if (seen.length % 2 === 1) medians.push(seen[middle]);
-    else medians.push((seen[middle - 1] + seen[middle]) / 2);
+class BinaryHeap<T> {
+  private values: T[] = [];
+
+  constructor(private readonly compare: (a: T, b: T) => number) {}
+
+  get size(): number {
+    return this.values.length;
   }
+
+  peek(): T | undefined {
+    return this.values[0];
+  }
+
+  push(value: T): void {
+    this.values.push(value);
+    this.bubbleUp(this.values.length - 1);
+  }
+
+  pop(): T | undefined {
+    if (this.values.length === 0) return undefined;
+    const top = this.values[0];
+    const last = this.values.pop()!;
+    if (this.values.length > 0) {
+      this.values[0] = last;
+      this.sinkDown(0);
+    }
+    return top;
+  }
+
+  private bubbleUp(index: number): void {
+    while (index > 0) {
+      const parent = Math.floor((index - 1) / 2);
+      if (this.compare(this.values[index], this.values[parent]) >= 0) break;
+      [this.values[index], this.values[parent]] = [this.values[parent], this.values[index]];
+      index = parent;
+    }
+  }
+
+  private sinkDown(index: number): void {
+    while (true) {
+      const left = index * 2 + 1;
+      const right = left + 1;
+      let best = index;
+      if (left < this.values.length && this.compare(this.values[left], this.values[best]) < 0) best = left;
+      if (right < this.values.length && this.compare(this.values[right], this.values[best]) < 0) best = right;
+      if (best === index) break;
+      [this.values[index], this.values[best]] = [this.values[best], this.values[index]];
+      index = best;
+    }
+  }
+}
+
+export function runningMediansLocal(nums: number[]): number[] {
+  const lower = new BinaryHeap<number>((a, b) => b - a);
+  const upper = new BinaryHeap<number>((a, b) => a - b);
+  const medians: number[] = [];
+
+  for (const num of nums) {
+    if (lower.size === 0 || num <= lower.peek()!) lower.push(num);
+    else upper.push(num);
+
+    if (lower.size > upper.size + 1) upper.push(lower.pop()!);
+    if (upper.size > lower.size) lower.push(upper.pop()!);
+
+    if ((lower.size + upper.size) % 2 === 1) medians.push(lower.peek()!);
+    else medians.push((lower.peek()! + upper.peek()!) / 2);
+  }
+
   return medians;
 }

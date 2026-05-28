@@ -1,10 +1,22 @@
 package solution
 
 func StartStation(fuel []int, cost []int) int {
-	if len(fuel) == 0 { return 0 }
+	if len(fuel) == 0 {
+		return 0
+	}
 	total, tank, start := 0, 0, 0
-	for index, amount := range fuel { diff := amount - cost[index]; total += diff; tank += diff; if tank < 0 { start = index + 1; tank = 0 } }
-	if total >= 0 { return start }
+	for index, amount := range fuel {
+		diff := amount - cost[index]
+		total += diff
+		tank += diff
+		if tank < 0 {
+			start = index + 1
+			tank = 0
+		}
+	}
+	if total >= 0 {
+		return start
+	}
 	return -1
 }
 func sortInts(values []int) []int {
@@ -38,6 +50,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

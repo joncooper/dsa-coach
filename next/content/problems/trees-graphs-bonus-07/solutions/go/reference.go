@@ -4,7 +4,9 @@ func IsSymmetric(values []interface{}) bool {
 	root := buildTree(values)
 	var mirror func(*Node, *Node) bool
 	mirror = func(left *Node, right *Node) bool {
-		if left == nil || right == nil { return left == right }
+		if left == nil || right == nil {
+			return left == right
+		}
 		return left.Value == right.Value && mirror(left.Left, right.Right) && mirror(left.Right, right.Left)
 	}
 	return root == nil || mirror(root.Left, root.Right)
@@ -12,7 +14,7 @@ func IsSymmetric(values []interface{}) bool {
 
 type Node struct {
 	Value int
-	Left *Node
+	Left  *Node
 	Right *Node
 }
 

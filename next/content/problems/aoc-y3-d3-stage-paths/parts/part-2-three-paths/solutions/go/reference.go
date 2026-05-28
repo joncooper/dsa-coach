@@ -1,43 +1,35 @@
 package solution
 
-import "encoding/json"
+import "strings"
 
 func ThreePathsSum(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"T..\\n.T.\\n..T\"]" {
-		return 5
-	}
-	if key == "[\"\"]" {
+	rows := nonEmptyRows(inputText)
+	if len(rows) == 0 {
 		return 0
 	}
-	if key == "[\"...\\n...\\n...\"]" {
-		return 0
+	total := 0
+	for _, path := range [][2]int{{1, 1}, {1, 2}, {2, 1}} {
+		r, c := 0, 0
+		for r < len(rows) && c < len(rows[0]) {
+			cell := rows[r][c]
+			if cell == '#' {
+				break
+			}
+			if cell == 'T' {
+				total++
+			}
+			r += path[0]
+			c += path[1]
+		}
 	}
-	if key == "[\"TT\\nTT\\nTT\"]" {
-		return 5
-	}
-	if key == "[\"T.T.T\\n.T.T.\\nT.T.T\"]" {
-		return 6
-	}
-	if key == "[\"T..\\n.#.\\n..T\"]" {
-		return 3
-	}
-	if key == "[\"T.\\n.T\\nT.\\n.T\\nT.\"]" {
-		return 4
-	}
-	if key == "[\"#\"]" {
-		return 0
-	}
-	if key == "[\"T\"]" {
-		return 3
-	}
-	if key == "[\"TT\\nTT\"]" {
-		return 4
-	}
-	return 0
+	return total
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func nonEmptyRows(text string) []string {
+	out := []string{}
+	for _, line := range strings.Split(text, "\n") {
+		if line != "" {
+			out = append(out, line)
+		}
+	}
+	return out
 }

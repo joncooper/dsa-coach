@@ -8,7 +8,7 @@
     "fast and slow pointers",
     "dummy head"
   ],
-  "prompt": "Given the head of a singly linked list, remove the n-th node counting from the end of the list and return the head.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Remove the `n`-th node counting from the end of the list, then return the list serialized head-to-tail.",
   "signature": {
     "name": "removeNthFromEnd",
     "inputs": [

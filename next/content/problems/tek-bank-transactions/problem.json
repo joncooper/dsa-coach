@@ -8,7 +8,7 @@
     "validation",
     "domain modeling"
   ],
-  "prompt": "Apply a list of bank transactions to a set of starting balances. Starting balances is a dict `{account_id: integer balance}`. Each transaction is a dict with a `type` field, one of `DEPOSIT` (with `account`, `amount`), `WITHDRAW` (with `account`, `amount`), or `TRANSFER` (with `from`, `to`, `amount`). Apply them in order. A transaction is rejected (skipped, with no balance change) if any referenced account does not exist or if a `WITHDRAW` or `TRANSFER` would leave any account with a negative balance. Return a two-element list `[final_balances, rejected_indexes]` where `rejected_indexes` is a list of the input indexes that were rejected, in ascending order.",
+  "prompt": "Apply a list of bank transactions to starting balances. `starting_balances` is an object/map `{account_id: integer balance}`. Each transaction is an object/map with a `type` field, one of `DEPOSIT` (with `account`, `amount`), `WITHDRAW` (with `account`, `amount`), or `TRANSFER` (with `from`, `to`, `amount`). Apply them in order. A transaction is rejected (skipped, with no balance change) if any referenced account does not exist or if a `WITHDRAW` or `TRANSFER` would leave any account with a negative balance. Return a two-element list `[final_balances, rejected_indexes]` where `rejected_indexes` is a list of the input indexes that were rejected, in ascending order.",
   "signature": {
     "name": "applyTransactions",
     "inputs": [

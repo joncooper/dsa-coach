@@ -6,9 +6,9 @@
   "concepts": [
     "recursion",
     "tree traversal",
-    "dict manipulation"
+    "map manipulation"
   ],
-  "prompt": "You are given a configuration as a nested dict. A value is either another dict (a subtree) or a scalar leaf (string, number, or boolean). Return a flat dict whose keys are the dot-joined paths from the root to each scalar leaf, mapping to that leaf's value. Keys never contain dots. An empty dict — including a nested empty dict — contributes no entries, so a config that has only empty subtrees flattens to an empty dict.",
+  "prompt": "You are given a configuration as a nested object/map. A value is either another object/map (a subtree) or a scalar leaf (string, number, or boolean). Return a flat object/map whose keys are the dot-joined paths from the root to each scalar leaf, mapping to that leaf's value. Keys never contain dots. An empty object/map, including a nested empty object/map, contributes no entries, so a config that has only empty subtrees flattens to an empty object/map.",
   "signature": {
     "name": "flattenConfig",
     "inputs": [
@@ -81,7 +81,7 @@
       "visibility": "hidden"
     },
     {
-      "name": "nested empty dict contributes nothing",
+      "name": "nested empty map contributes nothing",
       "args": [
         {
           "a": {},
@@ -153,7 +153,7 @@
     {
       "id": "part-2-unflatten",
       "title": "Part 2: Rebuild the nested config",
-      "prompt": "Write the reconstruction. Given a flat dict whose keys are dot-joined paths mapping to scalar values, rebuild the nested dict. Every intermediate path segment becomes a nested dict. This recovers the scalar leaves only — flattening discards empty subtrees, so it is the inverse of `flatten_config` for any config without empty subtrees. You may assume the flat keys are consistent (no key is a strict prefix of another) and every path segment is a non-empty string containing no dot, so the result is unambiguous.",
+      "prompt": "Write the reconstruction. Given a flat object/map whose keys are dot-joined paths mapping to scalar values, rebuild the nested object/map. Every intermediate path segment becomes a nested object/map. This recovers the scalar leaves only — flattening discards empty subtrees, so it is the inverse of `flatten_config` for any config without empty subtrees. You may assume the flat keys are consistent (no key is a strict prefix of another) and every path segment is a non-empty string containing no dot, so the result is unambiguous.",
       "signature": {
         "name": "unflatten_config",
         "inputs": [

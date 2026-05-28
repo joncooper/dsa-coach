@@ -1,41 +1,49 @@
 package solution
 
+import "container/heap"
+
 func CombineUntilTarget(values []int, target int) int {
-	heap := sortInts(values)
+	pq := &intHeap{less: func(a int, b int) bool { return a < b }}
+	heap.Init(pq)
+	for _, value := range values {
+		heap.Push(pq, value)
+	}
 	combines := 0
-	for len(heap) > 0 && heap[0] < target {
-		if len(heap) < 2 { return -1 }
-		small, large := heap[0], heap[1]
-		heap = heap[2:]
-		heap = append(heap, small+2*large)
-		heap = sortInts(heap)
+	for pq.Len() > 0 && pq.Peek() < target {
+		if pq.Len() < 2 {
+			return -1
+		}
+		small := heap.Pop(pq).(int)
+		large := heap.Pop(pq).(int)
+		heap.Push(pq, small+2*large)
 		combines++
 	}
-	if len(heap) == 0 { return -1 }
+	if pq.Len() == 0 {
+		return -1
+	}
 	return combines
 }
-func sortInts(values []int) []int {
-	result := append([]int{}, values...)
-	for i := 0; i < len(result); i++ {
-		for j := i + 1; j < len(result); j++ {
-			if result[j] < result[i] {
-				result[i], result[j] = result[j], result[i]
-			}
-		}
-	}
-	return result
+
+type intHeap struct {
+	values []int
+	less   func(a int, b int) bool
 }
 
-func reverseInts(values []int) {
-	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
-		values[left], values[right] = values[right], values[left]
-	}
+func (h intHeap) Len() int           { return len(h.values) }
+func (h intHeap) Less(i, j int) bool { return h.less(h.values[i], h.values[j]) }
+func (h intHeap) Swap(i, j int)      { h.values[i], h.values[j] = h.values[j], h.values[i] }
+
+func (h *intHeap) Push(x any) {
+	h.values = append(h.values, x.(int))
 }
 
-func countPairs(counts map[int]int) [][]int {
-	pairs := [][]int{}
-	for num, count := range counts {
-		pairs = append(pairs, []int{num, count})
-	}
-	return pairs
+func (h *intHeap) Pop() any {
+	old := h.values
+	value := old[len(old)-1]
+	h.values = old[:len(old)-1]
+	return value
+}
+
+func (h *intHeap) Peek() int {
+	return h.values[0]
 }

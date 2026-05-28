@@ -1,11 +1,14 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import ts from "typescript";
-import type { Problem, ProblemTest, RunRequest, RunResult, TestResult, ValueType } from "../core/types.js";
+import type { Problem, ProblemTest, RunDiagnostic, RunRequest, RunResult, TestResult, ValueType } from "../core/types.js";
 import { writableCacheRoot } from "../runtime/paths.js";
 import { resolveScalaToolchain } from "../toolchains/localToolchains.js";
 import { jsonEqual } from "./compare.js";
-import { commandExists, commandOutput, runSandboxedProcess, withSandboxWorkdir } from "./processSandbox.js";
+import { diagnosticsFromErrorText, formatDiagnosticsForStderr, locationDiagnostic, type DiagnosticContext } from "./errorDiagnostics.js";
+import { resolveGoRuntime } from "./goRuntime.js";
+import { commandOutput, runSandboxedProcess, withSandboxWorkdir } from "./processSandbox.js";
+import { resolvePythonRuntime } from "./pythonRuntime.js";
 import { selectRunTarget } from "./runnerTarget.js";
 
 const RESULT_MARKER = "__DSA_COACH_RESULT__";
@@ -35,18 +38,21 @@ export class TypeScriptProcessBackend {
         target: ts.ScriptTarget.ES2022,
         strict: true
       },
+      fileName: "solution.ts",
       reportDiagnostics: true
     });
     const diagnostics = transpiled.diagnostics ?? [];
     const blocking = diagnostics.filter((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error);
     if (blocking.length) {
+      const runDiagnostics = typeScriptDiagnostics(blocking, request.code, "solution.ts");
       return {
         status: "compile-error",
         stdout: "",
-        stderr: formatDiagnostics(blocking),
+        stderr: formatDiagnosticsForStderr(runDiagnostics),
         durationMs: elapsed(started),
         tests: [],
-        message: "TypeScript compile failed"
+        message: "TypeScript compile failed",
+        diagnostics: runDiagnostics
       };
     }
 
@@ -69,10 +75,19 @@ export class TypeScriptProcessBackend {
           stderr: processResult.stderr,
           durationMs: elapsed(started),
           tests: [],
-          message: "TypeScript runner did not produce a result payload"
+          message: "TypeScript runner did not produce a result payload",
+          diagnostics: diagnosticsFromErrorText(processResult.stderr || processResult.stdout, {
+            language: "TypeScript",
+            sourceFile: "solution.cjs",
+            source: transpiled.outputText
+          }, "TypeScript runner did not produce a result payload")
         };
       }
-      return resultFromPayload(started, tests, payload, processResult.stderr);
+      return resultFromPayload(started, tests, payload, processResult.stderr, {
+        language: "TypeScript",
+        sourceFile: "solution.cjs",
+        source: transpiled.outputText
+      });
     });
   }
 }
@@ -84,20 +99,21 @@ export class PythonProcessBackend {
     if (!target) return baseResult("unsupported", started, [], `Problem ${problem.id} has no part ${request.partId}`);
     const support = target.languages[request.language];
     if (!support) return baseResult("unsupported", started, [], `Problem ${target.label} does not support ${request.language}`);
-    if (!(await commandExists("python3"))) return baseResult("unsupported", started, [], "python3 is not installed");
-    const pythonPath = await commandOutput("python3", ["-c", "import os, sys; print(os.path.realpath(sys.executable))"], 1000);
-    if (!pythonPath) return baseResult("unsupported", started, [], "Unable to resolve python3 executable");
+    const python = await resolvePythonRuntime();
+    if (!python.runtime) return baseResult("unsupported", started, [], python.message ?? "Python 3.10 or newer is not installed");
+    const pythonRuntime = python.runtime;
     const tests = filteredTests(target.tests, request);
 
     return withSandboxWorkdir("dsa-python-", async (workdir) => {
       await writeFile(join(workdir, "solution.py"), request.code, "utf8");
       await writeFile(join(workdir, "runner.py"), pythonHarness(support.entrypoint, tests), "utf8");
       const processResult = await runSandboxedProcess({
-        command: pythonPath,
+        command: pythonRuntime.command,
         args: ["runner.py"],
         cwd: workdir,
         timeoutMs: request.timeoutMs ?? 1000,
-        processExecPaths: pythonFrameworkExecPaths(pythonPath),
+        processExecPaths: pythonRuntime.processExecPaths,
+        allowProcessFork: pythonRuntime.allowProcessFork,
         sandbox: true
       });
       if (processResult.timedOut) return timeoutResult(started, tests, processResult);
@@ -109,10 +125,19 @@ export class PythonProcessBackend {
           stderr: processResult.stderr,
           durationMs: elapsed(started),
           tests: [],
-          message: "Python runner did not produce a result payload"
+          message: "Python runner did not produce a result payload",
+          diagnostics: diagnosticsFromErrorText(processResult.stderr || processResult.stdout, {
+            language: "Python",
+            sourceFile: "solution.py",
+            source: request.code
+          }, "Python runner did not produce a result payload")
         };
       }
-      return resultFromPayload(started, tests, payload, processResult.stderr);
+      return resultFromPayload(started, tests, payload, processResult.stderr, {
+        language: "Python",
+        sourceFile: "solution.py",
+        source: request.code
+      });
     });
   }
 }
@@ -124,46 +149,53 @@ export class GoProcessBackend {
     if (!target) return baseResult("unsupported", started, [], `Problem ${problem.id} has no part ${request.partId}`);
     const support = target.languages[request.language];
     if (!support) return baseResult("unsupported", started, [], `Problem ${target.label} does not support ${request.language}`);
-    if (!(await commandExists("go"))) return baseResult("unsupported", started, [], "go is not installed");
+    const go = await resolveGoRuntime();
+    if (!go.runtime) return baseResult("unsupported", started, [], go.message ?? "Go runner toolchain is not installed");
+    const goRuntime = go.runtime;
     const tests = filteredTests(target.tests, request);
 
     return withSandboxWorkdir("dsa-go-", async (workdir) => {
       const cacheRoot = writableCacheRoot();
       const goCache = resolve(cacheRoot, "go-build");
       const goPath = resolve(cacheRoot, "gopath");
-      const goToolDir = await commandOutput("go", ["env", "GOTOOLDIR"], 1000);
-      const goCommand = await commandOutput("which", ["go"], 1000);
       await mkdir(goCache, { recursive: true });
       await mkdir(goPath, { recursive: true });
       await writeFile(join(workdir, "go.mod"), "module solution\n\ngo 1.22\n", "utf8");
       await writeFile(join(workdir, "solution.go"), request.code, "utf8");
       await writeFile(join(workdir, "solution_test.go"), goHarness(support.entrypoint, target.tests[0]?.args.length ?? 0, problem, request, tests), "utf8");
       const compileResult = await runSandboxedProcess({
-        command: "go",
+        command: goRuntime.command,
         args: ["test", "-c", "-o", "runner.test", "."],
         cwd: workdir,
         timeoutMs: request.timeoutMs ?? 1000,
         env: {
+          ...(goRuntime.goRoot ? { GOROOT: goRuntime.goRoot } : {}),
           GOCACHE: goCache,
           GOPATH: goPath,
           CGO_ENABLED: "0",
           GOFLAGS: "-buildvcs=false"
         },
         writePaths: [goCache, goPath],
-        processExecPaths: [goToolDir, goCommand].filter((path): path is string => Boolean(path)),
+        processExecPaths: goRuntime.processExecPaths,
         allowProcessFork: true,
         allowAnyProcessExec: true,
         sandbox: true
       });
       if (compileResult.timedOut) return timeoutResult(started, tests, compileResult);
       if (compileResult.exitCode !== 0) {
+        const diagnostics = diagnosticsFromErrorText(compileResult.stderr, {
+          language: "Go",
+          sourceFile: "solution.go",
+          source: request.code
+        }, "Go compile failed");
         return {
           status: "compile-error",
           stdout: compileResult.stdout,
           stderr: compileResult.stderr,
           durationMs: elapsed(started),
           tests: [],
-          message: "Go compile failed"
+          message: "Go compile failed",
+          diagnostics
         };
       }
       const processResult = await runSandboxedProcess({
@@ -182,10 +214,19 @@ export class GoProcessBackend {
           stderr: processResult.stderr,
           durationMs: elapsed(started),
           tests: [],
-          message: "Go runner did not produce a result payload"
+          message: "Go runner did not produce a result payload",
+          diagnostics: diagnosticsFromErrorText(processResult.stderr || processResult.stdout, {
+            language: "Go",
+            sourceFile: "solution.go",
+            source: request.code
+          }, "Go runner did not produce a result payload")
         };
       }
-      return resultFromPayload(started, tests, payload, processResult.stderr);
+      return resultFromPayload(started, tests, payload, processResult.stderr, {
+        language: "Go",
+        sourceFile: "solution.go",
+        source: request.code
+      });
     });
   }
 }
@@ -216,13 +257,19 @@ export class ScalaProcessBackend {
       });
       if (compileResult.timedOut) return timeoutResult(started, tests, compileResult);
       if (compileResult.exitCode !== 0) {
+        const diagnostics = diagnosticsFromErrorText(compileResult.stderr, {
+          language: "Scala",
+          sourceFile: "Solution.scala",
+          source: request.code
+        }, "Scala compile failed");
         return {
           status: "compile-error",
           stdout: compileResult.stdout,
           stderr: compileResult.stderr,
           durationMs: elapsed(started),
           tests: [],
-          message: "Scala compile failed"
+          message: "Scala compile failed",
+          diagnostics
         };
       }
       const runResult = await runSandboxedProcess({
@@ -241,10 +288,19 @@ export class ScalaProcessBackend {
           stderr: runResult.stderr,
           durationMs: elapsed(started),
           tests: [],
-          message: "Scala runner did not produce a result payload"
+          message: "Scala runner did not produce a result payload",
+          diagnostics: diagnosticsFromErrorText(runResult.stderr || runResult.stdout, {
+            language: "Scala",
+            sourceFile: "Solution.scala",
+            source: request.code
+          }, "Scala runner did not produce a result payload")
         };
       }
-      return resultFromPayload(started, tests, payload, runResult.stderr);
+      return resultFromPayload(started, tests, payload, runResult.stderr, {
+        language: "Scala",
+        sourceFile: "Solution.scala",
+        source: request.code
+      });
     });
   }
 }
@@ -529,15 +585,17 @@ function filteredTests(tests: ProblemTest[], request: RunRequest): ProblemTest[]
   return tests.filter((test) => request.includeHidden || test.visibility === "visible");
 }
 
-function resultFromPayload(started: number, tests: ProblemTest[], payload: RuntimePayload, processStderr: string): RunResult {
+function resultFromPayload(started: number, tests: ProblemTest[], payload: RuntimePayload, processStderr: string, context?: DiagnosticContext): RunResult {
   if (payload.status === "compile-error" || payload.status === "runtime-error") {
+    const diagnosticText = [payload.stderr, payload.message, processStderr].filter(Boolean).join("\n");
     return {
       status: payload.status,
       stdout: payload.stdout ?? "",
       stderr: [payload.stderr, payload.message, processStderr].filter(Boolean).join("\n"),
       durationMs: elapsed(started),
       tests: [],
-      message: payload.message
+      message: payload.message,
+      diagnostics: context ? diagnosticsFromErrorText(diagnosticText, context, payload.message ?? payload.status) : undefined
     };
   }
   const results = tests.map((test, index) => {
@@ -545,7 +603,7 @@ function resultFromPayload(started: number, tests: ProblemTest[], payload: Runti
     if (!item) {
       return { ...toErroredTest(test, "Runner did not return a result for this test") };
     }
-    if (item.error) return toErroredTest(test, item.error);
+    if (item.error) return toErroredTest(test, item.error, context ? diagnosticsFromErrorText(item.error, context, item.error) : undefined);
     return toTestResult(test, jsonEqual(item.actual, test.expected), item.actual);
   });
   return {
@@ -613,14 +671,15 @@ function toTestResult(test: ProblemTest, passed: boolean, actual: unknown): Test
   };
 }
 
-function toErroredTest(test: ProblemTest, error: string): TestResult {
+function toErroredTest(test: ProblemTest, error: string, diagnostics?: RunDiagnostic[]): TestResult {
   return {
     name: test.name,
     passed: false,
     visibility: test.visibility,
     args: test.args,
     expected: test.expected,
-    error
+    error,
+    diagnostics
   };
 }
 
@@ -628,8 +687,24 @@ function elapsed(started: number): number {
   return Math.round(performance.now() - started);
 }
 
-function formatDiagnostics(diagnostics: readonly ts.Diagnostic[]): string {
-  return diagnostics.map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")).join("\n");
+function typeScriptDiagnostics(diagnostics: readonly ts.Diagnostic[], source: string, sourceFile: string): RunDiagnostic[] {
+  return diagnostics.map((diagnostic) => {
+    const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
+    if (diagnostic.file && typeof diagnostic.start === "number") {
+      const start = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+      return {
+        ...locationDiagnostic(message, { language: "TypeScript", sourceFile, source }, start.line + 1, start.character + 1, diagnostic.length ?? 1),
+        code: `TS${diagnostic.code}`
+      };
+    }
+    return {
+      message,
+      severity: "error",
+      source: "TypeScript",
+      file: sourceFile,
+      code: `TS${diagnostic.code}`
+    };
+  });
 }
 
 function goType(type: ValueType): string {
@@ -651,15 +726,6 @@ function goParamTypesFromSource(source: string, entrypoint: string, fallback: st
     const pieces = param.split(/\s+/);
     return pieces.length >= 2 ? pieces.slice(1).join(" ") : fallback[index];
   });
-}
-
-function pythonFrameworkExecPaths(pythonPath: string): string[] {
-  const marker = "/Python.framework/Versions/";
-  const index = pythonPath.indexOf(marker);
-  if (index === -1) return [];
-  const rest = pythonPath.slice(index + marker.length);
-  const version = rest.split("/")[0];
-  return [`${pythonPath.slice(0, index)}${marker}${version}`];
 }
 
 function needsAnyNormalization(goTypeName: string): boolean {

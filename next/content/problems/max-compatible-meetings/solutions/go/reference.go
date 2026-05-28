@@ -5,7 +5,10 @@ func MaxCompatibleMeetings(intervals [][]int) int {
 	count := 0
 	currentEnd := -1 << 60
 	for _, interval := range sorted {
-		if interval[0] >= currentEnd { count++; currentEnd = interval[1] }
+		if interval[0] >= currentEnd {
+			count++
+			currentEnd = interval[1]
+		}
 	}
 	return count
 }
@@ -40,6 +43,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

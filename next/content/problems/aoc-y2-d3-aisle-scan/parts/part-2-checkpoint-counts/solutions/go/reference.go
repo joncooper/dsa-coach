@@ -1,43 +1,33 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strings"
+)
 
 func ScanCheckpoints(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"\"]" {
-		return 0
+	prior := []int{}
+	exceeded := 0
+	for _, row := range strings.Split(inputText, "\n") {
+		if row == "" {
+			continue
+		}
+		count := 0
+		for i := 0; i < len(row); i++ {
+			if row[i] == '#' {
+				break
+			}
+			if row[i] == '*' {
+				count++
+			}
+		}
+		if len(prior) > 0 && count > prior[(len(prior)-1)/2] {
+			exceeded++
+		}
+		pos := sort.SearchInts(prior, count)
+		prior = append(prior, 0)
+		copy(prior[pos+1:], prior[pos:])
+		prior[pos] = count
 	}
-	if key == "[\"*.*.\"]" {
-		return 0
-	}
-	if key == "[\"*\\n**\"]" {
-		return 1
-	}
-	if key == "[\"**\\n**\\n**\"]" {
-		return 0
-	}
-	if key == "[\"*\\n**\\n***\\n****\"]" {
-		return 3
-	}
-	if key == "[\"****\\n***\\n**\\n*****\"]" {
-		return 1
-	}
-	if key == "[\"**#**\\n*****\\n*#***\\n*****\"]" {
-		return 2
-	}
-	if key == "[\"**\\n**\\n**\\n**\\n**\"]" {
-		return 0
-	}
-	if key == "[\"**\\n**\"]" {
-		return 0
-	}
-	if key == "[\"*\\n**\\n***\\n****\\n**\"]" {
-		return 3
-	}
-	return 0
-}
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+	return exceeded
 }

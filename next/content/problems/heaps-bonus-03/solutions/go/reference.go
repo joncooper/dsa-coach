@@ -1,38 +1,46 @@
 package solution
 
+import "container/heap"
+
 func LastStoneWeight(stones []int) int {
-	heap := sortInts(stones)
-	for len(heap) > 1 {
-		y := heap[len(heap)-1]
-		x := heap[len(heap)-2]
-		heap = heap[:len(heap)-2]
-		if x != y { heap = append(heap, y-x); heap = sortInts(heap) }
+	pq := &intHeap{less: func(a int, b int) bool { return a > b }}
+	heap.Init(pq)
+	for _, stone := range stones {
+		heap.Push(pq, stone)
 	}
-	if len(heap) == 0 { return 0 }
-	return heap[0]
-}
-func sortInts(values []int) []int {
-	result := append([]int{}, values...)
-	for i := 0; i < len(result); i++ {
-		for j := i + 1; j < len(result); j++ {
-			if result[j] < result[i] {
-				result[i], result[j] = result[j], result[i]
-			}
+	for pq.Len() > 1 {
+		y := heap.Pop(pq).(int)
+		x := heap.Pop(pq).(int)
+		if x != y {
+			heap.Push(pq, y-x)
 		}
 	}
-	return result
+	if pq.Len() == 0 {
+		return 0
+	}
+	return heap.Pop(pq).(int)
 }
 
-func reverseInts(values []int) {
-	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
-		values[left], values[right] = values[right], values[left]
-	}
+type intHeap struct {
+	values []int
+	less   func(a int, b int) bool
 }
 
-func countPairs(counts map[int]int) [][]int {
-	pairs := [][]int{}
-	for num, count := range counts {
-		pairs = append(pairs, []int{num, count})
-	}
-	return pairs
+func (h intHeap) Len() int           { return len(h.values) }
+func (h intHeap) Less(i, j int) bool { return h.less(h.values[i], h.values[j]) }
+func (h intHeap) Swap(i, j int)      { h.values[i], h.values[j] = h.values[j], h.values[i] }
+
+func (h *intHeap) Push(x any) {
+	h.values = append(h.values, x.(int))
+}
+
+func (h *intHeap) Pop() any {
+	old := h.values
+	value := old[len(old)-1]
+	h.values = old[:len(old)-1]
+	return value
+}
+
+func (h *intHeap) Peek() int {
+	return h.values[0]
 }

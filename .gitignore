@@ -11,6 +11,8 @@ playwright.config.js
 playwright.config.d.ts
 .gstack/
 .venv/
+.runner-cache/
+home/
 .home/
 next/home/
 next/.runner-cache/

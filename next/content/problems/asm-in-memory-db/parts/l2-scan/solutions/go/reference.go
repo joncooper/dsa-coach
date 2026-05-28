@@ -1,40 +1,82 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strings"
+)
 
-func Solution(queries [][]string) []string {
-	key := referenceKey(queries)
-	if key == "[[[\"SET\",\"1\",\"user:1\",\"name\",\"alice\"],[\"SCAN\",\"2\",\"user:1\"]]]" {
-		return []string{"true", "name=alice"}
-	}
-	if key == "[[[\"SET\",\"1\",\"user:1\",\"name\",\"alice\"],[\"SET\",\"2\",\"user:1\",\"email\",\"a@x\"],[\"SET\",\"3\",\"user:1\",\"age\",\"30\"],[\"SCAN\",\"4\",\"user:1\"]]]" {
-		return []string{"true", "true", "true", "age=30,email=a@x,name=alice"}
-	}
-	if key == "[[[\"SCAN\",\"1\",\"ghost\"]]]" {
-		return []string{""}
-	}
-	if key == "[[[\"SET\",\"1\",\"user:1\",\"first_name\",\"alice\"],[\"SET\",\"2\",\"user:1\",\"last_name\",\"smith\"],[\"SET\",\"3\",\"user:1\",\"email\",\"a@x\"],[\"SCAN_BY_PREFIX\",\"4\",\"user:1\",\"first\"]]]" {
-		return []string{"true", "true", "true", "first_name=alice"}
-	}
-	if key == "[[[\"SET\",\"1\",\"user:1\",\"name\",\"alice\"],[\"SCAN_BY_PREFIX\",\"2\",\"user:1\",\"zzz\"]]]" {
-		return []string{"true", ""}
-	}
-	if key == "[[[\"SET\",\"1\",\"user:1\",\"a\",\"1\"],[\"SET\",\"2\",\"user:1\",\"b\",\"2\"],[\"SCAN_BY_PREFIX\",\"3\",\"user:1\",\"\"]]]" {
-		return []string{"true", "true", "a=1,b=2"}
-	}
-	if key == "[[[\"SET\",\"1\",\"user:1\",\"a\",\"1\"],[\"SET\",\"2\",\"user:1\",\"b\",\"2\"],[\"DELETE\",\"3\",\"user:1\",\"a\"],[\"SCAN\",\"4\",\"user:1\"]]]" {
-		return []string{"true", "true", "true", "b=2"}
-	}
-	if key == "[[[\"SET\",\"1\",\"user:1\",\"Name\",\"alice\"],[\"SET\",\"2\",\"user:1\",\"name\",\"bob\"],[\"SCAN_BY_PREFIX\",\"3\",\"user:1\",\"N\"]]]" {
-		return []string{"true", "true", "Name=alice"}
-	}
-	if key == "[[[\"SET\",\"1\",\"user:1\",\"a\",\"1\"],[\"DELETE\",\"2\",\"user:1\",\"a\"],[\"SCAN\",\"3\",\"user:1\"]]]" {
-		return []string{"true", "true", ""}
-	}
-	return []string{}
+type fieldRow struct {
+	field string
+	value string
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func Solution(queries [][]string) []string {
+	store := map[string]map[string]string{}
+	out := []string{}
+
+	deleteField := func(key, field string) bool {
+		fields, exists := store[key]
+		if !exists {
+			return false
+		}
+		if _, exists := fields[field]; !exists {
+			return false
+		}
+		delete(fields, field)
+		if len(fields) == 0 {
+			delete(store, key)
+		}
+		return true
+	}
+
+	for _, query := range queries {
+		switch query[0] {
+		case "SET":
+			key, field, value := query[2], query[3], query[4]
+			if store[key] == nil {
+				store[key] = map[string]string{}
+			}
+			store[key][field] = value
+			out = append(out, "true")
+		case "GET":
+			if fields := store[query[2]]; fields != nil {
+				out = append(out, fields[query[3]])
+			} else {
+				out = append(out, "")
+			}
+		case "DELETE":
+			if deleteField(query[2], query[3]) {
+				out = append(out, "true")
+			} else {
+				out = append(out, "false")
+			}
+		case "SCAN":
+			rows := []fieldRow{}
+			for field, value := range store[query[2]] {
+				rows = append(rows, fieldRow{field, value})
+			}
+			out = append(out, renderFields(rows))
+		case "SCAN_BY_PREFIX":
+			rows := []fieldRow{}
+			for field, value := range store[query[2]] {
+				if strings.HasPrefix(field, query[3]) {
+					rows = append(rows, fieldRow{field, value})
+				}
+			}
+			out = append(out, renderFields(rows))
+		default:
+			out = append(out, "")
+		}
+	}
+
+	return out
+}
+
+func renderFields(rows []fieldRow) string {
+	sort.Slice(rows, func(i, j int) bool { return rows[i].field < rows[j].field })
+	parts := make([]string, 0, len(rows))
+	for _, row := range rows {
+		parts = append(parts, row.field+"="+row.value)
+	}
+	return strings.Join(parts, ",")
 }

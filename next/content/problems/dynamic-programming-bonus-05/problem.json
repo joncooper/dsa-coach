@@ -8,7 +8,7 @@
     "subset sum",
     "knapsack"
   ],
-  "prompt": "Given a list of integers and a target, return True if some subset of the list sums exactly to the target, and False otherwise. The empty subset sums to 0.",
+  "prompt": "Given a list of integers and a target, return `true` if some subset of the list sums exactly to the target, and `false` otherwise. The empty subset sums to 0.",
   "signature": {
     "name": "subsetSumReachable",
     "inputs": [

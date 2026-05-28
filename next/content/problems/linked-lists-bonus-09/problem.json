@@ -8,7 +8,7 @@
     "in-place updates",
     "pointer rewiring"
   ],
-  "prompt": "Given the head of a singly linked list, group all nodes at odd positions together followed by all nodes at even positions, and return the head. Positions are one-based, so the first node is odd. Preserve the relative order within each group.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Group all nodes at odd positions together followed by all nodes at even positions, then return the list serialized head-to-tail. Positions are one-based, so the first node is odd. Preserve the relative order within each group.",
   "signature": {
     "name": "oddEvenList",
     "inputs": [

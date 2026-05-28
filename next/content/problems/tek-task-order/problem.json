@@ -8,7 +8,7 @@
     "cycle detection",
     "graph"
   ],
-  "prompt": "You are given a dict mapping each task name to a list of tasks that must run before it (its prerequisites). Some tasks appear only as a prerequisite and never as a top-level key; they are still real tasks that must run. Return a list giving a valid run order: every task appears exactly once and only after all of its prerequisites. Any valid ordering is accepted (the grader checks the ordering, not one specific permutation). If the prerequisites contain a cycle and no valid order exists, return None.",
+  "prompt": "You are given an object/map from each task name to a list of tasks that must run before it (its prerequisites). Some tasks appear only as a prerequisite and never as a top-level key; they are still real tasks that must run. Return a list giving a valid run order: every task appears exactly once and only after all of its prerequisites. Any valid ordering is accepted (the grader checks the ordering, not one specific permutation). If the prerequisites contain a cycle and no valid order exists, return `null`.",
   "signature": {
     "name": "taskOrder",
     "inputs": [
@@ -59,7 +59,7 @@
       "validator": "topological"
     },
     {
-      "name": "simple cycle returns None",
+      "name": "simple cycle returns null",
       "args": [
         {
           "a": [

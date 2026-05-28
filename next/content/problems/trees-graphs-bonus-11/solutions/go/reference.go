@@ -6,7 +6,10 @@ func CountReachable(graph map[string][]string, source string) int {
 	for index := 0; index < len(queue); index++ {
 		node := queue[index]
 		for _, neighbor := range graph[node] {
-			if !seen[neighbor] { seen[neighbor] = true; queue = append(queue, neighbor) }
+			if !seen[neighbor] {
+				seen[neighbor] = true
+				queue = append(queue, neighbor)
+			}
 		}
 	}
 	return len(seen)

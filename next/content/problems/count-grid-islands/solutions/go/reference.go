@@ -1,15 +1,21 @@
 package solution
 
 func CountGridIslands(grid [][]int) int {
-	if len(grid) == 0 { return 0 }
+	if len(grid) == 0 {
+		return 0
+	}
 	rows, cols := len(grid), len(grid[0])
 	seen := make([][]bool, rows)
-	for row := range seen { seen[row] = make([]bool, cols) }
+	for row := range seen {
+		seen[row] = make([]bool, cols)
+	}
 	islands := 0
 	dirs := [][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
 	for row := 0; row < rows; row++ {
 		for col := 0; col < cols; col++ {
-			if grid[row][col] != 1 || seen[row][col] { continue }
+			if grid[row][col] != 1 || seen[row][col] {
+				continue
+			}
 			islands++
 			stack := [][]int{{row, col}}
 			seen[row][col] = true

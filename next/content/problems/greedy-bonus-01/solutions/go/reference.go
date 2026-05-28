@@ -1,9 +1,13 @@
 package solution
 
 func FewestCoins(coins []int, amount int) int {
-	values := sortInts(coins); reverseInts(values)
+	values := sortInts(coins)
+	reverseInts(values)
 	remaining, count := amount, 0
-	for _, coin := range values { count += remaining / coin; remaining %= coin }
+	for _, coin := range values {
+		count += remaining / coin
+		remaining %= coin
+	}
 	return count
 }
 func sortInts(values []int) []int {
@@ -37,6 +41,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

@@ -8,7 +8,7 @@
     "in-place updates",
     "dummy head"
   ],
-  "prompt": "Given the head of a singly linked list, swap every two adjacent nodes and return the head. Swap the nodes themselves by rewiring pointers, not by changing values. If the list has an odd number of nodes, the final node stays in place.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Swap every two adjacent nodes by rewiring pointers, then return the list serialized head-to-tail. If the list has an odd number of nodes, the final node stays in place.",
   "signature": {
     "name": "swapPairs",
     "inputs": [

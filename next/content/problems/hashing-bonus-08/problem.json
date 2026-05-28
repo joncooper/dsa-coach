@@ -8,7 +8,7 @@
     "grouping",
     "canonical key"
   ],
-  "prompt": "Group the words by their first letter and return a dictionary mapping each first letter to the list of words that start with it, in their original order. Skip any empty string. Iterate the dictionary keys in sorted order.",
+  "prompt": "Group the words by their first letter and return an object/map from each first letter to the list of words that start with it, in their original order. Skip any empty string. Iterate the map keys in sorted order.",
   "signature": {
     "name": "groupByFirstLetter",
     "inputs": [

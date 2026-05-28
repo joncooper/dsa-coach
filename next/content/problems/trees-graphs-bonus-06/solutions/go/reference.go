@@ -4,8 +4,12 @@ func CountLeaves(values []interface{}) int {
 	root := buildTree(values)
 	var count func(*Node) int
 	count = func(node *Node) int {
-		if node == nil { return 0 }
-		if node.Left == nil && node.Right == nil { return 1 }
+		if node == nil {
+			return 0
+		}
+		if node.Left == nil && node.Right == nil {
+			return 1
+		}
 		return count(node.Left) + count(node.Right)
 	}
 	return count(root)
@@ -13,7 +17,7 @@ func CountLeaves(values []interface{}) int {
 
 type Node struct {
 	Value int
-	Left *Node
+	Left  *Node
 	Right *Node
 }
 

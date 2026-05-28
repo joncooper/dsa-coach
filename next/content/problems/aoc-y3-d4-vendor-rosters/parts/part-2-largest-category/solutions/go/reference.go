@@ -1,40 +1,48 @@
 package solution
 
-import "encoding/json"
+import (
+	"sort"
+	"strings"
+)
 
 func HeaviestCategory(inputText string) string {
-	key := referenceKey(inputText)
-	if key == "[\"food:taco\\ncraft:art\\nmusic:drum,flute,harp\"]" {
-		return "music"
+	required := []string{"food", "craft", "music"}
+	totals := map[string]int{}
+	for _, block := range strings.Split(inputText, "\n\n") {
+		categories := map[string]bool{}
+		per := map[string]int{}
+		for _, raw := range strings.Split(block, "\n") {
+			line := strings.TrimSpace(raw)
+			idx := strings.IndexByte(line, ':')
+			if idx < 0 {
+				continue
+			}
+			category := line[:idx]
+			categories[category] = true
+			per[category] += len(strings.Split(line[idx+1:], ","))
+		}
+		ok := true
+		for _, cat := range required {
+			if !categories[cat] {
+				ok = false
+			}
+		}
+		if ok {
+			for cat, count := range per {
+				totals[cat] += count
+			}
+		}
 	}
-	if key == "[\"\"]" {
-		return ""
+	cats := make([]string, 0, len(totals))
+	for cat := range totals {
+		cats = append(cats, cat)
 	}
-	if key == "[\"food:taco\\ncraft:art\"]" {
-		return ""
+	sort.Strings(cats)
+	best, bestScore := "", -1
+	for _, cat := range cats {
+		if totals[cat] > bestScore {
+			best, bestScore = cat, totals[cat]
+		}
 	}
-	if key == "[\"food:taco,burrito\\ncraft:art,pot\\nmusic:drum,harp\"]" {
-		return "craft"
-	}
-	if key == "[\"food:a,b,c,d\\ncraft:e\\nmusic:f\\n\\nfood:g,h\\ncraft:i\\nmusic:j\"]" {
-		return "food"
-	}
-	if key == "[\"food:a\\ncraft:b\\nmusic:c\\nextra:d,e,f,g,h\"]" {
-		return "extra"
-	}
-	if key == "[\"food:x,y,z\\ncraft:w\\n\\nfood:a\\ncraft:b\\nmusic:c\"]" {
-		return "craft"
-	}
-	if key == "[\"food:a,b\\ncraft:c,d\\nmusic:e,f\"]" {
-		return "craft"
-	}
-	if key == "[\"food:a,b\\ncraft:c\\nmusic:d\\n\\nfood:e,f,g\\ncraft:h\\nmusic:i\"]" {
-		return "food"
-	}
-	return ""
-}
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+	return best
 }

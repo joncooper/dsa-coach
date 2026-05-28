@@ -1,5 +1,40 @@
+class ListNode:
+    def __init__(self, value: int, next: "ListNode | None" = None):
+        self.value = value
+        self.next = next
+
+def build_list(values: list[int]) -> ListNode | None:
+    dummy = ListNode(0)
+    tail = dummy
+    for value in values:
+        tail.next = ListNode(value)
+        tail = tail.next
+    return dummy.next
+
+def list_to_array(head: ListNode | None) -> list[int]:
+    result = []
+    node = head
+    while node is not None:
+        result.append(node.value)
+        node = node.next
+    return result
+
+def reverse_nodes(head: ListNode | None) -> ListNode | None:
+    previous = None
+    node = head
+    while node is not None:
+        next_node = node.next
+        node.next = previous
+        previous = node
+        node = next_node
+    return previous
+
 def is_list_sorted(values: list[int]) -> bool:
-    for index in range(1, len(values)):
-        if values[index - 1] > values[index]:
+    node = build_list(values)
+
+    while node is not None and node.next is not None:
+        if node.value > node.next.value:
             return False
+        node = node.next
+
     return True

@@ -25,7 +25,7 @@
   },
   "tests": [
     {
-      "name": "three triples of fives",
+      "name": "three pairs of fives",
       "args": [
         "5\n3\n5\n7\n5"
       ],

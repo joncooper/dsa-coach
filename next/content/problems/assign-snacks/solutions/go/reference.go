@@ -4,7 +4,11 @@ func AssignSnacks(appetites []int, snacks []int) int {
 	needs := sortInts(appetites)
 	sizes := sortInts(snacks)
 	child := 0
-	for _, snack := range sizes { if child < len(needs) && snack >= needs[child] { child++ } }
+	for _, snack := range sizes {
+		if child < len(needs) && snack >= needs[child] {
+			child++
+		}
+	}
 	return child
 }
 func sortInts(values []int) []int {
@@ -38,6 +42,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

@@ -1,58 +1,90 @@
 package solution
 
-import "encoding/json"
-
-func Evaluate(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"7\"]" {
-		return 7
+func Evaluate(expr string) int {
+	tokens := tokenize(expr)
+	pos := 0
+	var parseExpr func() int
+	var parseTerm func() int
+	var parseFactor func() int
+	parseExpr = func() int {
+		value := parseTerm()
+		for pos < len(tokens) && (tokens[pos].op == "+" || tokens[pos].op == "-") {
+			op := tokens[pos].op
+			pos++
+			rhs := parseTerm()
+			if op == "+" {
+				value += rhs
+			} else {
+				value -= rhs
+			}
+		}
+		return value
 	}
-	if key == "[\"2+3*4\"]" {
-		return 14
+	parseTerm = func() int {
+		value := parseFactor()
+		for pos < len(tokens) && (tokens[pos].op == "*" || tokens[pos].op == "/") {
+			op := tokens[pos].op
+			pos++
+			rhs := parseFactor()
+			if op == "*" {
+				value *= rhs
+			} else {
+				value = truncDiv(value, rhs)
+			}
+		}
+		return value
 	}
-	if key == "[\"(2+3)*4\"]" {
-		return 20
+	parseFactor = func() int {
+		if tokens[pos].op == "(" {
+			pos++
+			value := parseExpr()
+			pos++
+			return value
+		}
+		value := tokens[pos].num
+		pos++
+		return value
 	}
-	if key == "[\" 1 + 2 \"]" {
-		return 3
-	}
-	if key == "[\"100-20-30\"]" {
-		return 50
-	}
-	if key == "[\"8/2/2\"]" {
-		return 2
-	}
-	if key == "[\"10/3\"]" {
-		return 3
-	}
-	if key == "[\"2*(3+(4-1))\"]" {
-		return 12
-	}
-	if key == "[\"(1+(2+(3+4)))\"]" {
-		return 10
-	}
-	if key == "[\"2+2*2-2\"]" {
-		return 4
-	}
-	if key == "[\"3 * ( 4 + 5 )\"]" {
-		return 27
-	}
-	if key == "[\"12*12+1\"]" {
-		return 145
-	}
-	if key == "[\"(1-8)/2\"]" {
-		return -3
-	}
-	if key == "[\"8/(2-5)\"]" {
-		return -2
-	}
-	if key == "[\"(1-8)/3\"]" {
-		return -2
-	}
-	return 0
+	return parseExpr()
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+type token struct {
+	num int
+	op  string
+}
+
+func tokenize(expr string) []token {
+	tokens := []token{}
+	for i := 0; i < len(expr); {
+		ch := expr[i]
+		if ch == ' ' {
+			i++
+			continue
+		}
+		if ch >= '0' && ch <= '9' {
+			value := 0
+			for i < len(expr) && expr[i] >= '0' && expr[i] <= '9' {
+				value = value*10 + int(expr[i]-'0')
+				i++
+			}
+			tokens = append(tokens, token{num: value})
+		} else {
+			tokens = append(tokens, token{op: string(ch)})
+			i++
+		}
+	}
+	return tokens
+}
+func truncDiv(a, b int) int {
+	q := abs(a) / abs(b)
+	if (a < 0) == (b < 0) {
+		return q
+	}
+	return -q
+}
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
 }

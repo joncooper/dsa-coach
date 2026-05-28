@@ -1,11 +1,12 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
-import type { ContentGraph, RunRequest } from "../core/types.js";
+import type { ContentGraph, RunRequest, ScratchpadRequest } from "../core/types.js";
 import { runtimeLanguagePacks } from "../languages/languagePacks.js";
 import { LspManager } from "../lsp/manager.js";
 import type { LspCompletionRequest, LspDocumentRequest, LspPositionRequest } from "../lsp/types.js";
 import { LocalRunner } from "../runner/localRunner.js";
+import { ScratchpadRunner } from "../runner/scratchpadRunner.js";
 import { readProblemSource, type SourceKind } from "./source.js";
 
 export interface RunnerDaemonOptions {
@@ -17,10 +18,11 @@ export interface RunnerDaemonOptions {
 
 export function createRunnerDaemonServer(options: RunnerDaemonOptions) {
   const runner = new LocalRunner(options.graph);
+  const scratchpad = new ScratchpadRunner();
   const lsp = new LspManager({ graph: options.graph });
 
   const server = createServer((req, res) => {
-    void handleRequest(req, res, options, runner, lsp).catch((error) => {
+    void handleRequest(req, res, options, runner, scratchpad, lsp).catch((error) => {
       json(res, 500, { error: error instanceof Error ? error.message : String(error) });
     });
   });
@@ -35,6 +37,7 @@ async function handleRequest(
   res: ServerResponse,
   options: RunnerDaemonOptions,
   runner: LocalRunner,
+  scratchpad: ScratchpadRunner,
   lsp: LspManager
 ) {
   setCorsHeaders(res);
@@ -112,6 +115,11 @@ async function handleRequest(
   if (req.method === "POST" && url.pathname === "/run") {
     const body = await readBody(req);
     const result = await runner.run(JSON.parse(body) as RunRequest);
+    return json(res, 200, result);
+  }
+  if (req.method === "POST" && url.pathname === "/scratchpad") {
+    const body = await readBody(req);
+    const result = await scratchpad.run(JSON.parse(body) as ScratchpadRequest);
     return json(res, 200, result);
   }
   if (req.method === "POST" && url.pathname === "/lsp/completions") {

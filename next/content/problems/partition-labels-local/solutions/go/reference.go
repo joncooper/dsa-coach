@@ -3,12 +3,19 @@ package solution
 func PartitionLabelsLocal(text string) []int {
 	last := map[rune]int{}
 	chars := []rune(text)
-	for index, char := range chars { last[char] = index }
+	for index, char := range chars {
+		last[char] = index
+	}
 	parts := []int{}
 	start, end := 0, 0
 	for index, char := range chars {
-		if last[char] > end { end = last[char] }
-		if index == end { parts = append(parts, end-start+1); start = index + 1 }
+		if last[char] > end {
+			end = last[char]
+		}
+		if index == end {
+			parts = append(parts, end-start+1)
+			start = index + 1
+		}
 	}
 	return parts
 }
@@ -43,6 +50,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

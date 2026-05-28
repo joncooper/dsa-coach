@@ -1,34 +1,59 @@
 package solution
 
-import "encoding/json"
-
-func RealizedPnlBySymbol(queries []map[string]any) map[string]any {
-	key := referenceKey(queries)
-	if key == "[[]]" {
-		return map[string]any{}
+func RealizedPnlBySymbol(trades []map[string]any) map[string]int {
+	lots := map[string][]lot{}
+	totals := map[string]int{}
+	for _, trade := range trades {
+		symbol := asString(trade["symbol"])
+		if asString(trade["side"]) == "BUY" {
+			lots[symbol] = append(lots[symbol], lot{asInt(trade["qty"]), asInt(trade["price"])})
+			continue
+		}
+		if _, ok := totals[symbol]; !ok {
+			totals[symbol] = 0
+		}
+		remaining, price := asInt(trade["qty"]), asInt(trade["price"])
+		queue := lots[symbol]
+		for remaining > 0 && len(queue) > 0 {
+			matched := minInt(remaining, queue[0].qty)
+			totals[symbol] += (price - queue[0].price) * matched
+			remaining -= matched
+			queue[0].qty -= matched
+			if queue[0].qty == 0 {
+				queue = queue[1:]
+			}
+		}
+		lots[symbol] = queue
 	}
-	if key == "[[{\"price\":50,\"qty\":10,\"side\":\"BUY\",\"symbol\":\"AAPL\"},{\"price\":70,\"qty\":10,\"side\":\"SELL\",\"symbol\":\"AAPL\"}]]" {
-		return map[string]any{"AAPL": 200}
-	}
-	if key == "[[{\"price\":50,\"qty\":10,\"side\":\"BUY\",\"symbol\":\"AAPL\"},{\"price\":30,\"qty\":5,\"side\":\"BUY\",\"symbol\":\"MSFT\"},{\"price\":70,\"qty\":10,\"side\":\"SELL\",\"symbol\":\"AAPL\"},{\"price\":35,\"qty\":5,\"side\":\"SELL\",\"symbol\":\"MSFT\"}]]" {
-		return map[string]any{"AAPL": 200, "MSFT": 25}
-	}
-	if key == "[[{\"price\":50,\"qty\":10,\"side\":\"BUY\",\"symbol\":\"AAPL\"}]]" {
-		return map[string]any{}
-	}
-	if key == "[[{\"price\":10,\"qty\":100,\"side\":\"BUY\",\"symbol\":\"X\"},{\"price\":20,\"qty\":100,\"side\":\"BUY\",\"symbol\":\"Y\"},{\"price\":12,\"qty\":30,\"side\":\"SELL\",\"symbol\":\"X\"},{\"price\":25,\"qty\":50,\"side\":\"SELL\",\"symbol\":\"Y\"}]]" {
-		return map[string]any{"X": 60, "Y": 250}
-	}
-	if key == "[[{\"price\":100,\"qty\":10,\"side\":\"BUY\",\"symbol\":\"X\"},{\"price\":50,\"qty\":10,\"side\":\"BUY\",\"symbol\":\"Y\"},{\"price\":60,\"qty\":10,\"side\":\"SELL\",\"symbol\":\"X\"}]]" {
-		return map[string]any{"X": -400}
-	}
-	if key == "[[{\"price\":100,\"qty\":10,\"side\":\"BUY\",\"symbol\":\"A\"},{\"price\":50,\"qty\":10,\"side\":\"BUY\",\"symbol\":\"A\"},{\"price\":50,\"qty\":10,\"side\":\"SELL\",\"symbol\":\"A\"},{\"price\":100,\"qty\":10,\"side\":\"SELL\",\"symbol\":\"A\"}]]" {
-		return map[string]any{"A": 0}
-	}
-	return map[string]any{}
+	return totals
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+type lot struct {
+	qty   int
+	price int
+}
+
+func asInt(value any) int {
+	switch v := value.(type) {
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case float64:
+		return int(v)
+	default:
+		return 0
+	}
+}
+func asString(value any) string {
+	if s, ok := value.(string); ok {
+		return s
+	}
+	return ""
+}
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

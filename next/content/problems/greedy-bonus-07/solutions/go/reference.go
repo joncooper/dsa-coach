@@ -2,10 +2,23 @@ package solution
 
 func MinRooms(intervals [][]int) int {
 	starts, ends := []int{}, []int{}
-	for _, interval := range intervals { starts = append(starts, interval[0]); ends = append(ends, interval[1]) }
-	starts = sortInts(starts); ends = sortInts(ends)
+	for _, interval := range intervals {
+		starts = append(starts, interval[0])
+		ends = append(ends, interval[1])
+	}
+	starts = sortInts(starts)
+	ends = sortInts(ends)
 	endIndex, active, best := 0, 0, 0
-	for _, start := range starts { for endIndex < len(ends) && ends[endIndex] <= start { active--; endIndex++ }; active++; if active > best { best = active } }
+	for _, start := range starts {
+		for endIndex < len(ends) && ends[endIndex] <= start {
+			active--
+			endIndex++
+		}
+		active++
+		if active > best {
+			best = active
+		}
+	}
 	return best
 }
 func sortInts(values []int) []int {
@@ -39,6 +52,8 @@ func sortIntervalsByEnd(intervals [][]int) [][]int {
 }
 
 func min(a int, b int) int {
-	if a < b { return a }
+	if a < b {
+		return a
+	}
 	return b
 }

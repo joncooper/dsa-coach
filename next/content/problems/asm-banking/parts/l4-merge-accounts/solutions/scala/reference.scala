@@ -1,44 +1,105 @@
 object Solution {
+  private case class Payment(var account: String, amount: Int, execAt: Int, seq: Int, var status: String = "pending")
+
   def solution(queries: Seq[Seq[String]]): Seq[String] = {
-    referenceKey(queries) match {
-      case "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"b\"],[\"DEPOSIT\",\"3\",\"a\",\"100\"],[\"DEPOSIT\",\"4\",\"b\",\"50\"],[\"MERGE_ACCOUNTS\",\"5\",\"a\",\"b\"]]]" => Seq("true", "true", "100", "50", "150")
-      case "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"b\"],[\"DEPOSIT\",\"3\",\"a\",\"100\"],[\"DEPOSIT\",\"4\",\"b\",\"50\"],[\"MERGE_ACCOUNTS\",\"5\",\"a\",\"b\"],[\"DEPOSIT\",\"6\",\"b\",\"10\"]]]" => Seq("true", "true", "100", "50", "150", "")
-      case "[[[\"MERGE_ACCOUNTS\",\"1\",\"ghost\",\"x\"]]]" => Seq("")
-      case "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"MERGE_ACCOUNTS\",\"2\",\"a\",\"a\"]]]" => Seq("true", "")
-      case "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"b\"],[\"DEPOSIT\",\"3\",\"a\",\"100\"],[\"DEPOSIT\",\"4\",\"b\",\"100\"],[\"WITHDRAW\",\"5\",\"a\",\"30\"],[\"WITHDRAW\",\"6\",\"b\",\"40\"],[\"MERGE_ACCOUNTS\",\"7\",\"a\",\"b\"],[\"TOP_SPENDERS\",\"8\",\"1\"]]]" => Seq("true", "true", "100", "100", "70", "60", "130", "a(70)")
-      case "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"b\"],[\"DEPOSIT\",\"3\",\"a\",\"100\"],[\"DEPOSIT\",\"4\",\"b\",\"50\"],[\"SCHEDULE_PAYMENT\",\"5\",\"b\",\"20\",\"10\"],[\"MERGE_ACCOUNTS\",\"6\",\"a\",\"b\"],[\"DEPOSIT\",\"20\",\"a\",\"0\"]]]" => Seq("true", "true", "100", "50", "payment1", "150", "130")
-      case "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"MERGE_ACCOUNTS\",\"2\",\"a\",\"ghost\"]]]" => Seq("true", "")
-      case "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"b\"],[\"MERGE_ACCOUNTS\",\"3\",\"a\",\"b\"],[\"MERGE_ACCOUNTS\",\"4\",\"a\",\"b\"]]]" => Seq("true", "true", "0", "")
-      case _ => Seq.empty
+    val balances = scala.collection.mutable.Map.empty[String, Int]
+    val spent = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
+    val payments = scala.collection.mutable.Map.empty[String, Payment]
+    val out = scala.collection.mutable.ArrayBuffer.empty[String]
+    var scheduleSeq = 0
+
+    def renderTop(count: Int): String =
+      if (count <= 0 || balances.isEmpty) ""
+      else balances.keys.toSeq.map(name => name -> spent(name)).sortBy { case (name, total) => (-total, name) }.take(count).map { case (name, total) => s"$name($total)" }.mkString(",")
+
+    def spend(account: String, amount: Int): Unit = spent(account) = spent(account) + amount
+
+    def fireDue(timestamp: Int): Unit = {
+      val due = payments.values.filter(payment => payment.status == "pending" && payment.execAt <= timestamp).toSeq.sortBy(payment => (payment.execAt, payment.seq))
+      for (payment <- due) balances.get(payment.account) match {
+        case Some(balance) if balance >= payment.amount =>
+          balances(payment.account) = balance - payment.amount
+          spend(payment.account, payment.amount)
+          payment.status = "fired"
+        case _ => payment.status = "cancelled"
+      }
     }
-  }
 
-  private def referenceKey(values: Any*): String = {
-    values.map(canonical).mkString("[", ",", "]")
-  }
-
-  private def canonical(value: Any): String = value match {
-    case s: String => quote(s)
-    case n: Int => n.toString
-    case n: Long => n.toString
-    case n: Double => if (n.isWhole) n.toInt.toString else n.toString
-    case b: Boolean => b.toString
-    case rows: Seq[_] => rows.map(canonical).mkString("[", ",", "]")
-    case map: scala.collection.Map[_, _] =>
-      map.toSeq.map { case (k, v) => quote(k.toString) + ":" + canonical(v) }.sortBy(identity).mkString("{", ",", "}")
-    case null => "null"
-    case other => quote(other.toString)
-  }
-
-  private def quote(value: String): String = {
-    val escaped = value.flatMap {
-      case char if char == 92.toChar => 92.toChar.toString + 92.toChar.toString
-      case char if char == 34.toChar => 92.toChar.toString + 34.toChar.toString
-      case '\n' => 92.toChar.toString + "n"
-      case '\r' => 92.toChar.toString + "r"
-      case '\t' => 92.toChar.toString + "t"
-      case char => char.toString
+    for (query <- queries) {
+      val timestamp = query(1).toInt
+      fireDue(timestamp)
+      query.head match {
+        case "CREATE_ACCOUNT" =>
+          val account = query(2)
+          if (balances.contains(account)) out += "false"
+          else {
+            balances(account) = 0
+            spent(account) = 0
+            out += "true"
+          }
+        case "DEPOSIT" =>
+          balances.get(query(2)) match {
+            case Some(balance) =>
+              balances(query(2)) = balance + query(3).toInt
+              out += balances(query(2)).toString
+            case None => out += ""
+          }
+        case "WITHDRAW" =>
+          val account = query(2)
+          val amount = query(3).toInt
+          balances.get(account) match {
+            case Some(balance) if balance >= amount =>
+              balances(account) = balance - amount
+              spend(account, amount)
+              out += balances(account).toString
+            case _ => out += ""
+          }
+        case "TRANSFER" =>
+          val source = query(2)
+          val target = query(3)
+          val amount = query(4).toInt
+          (balances.get(source), balances.get(target)) match {
+            case (Some(sourceBalance), Some(targetBalance)) if source != target && sourceBalance >= amount =>
+              balances(source) = sourceBalance - amount
+              balances(target) = targetBalance + amount
+              spend(source, amount)
+              out += balances(source).toString
+            case _ => out += ""
+          }
+        case "TOP_SPENDERS" => out += renderTop(query(2).toInt)
+        case "SCHEDULE_PAYMENT" =>
+          val account = query(2)
+          if (!balances.contains(account)) out += ""
+          else {
+            scheduleSeq += 1
+            val id = s"payment$scheduleSeq"
+            payments(id) = Payment(account, query(3).toInt, timestamp + query(4).toInt, scheduleSeq)
+            out += id
+          }
+        case "CANCEL_PAYMENT" =>
+          payments.get(query(3)) match {
+            case Some(payment) if payment.status == "pending" && payment.account == query(2) =>
+              payment.status = "cancelled"
+              out += "true"
+            case _ => out += "false"
+          }
+        case "MERGE_ACCOUNTS" =>
+          val primary = query(2)
+          val secondary = query(3)
+          (balances.get(primary), balances.get(secondary)) match {
+            case (Some(primaryBalance), Some(secondaryBalance)) if primary != secondary =>
+              balances(primary) = primaryBalance + secondaryBalance
+              spent(primary) = spent(primary) + spent(secondary)
+              for (payment <- payments.values if payment.status == "pending" && payment.account == secondary) payment.account = primary
+              balances.remove(secondary)
+              spent.remove(secondary)
+              out += balances(primary).toString
+            case _ => out += ""
+          }
+        case _ => out += ""
+      }
     }
-    34.toChar.toString + escaped + 34.toChar.toString
+
+    out.toSeq
   }
 }

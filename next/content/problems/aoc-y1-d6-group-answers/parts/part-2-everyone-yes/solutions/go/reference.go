@@ -1,46 +1,36 @@
 package solution
 
-import "encoding/json"
+import "strings"
 
 func EveryoneYesSum(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"abc\\nbcd\\n\\nef\\nfg\"]" {
-		return 3
+	total := 0
+	for _, block := range strings.Split(inputText, "\n\n") {
+		persons := []string{}
+		for _, line := range strings.Split(block, "\n") {
+			line = strings.TrimSpace(line)
+			if line != "" {
+				persons = append(persons, line)
+			}
+		}
+		if len(persons) == 0 {
+			continue
+		}
+		common := map[rune]bool{}
+		for _, ch := range persons[0] {
+			common[ch] = true
+		}
+		for _, person := range persons[1:] {
+			chars := map[rune]bool{}
+			for _, ch := range person {
+				chars[ch] = true
+			}
+			for ch := range common {
+				if !chars[ch] {
+					delete(common, ch)
+				}
+			}
+		}
+		total += len(common)
 	}
-	if key == "[\"abc\"]" {
-		return 3
-	}
-	if key == "[\"\"]" {
-		return 0
-	}
-	if key == "[\"a\\nb\\nc\"]" {
-		return 0
-	}
-	if key == "[\"ab\\nac\\nad\"]" {
-		return 1
-	}
-	if key == "[\"ab\\nac\\n\\nef\\nef\\n\\nx\"]" {
-		return 4
-	}
-	if key == "[\"abc\\n\\n\\n\\ndef\\nde\"]" {
-		return 5
-	}
-	if key == "[\"abc\\nabc\\nabc\"]" {
-		return 3
-	}
-	if key == "[\"abcd\\nabc\\nab\\na\"]" {
-		return 1
-	}
-	if key == "[\"a\\nb\\n\\nx\\nx\"]" {
-		return 1
-	}
-	if key == "[\"a\\na\\na\"]" {
-		return 1
-	}
-	return 0
-}
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+	return total
 }

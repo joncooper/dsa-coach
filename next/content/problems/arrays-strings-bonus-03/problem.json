@@ -5,7 +5,7 @@
   "difficulty": "easy",
   "concepts": [
     "arrays-strings",
-    "in-place thinking",
+    "write pointer",
     "two write pointers"
   ],
   "prompt": "Return a new list with every zero moved to the end, while every non-zero value keeps its original relative order.",

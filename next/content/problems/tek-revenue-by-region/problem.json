@@ -8,7 +8,7 @@
     "group-by",
     "aggregation"
   ],
-  "prompt": "You are given two lists. `customers` is a list of dicts, each with an integer `id` and a string `region`. `orders` is a list of dicts, each with a `customer_id` and an integer `amount` in cents. Join orders to customers on the customer id and return a dict mapping `region -> total order amount` for that region. An order whose `customer_id` does not match any customer is dropped entirely. A region only appears in the output if at least one matched order rolled up into it.",
+  "prompt": "You are given two lists. `customers` is a list of objects/maps, each with an integer `id` and a string `region`. `orders` is a list of objects/maps, each with a `customer_id` and an integer `amount` in cents. Join orders to customers on the customer id and return an object/map from `region` to total order amount for that region. An order whose `customer_id` does not match any customer is dropped entirely. A region only appears in the output if at least one matched order rolled up into it.",
   "signature": {
     "name": "revenueByRegion",
     "inputs": [
@@ -230,7 +230,7 @@
     {
       "id": "part-2-stats",
       "title": "Part 2: Per-region statistics",
-      "prompt": "Extend the roll-up. Instead of a single number per region, return a dict mapping `region -> {\"total\": <summed amount>, \"count\": <number of matched orders>}`. The same join and drop-unmatched rules apply. A region appears only if at least one matched order contributed to it, and `count` is the number of matched orders for that region (never zero in the output).",
+      "prompt": "Extend the roll-up. Instead of a single number per region, return an object/map from `region -> {\"total\": <summed amount>, \"count\": <number of matched orders>}`. The same join and drop-unmatched rules apply. A region appears only if at least one matched order contributed to it, and `count` is the number of matched orders for that region (never zero in the output).",
       "signature": {
         "name": "revenue_stats_by_region",
         "inputs": [

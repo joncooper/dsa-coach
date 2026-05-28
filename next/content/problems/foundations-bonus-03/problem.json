@@ -8,7 +8,7 @@
     "iteration",
     "running state"
   ],
-  "prompt": "Return the second largest distinct value in the list. If there are fewer than two distinct values, return None.",
+  "prompt": "Return the second largest distinct value in the list. If there are fewer than two distinct values, return `null`.",
   "signature": {
     "name": "secondLargest",
     "inputs": [

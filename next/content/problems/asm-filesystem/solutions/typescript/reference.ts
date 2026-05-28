@@ -1,52 +1,37 @@
 export function solution(queries: string[][]): string[] {
-  const key = JSON.stringify([queries]);
-  const cases = {
-  "[[]]": [],
-  "[[[\"ADD_FILE\",\"a.txt\",\"100\"],[\"GET_FILE_SIZE\",\"a.txt\"]]]": [
-    "true",
-    "100"
-  ],
-  "[[[\"ADD_FILE\",\"a.txt\",\"100\"],[\"ADD_FILE\",\"a.txt\",\"200\"],[\"GET_FILE_SIZE\",\"a.txt\"]]]": [
-    "true",
-    "false",
-    "100"
-  ],
-  "[[[\"ADD_FILE\",\"a.txt\",\"50\"],[\"COPY_FILE\",\"a.txt\",\"b.txt\"],[\"GET_FILE_SIZE\",\"b.txt\"]]]": [
-    "true",
-    "true",
-    "50"
-  ],
-  "[[[\"COPY_FILE\",\"x\",\"y\"]]]": [
-    "false"
-  ],
-  "[[[\"GET_FILE_SIZE\",\"nope\"]]]": [
-    ""
-  ],
-  "[[[\"ADD_FILE\",\"a\",\"10\"],[\"ADD_FILE\",\"b\",\"99\"],[\"COPY_FILE\",\"a\",\"b\"],[\"GET_FILE_SIZE\",\"b\"]]]": [
-    "true",
-    "true",
-    "true",
-    "10"
-  ],
-  "[[[\"ADD_FILE\",\"File\",\"1\"],[\"GET_FILE_SIZE\",\"file\"],[\"GET_FILE_SIZE\",\"File\"]]]": [
-    "true",
-    "",
-    "1"
-  ],
-  "[[[\"ADD_FILE\",\"a\",\"7\"],[\"COPY_FILE\",\"a\",\"a\"],[\"GET_FILE_SIZE\",\"a\"]]]": [
-    "true",
-    "true",
-    "7"
-  ],
-  "[[[\"ADD_FILE\",\"z\",\"0\"],[\"GET_FILE_SIZE\",\"z\"]]]": [
-    "true",
-    "0"
-  ]
-} as Record<string, string[]>;
-  if (!Object.hasOwn(cases, key)) throw new Error(`No migrated reference case for ${key}`);
-  return clone(cases[key]);
-}
+  const files = new Map<string, number>();
+  const out: string[] = [];
 
-function clone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+  for (const query of queries) {
+    switch (query[0]) {
+      case "ADD_FILE": {
+        const name = query[1];
+        const size = Number(query[2]);
+        if (files.has(name)) out.push("false");
+        else {
+          files.set(name, size);
+          out.push("true");
+        }
+        break;
+      }
+      case "GET_FILE_SIZE": {
+        const size = files.get(query[1]);
+        out.push(size === undefined ? "" : String(size));
+        break;
+      }
+      case "COPY_FILE": {
+        const size = files.get(query[1]);
+        if (size === undefined) out.push("false");
+        else {
+          files.set(query[2], size);
+          out.push("true");
+        }
+        break;
+      }
+      default:
+        out.push("");
+    }
+  }
+
+  return out;
 }

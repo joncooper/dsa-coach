@@ -1,52 +1,77 @@
 package solution
 
-import "encoding/json"
+import "sort"
 
-func VersionedKvWithSnapshot(queries [][]any) []any {
-	key := referenceKey(queries)
-	if key == "[[]]" {
-		return []any{}
+func VersionedKvWithSnapshot(operations [][]any) []any {
+	history := map[string][]int{}
+	table := map[entry]any{}
+	out := []any{}
+	for _, op := range operations {
+		switch asString(op[0]) {
+		case "SET":
+			key, ts := asString(op[1]), asInt(op[3])
+			insertStamp(history, key, ts)
+			table[entry{key, ts}] = op[2]
+		case "DELETE":
+			key, ts := asString(op[1]), asInt(op[2])
+			insertStamp(history, key, ts)
+			table[entry{key, ts}] = nil
+		case "GET":
+			key, ts := asString(op[1]), asInt(op[2])
+			out = append(out, valueAt(history, table, key, ts))
+		case "SNAPSHOT":
+			ts := asInt(op[1])
+			snapshot := map[string]any{}
+			for key := range history {
+				value := valueAt(history, table, key, ts)
+				if value != nil {
+					snapshot[key] = value
+				}
+			}
+			out = append(out, snapshot)
+		}
 	}
-	if key == "[[[\"SET\",\"a\",\"x\",5],[\"DELETE\",\"a\",10],[\"GET\",\"a\",15]]]" {
-		return []any{nil}
-	}
-	if key == "[[[\"SET\",\"a\",\"x\",5],[\"DELETE\",\"a\",10],[\"GET\",\"a\",7]]]" {
-		return []any{"x"}
-	}
-	if key == "[[[\"SET\",\"a\",\"x\",5],[\"DELETE\",\"a\",10],[\"SET\",\"a\",\"y\",15],[\"GET\",\"a\",20]]]" {
-		return []any{"y"}
-	}
-	if key == "[[[\"SET\",\"a\",\"x\",1],[\"SET\",\"b\",\"y\",2],[\"SNAPSHOT\",3]]]" {
-		return []any{map[string]any{"a": "x", "b": "y"}}
-	}
-	if key == "[[[\"SET\",\"a\",\"x\",1],[\"DELETE\",\"a\",2],[\"SNAPSHOT\",5]]]" {
-		return []any{map[string]any{}}
-	}
-	if key == "[[[\"SET\",\"a\",\"x\",1],[\"SNAPSHOT\",1]]]" {
-		return []any{map[string]any{"a": "x"}}
-	}
-	if key == "[[[\"SET\",\"a\",\"1\",1],[\"SET\",\"b\",\"2\",2],[\"DELETE\",\"a\",3],[\"GET\",\"a\",4],[\"SET\",\"a\",\"3\",5],[\"SNAPSHOT\",6]]]" {
-		return []any{nil, map[string]any{"a": "3", "b": "2"}}
-	}
-	if key == "[[[\"SET\",\"a\",\"x\",5],[\"DELETE\",\"a\",10],[\"SNAPSHOT\",9],[\"SNAPSHOT\",10]]]" {
-		return []any{map[string]any{"a": "x"}, map[string]any{}}
-	}
-	if key == "[[[\"SET\",\"a\",\"v1\",5],[\"DELETE\",\"a\",10],[\"SET\",\"a\",\"v2\",15],[\"DELETE\",\"a\",20],[\"SET\",\"a\",\"v3\",25],[\"GET\",\"a\",7],[\"GET\",\"a\",12],[\"GET\",\"a\",17],[\"GET\",\"a\",22],[\"GET\",\"a\",30]]]" {
-		return []any{"v1", nil, "v2", nil, "v3"}
-	}
-	if key == "[[[\"SET\",\"a\",\"x\",10],[\"DELETE\",\"a\",5],[\"GET\",\"a\",6],[\"GET\",\"a\",10]]]" {
-		return []any{nil, "x"}
-	}
-	if key == "[[[\"SET\",\"a\",\"1\",1],[\"SET\",\"b\",\"2\",1],[\"SET\",\"c\",\"3\",1],[\"DELETE\",\"b\",5],[\"SNAPSHOT\",10]]]" {
-		return []any{map[string]any{"a": "1", "c": "3"}}
-	}
-	if key == "[[[\"SET\",\"a\",\"x\",5],[\"DELETE\",\"a\",10],[\"GET\",\"a\",10]]]" {
-		return []any{nil}
-	}
-	return []any{}
+	return out
 }
 
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+type entry struct {
+	key string
+	ts  int
+}
+
+func insertStamp(history map[string][]int, key string, ts int) {
+	stamps := history[key]
+	pos := sort.SearchInts(stamps, ts)
+	if pos == len(stamps) || stamps[pos] != ts {
+		stamps = append(stamps, 0)
+		copy(stamps[pos+1:], stamps[pos:])
+		stamps[pos] = ts
+		history[key] = stamps
+	}
+}
+func valueAt(history map[string][]int, table map[entry]any, key string, ts int) any {
+	stamps := history[key]
+	pos := sort.Search(len(stamps), func(i int) bool { return stamps[i] > ts })
+	if pos == 0 {
+		return nil
+	}
+	return table[entry{key, stamps[pos-1]}]
+}
+func asInt(value any) int {
+	switch v := value.(type) {
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case float64:
+		return int(v)
+	default:
+		return 0
+	}
+}
+func asString(value any) string {
+	if s, ok := value.(string); ok {
+		return s
+	}
+	return ""
 }

@@ -1,56 +1,59 @@
 export function solution(queries: string[][]): string[] {
-  const key = JSON.stringify([queries]);
-  const cases = {
-  "[[]]": [],
-  "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"100\"]]]": [
-    "true",
-    "100"
-  ],
-  "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"a\"]]]": [
-    "true",
-    "false"
-  ],
-  "[[[\"DEPOSIT\",\"1\",\"ghost\",\"50\"]]]": [
-    ""
-  ],
-  "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"100\"],[\"WITHDRAW\",\"3\",\"a\",\"40\"]]]": [
-    "true",
-    "100",
-    "60"
-  ],
-  "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"50\"],[\"WITHDRAW\",\"3\",\"a\",\"100\"]]]": [
-    "true",
-    "50",
-    ""
-  ],
-  "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"b\"],[\"DEPOSIT\",\"3\",\"a\",\"100\"],[\"TRANSFER\",\"4\",\"a\",\"b\",\"30\"]]]": [
-    "true",
-    "true",
-    "100",
-    "70"
-  ],
-  "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"50\"],[\"TRANSFER\",\"3\",\"a\",\"a\",\"10\"]]]": [
-    "true",
-    "50",
-    ""
-  ],
-  "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"DEPOSIT\",\"2\",\"a\",\"50\"],[\"TRANSFER\",\"3\",\"a\",\"ghost\",\"10\"]]]": [
-    "true",
-    "50",
-    ""
-  ],
-  "[[[\"CREATE_ACCOUNT\",\"1\",\"a\"],[\"CREATE_ACCOUNT\",\"2\",\"b\"],[\"DEPOSIT\",\"3\",\"a\",\"10\"],[\"TRANSFER\",\"4\",\"a\",\"b\",\"50\"],[\"DEPOSIT\",\"5\",\"b\",\"0\"]]]": [
-    "true",
-    "true",
-    "10",
-    "",
-    "0"
-  ]
-} as Record<string, string[]>;
-  if (!Object.hasOwn(cases, key)) throw new Error(`No migrated reference case for ${key}`);
-  return clone(cases[key]);
-}
+  const balances = new Map<string, number>();
+  const out: string[] = [];
 
-function clone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+  for (const query of queries) {
+    switch (query[0]) {
+      case "CREATE_ACCOUNT": {
+        const account = query[2];
+        if (balances.has(account)) out.push("false");
+        else {
+          balances.set(account, 0);
+          out.push("true");
+        }
+        break;
+      }
+      case "DEPOSIT": {
+        const account = query[2];
+        const amount = Number(query[3]);
+        const balance = balances.get(account);
+        if (balance === undefined) out.push("");
+        else {
+          const next = balance + amount;
+          balances.set(account, next);
+          out.push(String(next));
+        }
+        break;
+      }
+      case "WITHDRAW": {
+        const account = query[2];
+        const amount = Number(query[3]);
+        const balance = balances.get(account);
+        if (balance === undefined || balance < amount) out.push("");
+        else {
+          const next = balance - amount;
+          balances.set(account, next);
+          out.push(String(next));
+        }
+        break;
+      }
+      case "TRANSFER": {
+        const [source, target] = [query[2], query[3]];
+        const amount = Number(query[4]);
+        const sourceBalance = balances.get(source);
+        const targetBalance = balances.get(target);
+        if (source === target || sourceBalance === undefined || targetBalance === undefined || sourceBalance < amount) out.push("");
+        else {
+          balances.set(source, sourceBalance - amount);
+          balances.set(target, targetBalance + amount);
+          out.push(String(sourceBalance - amount));
+        }
+        break;
+      }
+      default:
+        out.push("");
+    }
+  }
+
+  return out;
 }

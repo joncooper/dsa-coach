@@ -19,7 +19,7 @@ func TreeMaxDepthLocal(values []interface{}) int {
 
 type Node struct {
 	Value int
-	Left *Node
+	Left  *Node
 	Right *Node
 }
 

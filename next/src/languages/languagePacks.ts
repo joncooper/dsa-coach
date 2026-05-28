@@ -1,5 +1,6 @@
 import type { LanguagePack } from "../core/types.js";
-import { commandExists } from "../runner/processSandbox.js";
+import { goRuntimeAvailable } from "../runner/goRuntime.js";
+import { resolvePythonRuntime } from "../runner/pythonRuntime.js";
 import { SCALA_VERSION, scalaToolchainAvailable } from "../toolchains/localToolchains.js";
 
 export const languagePacks: LanguagePack[] = [
@@ -155,8 +156,8 @@ export async function runtimeLanguagePacks(): Promise<LanguagePack[]> {
 
 async function runtimeAvailable(languageId: string): Promise<boolean> {
   if (languageId === "typescript") return true;
-  if (languageId === "python") return commandExists("python3");
-  if (languageId === "go") return commandExists("go");
+  if (languageId === "python") return Boolean((await resolvePythonRuntime()).runtime);
+  if (languageId === "go") return goRuntimeAvailable();
   if (languageId === "scala") return scalaToolchainAvailable();
   return false;
 }

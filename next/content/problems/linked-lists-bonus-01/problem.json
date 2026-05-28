@@ -8,7 +8,7 @@
     "traversal",
     "iteration"
   ],
-  "prompt": "Given the head of a singly linked list, return how many nodes it contains. An empty list has length zero.",
+  "prompt": "The input `values` serializes a singly linked list in head-to-tail order. The starter code builds a linked-list `head` from that array. Return how many nodes the list contains. An empty list has length `0`.",
   "signature": {
     "name": "listLength",
     "inputs": [

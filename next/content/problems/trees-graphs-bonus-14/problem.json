@@ -8,7 +8,7 @@
     "topological order",
     "BFS"
   ],
-  "prompt": "You are given a dictionary mapping each task to the list of tasks that must be completed before it. Return any ordering of all the tasks in which every task appears after all of its prerequisites. Return None if no such ordering exists.",
+  "prompt": "You are given a map from each task to the list of tasks that must be completed before it. Return any ordering of all the tasks in which every task appears after all of its prerequisites. Return `null` if no such ordering exists.",
   "signature": {
     "name": "buildOrder",
     "inputs": [

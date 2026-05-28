@@ -7,7 +7,7 @@
     "tree DFS",
     "path state"
   ],
-  "prompt": "Return true if the tree has a root-to-leaf path whose node values sum to `target`.",
+  "prompt": "The input `values` encodes a binary tree in level order (breadth-first): `values[0]` is the root, then each following pair gives the left and right child of the next non-null node, and `null` means that child is missing.\n\nReturn `true` if the tree has a root-to-leaf path whose node values sum to `target`.",
   "signature": {
     "name": "treeHasPathSumLocal",
     "inputs": [

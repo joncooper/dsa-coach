@@ -1,46 +1,31 @@
 package solution
 
-import "encoding/json"
+import "strings"
 
 func ValidRosterTotal(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"food:taco,burrito\\ncraft:pottery\\nmusic:drum,flute,harp\"]" {
-		return 6
+	required := []string{"food", "craft", "music"}
+	total := 0
+	for _, block := range strings.Split(inputText, "\n\n") {
+		categories := map[string]bool{}
+		itemCount := 0
+		for _, raw := range strings.Split(block, "\n") {
+			line := strings.TrimSpace(raw)
+			idx := strings.IndexByte(line, ':')
+			if idx < 0 {
+				continue
+			}
+			categories[line[:idx]] = true
+			itemCount += len(strings.Split(line[idx+1:], ","))
+		}
+		ok := true
+		for _, cat := range required {
+			if !categories[cat] {
+				ok = false
+			}
+		}
+		if ok {
+			total += itemCount
+		}
 	}
-	if key == "[\"\"]" {
-		return 0
-	}
-	if key == "[\"food:taco\\ncraft:pottery\"]" {
-		return 0
-	}
-	if key == "[\"food:taco\\ncraft:art\\nmusic:drum\\n\\nfood:burrito\\ncraft:art\\nmusic:guitar,bass\"]" {
-		return 7
-	}
-	if key == "[\"food:taco\\ncraft:art\\nmusic:drum\\nextra:foo,bar\"]" {
-		return 5
-	}
-	if key == "[\"food:taco\\ncraft:art\\nmusic:drum\"]" {
-		return 3
-	}
-	if key == "[\"food:taco\\ncraft:art\\nmusic:drum\\n\\n\\n\"]" {
-		return 3
-	}
-	if key == "[\"food:taco,taco\\ncraft:art\\nmusic:drum\"]" {
-		return 4
-	}
-	if key == "[\"food:taco\\ncraft:art\\nmusic:drum\\n\\nfood:burrito\\ncraft:pot\"]" {
-		return 3
-	}
-	if key == "[\"food:taco\\nfood:burrito\\ncraft:art\\nmusic:drum\"]" {
-		return 4
-	}
-	if key == "[\"\\n\\nfood:taco\\ncraft:art\\nmusic:drum\"]" {
-		return 3
-	}
-	return 0
-}
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+	return total
 }

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import type { ContentGraph, LanguageId, Problem } from "../core/types.js";
+import type { ContentGraph, FunctionSignature, LanguageId, Problem } from "../core/types.js";
 import { ContentCatalog } from "../core/graph.js";
 
 export type SourceKind = "starter" | "reference" | "solution";
@@ -32,8 +32,25 @@ export async function readProblemSource(
         ? support.referencePath
         : support.solutionPath;
   if (!path) throw new Error(`Problem ${label}/${request.language} has no ${request.kind} source`);
+  let code = await readFile(resolve(contentRoot, path), "utf8");
+  if (request.kind === "starter" && request.language === "python") {
+    code = legacyPythonStarterIfGenerated(code, support.entrypoint, part?.signature ?? problem.signature);
+  }
   return {
     problem,
-    code: await readFile(resolve(contentRoot, path), "utf8")
+    code
   };
+}
+
+function legacyPythonStarterIfGenerated(source: string, entrypoint: string, signature: FunctionSignature): string {
+  const generatedStub = new RegExp(
+    `^def\\s+${escapeRegExp(entrypoint)}\\s*\\([^)]*\\)\\s*(?:->\\s*[^:]+)?\\s*:\\s*\\n\\s+raise\\s+NotImplementedError\\s*$`
+  );
+  if (!generatedStub.test(source.trim())) return source;
+  const args = signature.inputs.map((input) => input.name).join(", ");
+  return `def ${entrypoint}(${args}):\n    # Write your solution here.\n    pass\n`;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

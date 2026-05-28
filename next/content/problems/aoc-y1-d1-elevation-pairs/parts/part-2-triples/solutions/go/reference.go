@@ -1,43 +1,38 @@
 package solution
 
-import "encoding/json"
+import (
+	"strconv"
+	"strings"
+)
 
 func ElevationTriples(inputText string) int {
-	key := referenceKey(inputText)
-	if key == "[\"15\\n2\\n4\\n3\\n8\\n5\"]" {
-		return 2
-	}
-	if key == "[\"100\\n1\\n2\\n3\\n4\"]" {
+	lines := nonEmptyLines(inputText)
+	if len(lines) == 0 {
 		return 0
 	}
-	if key == "[\"\"]" {
-		return 0
+	target, _ := strconv.Atoi(lines[0])
+	values := []int{}
+	for _, line := range lines[1:] {
+		value, _ := strconv.Atoi(line)
+		values = append(values, value)
 	}
-	if key == "[\"0\\n0\\n0\\n0\\n0\"]" {
-		return 4
+	total := 0
+	for i := 0; i < len(values); i++ {
+		seen := map[int]int{}
+		for j := i + 1; j < len(values); j++ {
+			need := target - values[i] - values[j]
+			total += seen[need]
+			seen[values[j]]++
+		}
 	}
-	if key == "[\"0\\n-2\\n-1\\n1\\n2\\n3\"]" {
-		return 1
-	}
-	if key == "[\"9\\n3\\n3\\n3\\n3\"]" {
-		return 4
-	}
-	if key == "[\"0\\n0\\n0\\n0\\n0\\n0\"]" {
-		return 10
-	}
-	if key == "[\"1000\\n1\\n2\\n3\\n4\\n5\"]" {
-		return 0
-	}
-	if key == "[\"6\\n2\\n2\"]" {
-		return 0
-	}
-	if key == "[\"6\\n2\"]" {
-		return 0
-	}
-	return 0
+	return total
 }
-
-func referenceKey(values ...any) string {
-	payload, _ := json.Marshal(values)
-	return string(payload)
+func nonEmptyLines(text string) []string {
+	out := []string{}
+	for _, line := range strings.Split(text, "\n") {
+		if strings.TrimSpace(line) != "" {
+			out = append(out, strings.TrimSpace(line))
+		}
+	}
+	return out
 }
