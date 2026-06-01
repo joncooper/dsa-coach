@@ -31,9 +31,11 @@ import json
 import traceback
 from typing import *
 from collections import *
+import asyncio
 import bisect
 import functools
 import heapq
+import inspect
 import itertools
 import math
 
@@ -150,7 +152,7 @@ def check(test, actual, expected):
         return bool(VALIDATORS[name](test["args"], actual))
     return actual == expected
 
-def run_all():
+async def run_all():
     request = json.loads(RUN_REQUEST_JSON)
     namespace = {
         "ListNode": ListNode,
@@ -182,7 +184,10 @@ def run_all():
             for test in request["tests"]:
                 try:
                     args = adapt_args(test["args"], request["adapter"])
-                    actual = normalize(fn(*args))
+                    result = fn(*args)
+                    if inspect.isawaitable(result):
+                        result = await result
+                    actual = normalize(result)
                     expected = normalize(test["expected"])
                     if request["adapter"] == "linked-list" and actual is None and isinstance(expected, list):
                         actual = []
@@ -222,7 +227,7 @@ def run_all():
         "message": message,
     })
 
-run_all()
+await run_all()
 `;
 
 const SCRATCHPAD_HARNESS = String.raw`

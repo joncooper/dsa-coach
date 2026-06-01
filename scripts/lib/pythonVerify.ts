@@ -31,9 +31,11 @@ import sys
 import traceback
 from typing import *
 from collections import *
+import asyncio
 import bisect
 import functools
 import heapq
+import inspect
 import itertools
 import math
 
@@ -175,7 +177,10 @@ try:
     failures = []
     for test in request["tests"]:
         args = adapt_args(test["args"], request["adapter"])
-        actual = normalize(fn(*args))
+        result = fn(*args)
+        if inspect.isawaitable(result):
+            result = asyncio.run(result)
+        actual = normalize(result)
         expected = normalize(test["expected"])
         if request["adapter"] == "linked-list" and actual is None and isinstance(expected, list):
             actual = []

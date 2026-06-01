@@ -1,13 +1,16 @@
 import type { ProblemSet } from "../../types";
 import {
+  LIBRARY_ASYNCIO_SET_ID,
   LIBRARY_ORDEREDDICT_SET_ID,
   LIBRARY_SET_IDS,
   LIBRARY_SORTEDCONTAINERS_SET_ID
 } from "./_shared";
+import { asyncioProblems } from "./asyncio";
 import { orderedDictProblems } from "./orderedDict";
 import { sortedContainersProblems } from "./sortedContainers";
 
 export {
+  LIBRARY_ASYNCIO_SET_ID,
   LIBRARY_ORDEREDDICT_SET_ID,
   LIBRARY_SET_IDS,
   LIBRARY_SORTEDCONTAINERS_SET_ID
@@ -33,4 +36,14 @@ const orderedDictSet: ProblemSet = {
   problems: orderedDictProblems
 };
 
-export const librarySets: ProblemSet[] = [sortedContainersSet, orderedDictSet];
+const asyncioSet: ProblemSet = {
+  id: LIBRARY_ASYNCIO_SET_ID,
+  title: "asyncio",
+  summary:
+    "Modern Python concurrency drills for async/await, task scheduling, bounded concurrency, queues, timeouts, and retries.",
+  intro:
+    "`asyncio` is Python's standard library for cooperative concurrency. These problems focus on the practical patterns you need most often: writing `async def` functions, awaiting coroutines, collecting task results with `gather` or `as_completed`, limiting concurrency with semaphores, moving work through queues, and handling timeouts and retries without blocking the event loop.",
+  problems: asyncioProblems
+};
+
+export const librarySets: ProblemSet[] = [sortedContainersSet, orderedDictSet, asyncioSet];

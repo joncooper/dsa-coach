@@ -11,10 +11,12 @@ import type { Problem } from "../../types";
 
 export const LIBRARY_SORTEDCONTAINERS_SET_ID = "lib-sortedcontainers";
 export const LIBRARY_ORDEREDDICT_SET_ID = "lib-ordered-dict";
+export const LIBRARY_ASYNCIO_SET_ID = "lib-asyncio";
 
 export const LIBRARY_SET_IDS: readonly string[] = [
   LIBRARY_SORTEDCONTAINERS_SET_ID,
-  LIBRARY_ORDEREDDICT_SET_ID
+  LIBRARY_ORDEREDDICT_SET_ID,
+  LIBRARY_ASYNCIO_SET_ID
 ] as const;
 
 /**
