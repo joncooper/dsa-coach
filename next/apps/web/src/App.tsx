@@ -781,6 +781,7 @@ export function App() {
     function handleKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       const isEditing = Boolean(target?.closest("input, textarea, [contenteditable='true'], .cm-editor"));
+      if (event.defaultPrevented) return;
       if ((event.metaKey || event.ctrlKey) && event.key === ",") {
         event.preventDefault();
         setSettingsOpen(true);
@@ -792,6 +793,7 @@ export function App() {
         return;
       }
       if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        if (isEditing) return;
         if (currentView.kind === "problem") {
           event.preventDefault();
           void run(event.shiftKey);
@@ -1838,6 +1840,7 @@ export function App() {
                   signature={activeSignature}
                   support={activeSupport}
                   onChange={setCode}
+                  onRun={(includeHidden) => void run(includeHidden)}
                 />
               </div>
 
@@ -5325,6 +5328,7 @@ function OutputDock({
                 problemId={scratchpadProblemId}
                 support={scratchpadSupport}
                 onChange={onScratchpadChange}
+                onRun={() => onScratchpadRun()}
               />
             </div>
             <ScratchpadOutput result={scratchpadResult} busy={scratchpadBusy} />

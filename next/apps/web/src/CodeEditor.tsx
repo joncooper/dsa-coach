@@ -73,6 +73,7 @@ interface CodeEditorProps {
   signature?: FunctionSignature;
   support?: ProblemLanguageSupport;
   onChange: (value: string) => void;
+  onRun?: (includeHidden: boolean) => void;
 }
 
 interface BasicCodeEditorProps {
@@ -135,10 +136,11 @@ export function BasicCodeEditor({ value, language, ariaLabel, onChange }: BasicC
   return <div ref={hostRef} />;
 }
 
-export function CodeEditor({ value, language, problemId, partId, signature, support, onChange }: CodeEditorProps) {
+export function CodeEditor({ value, language, problemId, partId, signature, support, onChange, onRun }: CodeEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
+  const onRunRef = useRef(onRun);
   const signatureTimerRef = useRef<number | undefined>(undefined);
   const languageSlot = useMemo(() => new Compartment(), []);
   const ideSlot = useMemo(() => new Compartment(), []);
@@ -155,6 +157,10 @@ export function CodeEditor({ value, language, problemId, partId, signature, supp
   }, [onChange]);
 
   useEffect(() => {
+    onRunRef.current = onRun;
+  }, [onRun]);
+
+  useEffect(() => {
     if (!hostRef.current) return;
     const view = new EditorView({
       parent: hostRef.current,
@@ -162,6 +168,24 @@ export function CodeEditor({ value, language, problemId, partId, signature, supp
         doc: value,
         extensions: [
           ...editorBaseExtensions,
+          keymap.of([
+            {
+              key: "Mod-Enter",
+              run: () => {
+                if (!onRunRef.current) return false;
+                onRunRef.current(false);
+                return true;
+              }
+            },
+            {
+              key: "Shift-Mod-Enter",
+              run: () => {
+                if (!onRunRef.current) return false;
+                onRunRef.current(true);
+                return true;
+              }
+            }
+          ]),
           languageSlot.of(languageExtension(language)),
           ideSlot.of(ideExtensions({
             language,
