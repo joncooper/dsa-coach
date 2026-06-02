@@ -1,55 +1,57 @@
 import scala.collection.mutable
 
 object Solution {
-  private case class Page(kind: String, payload: Any, failures: Int)
-
-  def findExitUrl(pages: Seq[Seq[Any]], start: String, maxRetries: Int): String = {
-    val byUrl = mutable.Map[String, Page]()
-    for (row <- pages) {
-      byUrl(row(0).toString) = Page(row(1).toString, row(2), asInt(row(3)))
-    }
-
-    val queue = mutable.Queue[String](start)
-    val visited = mutable.Set[String]()
-    val attempts = mutable.Map[String, Int]().withDefaultValue(0)
+  def findFinalUrl(startUrl: String, maxRetries: Int): Option[String] = {
+    val queue = mutable.Queue[String](startUrl)
+    val seen = mutable.Set[String](startUrl)
 
     while (queue.nonEmpty) {
       val url = queue.dequeue()
-      if (!visited.contains(url)) {
-        byUrl.get(url) match {
-          case None =>
-          case Some(page) =>
-            val attempt = attempts(url)
-            if (attempt < page.failures) {
-              attempts(url) = attempt + 1
-              if (attempts(url) <= maxRetries) queue.enqueue(url)
-            } else {
-              visited += url
-              if (page.kind == "EXIT") return url
-              if (page.kind == "LINKS") {
-                for (nextUrl <- asSeq(page.payload)) {
-                  val child = nextUrl.toString
-                  if (!visited.contains(child)) queue.enqueue(child)
+      val response = readWithRetries(url, maxRetries)
+
+      if (response == "congrats") return Some(url)
+
+      response match {
+        case body: Map[_, _] =>
+          body.asInstanceOf[Map[String, Any]].get("urls") match {
+            case Some(urls: Seq[_]) =>
+              for (next <- urls) {
+                next match {
+                  case nextUrl: String if !seen.contains(nextUrl) =>
+                    seen += nextUrl
+                    queue.enqueue(nextUrl)
+                  case _ =>
                 }
               }
-            }
-        }
+            case _ =>
+          }
+        case _ =>
       }
     }
 
-    ""
+    None
   }
 
-  private def asSeq(value: Any): Seq[Any] = value match {
-    case items: Seq[_] => items.asInstanceOf[Seq[Any]]
-    case _ => Seq.empty
+  private def readWithRetries(url: String, maxRetries: Int): Any = {
+    for (attempt <- 0 to maxRetries) {
+      val response = MazeApi.fetchUrl(url)
+      if (status(response).contains(503)) {
+        if (attempt == maxRetries) return null
+      } else {
+        return response
+      }
+    }
+    null
   }
 
-  private def asInt(value: Any): Int = value match {
-    case n: Int => n
-    case n: Long => n.toInt
-    case n: Double => n.toInt
-    case text: String => text.toInt
-    case _ => 0
+  private def status(response: Any): Option[Int] = response match {
+    case body: Map[_, _] =>
+      body.asInstanceOf[Map[String, Any]].get("status") match {
+        case Some(code: Int) => Some(code)
+        case Some(code: Long) => Some(code.toInt)
+        case Some(code: Double) => Some(code.toInt)
+        case _ => None
+      }
+    case _ => None
   }
 }

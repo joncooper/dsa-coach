@@ -71,6 +71,7 @@ export interface ProblemTest {
   args: unknown[];
   expected: unknown;
   visibility: TestVisibility;
+  fixture?: unknown;
   validator?: string;
 }
 

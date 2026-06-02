@@ -1,32 +1,21 @@
 {
   "id": "ramp-url-maze",
   "kind": "problem",
-  "title": "URL Maze Crawler",
-  "difficulty": "medium",
+  "title": "API Maze Crawler",
+  "difficulty": "hard",
   "concepts": [
-    "BFS",
     "API traversal",
+    "graph traversal",
+    "response parsing",
     "retries",
-    "visited set"
+    "cycle detection"
   ],
-  "prompt": "Suppose we have a small internal web challenge where each page either links to more pages, is a dead end, or is the exit. Starting from one URL, find the first exit page you can reach.\n\nIn a real system you would make HTTP requests. Here, the responses are already modeled for you in `pages`. Each page is a row `[url, kind, payload, failures]`:\n\n- `url` is the page URL.\n- `kind` is `\"LINKS\"`, `\"EXIT\"`, or `\"DEAD\"`.\n- For a `\"LINKS\"` page, `payload` is the ordered list of URLs found on that page.\n- For `\"EXIT\"` and `\"DEAD\"` pages, `payload` is ignored.\n- `failures` is how many temporary failures happen before that page can be read successfully.\n\nWrite `findExitUrl(pages, start, max_retries)`.\n\nCrawl breadth-first from `start`, following links in the order they appear. If reading a page fails, retry that same URL later. A page can eventually be read if `failures <= max_retries`; if it would need more retries than that, skip it. Missing URLs can be ignored.\n\nOnly mark a URL visited after you successfully read it. That matters because a temporarily failing page may need to be retried.\n\nReturn the URL of the first successfully read `\"EXIT\"` page in BFS order. If no readable exit is reachable, return `\"\"`.",
+  "prompt": "I give you a starting URL and a tiny HTTP-like helper. When you fetch a URL, the response may point you at more URLs. Somewhere in that maze there may be a response whose body is exactly `\"congrats\"`.\n\nWrite `find_final_url(start_url, max_retries)`.\n\nYour job is to crawl from `start_url` and return the URL whose response is `\"congrats\"`. Return `None`/`null` if you cannot reach one.\n\nIn a real interview this would probably be an HTTP client or a provided helper. In this app, the test harness provides the helper and backs it with hidden test data:\n\n- Python: call `fetch_url(url)`.\n- TypeScript: call `fetchUrl(url)`.\n- Go: call `FetchURL(url)`.\n- Scala: call `MazeApi.fetchUrl(url)`.\n\nEach call returns one response body. A body can be:\n\n- The string `\"congrats\"`: you found the answer; return the URL you just fetched.\n- An object/dict/map containing `\"urls\"`: those are the next URLs discovered from this page, in order.\n- An object/dict/map with `\"status\": 503`: a temporary failure for this URL.\n- Anything else: treat it as a dead end.\n\nSome URLs are flaky. If a fetch returns status `503`, retry that same URL immediately, up to `max_retries` extra times. For example, if a URL returns `503`, then `503`, then `\"congrats\"`, it is reachable when `max_retries` is `2`, but not when `max_retries` is `1`.\n\nThe maze can contain cycles and duplicate links. Do not get stuck repeatedly processing the same URL. If several successful URLs could lead to `\"congrats\"`, return the one reachable in the fewest number of link hops from `start_url`. If there is still a tie, use the order in which URLs are returned by the API.\n\nThe hidden service behaves like this: each URL has a response transcript. The first time you fetch it, you receive the first response; the second time, the second response; after the transcript runs out, the service keeps returning the last response.\n\nVisible example A:\n\n```python\n# hidden fake service\n{\n  \"http://start\": {\"urls\": [\"http://a\", \"http://b\"]},\n  \"http://a\": {\"message\": \"nothing here\"},\n  \"http://b\": \"congrats\"\n}\n\nfind_final_url(\"http://start\", 2) == \"http://b\"\n```\n\nVisible example B:\n\n```python\n# hidden fake service\n{\n  \"s\": {\"urls\": [\"r\"]},\n  \"r\": [{\"status\": 503}, {\"status\": 503}, \"congrats\"]\n}\n\nfind_final_url(\"s\", 2) == \"r\"\n```\n\nYou do not need real network access, sleeps, exponential backoff, threads, or async code. Focus on the crawling logic, retry boundary, response parsing, and cycle safety.",
   "signature": {
-    "name": "findExitUrl",
+    "name": "findFinalUrl",
     "inputs": [
       {
-        "name": "pages",
-        "type": {
-          "type": "array",
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "any"
-            }
-          }
-        }
-      },
-      {
-        "name": "start",
+        "name": "start_url",
         "type": {
           "type": "string"
         }
@@ -39,334 +28,315 @@
       }
     ],
     "output": {
-      "type": "string"
+      "type": "string",
+      "nullable": true
     }
   },
   "tests": [
     {
-      "name": "direct exit",
+      "name": "start already succeeds",
       "args": [
-        [
-          [
-            "/start",
-            "EXIT",
-            [],
-            0
-          ]
-        ],
-        "/start",
-        1
+        "done",
+        3
       ],
-      "expected": "/start",
+      "fixture": {
+        "done": "congrats"
+      },
+      "expected": "done",
       "visibility": "visible"
     },
     {
-      "name": "simple branch",
+      "name": "branch with one dead end",
       "args": [
-        [
-          [
-            "/start",
-            "LINKS",
-            [
-              "/a",
-              "/b"
-            ],
-            0
-          ],
-          [
-            "/a",
-            "DEAD",
-            [],
-            0
-          ],
-          [
-            "/b",
-            "EXIT",
-            [],
-            0
-          ]
-        ],
-        "/start",
-        1
+        "http://start",
+        2
       ],
-      "expected": "/b",
-      "visibility": "visible"
-    },
-    {
-      "name": "cycle does not loop",
-      "args": [
-        [
-          [
-            "/start",
-            "LINKS",
-            [
-              "/a"
-            ],
-            0
+      "fixture": {
+        "http://start": {
+          "urls": [
+            "http://a",
+            "http://b"
           ],
-          [
-            "/a",
-            "LINKS",
-            [
-              "/start",
-              "/exit"
-            ],
-            0
-          ],
-          [
-            "/exit",
-            "EXIT",
-            [],
-            0
-          ]
-        ],
-        "/start",
-        1
-      ],
-      "expected": "/exit",
+          "meta": 1
+        },
+        "http://a": {
+          "message": "nothing here"
+        },
+        "http://b": "congrats"
+      },
+      "expected": "http://b",
       "visibility": "visible"
     },
     {
       "name": "retry succeeds",
       "args": [
-        [
-          [
-            "/start",
-            "LINKS",
-            [
-              "/flaky"
-            ],
-            0
-          ],
-          [
-            "/flaky",
-            "EXIT",
-            [],
-            2
-          ]
-        ],
-        "/start",
+        "s",
         2
       ],
-      "expected": "/flaky",
-      "visibility": "hidden"
+      "fixture": {
+        "s": {
+          "urls": [
+            "r"
+          ]
+        },
+        "r": [
+          {
+            "status": 503
+          },
+          {
+            "status": 503
+          },
+          "congrats"
+        ]
+      },
+      "expected": "r",
+      "visibility": "visible"
     },
     {
-      "name": "too many failures skips page",
+      "name": "cycle without success",
       "args": [
-        [
-          [
-            "/start",
-            "LINKS",
-            [
-              "/flaky",
-              "/fallback"
-            ],
-            0
-          ],
-          [
-            "/flaky",
-            "EXIT",
-            [],
-            3
-          ],
-          [
-            "/fallback",
-            "EXIT",
-            [],
-            0
-          ]
-        ],
-        "/start",
-        2
-      ],
-      "expected": "/fallback",
-      "visibility": "hidden"
-    },
-    {
-      "name": "bfs returns nearest exit",
-      "args": [
-        [
-          [
-            "/start",
-            "LINKS",
-            [
-              "/left",
-              "/right"
-            ],
-            0
-          ],
-          [
-            "/left",
-            "LINKS",
-            [
-              "/deep"
-            ],
-            0
-          ],
-          [
-            "/right",
-            "EXIT",
-            [],
-            0
-          ],
-          [
-            "/deep",
-            "EXIT",
-            [],
-            0
-          ]
-        ],
-        "/start",
+        "u1",
         1
       ],
-      "expected": "/right",
+      "fixture": {
+        "u1": {
+          "urls": [
+            "u2"
+          ]
+        },
+        "u2": {
+          "urls": [
+            "u1",
+            "u3"
+          ]
+        },
+        "u3": {
+          "info": "dead end"
+        }
+      },
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "closest success beats earlier deep branch",
+      "args": [
+        "start",
+        1
+      ],
+      "fixture": {
+        "start": {
+          "urls": [
+            "left",
+            "right"
+          ]
+        },
+        "left": {
+          "urls": [
+            "deep"
+          ]
+        },
+        "right": "congrats",
+        "deep": "congrats"
+      },
+      "expected": "right",
+      "visibility": "hidden"
+    },
+    {
+      "name": "tie follows API order",
+      "args": [
+        "start",
+        1
+      ],
+      "fixture": {
+        "start": {
+          "urls": [
+            "left",
+            "right"
+          ]
+        },
+        "left": {
+          "urls": [
+            "left-exit"
+          ]
+        },
+        "right": {
+          "urls": [
+            "right-exit"
+          ]
+        },
+        "left-exit": "congrats",
+        "right-exit": "congrats"
+      },
+      "expected": "left-exit",
+      "visibility": "hidden"
+    },
+    {
+      "name": "too many retries skips flaky URL",
+      "args": [
+        "root",
+        1
+      ],
+      "fixture": {
+        "root": {
+          "urls": [
+            "slow",
+            "fallback"
+          ]
+        },
+        "slow": [
+          {
+            "status": 503
+          },
+          {
+            "status": 503
+          },
+          "congrats"
+        ],
+        "fallback": "congrats"
+      },
+      "expected": "fallback",
+      "visibility": "hidden"
+    },
+    {
+      "name": "permanent 503 is not success",
+      "args": [
+        "root",
+        3
+      ],
+      "fixture": {
+        "root": {
+          "urls": [
+            "slow"
+          ]
+        },
+        "slow": [
+          {
+            "status": 503
+          }
+        ]
+      },
+      "expected": null,
+      "visibility": "hidden"
+    },
+    {
+      "name": "missing URL is ignored",
+      "args": [
+        "start",
+        2
+      ],
+      "fixture": {
+        "start": {
+          "urls": [
+            "missing",
+            "exit"
+          ]
+        },
+        "exit": "congrats"
+      },
+      "expected": "exit",
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicate links do not repeat work",
+      "args": [
+        "start",
+        2
+      ],
+      "fixture": {
+        "start": {
+          "urls": [
+            "a",
+            "a",
+            "b"
+          ]
+        },
+        "a": {
+          "urls": [
+            "start"
+          ]
+        },
+        "b": "congrats"
+      },
+      "expected": "b",
+      "visibility": "hidden"
+    },
+    {
+      "name": "malformed list body is a dead end",
+      "args": [
+        "root",
+        1
+      ],
+      "fixture": {
+        "root": {
+          "urls": [
+            "bad",
+            "good"
+          ]
+        },
+        "bad": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "good": "congrats"
+      },
+      "expected": "good",
+      "visibility": "hidden"
+    },
+    {
+      "name": "urls must be a list",
+      "args": [
+        "root",
+        1
+      ],
+      "fixture": {
+        "root": {
+          "urls": [
+            "weird",
+            "exit"
+          ]
+        },
+        "weird": {
+          "urls": "exit"
+        },
+        "exit": "congrats"
+      },
+      "expected": "exit",
       "visibility": "hidden"
     },
     {
       "name": "missing start",
       "args": [
-        [
-          [
-            "/a",
-            "EXIT",
-            [],
-            0
-          ]
-        ],
-        "/missing",
-        1
-      ],
-      "expected": "",
-      "visibility": "hidden"
-    },
-    {
-      "name": "missing child ignored",
-      "args": [
-        [
-          [
-            "/start",
-            "LINKS",
-            [
-              "/missing",
-              "/exit"
-            ],
-            0
-          ],
-          [
-            "/exit",
-            "EXIT",
-            [],
-            0
-          ]
-        ],
-        "/start",
-        1
-      ],
-      "expected": "/exit",
-      "visibility": "hidden"
-    },
-    {
-      "name": "dead start has no exit",
-      "expected": "",
-      "args": [
-        [
-          [
-            "/start",
-            "DEAD",
-            [],
-            0
-          ]
-        ],
-        "/start",
-        1
-      ],
-      "visibility": "hidden"
-    },
-    {
-      "name": "zero retries skips flaky branch",
-      "expected": "/exit",
-      "args": [
-        [
-          [
-            "/start",
-            "LINKS",
-            [
-              "/flaky",
-              "/exit"
-            ],
-            0
-          ],
-          [
-            "/flaky",
-            "EXIT",
-            [],
-            1
-          ],
-          [
-            "/exit",
-            "EXIT",
-            [],
-            0
-          ]
-        ],
-        "/start",
-        0
-      ],
-      "visibility": "hidden"
-    },
-    {
-      "name": "duplicate links do not change bfs result",
-      "expected": "/b",
-      "args": [
-        [
-          [
-            "/start",
-            "LINKS",
-            [
-              "/a",
-              "/a",
-              "/b"
-            ],
-            0
-          ],
-          [
-            "/a",
-            "DEAD",
-            [],
-            0
-          ],
-          [
-            "/b",
-            "EXIT",
-            [],
-            0
-          ]
-        ],
-        "/start",
+        "missing",
         2
       ],
+      "fixture": {
+        "elsewhere": "congrats"
+      },
+      "expected": null,
       "visibility": "hidden"
     }
   ],
   "languages": {
     "python": {
-      "entrypoint": "find_exit_url",
+      "entrypoint": "find_final_url",
       "starterPath": "problems/ramp-url-maze/solutions/python/starter.py",
       "referencePath": "problems/ramp-url-maze/solutions/python/reference.py"
     },
     "typescript": {
-      "entrypoint": "findExitUrl",
+      "entrypoint": "findFinalUrl",
       "starterPath": "problems/ramp-url-maze/solutions/typescript/starter.ts",
       "referencePath": "problems/ramp-url-maze/solutions/typescript/reference.ts"
     },
     "go": {
-      "entrypoint": "FindExitUrl",
+      "entrypoint": "FindFinalURL",
       "starterPath": "problems/ramp-url-maze/solutions/go/starter.go",
       "referencePath": "problems/ramp-url-maze/solutions/go/reference.go"
     },
     "scala": {
-      "entrypoint": "findExitUrl",
+      "entrypoint": "findFinalUrl",
       "starterPath": "problems/ramp-url-maze/solutions/scala/starter.scala",
       "referencePath": "problems/ramp-url-maze/solutions/scala/reference.scala"
     }

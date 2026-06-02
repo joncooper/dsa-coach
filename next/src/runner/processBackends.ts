@@ -12,6 +12,7 @@ import { resolvePythonRuntime } from "./pythonRuntime.js";
 import { selectRunTarget } from "./runnerTarget.js";
 
 const RESULT_MARKER = "__DSA_COACH_RESULT__";
+const API_MAZE_PROBLEM_ID = "ramp-url-maze";
 
 interface RuntimePayload {
   stdout?: string;
@@ -58,7 +59,7 @@ export class TypeScriptProcessBackend {
 
     return withSandboxWorkdir("dsa-ts-", async (workdir) => {
       await writeFile(join(workdir, "solution.cjs"), transpiled.outputText, "utf8");
-      await writeFile(join(workdir, "runner.cjs"), typeScriptHarness(support.entrypoint, tests), "utf8");
+      await writeFile(join(workdir, "runner.cjs"), typeScriptHarness(support.entrypoint, tests, problem.id), "utf8");
       const processResult = await runSandboxedProcess({
         command: nodePath,
         args: ["runner.cjs"],
@@ -106,7 +107,7 @@ export class PythonProcessBackend {
 
     return withSandboxWorkdir("dsa-python-", async (workdir) => {
       await writeFile(join(workdir, "solution.py"), request.code, "utf8");
-      await writeFile(join(workdir, "runner.py"), pythonHarness(support.entrypoint, tests), "utf8");
+      await writeFile(join(workdir, "runner.py"), pythonHarness(support.entrypoint, tests, problem.id), "utf8");
       const processResult = await runSandboxedProcess({
         command: pythonRuntime.command,
         args: ["runner.py"],
@@ -334,7 +335,26 @@ function scalaRunArgs(scalaHome: string, classpath: string, classesDir: string):
   ];
 }
 
-function typeScriptHarness(entrypoint: string, tests: ProblemTest[]): string {
+function typeScriptHarness(entrypoint: string, tests: ProblemTest[], problemId: string): string {
+  const mazeHelpers = problemId === API_MAZE_PROBLEM_ID ? `
+function makeMazeFetch(web) {
+  const attempts = new Map();
+  return (url) => {
+    const value = Object.prototype.hasOwnProperty.call(web, url) ? web[url] : { status: 404 };
+    if (Array.isArray(value)) {
+      const index = attempts.get(url) ?? 0;
+      attempts.set(url, index + 1);
+      if (value.length === 0) return { status: 404 };
+      return index < value.length ? value[index] : value[value.length - 1];
+    }
+    attempts.set(url, (attempts.get(url) ?? 0) + 1);
+    return value;
+  };
+}
+` : "";
+  const beforeEachTest = problemId === API_MAZE_PROBLEM_ID
+    ? `      globalThis.fetchUrl = makeMazeFetch(test.fixture ?? {});\n`
+    : "";
   return `"use strict";
 const tests = ${JSON.stringify(tests)};
 const entrypoint = ${JSON.stringify(entrypoint)};
@@ -342,6 +362,7 @@ const marker = ${JSON.stringify(RESULT_MARKER)};
 const capturedStdout = [];
 const capturedStderr = [];
 const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+${mazeHelpers}
 
 console.log = (...args) => capturedStdout.push(args.map(String).join(" "));
 console.error = (...args) => capturedStderr.push(args.map(String).join(" "));
@@ -354,7 +375,7 @@ try {
   if (typeof fn !== "function") throw new Error(\`Missing entrypoint \${entrypoint}\`);
   for (const test of tests) {
     try {
-      const actual = fn(...test.args);
+${beforeEachTest}      const actual = fn(...test.args);
       JSON.stringify(actual);
       payload.tests.push({ actual });
     } catch (error) {
@@ -372,7 +393,27 @@ originalStdoutWrite(marker + JSON.stringify(payload));
 `;
 }
 
-function pythonHarness(entrypoint: string, tests: ProblemTest[]): string {
+function pythonHarness(entrypoint: string, tests: ProblemTest[], problemId: string): string {
+  const mazeHelpers = problemId === API_MAZE_PROBLEM_ID ? `
+def make_maze_fetch(web):
+    attempts = {}
+
+    def fetch_url(url):
+        value = web.get(url, {"status": 404})
+        if isinstance(value, list):
+            index = attempts.get(url, 0)
+            attempts[url] = index + 1
+            if not value:
+                return {"status": 404}
+            return value[index] if index < len(value) else value[-1]
+        attempts[url] = attempts.get(url, 0) + 1
+        return value
+
+    return fetch_url
+` : "";
+  const beforeEachTest = problemId === API_MAZE_PROBLEM_ID
+    ? `                module.fetch_url = make_maze_fetch(test.get("fixture", {}))\n`
+    : "";
   return `import contextlib
 import importlib.util
 import io
@@ -386,6 +427,7 @@ MARKER = ${JSON.stringify(RESULT_MARKER)}
 stdout_buffer = io.StringIO()
 stderr_buffer = io.StringIO()
 payload = {"tests": [], "stdout": "", "stderr": ""}
+${mazeHelpers}
 
 try:
     with contextlib.redirect_stdout(stdout_buffer), contextlib.redirect_stderr(stderr_buffer):
@@ -405,7 +447,7 @@ else:
     for test in TESTS:
         try:
             with contextlib.redirect_stdout(stdout_buffer), contextlib.redirect_stderr(stderr_buffer):
-                actual = fn(*test["args"])
+${beforeEachTest}                actual = fn(*test["args"])
             json.dumps(actual)
             payload["tests"].append({"actual": actual})
         except Exception:
@@ -418,6 +460,11 @@ print(MARKER + json.dumps(payload, separators=(",", ":")))
 }
 
 function goHarness(entrypoint: string, argCount: number, problem: Problem, request: RunRequest, tests: ProblemTest[]): string {
+  if (problem.id === API_MAZE_PROBLEM_ID) return goMazeHarness(entrypoint, argCount, problem, request, tests);
+  return goStandardHarness(entrypoint, argCount, problem, request, tests);
+}
+
+function goHarnessArgs(entrypoint: string, argCount: number, problem: Problem, request: RunRequest) {
   const signature = activeSignature(problem, request);
   const paramTypes = goParamTypesFromSource(request.code, entrypoint, signature.inputs.map((input) => goType(input.type)));
   const argDecls = signature.inputs.map((input, index) => {
@@ -429,10 +476,17 @@ function goHarness(entrypoint: string, argCount: number, problem: Problem, reque
 \t}
 ${normalize}`;
   }).join("\n");
-  const callArgs = signature.inputs.map((_, index) => `arg${index}`).join(", ");
-  const argsGuard = `\tif len(args) != ${argCount} {
+  return {
+    argDecls,
+    argsGuard: `\tif len(args) != ${argCount} {
 \t\treturn nil, fmt.Sprintf("expected ${argCount} args, got %d", len(args))
-\t}`;
+\t}`,
+    callArgs: signature.inputs.map((_, index) => `arg${index}`).join(", ")
+  };
+}
+
+function goStandardHarness(entrypoint: string, argCount: number, problem: Problem, request: RunRequest, tests: ProblemTest[]): string {
+  const { argDecls, argsGuard, callArgs } = goHarnessArgs(entrypoint, argCount, problem, request);
   return `package solution
 
 import (
@@ -485,7 +539,100 @@ ${argDecls}
 \treturn ${entrypoint}(${callArgs}), ""
 }
 
-func normalizeAny(value any) any {
+${goNormalizeAnyFunction()}
+`;
+}
+
+function goMazeHarness(entrypoint: string, argCount: number, problem: Problem, request: RunRequest, tests: ProblemTest[]): string {
+  const { argDecls, argsGuard, callArgs } = goHarnessArgs(entrypoint, argCount, problem, request);
+  return `package solution
+
+import (
+\t"encoding/json"
+\t"fmt"
+\t"os"
+\t"runtime/debug"
+\t"testing"
+)
+
+type harnessCase struct {
+\tName string \`json:"name"\`
+\tArgs []json.RawMessage \`json:"args"\`
+\tFixture map[string]any \`json:"fixture"\`
+}
+
+type harnessResult struct {
+\tActual any \`json:"actual"\`
+\tError string \`json:"error,omitempty"\`
+}
+
+var mazeWeb map[string]any
+var mazeAttempts map[string]int
+
+func TestDsaCoachHarness(t *testing.T) {
+\traw := ${goRawString(JSON.stringify(tests.map((test) => ({ name: test.name, args: test.args, fixture: test.fixture ?? {} }))))}
+\tvar cases []harnessCase
+\tif err := json.Unmarshal([]byte(raw), &cases); err != nil {
+\t\tpanic(err)
+\t}
+\tresults := make([]harnessResult, 0, len(cases))
+\tfor _, tc := range cases {
+\t\tresetMaze(tc.Fixture)
+\t\tactual, errText := callEntrypoint(tc.Args)
+\t\tif errText != "" {
+\t\t\tresults = append(results, harnessResult{Error: errText})
+\t\t} else {
+\t\t\tresults = append(results, harnessResult{Actual: actual})
+\t\t}
+\t}
+\tpayload, _ := json.Marshal(map[string]any{"tests": results})
+\tif err := os.WriteFile("result.json", payload, 0600); err != nil {
+\t\tpanic(err)
+\t}
+}
+
+func resetMaze(fixture map[string]any) {
+\tmazeWeb = normalizeAny(fixture).(map[string]any)
+\tmazeAttempts = map[string]int{}
+}
+
+func FetchURL(url string) any {
+\tvalue, ok := mazeWeb[url]
+\tif !ok {
+\t\treturn map[string]any{"status": 404}
+\t}
+\tif responses, ok := value.([]any); ok {
+\t\tindex := mazeAttempts[url]
+\t\tmazeAttempts[url] = index + 1
+\t\tif len(responses) == 0 {
+\t\t\treturn map[string]any{"status": 404}
+\t\t}
+\t\tif index < len(responses) {
+\t\t\treturn normalizeAny(responses[index])
+\t\t}
+\t\treturn normalizeAny(responses[len(responses)-1])
+\t}
+\tmazeAttempts[url]++
+\treturn normalizeAny(value)
+}
+
+func callEntrypoint(args []json.RawMessage) (actual any, errText string) {
+\tdefer func() {
+\t\tif recovered := recover(); recovered != nil {
+\t\t\terrText = fmt.Sprintf("%v\\n%s", recovered, string(debug.Stack()))
+\t\t}
+\t}()
+${argsGuard}
+${argDecls}
+\treturn ${entrypoint}(${callArgs}), ""
+}
+
+${goNormalizeAnyFunction()}
+`;
+}
+
+function goNormalizeAnyFunction(): string {
+  return `func normalizeAny(value any) any {
 \tswitch typed := value.(type) {
 \tcase float64:
 \t\tif typed == float64(int(typed)) {
@@ -520,17 +667,103 @@ func normalizeAny(value any) any {
 \tdefault:
 \t\treturn typed
 \t}
-}
-`;
+}`;
 }
 
 function scalaHarness(entrypoint: string, tests: ProblemTest[], problem: Problem, request: RunRequest): string {
+  if (problem.id === API_MAZE_PROBLEM_ID) return scalaMazeHarness(entrypoint, tests, problem, request);
+
   const signature = activeSignature(problem, request);
   const cases = tests.map((test, index) => {
     const args = signature.inputs.map((input, argIndex) => scalaLiteral(test.args[argIndex], input.type)).join(", ");
     return `      runCase(${index}) { Solution.${entrypoint}(${args}) }`;
   }).join(",\n");
   return `object Runner {
+  def main(args: Array[String]): Unit = {
+    val results = Seq(
+${cases}
+    )
+    println(${JSON.stringify(RESULT_MARKER)} + toJson(Map("tests" -> results)))
+  }
+
+  private def runCase(index: Int)(body: => Any): Map[String, Any] = {
+    try Map("actual" -> body)
+    catch {
+      case error: Throwable => Map("error" -> (error.getClass.getName + ": " + error.getMessage))
+    }
+  }
+
+  private def toJson(value: Any): String = value match {
+    case null => "null"
+    case s: String => quote(s)
+    case b: Boolean => b.toString
+    case n: Byte => n.toString
+    case n: Short => n.toString
+    case n: Int => n.toString
+    case n: Long => n.toString
+    case n: Float => if (n.isWhole) n.toInt.toString else n.toString
+    case n: Double => if (n.isWhole) n.toInt.toString else n.toString
+    case Some(inner) => toJson(inner)
+    case None => "null"
+    case tuple: Product if tuple.productArity > 0 && tuple.productPrefix.startsWith("Tuple") =>
+      tuple.productIterator.map(toJson).mkString("[", ",", "]")
+    case map: scala.collection.Map[_, _] =>
+      map.toSeq.map { case (k, v) => quote(k.toString) + ":" + toJson(v) }.sortBy(identity).mkString("{", ",", "}")
+    case seq: Seq[_] => seq.map(toJson).mkString("[", ",", "]")
+    case array: Array[_] => array.toSeq.map(toJson).mkString("[", ",", "]")
+    case other => quote(other.toString)
+  }
+
+  private def quote(value: String): String = {
+    val escaped = value.flatMap {
+      case char if char == 92.toChar => 92.toChar.toString + 92.toChar.toString
+      case char if char == 34.toChar => 92.toChar.toString + 34.toChar.toString
+      case '\\n' => 92.toChar.toString + "n"
+      case '\\r' => 92.toChar.toString + "r"
+      case '\\t' => 92.toChar.toString + "t"
+      case char => char.toString
+    }
+    34.toChar.toString + escaped + 34.toChar.toString
+  }
+}
+`;
+}
+
+function scalaMazeHarness(entrypoint: string, tests: ProblemTest[], problem: Problem, request: RunRequest): string {
+  const signature = activeSignature(problem, request);
+  const cases = tests.map((test, index) => {
+    const args = signature.inputs.map((input, argIndex) => scalaLiteral(test.args[argIndex], input.type)).join(", ");
+    const fixture = scalaAnyLiteral(test.fixture ?? {});
+    return `      runCase(${index}) { MazeApi.reset(${fixture}.asInstanceOf[Map[String, Any]]); Solution.${entrypoint}(${args}) }`;
+  }).join(",\n");
+  return `import scala.collection.mutable
+
+object MazeApi {
+  private var web: Map[String, Any] = Map.empty
+  private val attempts = mutable.Map[String, Int]().withDefaultValue(0)
+
+  def reset(fixture: Map[String, Any]): Unit = {
+    web = fixture
+    attempts.clear()
+  }
+
+  def fetchUrl(url: String): Any = {
+    web.get(url) match {
+      case None => Map("status" -> 404)
+      case Some(responses: Seq[_]) =>
+        val index = attempts(url)
+        attempts(url) = index + 1
+        if (responses.isEmpty) Map("status" -> 404)
+        else if (index < responses.length) responses(index)
+        else responses.last
+      case Some(value) =>
+        attempts(url) = attempts(url) + 1
+        value
+    }
+  }
+}
+
+object Runner {
   def main(args: Array[String]): Unit = {
     val results = Seq(
 ${cases}

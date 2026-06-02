@@ -211,7 +211,7 @@ async function handleRequest(
     return json(res, 200, await content.current().lsp.status());
   }
   if (req.method === "GET" && url.pathname === "/catalog") {
-    return json(res, 200, content.current().graph);
+    return json(res, 200, publicContentGraph(content.current().graph));
   }
   if (req.method === "GET" && url.pathname === "/content/status") {
     return json(res, 200, content.status());
@@ -328,6 +328,27 @@ function requiredParam(url: URL, name: string): string {
   const value = url.searchParams.get(name);
   if (!value) throw new Error(`Missing query parameter ${name}`);
   return value;
+}
+
+function publicContentGraph(graph: ContentGraph): ContentGraph {
+  return {
+    ...graph,
+    problems: graph.problems.map((problem) => ({
+      ...problem,
+      tests: stripTestFixtures(problem.tests),
+      parts: problem.parts?.map((part) => ({
+        ...part,
+        tests: stripTestFixtures(part.tests)
+      }))
+    }))
+  };
+}
+
+function stripTestFixtures<T extends { fixture?: unknown }>(tests: T[]): T[] {
+  return tests.map((test) => {
+    const { fixture: _fixture, ...publicTest } = test;
+    return publicTest as T;
+  });
 }
 
 function sourceKind(value: string): SourceKind {

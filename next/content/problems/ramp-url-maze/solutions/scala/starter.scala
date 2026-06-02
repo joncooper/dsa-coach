@@ -1,5 +1,5 @@
 object Solution {
-  def findExitUrl(pages: Seq[Seq[Any]], start: String, maxRetries: Int): String = {
-    ""
+  def findFinalUrl(startUrl: String, maxRetries: Int): Option[String] = {
+    ???
   }
 }

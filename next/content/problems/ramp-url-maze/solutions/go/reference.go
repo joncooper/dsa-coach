@@ -1,88 +1,66 @@
 package solution
 
-type page struct {
-	kind     string
-	payload  any
-	failures int
-}
+func FindFinalURL(startURL string, maxRetries int) *string {
+	queue := []string{startURL}
+	seen := map[string]bool{startURL: true}
 
-func FindExitUrl(pages [][]any, start string, maxRetries int) string {
-	byURL := map[string]page{}
-	for _, row := range pages {
-		byURL[asString(row[0])] = page{
-			kind:     asString(row[1]),
-			payload:  row[2],
-			failures: asInt(row[3]),
-		}
-	}
+	for head := 0; head < len(queue); head++ {
+		url := queue[head]
+		response := readWithRetries(url, maxRetries)
 
-	queue := []string{start}
-	visited := map[string]bool{}
-	attempts := map[string]int{}
-
-	for len(queue) > 0 {
-		url := queue[0]
-		queue = queue[1:]
-		if visited[url] {
-			continue
+		if text, ok := response.(string); ok && text == "congrats" {
+			return strPtr(url)
 		}
 
-		page, ok := byURL[url]
+		body, ok := response.(map[string]any)
 		if !ok {
 			continue
 		}
 
-		attempt := attempts[url]
-		if attempt < page.failures {
-			attempts[url] = attempt + 1
-			if attempts[url] <= maxRetries {
-				queue = append(queue, url)
-			}
+		urls, ok := body["urls"].([]any)
+		if !ok {
 			continue
 		}
 
-		visited[url] = true
-		if page.kind == "EXIT" {
-			return url
+		for _, next := range urls {
+			nextURL, ok := next.(string)
+			if !ok || seen[nextURL] {
+				continue
+			}
+			seen[nextURL] = true
+			queue = append(queue, nextURL)
 		}
-		if page.kind != "LINKS" {
+	}
+
+	return nil
+}
+
+func readWithRetries(url string, maxRetries int) any {
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		response := FetchURL(url)
+		if status(response) == 503 {
+			if attempt == maxRetries {
+				return nil
+			}
 			continue
 		}
-
-		for _, nextURL := range asAnySlice(page.payload) {
-			child := asString(nextURL)
-			if !visited[child] {
-				queue = append(queue, child)
-			}
-		}
+		return response
 	}
-
-	return ""
+	return nil
 }
 
-func asAnySlice(value any) []any {
-	if items, ok := value.([]any); ok {
-		return items
-	}
-	return []any{}
-}
-
-func asInt(value any) int {
-	switch v := value.(type) {
-	case int:
-		return v
-	case int64:
-		return int(v)
-	case float64:
-		return int(v)
-	default:
+func status(response any) int {
+	body, ok := response.(map[string]any)
+	if !ok {
 		return 0
 	}
+	code, ok := body["status"].(int)
+	if !ok {
+		return 0
+	}
+	return code
 }
 
-func asString(value any) string {
-	if s, ok := value.(string); ok {
-		return s
-	}
-	return ""
+func strPtr(value string) *string {
+	return &value
 }

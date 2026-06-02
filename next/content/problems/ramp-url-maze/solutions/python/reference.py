@@ -1,44 +1,42 @@
 from collections import deque
 
 
-def find_exit_url(pages: list[list[object]], start: str, max_retries: int) -> str:
-    by_url = {}
-    for url, kind, payload, failures in pages:
-        by_url[str(url)] = {
-            "kind": str(kind),
-            "payload": payload,
-            "failures": int(failures),
-        }
+def fetch_url(url: str) -> object:
+    raise RuntimeError("fetch_url is provided by the test harness")
 
-    queue = deque([start])
-    visited = set()
-    attempts = {}
+
+def read_with_retries(url: str, max_retries: int) -> object | None:
+    for attempt in range(max_retries + 1):
+        response = fetch_url(url)
+        if isinstance(response, dict) and response.get("status") == 503:
+            if attempt == max_retries:
+                return None
+            continue
+        return response
+    return None
+
+
+def find_final_url(start_url: str, max_retries: int) -> str | None:
+    queue = deque([start_url])
+    seen = {start_url}
 
     while queue:
         url = queue.popleft()
-        if url in visited:
-            continue
+        response = read_with_retries(url, max_retries)
 
-        page = by_url.get(url)
-        if page is None:
-            continue
-
-        attempt = attempts.get(url, 0)
-        if attempt < page["failures"]:
-            attempts[url] = attempt + 1
-            if attempts[url] <= max_retries:
-                queue.append(url)
-            continue
-
-        visited.add(url)
-        if page["kind"] == "EXIT":
+        if response == "congrats":
             return url
-        if page["kind"] != "LINKS":
+
+        if not isinstance(response, dict):
             continue
 
-        for next_url in page["payload"]:
-            next_url = str(next_url)
-            if next_url not in visited:
+        urls = response.get("urls")
+        if not isinstance(urls, list):
+            continue
+
+        for next_url in urls:
+            if isinstance(next_url, str) and next_url not in seen:
+                seen.add(next_url)
                 queue.append(next_url)
 
-    return ""
+    return None
