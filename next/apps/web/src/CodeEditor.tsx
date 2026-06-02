@@ -440,6 +440,65 @@ const editorTheme = EditorView.theme({
   }
 });
 
+const INDENT_GUIDE_COLUMNS = 2;
+
+const indentGuideDecoration = Decoration.mark({ class: "cm-indent-guide" });
+const activeIndentGuideDecoration = Decoration.mark({ class: "cm-indent-guide cm-indent-guide-active" });
+
+const indentGuidePlugin = ViewPlugin.fromClass(class {
+  decorations: DecorationSet;
+
+  constructor(view: EditorView) {
+    this.decorations = buildIndentGuides(view);
+  }
+
+  update(update: ViewUpdate) {
+    if (update.docChanged || update.viewportChanged || update.selectionSet) {
+      this.decorations = buildIndentGuides(update.view);
+    }
+  }
+}, {
+  decorations: (plugin) => plugin.decorations
+});
+
+function buildIndentGuides(view: EditorView): DecorationSet {
+  const builder = new RangeSetBuilder<Decoration>();
+  const activeLine = view.state.doc.lineAt(view.state.selection.main.head).number;
+
+  for (const range of view.visibleRanges) {
+    let position = range.from;
+    while (position <= range.to) {
+      const line = view.state.doc.lineAt(position);
+      addIndentGuidesForLine(builder, line.from, line.text, line.number === activeLine);
+      position = line.to + 1;
+    }
+  }
+
+  return builder.finish();
+}
+
+function addIndentGuidesForLine(
+  builder: RangeSetBuilder<Decoration>,
+  lineStart: number,
+  lineText: string,
+  isActiveLine: boolean
+) {
+  const indentLength = leadingWhitespaceLength(lineText);
+  if (indentLength < INDENT_GUIDE_COLUMNS) return;
+
+  for (let column = 0; column + INDENT_GUIDE_COLUMNS <= indentLength; column += INDENT_GUIDE_COLUMNS) {
+    const decoration = isActiveLine && column + INDENT_GUIDE_COLUMNS === indentLength
+      ? activeIndentGuideDecoration
+      : indentGuideDecoration;
+    builder.add(lineStart + column, lineStart + column + 1, decoration);
+  }
+}
+
+function leadingWhitespaceLength(text: string): number {
+  const match = text.match(/^[\t ]+/);
+  return match ? match[0].length : 0;
+}
+
 const editorBaseExtensions: Extension[] = [
   lineNumbers(),
   foldGutter(),
@@ -502,65 +561,6 @@ function editorTooltipSpace(view: EditorView): Rect {
     right: rect.right - inset,
     bottom: rect.bottom - inset
   };
-}
-
-const INDENT_GUIDE_COLUMNS = 2;
-
-const indentGuideDecoration = Decoration.mark({ class: "cm-indent-guide" });
-const activeIndentGuideDecoration = Decoration.mark({ class: "cm-indent-guide cm-indent-guide-active" });
-
-const indentGuidePlugin = ViewPlugin.fromClass(class {
-  decorations: DecorationSet;
-
-  constructor(view: EditorView) {
-    this.decorations = buildIndentGuides(view);
-  }
-
-  update(update: ViewUpdate) {
-    if (update.docChanged || update.viewportChanged || update.selectionSet) {
-      this.decorations = buildIndentGuides(update.view);
-    }
-  }
-}, {
-  decorations: (plugin) => plugin.decorations
-});
-
-function buildIndentGuides(view: EditorView): DecorationSet {
-  const builder = new RangeSetBuilder<Decoration>();
-  const activeLine = view.state.doc.lineAt(view.state.selection.main.head).number;
-
-  for (const range of view.visibleRanges) {
-    let position = range.from;
-    while (position <= range.to) {
-      const line = view.state.doc.lineAt(position);
-      addIndentGuidesForLine(builder, line.from, line.text, line.number === activeLine);
-      position = line.to + 1;
-    }
-  }
-
-  return builder.finish();
-}
-
-function addIndentGuidesForLine(
-  builder: RangeSetBuilder<Decoration>,
-  lineStart: number,
-  lineText: string,
-  isActiveLine: boolean
-) {
-  const indentLength = leadingWhitespaceLength(lineText);
-  if (indentLength < INDENT_GUIDE_COLUMNS) return;
-
-  for (let column = 0; column + INDENT_GUIDE_COLUMNS <= indentLength; column += INDENT_GUIDE_COLUMNS) {
-    const decoration = isActiveLine && column + INDENT_GUIDE_COLUMNS === indentLength
-      ? activeIndentGuideDecoration
-      : indentGuideDecoration;
-    builder.add(lineStart + column, lineStart + column + 1, decoration);
-  }
-}
-
-function leadingWhitespaceLength(text: string): number {
-  const match = text.match(/^[\t ]+/);
-  return match ? match[0].length : 0;
 }
 
 interface IdeExtensionOptions {
