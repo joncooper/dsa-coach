@@ -1,10 +1,16 @@
+import { resolve } from "node:path";
 import { defaultContentRoot, loadContentGraph } from "../content/loadContentGraph.js";
-import { createRunnerDaemonServer } from "../daemon/server.js";
+import { type BuildMode, createRunnerDaemonServer } from "../daemon/server.js";
 
-const graph = await loadContentGraph();
+const buildMode: BuildMode = process.env.DSA_COACH_BUILD_MODE === "release" ? "release" : "development";
+const contentRoot = resolve(buildMode === "development"
+  ? (process.env.DSA_COACH_CONTENT_ROOT ?? defaultContentRoot)
+  : defaultContentRoot);
+const graph = await loadContentGraph(contentRoot);
 const server = createRunnerDaemonServer({
   graph,
-  contentRoot: defaultContentRoot,
+  contentRoot,
+  buildMode,
   userDataRoot: process.env.DSA_COACH_USER_DATA_DIR
 });
 

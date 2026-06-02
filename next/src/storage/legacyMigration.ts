@@ -147,6 +147,7 @@ export function migrateLegacyBackup(payload: LegacyBackupPayload, options: Legac
     scratchpads,
     assessmentState,
     preferences,
+    activity: [],
     coachLogs,
     legacySnapshots:
       options.keepLegacySnapshot === false
@@ -162,6 +163,7 @@ export function migrateLegacyBackup(payload: LegacyBackupPayload, options: Legac
         scratchpads: scratchpads.length,
         assessmentState: assessmentState.length,
         preferences: preferences.length,
+        activity: 0,
         coachLogs: coachLogs.length
       }
     }

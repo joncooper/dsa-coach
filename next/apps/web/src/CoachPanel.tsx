@@ -3,6 +3,8 @@ import type { LanguageId, Problem, ProblemPart, RunResult } from "../../../src/c
 import type { UserCoachLogRecord } from "../../../src/storage/userData";
 import { MarkdownView } from "../../../../src/components/MarkdownView";
 import { API_BASE } from "./apiBase";
+import { buildCoachMessages } from "./coachMessages";
+import type { CoachMessage } from "./coachMessages";
 
 interface CoachPanelProps {
   problem: Problem;
@@ -28,11 +30,6 @@ interface Turn {
   content: string;
   logCreatedAt?: string;
   feedback?: CoachFeedback;
-}
-
-interface CoachMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
 }
 
 interface CoachFeedback {
@@ -403,73 +400,6 @@ async function loadReferenceCode(problemId: string, partId: string | undefined, 
   } catch {
     return "";
   }
-}
-
-function buildCoachMessages(args: {
-  turns: Turn[];
-  question: string;
-  problemTitle: string;
-  prompt: string;
-  concepts: string[];
-  difficulty: string;
-  language: string;
-  entrypoint: string;
-  code: string;
-  result: RunResult | null;
-  failedVisible: NonNullable<RunResult["tests"]>;
-  referenceCode: string;
-}): CoachMessage[] {
-  const runState = args.result
-    ? `${args.result.status}${args.result.message ? `: ${args.result.message}` : ""}`
-    : "not run yet";
-  const failures = args.failedVisible
-    .slice(0, 4)
-    .map((test) => `- ${test.name}: expected ${JSON.stringify(test.expected)}, actual ${JSON.stringify(test.actual)}${test.error ? ` (${test.error})` : ""}`)
-    .join("\n") || "(none)";
-  const solveHint = looksLikeSolveRequest(args.question)
-    ? "\nThe learner is explicitly asking for the solution. Give the complete corrected code and a short explanation."
-    : "";
-
-  return [
-    {
-      role: "system",
-      content: `You are DSA Coach, a local coding coach inside a programming practice app. Be concise, concrete, and helpful. Prefer debugging the learner's current approach over redirecting to a different algorithm. Give hints by default, but if the learner asks for the solution, comply.`
-    },
-    {
-      role: "user",
-      content: `Problem: ${args.problemTitle}
-Difficulty: ${args.difficulty}
-Concepts: ${args.concepts.join(", ")}
-Language: ${args.language}
-Entrypoint: ${args.entrypoint}
-
-Prompt:
-${args.prompt}
-
-Learner code:
-\`\`\`${args.language}
-${args.code}
-\`\`\`
-
-Last run state: ${runState}
-Failing visible tests:
-${failures}
-
-Reference solution for grounding only:
-\`\`\`${args.language}
-${args.referenceCode}
-\`\`\`
-${solveHint}`
-    },
-    ...args.turns.slice(-10)
-  ];
-}
-
-function looksLikeSolveRequest(text: string): boolean {
-  const value = text.toLowerCase();
-  return /\b(give|show|tell) me (the )?(answer|solution|code)\b/.test(value) ||
-    /\b(full|complete) (answer|solution|code)\b/.test(value) ||
-    /\bi (give up|quit)\b/.test(value);
 }
 
 async function getJson<T>(path: string): Promise<T> {

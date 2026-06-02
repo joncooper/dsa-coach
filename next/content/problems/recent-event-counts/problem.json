@@ -4,10 +4,11 @@
   "title": "Recent Event Counts",
   "difficulty": "medium",
   "concepts": [
-    "queue",
-    "sliding time window"
+    "sliding window",
+    "two pointers",
+    "queue"
   ],
-  "prompt": "Event timestamps arrive sorted. For each timestamp, return how many events are in the inclusive range `[timestamp - window, timestamp]`.",
+  "prompt": "Imagine an analytics dashboard that receives events over time. For every event, the dashboard wants to know: how many events have happened recently, ending at this event's timestamp?\n\nYou are given sorted event timestamps and a window size. Write `recentEventCounts(timestamps, window)` so that for each timestamp `t`, it counts how many events seen so far fall inside `[t - window, t]`.\n\nThe current event always counts, because its timestamp is exactly `t`. Earlier events count only if they are not older than `t - window`.\n\nDuplicates are separate events. So if two events have the same timestamp, they both count. If `window` is `0`, only events at exactly the current timestamp count.\n\nReturn one integer per input timestamp, in the same order as the input. If there are no timestamps, return an empty list.",
   "signature": {
     "name": "recentEventCounts",
     "inputs": [
@@ -184,6 +185,61 @@
         2,
         3,
         4,
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "inclusive left boundary",
+      "expected": [
+        1,
+        2,
+        2
+      ],
+      "args": [
+        [
+          1,
+          6,
+          7
+        ],
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicates on boundary",
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        3
+      ],
+      "args": [
+        [
+          0,
+          0,
+          5,
+          5,
+          6
+        ],
+        5
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative timestamps",
+      "expected": [
+        1,
+        2,
+        2
+      ],
+      "args": [
+        [
+          -5,
+          0,
+          5
+        ],
         5
       ],
       "visibility": "hidden"

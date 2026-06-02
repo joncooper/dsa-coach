@@ -26,10 +26,6 @@
     },
     {
       "kind": "problem",
-      "id": "recent-event-counts"
-    },
-    {
-      "kind": "problem",
       "id": "next-greater-values"
     },
     {

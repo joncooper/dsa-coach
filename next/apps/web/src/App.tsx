@@ -32,12 +32,32 @@ type LoadState =
   | { status: "ready"; graph: ContentGraph; languages: LanguagePack[] }
   | { status: "error"; message: string };
 
+interface ContentStatus {
+  ok: true;
+  mode: "development" | "release";
+  contentRoot: string;
+  reloadAvailable: boolean;
+  loadedAt: string;
+  generation: number;
+  counts: {
+    tracks: number;
+    modules: number;
+    problemSets: number;
+    problems: number;
+  };
+}
+
+type ContentReloadResponse =
+  | (ContentStatus & { reloadedAt: string })
+  | (Omit<ContentStatus, "ok"> & { ok: false; errors: string[] });
+
 type SidebarScope =
   | { kind: "all" }
   | { kind: "module"; id: string }
   | { kind: "problem-set"; id: string };
 
 type ContentContainer = { kind: "module" | "problem-set"; id: string; title: string };
+type ProblemOrigin = Extract<SidebarScope, { kind: "module" | "problem-set" }>;
 
 type AppView =
   | { kind: "dashboard" }
@@ -45,7 +65,7 @@ type AppView =
   | { kind: "lesson"; lessonId: string }
   | { kind: "quiz"; quizId: string }
   | { kind: "assessment"; problemId: string }
-  | { kind: "problem" };
+  | { kind: "problem"; origin?: ProblemOrigin };
 
 type CollectionViewModel = {
   kind: "module" | "problem-set";
@@ -66,6 +86,8 @@ type SidebarSearchHit =
 
 type OutputPanel = "results" | "stdout" | "errors" | "scratchpad" | "notes" | "history";
 const outputPanels: OutputPanel[] = ["results", "stdout", "errors", "scratchpad", "notes", "history"];
+const activeTimeFlushMs = 15_000;
+const activeTimeTickCapMs = 5_000;
 type MobileWorkspaceTab = "prompt" | "code" | "results" | "scratchpad" | "notes";
 const mobileWorkspaceTabs: MobileWorkspaceTab[] = ["prompt", "code", "results", "scratchpad", "notes"];
 type AssessmentMode = "exam" | "practice";
@@ -157,6 +179,7 @@ interface AssessmentEventRecord {
 
 export function App() {
   const [loadState, setLoadState] = useState<LoadState>({ status: "loading" });
+  const [contentStatus, setContentStatus] = useState<ContentStatus | null>(null);
   const [selectedProblemId, setSelectedProblemId] = useState<string>("");
   const [selectedPartId, setSelectedPartId] = useState<string>("");
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageId>("python");
@@ -211,15 +234,16 @@ export function App() {
     let alive = true;
     void (async () => {
       try {
-        const [graph, languages] = await Promise.all([
+        const [graph, languages, nextContentStatus] = await Promise.all([
           getJson<ContentGraph>("/catalog"),
-          getJson<LanguagePack[]>("/languages")
+          getJson<LanguagePack[]>("/languages"),
+          safeGetJson<ContentStatus>("/content/status")
         ]);
         const [daemonUserData, daemonWorkspaceState] = await Promise.all([
           safeGetJson<{ userData: NextUserData | null }>("/user-data"),
           safeGetJson<{ workspaceState: NextWorkspaceState | null }>("/workspace-state")
         ]);
-        const nextUserData = daemonUserData?.userData ?? null;
+        const nextUserData = normalizeUserData(daemonUserData?.userData ?? null);
         const nextWorkspaceState =
           daemonWorkspaceState?.workspaceState ??
           (nextUserData ? workspaceStateFromUserData(nextUserData, null) : null);
@@ -228,6 +252,7 @@ export function App() {
           defaultSelection(graph, languages);
         if (!alive) return;
         setLoadState({ status: "ready", graph, languages });
+        setContentStatus(nextContentStatus ?? null);
         if (nextUserData) {
           userDataRef.current = nextUserData;
           setUserData(nextUserData);
@@ -293,7 +318,7 @@ export function App() {
   const librarySets = graph?.problemSets.filter((set) => set.id.startsWith("lib-")) ?? [];
   const practiceSets = graph?.problemSets.filter((set) => set.id !== "assessments" && !set.id.startsWith("lib-")) ?? [];
   const sidebarModules = graph ? legacyOrderedModules(graph) : [];
-  const activeContainer = graph && selectedProblem ? containerForProblem(graph, selectedProblem.id) : undefined;
+  const activeContainer = graph && selectedProblem ? containerForProblemView(graph, selectedProblem.id, currentView) : undefined;
   const selectedCollection = graph && currentView.kind === "collection" ? collectionForScope(graph, currentView.scope) : undefined;
   const sidebarActiveScope: SidebarScope = currentView.kind === "collection" ? sidebarScope : { kind: "all" };
   const siblingProblemIds = graph && selectedProblem ? problemIdsForContainer(graph, activeContainer) : [];
@@ -303,42 +328,71 @@ export function App() {
   const runStatus = busy ? "Running" : result ? statusLabel(result.status) : "Ready";
   const promptConstraints = selectedProblem ? problemConstraints(selectedProblem, selectedPart, activeSignature) : [];
   const splitStyle = { "--prompt-width": `${splitRatio}%`, "--dock-height": `${dockHeight}px` } as CSSProperties;
+  const canReloadContent = contentStatus?.reloadAvailable === true;
+  const activeProblemTimeMs = selectedProblemId ? activeTimeForProblem(userData, selectedProblemId) : 0;
 
   useEffect(() => {
     setMobileNavOpen(false);
   }, [currentView.kind, selectedProblemId]);
 
-  const selectProblem = useCallback((problemId: string) => {
+  function flushCurrentWorkspaceBuffer() {
+    if (currentView.kind !== "problem" || !selectedProblemId || !selectedLanguage) return;
+    const selection: WorkspaceSelection = {
+      problemId: selectedProblemId,
+      partId: selectedPartId || undefined,
+      language: selectedLanguage,
+      sourceKind
+    };
+    const key = workspaceKey(selection);
+    if (key !== codeSelectionKeyRef.current) return;
+    const now = new Date().toISOString();
+    const nextState = upsertWorkspaceBuffer(workspaceStateRef.current, {
+      ...selection,
+      code,
+      updatedAt: now
+    });
+    workspaceStateRef.current = nextState;
+    setWorkspaceState(nextState);
+    void persistWorkspaceState(nextState);
+  }
+
+  const selectProblem = useCallback((problemId: string, origin?: ProblemOrigin) => {
+    flushCurrentWorkspaceBuffer();
     setSelectedProblemId(problemId);
     setSelectedPartId("");
     setResult(null);
     setActiveOutputPanel("results");
-    setCurrentView({ kind: "problem" });
-  }, []);
+    setCurrentView({ kind: "problem", origin });
+  }, [code, currentView.kind, selectedLanguage, selectedPartId, selectedProblemId]);
 
   const openDashboard = useCallback(() => {
+    flushCurrentWorkspaceBuffer();
     setSidebarScope({ kind: "all" });
     setCurrentView({ kind: "dashboard" });
-  }, []);
+  }, [code, currentView.kind, selectedLanguage, selectedPartId, selectedProblemId]);
 
   const openCollection = useCallback((scope: Extract<SidebarScope, { kind: "module" | "problem-set" }>) => {
+    flushCurrentWorkspaceBuffer();
     setSidebarScope(scope);
     setCurrentView({ kind: "collection", scope });
-  }, []);
+  }, [code, currentView.kind, selectedLanguage, selectedPartId, selectedProblemId]);
 
   const openLesson = useCallback((lessonId: string) => {
+    flushCurrentWorkspaceBuffer();
     setCurrentView({ kind: "lesson", lessonId });
-  }, []);
+  }, [code, currentView.kind, selectedLanguage, selectedPartId, selectedProblemId]);
 
   const openQuiz = useCallback((quizId: string) => {
+    flushCurrentWorkspaceBuffer();
     setCurrentView({ kind: "quiz", quizId });
-  }, []);
+  }, [code, currentView.kind, selectedLanguage, selectedPartId, selectedProblemId]);
 
   const openAssessment = useCallback((problemId: string) => {
+    flushCurrentWorkspaceBuffer();
     setSelectedProblemId(problemId);
     setSelectedPartId("");
     setCurrentView({ kind: "assessment", problemId });
-  }, []);
+  }, [code, currentView.kind, selectedLanguage, selectedPartId, selectedProblemId]);
 
   const updateSidebarCollapsed = useCallback((next: boolean) => {
     setSidebarCollapsed(next);
@@ -378,6 +432,73 @@ export function App() {
     window.setTimeout(() => searchInputRef.current?.focus(), 0);
   }, [sidebarCollapsed, updateSidebarCollapsed]);
 
+  async function reloadContent() {
+    if (!canReloadContent) {
+      setStorageStatus("Content reload is only available in development builds.");
+      return;
+    }
+    flushCurrentWorkspaceBuffer();
+    setStorageStatus("Reloading problem content...");
+    try {
+      const res = await fetch(`${API_BASE}/content/reload`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}"
+      });
+      const reload = (await res.json()) as ContentReloadResponse;
+      if (!res.ok || !reload.ok) {
+        const errors = "errors" in reload && Array.isArray(reload.errors)
+          ? reload.errors
+          : [`${res.status} ${res.statusText}`];
+        setStorageStatus(`Content reload failed: ${errors.slice(0, 3).join(" ")}`);
+        return;
+      }
+
+      const [nextGraph, nextLanguages, nextStatus] = await Promise.all([
+        getJson<ContentGraph>("/catalog"),
+        getJson<LanguagePack[]>("/languages"),
+        getJson<ContentStatus>("/content/status")
+      ]);
+      const nextSelection =
+        validSelection({
+          problemId: selectedProblemId,
+          partId: selectedPartId || undefined,
+          language: selectedLanguage,
+          sourceKind
+        }, nextGraph) ??
+        validSelection(workspaceStateRef.current?.lastSelection, nextGraph) ??
+        defaultSelection(nextGraph, nextLanguages);
+
+      setLoadState({ status: "ready", graph: nextGraph, languages: nextLanguages });
+      setContentStatus(nextStatus);
+      setResult(null);
+      setRecentRuns([]);
+      setScratchpadResult(null);
+      setSolutionOpen(false);
+      setSolutionCode("");
+
+      if (nextSelection) {
+        setSelectedProblemId(nextSelection.problemId);
+        setSelectedPartId(nextSelection.partId ?? "");
+        setSelectedLanguage(nextSelection.language);
+        if (currentView.kind === "collection" && !collectionForScope(nextGraph, currentView.scope)) {
+          setCurrentView({ kind: "dashboard" });
+        } else if (currentView.kind === "assessment" && !nextGraph.problems.some((problem) => problem.id === currentView.problemId)) {
+          setCurrentView({ kind: "problem" });
+        } else if (currentView.kind === "problem" && currentView.origin && !containerForScope(nextGraph, currentView.origin)) {
+          setCurrentView({ kind: "problem" });
+        }
+      } else {
+        setSelectedProblemId("");
+        setSelectedPartId("");
+        setCurrentView({ kind: "dashboard" });
+      }
+      setStorageStatus(`Content reloaded from ${nextStatus.contentRoot}.`);
+    } catch (error) {
+      setStorageStatus(`Content reload failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
   const handleDesktopCommand = useCallback((command: string) => {
     if (command === "open-settings") {
       setSettingsOpen(true);
@@ -401,6 +522,10 @@ export function App() {
     }
     if (command === "focus-search") {
       focusSidebarSearch();
+      return;
+    }
+    if (command === "reload-content") {
+      void reloadContent();
       return;
     }
     if (command === "toggle-sidebar") {
@@ -480,6 +605,23 @@ export function App() {
           codeSelectionKeyRef.current = key;
           setCode(savedBuffer.code);
         }
+        return;
+      }
+      const recoveredAttempt = latestAttemptForSelection(userDataRef.current, selection);
+      if (recoveredAttempt && !isGeneratedPythonStarter(recoveredAttempt.code, selectedLanguage)) {
+        const nextBuffer: WorkspaceEditorBuffer = {
+          ...selection,
+          code: recoveredAttempt.code,
+          updatedAt: recoveredAttempt.createdAt
+        };
+        const nextState = upsertWorkspaceBuffer(workspaceStateRef.current, nextBuffer);
+        workspaceStateRef.current = nextState;
+        if (alive) {
+          codeSelectionKeyRef.current = key;
+          setWorkspaceState(nextState);
+          setCode(recoveredAttempt.code);
+        }
+        void persistWorkspaceState(nextState);
         return;
       }
       try {
@@ -581,6 +723,59 @@ export function App() {
     }, 650);
     return () => window.clearTimeout(timer);
   }, [currentView.kind, scratchpadCode, selectedLanguage, selectedProblemId]);
+
+  useEffect(() => {
+    if (currentView.kind !== "problem" || !selectedProblemId) return;
+
+    const workspaceId = problemWorkspaceId(selectedProblemId, selectedPartId || undefined);
+    let active = isDocumentActive();
+    let lastTick = Date.now();
+    let pendingMs = 0;
+
+    const persistDelta = (deltaMs: number) => {
+      if (deltaMs < 1000) return;
+      const next = addActivityTime(userDataRef.current ?? createEmptyUserData(), workspaceId, deltaMs);
+      userDataRef.current = next;
+      setUserData(next);
+      void persistUserData(next, "Active time saved");
+    };
+
+    const flush = () => {
+      const delta = pendingMs;
+      pendingMs = 0;
+      persistDelta(delta);
+    };
+
+    const tick = () => {
+      const now = Date.now();
+      if (active) pendingMs += Math.min(now - lastTick, activeTimeTickCapMs);
+      lastTick = now;
+      if (pendingMs >= activeTimeFlushMs) flush();
+    };
+
+    const refreshActiveState = () => {
+      tick();
+      active = isDocumentActive();
+      lastTick = Date.now();
+      if (!active) flush();
+    };
+
+    const interval = window.setInterval(tick, 1000);
+    window.addEventListener("focus", refreshActiveState);
+    window.addEventListener("blur", refreshActiveState);
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", refreshActiveState);
+
+    return () => {
+      tick();
+      flush();
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshActiveState);
+      window.removeEventListener("blur", refreshActiveState);
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", refreshActiveState);
+    };
+  }, [currentView.kind, selectedPartId, selectedProblemId]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -864,7 +1059,7 @@ export function App() {
 
   async function recordProblemRun(nextResult: RunResult) {
     if (!selectedProblem) return;
-    const workspaceId = selectedPartId ? `${selectedProblem.id}:${selectedPartId}` : selectedProblem.id;
+    const workspaceId = problemWorkspaceId(selectedProblem.id, selectedPartId || undefined);
     await updateUserData((current) => {
       const now = new Date().toISOString();
       const attempt = {
@@ -897,7 +1092,7 @@ export function App() {
   }
 
   async function recordAssessmentRun(problemId: string, partId: string | undefined, language: LanguageId, runCode: string, nextResult: RunResult) {
-    const workspaceId = partId ? `${problemId}:${partId}` : problemId;
+    const workspaceId = problemWorkspaceId(problemId, partId);
     await updateUserData((current) => {
       const attempt = {
         workspaceId,
@@ -1145,14 +1340,19 @@ export function App() {
         open={settingsOpen}
         supportedLanguages={languages}
         selectedLanguage={selectedLanguage}
+        contentStatus={contentStatus}
         storageStatus={storageStatus}
         migrationError={migrationError}
         userData={userData}
         onClose={() => setSettingsOpen(false)}
-        onLanguageChange={setSelectedLanguage}
+        onLanguageChange={(language) => {
+          flushCurrentWorkspaceBuffer();
+          setSelectedLanguage(language);
+        }}
         onImportProgress={triggerLegacyImport}
         onExportProgress={exportUserData}
         onExportCoachLog={exportCoachLog}
+        onReloadContent={() => void reloadContent()}
       />
       <input
         ref={legacyImportInputRef}
@@ -1193,7 +1393,7 @@ export function App() {
             userData={userData}
             sidebarCollapsed={workspaceSidebarCollapsed}
             onShowSidebar={() => updateSidebarCollapsed(false)}
-            onOpenProblem={selectProblem}
+            onOpenProblem={(problemId) => selectProblem(problemId, currentView.scope)}
             onOpenAssessment={openAssessment}
             onOpenLesson={openLesson}
             onOpenQuiz={openQuiz}
@@ -1305,16 +1505,16 @@ export function App() {
                 className="secondary-button compact-button"
                 onClick={() => openCollection(activeContainer.kind === "module" ? { kind: "module", id: activeContainer.id } : { kind: "problem-set", id: activeContainer.id })}
               >
-                {activeContainer.kind === "module" ? "Back to chapter" : "Back to set"}
+                {activeContainer.kind === "module" ? "Back to chapter" : `Back to ${activeContainer.title}`}
               </button>
             ) : null}
             {previousProblemId ? (
-              <button type="button" className="secondary-button compact-button problem-nav-link" onClick={() => selectProblem(previousProblemId)}>
+              <button type="button" className="secondary-button compact-button problem-nav-link" onClick={() => selectProblem(previousProblemId, activeContainer ? { kind: activeContainer.kind, id: activeContainer.id } : undefined)}>
                 Previous
               </button>
             ) : null}
             {nextProblemId ? (
-              <button type="button" className="secondary-button compact-button problem-nav-link" onClick={() => selectProblem(nextProblemId)}>
+              <button type="button" className="secondary-button compact-button problem-nav-link" onClick={() => selectProblem(nextProblemId, activeContainer ? { kind: activeContainer.kind, id: activeContainer.id } : undefined)}>
                 Next
               </button>
             ) : null}
@@ -1373,7 +1573,14 @@ export function App() {
               <div className="prompt-scroll">
               {selectedProblem.parts?.length ? (
                 <nav className="part-tabs" aria-label="Problem parts">
-                  <button type="button" className={!selectedPartId ? "part-tab active" : "part-tab"} onClick={() => setSelectedPartId("")}>
+                  <button
+                    type="button"
+                    className={!selectedPartId ? "part-tab active" : "part-tab"}
+                    onClick={() => {
+                      flushCurrentWorkspaceBuffer();
+                      setSelectedPartId("");
+                    }}
+                  >
                     Base
                   </button>
                   {selectedProblem.parts.map((part) => (
@@ -1381,7 +1588,10 @@ export function App() {
                       type="button"
                       key={part.id}
                       className={selectedPartId === part.id ? "part-tab active" : "part-tab"}
-                      onClick={() => setSelectedPartId(part.id)}
+                      onClick={() => {
+                        flushCurrentWorkspaceBuffer();
+                        setSelectedPartId(part.id);
+                      }}
                     >
                       {part.title}
                     </button>
@@ -1520,7 +1730,10 @@ export function App() {
               <div className={`workspace-toolbar mobile-pane ${activeMobileTab === "code" || activeMobileTab === "results" ? "active" : ""}`}>
                 <div className="toolbar-status-group">
                   <span className={`run-status ${busy ? "loading" : result?.status ?? "idle"}`}>{runStatus}</span>
-                  <small>{result?.durationMs ? `${result.durationMs} ms` : selectedPack ? `Local ${selectedPack.label}` : "Local runner"}</small>
+                  <small>
+                    {activeProblemTimeMs ? `Active ${formatActiveTime(activeProblemTimeMs)} · ` : ""}
+                    {result?.durationMs ? `${result.durationMs} ms` : selectedPack ? `Local ${selectedPack.label}` : "Local runner"}
+                  </small>
                 </div>
                 <div className="toolbar-actions">
                   <details className="toolbar-menu">
@@ -1533,6 +1746,12 @@ export function App() {
                         <ResetIcon />
                         Reset to starter
                       </button>
+                      {canReloadContent ? (
+                        <button type="button" onClick={() => void reloadContent()}>
+                          <ResetIcon />
+                          Reload content
+                        </button>
+                      ) : null}
                       <div className="shortcut-list" aria-label="Keyboard shortcuts">
                         <strong>
                           <KeyboardIcon />
@@ -1628,6 +1847,7 @@ export function App() {
                 busy={busy}
                 noteText={noteText}
                 recentRuns={recentRuns}
+                activeProblemTimeMs={activeProblemTimeMs}
                 result={result}
                 scratchpadCode={scratchpadCode}
                 scratchpadBusy={scratchpadBusy}
@@ -1722,6 +1942,7 @@ function SettingsDialog({
   open,
   supportedLanguages,
   selectedLanguage,
+  contentStatus,
   storageStatus,
   migrationError,
   userData,
@@ -1729,11 +1950,13 @@ function SettingsDialog({
   onLanguageChange,
   onImportProgress,
   onExportProgress,
-  onExportCoachLog
+  onExportCoachLog,
+  onReloadContent
 }: {
   open: boolean;
   supportedLanguages: LanguagePack[];
   selectedLanguage: LanguageId;
+  contentStatus: ContentStatus | null;
   storageStatus: string;
   migrationError: string;
   userData: NextUserData | null;
@@ -1742,6 +1965,7 @@ function SettingsDialog({
   onImportProgress: () => void;
   onExportProgress: () => void;
   onExportCoachLog: () => void;
+  onReloadContent: () => void;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -1798,7 +2022,16 @@ function SettingsDialog({
                 <FlaskIcon />
                 Export coach log
               </button>
+              {contentStatus?.reloadAvailable ? (
+                <button type="button" className="secondary-button compact-button" onClick={onReloadContent}>
+                  <ResetIcon />
+                  Reload content
+                </button>
+              ) : null}
             </div>
+            {contentStatus?.reloadAvailable ? (
+              <p className="muted">Content root: {contentStatus.contentRoot}</p>
+            ) : null}
             {migrationError ? <p className="migration-error">{migrationError}</p> : null}
             {userData ? <MigrationSummary userData={userData} /> : <p className="muted">No migrated user data loaded.</p>}
           </section>
@@ -2354,7 +2587,13 @@ function AssessmentFlowScreen({
   }
   const problem: Problem = problemOrMissing;
   const levels = assessmentLevelsForProblem(problem);
-  const restoredSession = assessmentSessionFor(userData, problem.id);
+  const restoredRawSession = assessmentSessionFor(userData, problem.id);
+  const restoredSession = repairAssessmentSessionBuffers(
+    restoredRawSession,
+    userData,
+    problem,
+    assessmentLanguage(problem, restoredRawSession?.language ?? selectedLanguage)
+  );
   const [session, setSession] = useState<AssessmentSessionState | undefined>(() => restoredSession);
   const [level, setLevel] = useState(() => restoredSession?.activeLevel ?? 1);
   const language = assessmentLanguage(problem, session?.language ?? selectedLanguage);
@@ -2380,14 +2619,23 @@ function AssessmentFlowScreen({
   const assessmentCodeKeyRef = useRef("");
 
   useEffect(() => {
-    const restored = assessmentSessionFor(userData, problem.id);
+    const rawRestored = assessmentSessionFor(userData, problem.id);
+    const restored = repairAssessmentSessionBuffers(
+      rawRestored,
+      userData,
+      problem,
+      assessmentLanguage(problem, rawRestored?.language ?? selectedLanguage)
+    );
     setSession(restored);
     setLevel(restored?.activeLevel ?? 1);
     setResult(null);
     setHintCount(0);
     setSolutionOpen(false);
     setSaveState("saved");
-  }, [problem.id, userData?.migratedAt]);
+    if (restored && restored !== rawRestored) {
+      void onSaveAssessmentState(problem.id, "session", restored);
+    }
+  }, [problem, problem.id, selectedLanguage, userData?.migratedAt]);
 
   useEffect(() => {
     assessmentSessionRef.current = session;
@@ -3676,9 +3924,7 @@ function latestAssessmentAttemptForLevel(
 ): NextUserData["attempts"][number] | undefined {
   const partId = assessmentPartId(problem, level);
   const workspaceId = partId ? `${problem.id}:${partId}` : problem.id;
-  return userData?.attempts
-    .filter((attempt) => attempt.workspaceId === workspaceId && attempt.language === language)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+  return latestAttemptForWorkspace(userData, workspaceId, language);
 }
 
 function AssessmentResultsSummary({
@@ -4946,6 +5192,7 @@ function OutputDock({
   dockHeight,
   noteText,
   recentRuns,
+  activeProblemTimeMs,
   result,
   scratchpadCode,
   scratchpadBusy,
@@ -4974,6 +5221,7 @@ function OutputDock({
   dockHeight: number;
   noteText: string;
   recentRuns: Array<{ result: RunResult; at: string; includeHidden: boolean }>;
+  activeProblemTimeMs: number;
   result: RunResult | null;
   scratchpadCode: string;
   scratchpadBusy: boolean;
@@ -5091,6 +5339,9 @@ function OutputDock({
         {activePanel === "history" ? (
           <section className="workspace-panel result-panel active">
             <h2>Run history</h2>
+            {activeProblemTimeMs ? (
+              <p className="muted">Active time on this problem: {formatActiveTime(activeProblemTimeMs)}.</p>
+            ) : null}
             {!recentRuns.length ? <p className="muted">No runs yet. Visible and submitted runs appear here.</p> : null}
             <div className="history-list">
               {recentRuns.map((run, index) => {
@@ -5353,6 +5604,8 @@ function TestResultsList({
   const failedVisibleCount = visible.filter((test) => !test.passed).length;
   const passedVisibleCount = visible.filter((test) => test.passed).length;
   const failedHiddenCount = hidden.filter((test) => !test.passed).length;
+  const failedHidden = hidden.filter((test) => !test.passed);
+  const hiddenResults = showHiddenDiagnostics && !lockHidden ? failedHidden : hidden;
   return (
     <div className="result-groups">
       <div className="result-group-header">
@@ -5367,26 +5620,36 @@ function TestResultsList({
             <span>{failedHiddenCount ? `${failedHiddenCount} failing` : "All passing"}</span>
           </div>
           {!lockHidden ? (
-            <button className="secondary-button hidden-diagnostics-toggle" type="button" onClick={() => onToggleHiddenDiagnostics(!showHiddenDiagnostics)}>
+            <button
+              className="secondary-button hidden-diagnostics-toggle"
+              type="button"
+              onClick={() => onToggleHiddenDiagnostics(!showHiddenDiagnostics)}
+              disabled={!failedHiddenCount}
+            >
               {showHiddenDiagnostics ? <EyeOffIcon /> : <EyeIcon />}
-              {showHiddenDiagnostics ? "Hide hidden diagnostics" : "Reveal hidden diagnostics"}
+              {showHiddenDiagnostics ? "Hide hidden failing cases" : "Show hidden failing cases"}
             </button>
           ) : null}
-          <ResultGroup tests={hidden} reveal={!lockHidden && showHiddenDiagnostics} hidden />
+          {showHiddenDiagnostics && failedHiddenCount ? (
+            <p className="muted hidden-diagnostics-note">
+              Showing the {failedHiddenCount} hidden case{failedHiddenCount === 1 ? "" : "s"} that failed on submit.
+            </p>
+          ) : null}
+          <ResultGroup tests={hiddenResults} reveal={!lockHidden && showHiddenDiagnostics} hidden locked={lockHidden} />
         </section>
       ) : null}
     </div>
   );
 }
 
-function ResultGroup({ tests, reveal, hidden = false }: { tests: RunResult["tests"]; reveal: boolean; hidden?: boolean }) {
+function ResultGroup({ tests, reveal, hidden = false, locked = false }: { tests: RunResult["tests"]; reveal: boolean; hidden?: boolean; locked?: boolean }) {
   if (!tests.length) return null;
   return (
     <section className="result-group">
       <div className="test-results">
         {tests.map((test) => (
           <article className={test.passed ? "test-pass" : "test-fail"} key={`${test.name}-${hidden ? "hidden" : "visible"}`}>
-            <strong>{test.passed ? "Pass" : "Fail"}: {hidden ? "Hidden" : test.name}</strong>
+            <strong>{test.passed ? "Pass" : "Fail"}: {hidden && !reveal ? "Hidden" : test.name}</strong>
             {reveal ? (
               <div className="result-diff">
                 <div>
@@ -5409,7 +5672,15 @@ function ResultGroup({ tests, reveal, hidden = false }: { tests: RunResult["test
                 ) : null}
               </div>
             ) : (
-              <p className="muted">Diagnostics hidden for practice integrity.</p>
+              <p className="muted">
+                {hidden
+                  ? locked
+                    ? "Diagnostics hidden during the timed exam."
+                    : test.passed
+                      ? "Passed hidden case."
+                      : "Use the toggle above to reveal failing hidden cases after submit."
+                  : "Diagnostics hidden."}
+              </p>
             )}
           </article>
         ))}
@@ -5510,6 +5781,23 @@ function searchSidebar(graph: ContentGraph, query: string): SidebarSearchHit[] {
     .slice(0, 3)
     .map((problem) => ({ kind: "assessment" as const, id: problem.id, title: problem.title }));
   return [...lessons, ...problems, ...assessments];
+}
+
+function containerForProblemView(graph: ContentGraph, problemId: string, view: AppView): ContentContainer | undefined {
+  if (view.kind === "problem" && view.origin) {
+    const origin = containerForScope(graph, view.origin);
+    if (origin && problemIdsForContainer(graph, origin).includes(problemId)) return origin;
+  }
+  return containerForProblem(graph, problemId);
+}
+
+function containerForScope(graph: ContentGraph, scope: ProblemOrigin): ContentContainer | undefined {
+  if (scope.kind === "module") {
+    const module = graph.modules.find((candidate) => candidate.id === scope.id);
+    return module ? { kind: "module", id: module.id, title: module.title } : undefined;
+  }
+  const set = graph.problemSets.find((candidate) => candidate.id === scope.id);
+  return set ? { kind: "problem-set", id: set.id, title: set.title } : undefined;
 }
 
 function containerForProblem(graph: ContentGraph, problemId: string): ContentContainer | undefined {
@@ -5729,6 +6017,25 @@ function assessmentSessionFor(userData: NextUserData | null, assessmentId: strin
   if (!value || typeof value !== "object") return undefined;
   const session = value as AssessmentSessionState;
   return session.assessmentId === assessmentId && session.status ? session : undefined;
+}
+
+function repairAssessmentSessionBuffers(
+  session: AssessmentSessionState | undefined,
+  userData: NextUserData | null,
+  problem: Problem,
+  language: LanguageId
+): AssessmentSessionState | undefined {
+  if (!session) return undefined;
+  const buffers = { ...(session.buffers ?? {}) };
+  let changed = false;
+  for (const level of assessmentLevelsForProblem(problem)) {
+    if (typeof buffers[level.level] === "string") continue;
+    const attempt = latestAssessmentAttemptForLevel(userData, problem, level.level, language);
+    if (!attempt?.code) continue;
+    buffers[level.level] = attempt.code;
+    changed = true;
+  }
+  return changed ? { ...session, buffers } : session;
 }
 
 function assessmentScorecardFor(userData: NextUserData | null, assessmentId: string): AssessmentScorecard | undefined {
@@ -5986,6 +6293,15 @@ function formatProblemRunDuration(value: number): string {
   return `${(value / 1000).toFixed(1)} s`;
 }
 
+function formatActiveTime(value: number): string {
+  const totalMinutes = Math.max(0, Math.round(value / 60_000));
+  if (totalMinutes < 1) return "<1m";
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (!hours) return `${minutes}m`;
+  return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
+}
+
 function historyStatusLabel(status: RunResult["status"]): string {
   if (status === "failed") return "Failed";
   return statusLabel(status);
@@ -6007,6 +6323,20 @@ function noteForContent(userData: NextUserData | null, contentKind: "lesson" | "
   return userData?.notes.find((record) => record.contentKind === contentKind && record.contentId === contentId)?.body ?? "";
 }
 
+function problemWorkspaceId(problemId: string, partId?: string): string {
+  return partId ? `${problemId}:${partId}` : problemId;
+}
+
+function activeTimeForProblem(userData: NextUserData | null, problemId: string): number {
+  return (userData?.activity ?? [])
+    .filter((record) => record.workspaceId === problemId || record.workspaceId.startsWith(`${problemId}:`))
+    .reduce((sum, record) => sum + record.activeMs, 0);
+}
+
+function isDocumentActive(): boolean {
+  return document.visibilityState === "visible" && document.hasFocus();
+}
+
 function createEmptyUserData(): NextUserData {
   const now = new Date().toISOString();
   return {
@@ -6020,6 +6350,7 @@ function createEmptyUserData(): NextUserData {
     scratchpads: [],
     assessmentState: [],
     preferences: [],
+    activity: [],
     coachLogs: [],
     legacySnapshots: [],
     migrationReport: {
@@ -6032,7 +6363,28 @@ function createEmptyUserData(): NextUserData {
         scratchpads: 0,
         assessmentState: 0,
         preferences: 0,
+        activity: 0,
         coachLogs: 0
+      }
+    }
+  };
+}
+
+function normalizeUserData(value: NextUserData | null): NextUserData | null {
+  if (!value) return null;
+  const empty = createEmptyUserData();
+  const maybeActivity = (value as Partial<NextUserData>).activity;
+  return {
+    ...empty,
+    ...value,
+    activity: Array.isArray(maybeActivity) ? maybeActivity : [],
+    migrationReport: {
+      ...empty.migrationReport,
+      ...value.migrationReport,
+      counts: {
+        ...empty.migrationReport.counts,
+        ...value.migrationReport?.counts,
+        activity: Array.isArray(maybeActivity) ? maybeActivity.length : 0
       }
     }
   };
@@ -6086,6 +6438,35 @@ function upsertPreference(userData: NextUserData, key: string, value: unknown): 
   return {
     ...userData,
     preferences: [...userData.preferences.filter((record) => record.key !== key), { key, value }]
+  };
+}
+
+function addActivityTime(userData: NextUserData, workspaceId: string, deltaMs: number): NextUserData {
+  const activeMs = Math.max(0, Math.round(deltaMs));
+  if (!workspaceId || activeMs < 1000) return userData;
+  const now = new Date().toISOString();
+  const activity = userData.activity ?? [];
+  const existing = activity.find((record) => record.workspaceId === workspaceId);
+  const nextRecord = {
+    workspaceId,
+    contentKind: "problem" as const,
+    activeMs: (existing?.activeMs ?? 0) + activeMs,
+    firstActiveAt: existing?.firstActiveAt ?? now,
+    lastActiveAt: now,
+    updatedAt: now,
+    sourceKey: `activity:problem:${workspaceId}`
+  };
+  const nextActivity = [...activity.filter((record) => record.workspaceId !== workspaceId), nextRecord];
+  return {
+    ...userData,
+    activity: nextActivity,
+    migrationReport: {
+      ...userData.migrationReport,
+      counts: {
+        ...userData.migrationReport.counts,
+        activity: nextActivity.length
+      }
+    }
   };
 }
 
@@ -6369,6 +6750,27 @@ function findWorkspaceBuffer(
 ): WorkspaceEditorBuffer | undefined {
   const key = workspaceKey(selection);
   return state?.editorBuffers.find((buffer) => workspaceKey(buffer) === key);
+}
+
+function latestAttemptForSelection(
+  userData: NextUserData | null,
+  selection: WorkspaceSelection
+): NextUserData["attempts"][number] | undefined {
+  return latestAttemptForWorkspace(userData, workspaceIdForSelection(selection), selection.language);
+}
+
+function latestAttemptForWorkspace(
+  userData: NextUserData | null,
+  workspaceId: string,
+  language: LanguageId
+): NextUserData["attempts"][number] | undefined {
+  return userData?.attempts
+    .filter((attempt) => attempt.workspaceId === workspaceId && attempt.language === language && typeof attempt.code === "string")
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+}
+
+function workspaceIdForSelection(selection: Pick<WorkspaceSelection, "problemId" | "partId">): string {
+  return selection.partId ? `${selection.problemId}:${selection.partId}` : selection.problemId;
 }
 
 function upsertWorkspaceBuffer(

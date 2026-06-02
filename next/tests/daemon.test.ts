@@ -1,5 +1,6 @@
 import { once } from "node:events";
-import { mkdtemp, rm } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
@@ -97,6 +98,7 @@ describe("runner daemon API", () => {
       scratchpads: [],
       assessmentState: [],
       preferences: [],
+      activity: [],
       coachLogs: [],
       legacySnapshots: [],
       migrationReport: {
@@ -109,6 +111,7 @@ describe("runner daemon API", () => {
           scratchpads: 0,
           assessmentState: 0,
           preferences: 0,
+          activity: 0,
           coachLogs: 0
         }
       }
@@ -160,4 +163,128 @@ describe("runner daemon API", () => {
       await rm(userDataRoot, { recursive: true, force: true });
     }
   });
+
+  test("reloads development content from disk and keeps old graph on invalid content", async () => {
+    const tempRoot = await mkdtemp(join(tmpdir(), "dsa-coach-content-"));
+    const contentRoot = join(tempRoot, "content");
+    await cp(defaultContentRoot, contentRoot, { recursive: true });
+    const graph = await loadContentGraph(contentRoot);
+    const server = createRunnerDaemonServer({ graph, contentRoot, buildMode: "development" });
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("missing test server address");
+    const base = `http://127.0.0.1:${address.port}`;
+
+    const problemPath = join(contentRoot, "problems/sum-positive-readings/problem.json");
+    const problem = JSON.parse(await readFile(problemPath, "utf8")) as { title: string; languages: Record<string, { referencePath: string }> };
+    problem.title = "Reloaded Sum Positive Readings";
+    await writeFile(problemPath, `${JSON.stringify(problem, null, 2)}\n`, "utf8");
+
+    try {
+      const status = await fetch(`${base}/content/status`).then((res) => res.json() as Promise<{ reloadAvailable: boolean; generation: number }>);
+      expect(status.reloadAvailable).toBe(true);
+      expect(status.generation).toBe(1);
+
+      const reload = await fetch(`${base}/content/reload`, { method: "POST" })
+        .then((res) => res.json() as Promise<{ ok: boolean; generation: number; counts: { problems: number } }>);
+      expect(reload.ok).toBe(true);
+      expect(reload.generation).toBe(2);
+      expect(reload.counts.problems).toBe(graph.problems.length);
+
+      const catalog = await fetch(`${base}/catalog`).then((res) => res.json() as Promise<{ problems: Array<{ id: string; title: string }> }>);
+      expect(catalog.problems.find((candidate) => candidate.id === "sum-positive-readings")?.title).toBe("Reloaded Sum Positive Readings");
+
+      const source = await fetch(
+        `${base}/source?problemId=sum-positive-readings&language=typescript&kind=reference`
+      ).then((res) => res.json() as Promise<{ code: string }>);
+      const result = await fetch(`${base}/run`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          language: "typescript",
+          problemId: "sum-positive-readings",
+          code: source.code,
+          includeHidden: true
+        })
+      }).then((res) => res.json() as Promise<{ status: string }>);
+      expect(result.status).toBe("passed");
+
+      const runtimePath = join(tempRoot, "runtime.json");
+      await writeFile(runtimePath, `${JSON.stringify({ baseUrl: base, pid: process.pid, mode: "development", contentRoot })}\n`, "utf8");
+      const script = await runReloadScript(runtimePath);
+      expect(script.code).toBe(0);
+      expect(script.stdout).toContain("Content reloaded");
+
+      problem.languages.typescript.referencePath = "missing-reference.ts";
+      await writeFile(problemPath, `${JSON.stringify(problem, null, 2)}\n`, "utf8");
+      const failed = await fetch(`${base}/content/reload`, { method: "POST" });
+      expect(failed.status).toBe(400);
+      const failedPayload = await failed.json() as { ok: boolean; generation: number; errors: string[] };
+      expect(failedPayload.ok).toBe(false);
+      expect(failedPayload.generation).toBe(3);
+      expect(failedPayload.errors.join("\n")).toContain("missing-reference.ts");
+
+      const preserved = await fetch(`${base}/catalog`).then((res) => res.json() as Promise<{ problems: Array<{ id: string; title: string }> }>);
+      expect(preserved.problems.find((candidate) => candidate.id === "sum-positive-readings")?.title).toBe("Reloaded Sum Positive Readings");
+    } finally {
+      server.close();
+      await rm(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  test("disables content reload in release mode", async () => {
+    const graph = await loadContentGraph();
+    const server = createRunnerDaemonServer({ graph, contentRoot: defaultContentRoot, buildMode: "release" });
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("missing test server address");
+    const base = `http://127.0.0.1:${address.port}`;
+
+    try {
+      const status = await fetch(`${base}/content/status`).then((res) => res.json() as Promise<{ mode: string; reloadAvailable: boolean }>);
+      expect(status.mode).toBe("release");
+      expect(status.reloadAvailable).toBe(false);
+
+      const reload = await fetch(`${base}/content/reload`, { method: "POST" });
+      expect(reload.status).toBe(403);
+      const payload = await reload.json() as { ok: boolean; errors: string[] };
+      expect(payload.ok).toBe(false);
+      expect(payload.errors[0]).toContain("development builds");
+    } finally {
+      server.close();
+    }
+  });
 });
+
+function runReloadScript(runtimePath: string): Promise<{ code: number | null; stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, ["run", "scripts/reload-content.ts", "--runtime", runtimePath], {
+      cwd: new URL("..", import.meta.url).pathname,
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    let stdout = "";
+    let stderr = "";
+    const timer = setTimeout(() => {
+      child.kill();
+      reject(new Error("reload script timed out"));
+    }, 3000);
+    child.stdout?.setEncoding("utf8");
+    child.stderr?.setEncoding("utf8");
+    child.stdout?.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr?.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      resolve({ code, stdout, stderr });
+    });
+  });
+}

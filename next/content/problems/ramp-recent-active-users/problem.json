@@ -1,0 +1,266 @@
+{
+  "id": "ramp-recent-active-users",
+  "kind": "problem",
+  "title": "Recent Active Users",
+  "difficulty": "medium",
+  "concepts": [
+    "sliding window",
+    "two pointers",
+    "frequency map"
+  ],
+  "prompt": "Imagine an activity feed where each event has a timestamp and a user id. After each event, the product team wants to know: how many distinct users have been active recently?\n\nYou are given `timestamps` and `users`, where `timestamps[i]` and `users[i]` describe the same event. The timestamps are sorted in non-decreasing order. Write `recentActiveUsers(timestamps, users, window)` so that for each event at time `t`, it counts how many distinct user ids appear in the inclusive window `[t - window, t]`.\n\nThe current event always counts. Duplicate events from the same user do not increase the distinct-user count, but they do matter while deciding when that user fully leaves the window.\n\nThe left boundary is inclusive: an event exactly at `t - window` is still recent. If `window` is `0`, count distinct users among events at exactly the current timestamp. If there are no events, return an empty list.",
+  "signature": {
+    "name": "recentActiveUsers",
+    "inputs": [
+      {
+        "name": "timestamps",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "users",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      {
+        "name": "window",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "small",
+      "args": [
+        [
+          1,
+          2,
+          4,
+          8
+        ],
+        [
+          "a",
+          "b",
+          "a",
+          "c"
+        ],
+        3
+      ],
+      "expected": [
+        1,
+        2,
+        2,
+        1
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "same user repeated",
+      "args": [
+        [
+          10,
+          11,
+          12
+        ],
+        [
+          "a",
+          "a",
+          "b"
+        ],
+        5
+      ],
+      "expected": [
+        1,
+        1,
+        2
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        [],
+        10
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "window zero with duplicate timestamp",
+      "args": [
+        [
+          2,
+          2,
+          3
+        ],
+        [
+          "a",
+          "b",
+          "a"
+        ],
+        0
+      ],
+      "expected": [
+        1,
+        2,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "inclusive left boundary",
+      "args": [
+        [
+          1,
+          6,
+          7
+        ],
+        [
+          "a",
+          "b",
+          "a"
+        ],
+        5
+      ],
+      "expected": [
+        1,
+        2,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicate user leaves only after last event leaves",
+      "args": [
+        [
+          1,
+          2,
+          8
+        ],
+        [
+          "a",
+          "a",
+          "b"
+        ],
+        6
+      ],
+      "expected": [
+        1,
+        1,
+        2
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "gap clears all previous users",
+      "args": [
+        [
+          1,
+          2,
+          10,
+          20
+        ],
+        [
+          "a",
+          "b",
+          "a",
+          "c"
+        ],
+        3
+      ],
+      "expected": [
+        1,
+        2,
+        1,
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "wide window",
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        [
+          "a",
+          "b",
+          "a",
+          "c"
+        ],
+        100
+      ],
+      "expected": [
+        1,
+        2,
+        2,
+        3
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative timestamps",
+      "args": [
+        [
+          -5,
+          0,
+          5
+        ],
+        [
+          "a",
+          "b",
+          "a"
+        ],
+        5
+      ],
+      "expected": [
+        1,
+        2,
+        2
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "recent_active_users",
+      "starterPath": "problems/ramp-recent-active-users/solutions/python/starter.py",
+      "referencePath": "problems/ramp-recent-active-users/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "recentActiveUsers",
+      "starterPath": "problems/ramp-recent-active-users/solutions/typescript/starter.ts",
+      "referencePath": "problems/ramp-recent-active-users/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RecentActiveUsers",
+      "starterPath": "problems/ramp-recent-active-users/solutions/go/starter.go",
+      "referencePath": "problems/ramp-recent-active-users/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "recentActiveUsers",
+      "starterPath": "problems/ramp-recent-active-users/solutions/scala/starter.scala",
+      "referencePath": "problems/ramp-recent-active-users/solutions/scala/reference.scala"
+    }
+  }
+}

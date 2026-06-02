@@ -71,6 +71,10 @@
         },
         {
           "kind": "problem-set",
+          "id": "ramp-prep"
+        },
+        {
+          "kind": "problem-set",
           "id": "aoc-year-1"
         },
         {
@@ -113,6 +117,7 @@
   ],
   "problemSets": [
     "problem-sets/interview-prep.json",
+    "problem-sets/ramp-prep.json",
     "problem-sets/aoc-year-1.json",
     "problem-sets/aoc-year-2.json",
     "problem-sets/aoc-year-3.json",
@@ -333,6 +338,12 @@
     "problems/interview-tools-bonus-06/problem.json",
     "problems/tek-trade-pnl/problem.json",
     "problems/tek-log-errors-per-hour/problem.json",
+    "problems/ramp-url-maze/problem.json",
+    "problems/ramp-flight-tracker/problem.json",
+    "problems/ramp-recurring-transactions/problem.json",
+    "problems/ramp-recent-spend-totals/problem.json",
+    "problems/ramp-recent-active-users/problem.json",
+    "problems/ramp-task-manager/problem.json",
     "problems/tek-rate-limiter/problem.json",
     "problems/tek-bank-transactions/problem.json",
     "problems/tek-sessionize-events/problem.json",

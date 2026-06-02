@@ -78,6 +78,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let viewMenu = addMenu(title: "View", to: mainMenu)
         viewMenu.addItem(commandItem(title: "Reload", action: #selector(reloadWebView(_:)), keyEquivalent: "r"))
+        if desktopBuildMode() == "development" {
+            viewMenu.addItem(commandItem(title: "Reload Content", action: #selector(reloadContent(_:)), keyEquivalent: "r", modifiers: [.command, .shift]))
+        }
         viewMenu.addItem(NSMenuItem.separator())
         viewMenu.addItem(commandItem(title: "Toggle Sidebar", action: #selector(toggleSidebar(_:)), keyEquivalent: "s", modifiers: [.command, .option]))
         viewMenu.addItem(commandItem(title: "Toggle Coach", action: #selector(toggleCoach(_:)), keyEquivalent: "c", modifiers: [.command, .option]))
@@ -169,6 +172,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func reloadWebView(_ sender: Any?) {
         webView.reload()
+    }
+
+    @objc private func reloadContent(_ sender: Any?) {
+        sendWebCommand("reload-content")
     }
 
     @objc private func goBack(_ sender: Any?) {
@@ -285,13 +292,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ]
 
         var environment = ProcessInfo.processInfo.environment
+        let buildMode = desktopBuildMode()
         environment["DSA_COACH_DESKTOP"] = "1"
+        environment["DSA_COACH_BUILD_MODE"] = buildMode
         environment["DSA_COACH_USER_DATA_DIR"] = userDataDirectory.path
+        environment["DSA_COACH_RUNTIME_STATUS_PATH"] = supportDirectory.appendingPathComponent("runtime.json").path
         environment["DSA_COACH_CACHE_ROOT"] = processCacheDirectory.path
         environment["DSA_COACH_BUNDLED_CACHE_ROOT"] = appRoot.appendingPathComponent(".runner-cache", isDirectory: true).path
         environment["XDG_CACHE_HOME"] = cacheDirectory.path
         environment["BUN_INSTALL_CACHE_DIR"] = cacheDirectory.appendingPathComponent("bun-install", isDirectory: true).path
         environment["PATH"] = launchPath(appRoot: appRoot, existing: environment["PATH"])
+        if buildMode == "development" {
+            let existingContentRoot = environment["DSA_COACH_CONTENT_ROOT"]
+            if !isContentRoot(existingContentRoot),
+               let developmentRoot = desktopDevelopmentContentRoot(),
+               isContentRoot(developmentRoot) {
+                environment["DSA_COACH_CONTENT_ROOT"] = developmentRoot
+            }
+        } else {
+            environment.removeValue(forKey: "DSA_COACH_CONTENT_ROOT")
+        }
         process.environment = environment
 
         let stdout = Pipe()
@@ -440,6 +460,29 @@ private func isAppRoot(_ url: URL) -> Bool {
 private func isAppRoot(_ url: URL?) -> Bool {
     guard let url else { return false }
     return isAppRoot(url)
+}
+
+private func desktopBuildMode() -> String {
+    if let value = ProcessInfo.processInfo.environment["DSA_COACH_BUILD_MODE"], value == "release" {
+        return "release"
+    }
+    if let value = Bundle.main.object(forInfoDictionaryKey: "DSACoachBuildMode") as? String, value == "release" {
+        return "release"
+    }
+    return "development"
+}
+
+private func desktopDevelopmentContentRoot() -> String? {
+    guard let value = Bundle.main.object(forInfoDictionaryKey: "DSACoachDevelopmentContentRoot") as? String else {
+        return nil
+    }
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
+}
+
+private func isContentRoot(_ path: String?) -> Bool {
+    guard let path else { return false }
+    return FileManager.default.fileExists(atPath: URL(fileURLWithPath: path).appendingPathComponent("catalog.json").path)
 }
 
 private func locateBun() -> String? {

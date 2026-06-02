@@ -2,43 +2,195 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
 import type { ContentGraph, RunRequest, ScratchpadRequest } from "../core/types.js";
-import { runtimeLanguagePacks } from "../languages/languagePacks.js";
+import { validateContentFiles, validateContentGraph } from "../core/validation.js";
+import { languagePacks, runtimeLanguagePacks } from "../languages/languagePacks.js";
 import { LspManager } from "../lsp/manager.js";
 import type { LspCompletionRequest, LspDocumentRequest, LspPositionRequest } from "../lsp/types.js";
 import { LocalRunner } from "../runner/localRunner.js";
 import { ScratchpadRunner } from "../runner/scratchpadRunner.js";
+import { loadContentGraph } from "../content/loadContentGraph.js";
 import { readProblemSource, type SourceKind } from "./source.js";
+
+export type BuildMode = "development" | "release";
 
 export interface RunnerDaemonOptions {
   graph: ContentGraph;
   contentRoot: string;
+  buildMode?: BuildMode;
   staticRoot?: string;
   userDataRoot?: string;
 }
 
+interface ContentRuntimeState {
+  graph: ContentGraph;
+  contentRoot: string;
+  runner: LocalRunner;
+  lsp: LspManager;
+  loadedAt: string;
+  generation: number;
+}
+
+export interface ContentStatus {
+  ok: true;
+  mode: BuildMode;
+  contentRoot: string;
+  reloadAvailable: boolean;
+  loadedAt: string;
+  generation: number;
+  counts: {
+    tracks: number;
+    modules: number;
+    problemSets: number;
+    problems: number;
+  };
+}
+
+export type ContentReloadResult =
+  | (ContentStatus & { reloadedAt: string })
+  | (Omit<ContentStatus, "ok"> & { ok: false; errors: string[] });
+
+interface ContentRuntime {
+  current(): ContentRuntimeState;
+  status(): ContentStatus;
+  reload(): Promise<ContentReloadResult>;
+  dispose(): Promise<void>;
+}
+
+type ValidatedContentLoad =
+  | { ok: true; graph: ContentGraph; reloadedAt: string }
+  | { ok: false; errors: string[] };
+
 export function createRunnerDaemonServer(options: RunnerDaemonOptions) {
-  const runner = new LocalRunner(options.graph);
+  const content = createContentRuntime(options);
   const scratchpad = new ScratchpadRunner();
-  const lsp = new LspManager({ graph: options.graph });
 
   const server = createServer((req, res) => {
-    void handleRequest(req, res, options, runner, scratchpad, lsp).catch((error) => {
+    void handleRequest(req, res, options, content, scratchpad).catch((error) => {
       json(res, 500, { error: error instanceof Error ? error.message : String(error) });
     });
   });
   server.on("close", () => {
-    void lsp.dispose();
+    void content.dispose();
   });
   return server;
+}
+
+function createContentRuntime(options: RunnerDaemonOptions): ContentRuntime {
+  const mode = options.buildMode ?? "development";
+  let state = createContentState(options.graph, options.contentRoot, 1);
+  let reloadInFlight: Promise<ContentReloadResult> | undefined;
+
+  return {
+    current() {
+      return state;
+    },
+    status() {
+      return statusForState(state, mode);
+    },
+    async reload() {
+      if (mode !== "development") {
+        return failedReload(statusForState(state, mode), ["Content reload is only available in development builds."]);
+      }
+      if (reloadInFlight) return reloadInFlight;
+      reloadInFlight = (async () => {
+        const loaded = await loadValidatedContent(state.contentRoot);
+        if (!loaded.ok) return failedReload(statusForState(state, mode), loaded.errors);
+        const previous = state;
+        state = createContentState(loaded.graph, state.contentRoot, state.generation + 1);
+        setTimeout(() => {
+          void previous.lsp.dispose();
+        }, 1000).unref();
+        return {
+          ...statusForState(state, mode),
+          reloadedAt: loaded.reloadedAt
+        };
+      })().finally(() => {
+        reloadInFlight = undefined;
+      });
+      return reloadInFlight;
+    },
+    async dispose() {
+      await state.lsp.dispose();
+    }
+  };
+}
+
+function createContentState(graph: ContentGraph, contentRoot: string, generation: number): ContentRuntimeState {
+  return {
+    graph,
+    contentRoot,
+    runner: new LocalRunner(graph),
+    lsp: new LspManager({ graph }),
+    loadedAt: new Date().toISOString(),
+    generation
+  };
+}
+
+async function loadValidatedContent(contentRoot: string): Promise<ValidatedContentLoad> {
+  try {
+    const graph = await loadContentGraph(contentRoot);
+    const graphResult = validateContentGraph(graph, languagePacks);
+    const fileResult = await validateContentFiles(graph, contentRoot);
+    const errors = [...graphResult.errors, ...fileResult.errors];
+    if (errors.length) return { ok: false, errors };
+    return {
+      ok: true,
+      graph,
+      reloadedAt: new Date().toISOString()
+    };
+  } catch (error) {
+    return { ok: false, errors: [error instanceof Error ? error.message : String(error)] };
+  }
+}
+
+function statusForState(state: ContentRuntimeState, mode: BuildMode, reloadedAt?: string): ContentStatus & { reloadedAt?: string } {
+  return statusForGraph(state.graph, state.contentRoot, mode, state.loadedAt, state.generation, reloadedAt);
+}
+
+function statusForGraph(
+  graph: ContentGraph,
+  contentRoot: string,
+  mode: BuildMode,
+  loadedAt: string,
+  generation: number,
+  reloadedAt?: string
+): ContentStatus & { reloadedAt?: string } {
+  return {
+    ok: true,
+    mode,
+    contentRoot,
+    reloadAvailable: mode === "development",
+    loadedAt,
+    generation,
+    counts: {
+      tracks: graph.tracks.length,
+      modules: graph.modules.length,
+      problemSets: graph.problemSets.length,
+      problems: graph.problems.length
+    },
+    ...(reloadedAt ? { reloadedAt } : {})
+  };
+}
+
+function failedReload(status: ContentStatus, errors: string[]): ContentReloadResult {
+  return {
+    ok: false,
+    mode: status.mode,
+    contentRoot: status.contentRoot,
+    reloadAvailable: status.reloadAvailable,
+    loadedAt: status.loadedAt,
+    generation: status.generation,
+    counts: status.counts,
+    errors
+  };
 }
 
 async function handleRequest(
   req: IncomingMessage,
   res: ServerResponse,
   options: RunnerDaemonOptions,
-  runner: LocalRunner,
-  scratchpad: ScratchpadRunner,
-  lsp: LspManager
+  content: ContentRuntime,
+  scratchpad: ScratchpadRunner
 ) {
   setCorsHeaders(res);
   if (req.method === "OPTIONS") {
@@ -56,10 +208,17 @@ async function handleRequest(
     return json(res, 200, await runtimeLanguagePacks());
   }
   if (req.method === "GET" && url.pathname === "/lsp/status") {
-    return json(res, 200, await lsp.status());
+    return json(res, 200, await content.current().lsp.status());
   }
   if (req.method === "GET" && url.pathname === "/catalog") {
-    return json(res, 200, options.graph);
+    return json(res, 200, content.current().graph);
+  }
+  if (req.method === "GET" && url.pathname === "/content/status") {
+    return json(res, 200, content.status());
+  }
+  if (req.method === "POST" && url.pathname === "/content/reload") {
+    const result = await content.reload();
+    return json(res, result.ok ? 200 : result.reloadAvailable ? 400 : 403, result);
   }
   if (req.method === "GET" && url.pathname === "/coach/status") {
     return json(res, 200, await coachStatus());
@@ -95,11 +254,12 @@ async function handleRequest(
     return json(res, 200, { ok: true, workspaceState: value });
   }
   if (req.method === "GET" && url.pathname === "/source") {
+    const state = content.current();
     const problemId = requiredParam(url, "problemId");
     const partId = url.searchParams.get("partId") ?? undefined;
     const language = requiredParam(url, "language");
     const kind = sourceKind(requiredParam(url, "kind"));
-    const { problem, code } = await readProblemSource(options.graph, options.contentRoot, {
+    const { problem, code } = await readProblemSource(state.graph, state.contentRoot, {
       problemId,
       partId,
       language,
@@ -114,7 +274,7 @@ async function handleRequest(
   }
   if (req.method === "POST" && url.pathname === "/run") {
     const body = await readBody(req);
-    const result = await runner.run(JSON.parse(body) as RunRequest);
+    const result = await content.current().runner.run(JSON.parse(body) as RunRequest);
     return json(res, 200, result);
   }
   if (req.method === "POST" && url.pathname === "/scratchpad") {
@@ -124,37 +284,37 @@ async function handleRequest(
   }
   if (req.method === "POST" && url.pathname === "/lsp/completions") {
     const body = await readBody(req);
-    const result = await lsp.complete(JSON.parse(body) as LspCompletionRequest);
+    const result = await content.current().lsp.complete(JSON.parse(body) as LspCompletionRequest);
     return json(res, 200, result);
   }
   if (req.method === "POST" && url.pathname === "/lsp/diagnostics") {
     const body = await readBody(req);
-    const result = await lsp.diagnostics(JSON.parse(body) as LspDocumentRequest);
+    const result = await content.current().lsp.diagnostics(JSON.parse(body) as LspDocumentRequest);
     return json(res, 200, result);
   }
   if (req.method === "POST" && url.pathname === "/lsp/hover") {
     const body = await readBody(req);
-    const result = await lsp.hover(JSON.parse(body) as LspPositionRequest);
+    const result = await content.current().lsp.hover(JSON.parse(body) as LspPositionRequest);
     return json(res, 200, result);
   }
   if (req.method === "POST" && url.pathname === "/lsp/signature-help") {
     const body = await readBody(req);
-    const result = await lsp.signatureHelp(JSON.parse(body) as LspPositionRequest);
+    const result = await content.current().lsp.signatureHelp(JSON.parse(body) as LspPositionRequest);
     return json(res, 200, result);
   }
   if (req.method === "POST" && url.pathname === "/lsp/format") {
     const body = await readBody(req);
-    const result = await lsp.format(JSON.parse(body) as LspDocumentRequest);
+    const result = await content.current().lsp.format(JSON.parse(body) as LspDocumentRequest);
     return json(res, 200, result);
   }
   if (req.method === "POST" && url.pathname === "/lsp/symbols") {
     const body = await readBody(req);
-    const result = await lsp.symbols(JSON.parse(body) as LspDocumentRequest);
+    const result = await content.current().lsp.symbols(JSON.parse(body) as LspDocumentRequest);
     return json(res, 200, result);
   }
   if (req.method === "POST" && url.pathname === "/lsp/definition") {
     const body = await readBody(req);
-    const result = await lsp.definition(JSON.parse(body) as LspPositionRequest);
+    const result = await content.current().lsp.definition(JSON.parse(body) as LspPositionRequest);
     return json(res, 200, result);
   }
   if (req.method === "GET" && options.staticRoot && (await serveStatic(res, url, options.staticRoot))) {

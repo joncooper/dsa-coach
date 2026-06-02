@@ -14,6 +14,7 @@ export interface NextUserData {
   scratchpads: ScratchpadRecord[];
   assessmentState: AssessmentStateRecord[];
   preferences: UserPreferenceRecord[];
+  activity: UserActivityRecord[];
   coachLogs: UserCoachLogRecord[];
   legacySnapshots: LegacySnapshotRecord[];
   migrationReport: MigrationReport;
@@ -95,6 +96,16 @@ export interface UserPreferenceRecord {
   value: unknown;
 }
 
+export interface UserActivityRecord {
+  workspaceId: string;
+  contentKind: "problem";
+  activeMs: number;
+  firstActiveAt: string;
+  lastActiveAt: string;
+  updatedAt: string;
+  sourceKey: string;
+}
+
 export interface UserCoachLogRecord {
   legacyId?: number;
   conversationId: string;
@@ -126,6 +137,7 @@ export interface MigrationReport {
     scratchpads: number;
     assessmentState: number;
     preferences: number;
+    activity: number;
     coachLogs: number;
   };
 }

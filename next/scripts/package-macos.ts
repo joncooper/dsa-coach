@@ -5,6 +5,9 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const appName = "DSA Coach Next";
+const buildMode = process.argv.includes("--release") || process.env.DSA_COACH_BUILD_MODE === "release"
+  ? "release"
+  : "development";
 const bundle = resolve(root, "dist/macos", `${appName}.app`);
 const contents = resolve(bundle, "Contents");
 const macos = resolve(contents, "MacOS");
@@ -49,7 +52,7 @@ run(
   }
 );
 
-console.log(`Packaged ${bundle}`);
+console.log(`Packaged ${bundle} (${buildMode})`);
 
 function copyRuntime() {
   mkdirSync(runtimeRoot, { recursive: true });
@@ -225,6 +228,7 @@ function run(command: string, args: string[], env: Record<string, string> = {}) 
 }
 
 function infoPlist(): string {
+  const developmentContentRoot = buildMode === "development" ? realpathSync(resolve(root, "content")) : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -247,6 +251,10 @@ function infoPlist(): string {
   <string>0.1.0</string>
   <key>CFBundleVersion</key>
   <string>1</string>
+  <key>DSACoachBuildMode</key>
+  <string>${buildMode}</string>
+  <key>DSACoachDevelopmentContentRoot</key>
+  <string>${plistEscape(developmentContentRoot)}</string>
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>
   <key>NSAppTransportSecurity</key>
@@ -259,4 +267,13 @@ function infoPlist(): string {
 </dict>
 </plist>
 `;
+}
+
+function plistEscape(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
 }

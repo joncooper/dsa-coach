@@ -30,6 +30,10 @@
     },
     {
       "kind": "problem",
+      "id": "recent-event-counts"
+    },
+    {
+      "kind": "problem",
       "id": "palindrome-edge-score"
     },
     {

@@ -1,0 +1,266 @@
+{
+  "id": "ramp-recent-spend-totals",
+  "kind": "problem",
+  "title": "Recent Spend Totals",
+  "difficulty": "medium",
+  "concepts": [
+    "sliding window",
+    "two pointers",
+    "rolling sum"
+  ],
+  "prompt": "Imagine you are building a lightweight spending monitor. Purchases arrive sorted by timestamp, and after each purchase you want to know: how much money has been spent recently, ending at this purchase?\n\nEach event is `[timestamp, amount]`. Write `recentSpendTotals(events, window)` so that for every event at time `t`, it returns the sum of all amounts whose timestamps are inside `[t - window, t]`.\n\nThe current event always counts. Earlier events count only if they are not older than `t - window`. The left boundary is inclusive, so an event exactly at `t - window` still counts.\n\nMultiple events may have the same timestamp, and each event counts separately. Amounts may be negative, representing refunds or reversals. The input is already sorted by timestamp. If there are no events, return an empty list.",
+  "signature": {
+    "name": "recentSpendTotals",
+    "inputs": [
+      {
+        "name": "events",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "window",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "small",
+      "args": [
+        [
+          [
+            1,
+            10
+          ],
+          [
+            3,
+            20
+          ],
+          [
+            8,
+            5
+          ],
+          [
+            10,
+            7
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        10,
+        30,
+        25,
+        12
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "duplicates and refund",
+      "args": [
+        [
+          [
+            0,
+            5
+          ],
+          [
+            0,
+            7
+          ],
+          [
+            5,
+            -2
+          ],
+          [
+            6,
+            10
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        5,
+        12,
+        10,
+        8
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "empty",
+      "args": [
+        [],
+        10
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "wide window",
+      "args": [
+        [
+          [
+            1,
+            4
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            8
+          ]
+        ],
+        100
+      ],
+      "expected": [
+        4,
+        10,
+        18
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "gap clears window",
+      "args": [
+        [
+          [
+            1,
+            10
+          ],
+          [
+            10,
+            20
+          ],
+          [
+            20,
+            30
+          ]
+        ],
+        3
+      ],
+      "expected": [
+        10,
+        20,
+        30
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "inclusive left boundary",
+      "args": [
+        [
+          [
+            1,
+            10
+          ],
+          [
+            6,
+            20
+          ],
+          [
+            7,
+            5
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        10,
+        30,
+        25
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "window zero same timestamp",
+      "args": [
+        [
+          [
+            2,
+            4
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            9
+          ]
+        ],
+        0
+      ],
+      "expected": [
+        4,
+        10,
+        9
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "negative timestamps",
+      "args": [
+        [
+          [
+            -5,
+            10
+          ],
+          [
+            0,
+            20
+          ],
+          [
+            5,
+            30
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        10,
+        30,
+        50
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "recent_spend_totals",
+      "starterPath": "problems/ramp-recent-spend-totals/solutions/python/starter.py",
+      "referencePath": "problems/ramp-recent-spend-totals/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "recentSpendTotals",
+      "starterPath": "problems/ramp-recent-spend-totals/solutions/typescript/starter.ts",
+      "referencePath": "problems/ramp-recent-spend-totals/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RecentSpendTotals",
+      "starterPath": "problems/ramp-recent-spend-totals/solutions/go/starter.go",
+      "referencePath": "problems/ramp-recent-spend-totals/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "recentSpendTotals",
+      "starterPath": "problems/ramp-recent-spend-totals/solutions/scala/starter.scala",
+      "referencePath": "problems/ramp-recent-spend-totals/solutions/scala/reference.scala"
+    }
+  }
+}

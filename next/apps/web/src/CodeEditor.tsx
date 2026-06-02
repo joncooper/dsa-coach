@@ -28,8 +28,10 @@ import {
 } from "@codemirror/language";
 import { type Diagnostic as CodeMirrorDiagnostic, linter } from "@codemirror/lint";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { Compartment, EditorState, type Extension } from "@codemirror/state";
+import { Compartment, EditorState, RangeSetBuilder, type Extension } from "@codemirror/state";
 import {
+  Decoration,
+  type DecorationSet,
   drawSelection,
   dropCursor,
   EditorView,
@@ -39,7 +41,9 @@ import {
   keymap,
   lineNumbers,
   tooltips,
-  type Rect
+  type Rect,
+  ViewPlugin,
+  type ViewUpdate
 } from "@codemirror/view";
 import { scala } from "@codemirror/legacy-modes/mode/clike";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -377,6 +381,15 @@ const editorTheme = EditorView.theme({
   ".cm-line": {
     padding: "0 14px"
   },
+  ".cm-indent-guide": {
+    backgroundImage: "linear-gradient(to bottom, rgba(9, 107, 114, 0.18) 45%, transparent 45%)",
+    backgroundPosition: "left 0.25em top",
+    backgroundRepeat: "repeat-y",
+    backgroundSize: "1px 7px"
+  },
+  ".cm-indent-guide-active": {
+    backgroundImage: "linear-gradient(to bottom, rgba(9, 107, 114, 0.34) 55%, transparent 55%)"
+  },
   ".cm-gutters": {
     backgroundColor: "#f3efe4",
     color: "#617174",
@@ -441,6 +454,7 @@ const editorBaseExtensions: Extension[] = [
   syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
   highlightSelectionMatches(),
   tooltips({ tooltipSpace: editorTooltipSpace }),
+  indentGuidePlugin,
   keymap.of([
     { key: "Ctrl-Space", run: startCompletion },
     { key: "Escape", run: closeCompletion },
@@ -469,6 +483,7 @@ const basicEditorExtensions: Extension[] = [
   bracketMatching(),
   closeBrackets(),
   syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+  indentGuidePlugin,
   keymap.of([
     indentWithTab,
     ...closeBracketsKeymap,
@@ -487,6 +502,65 @@ function editorTooltipSpace(view: EditorView): Rect {
     right: rect.right - inset,
     bottom: rect.bottom - inset
   };
+}
+
+const INDENT_GUIDE_COLUMNS = 2;
+
+const indentGuideDecoration = Decoration.mark({ class: "cm-indent-guide" });
+const activeIndentGuideDecoration = Decoration.mark({ class: "cm-indent-guide cm-indent-guide-active" });
+
+const indentGuidePlugin = ViewPlugin.fromClass(class {
+  decorations: DecorationSet;
+
+  constructor(view: EditorView) {
+    this.decorations = buildIndentGuides(view);
+  }
+
+  update(update: ViewUpdate) {
+    if (update.docChanged || update.viewportChanged || update.selectionSet) {
+      this.decorations = buildIndentGuides(update.view);
+    }
+  }
+}, {
+  decorations: (plugin) => plugin.decorations
+});
+
+function buildIndentGuides(view: EditorView): DecorationSet {
+  const builder = new RangeSetBuilder<Decoration>();
+  const activeLine = view.state.doc.lineAt(view.state.selection.main.head).number;
+
+  for (const range of view.visibleRanges) {
+    let position = range.from;
+    while (position <= range.to) {
+      const line = view.state.doc.lineAt(position);
+      addIndentGuidesForLine(builder, line.from, line.text, line.number === activeLine);
+      position = line.to + 1;
+    }
+  }
+
+  return builder.finish();
+}
+
+function addIndentGuidesForLine(
+  builder: RangeSetBuilder<Decoration>,
+  lineStart: number,
+  lineText: string,
+  isActiveLine: boolean
+) {
+  const indentLength = leadingWhitespaceLength(lineText);
+  if (indentLength < INDENT_GUIDE_COLUMNS) return;
+
+  for (let column = 0; column + INDENT_GUIDE_COLUMNS <= indentLength; column += INDENT_GUIDE_COLUMNS) {
+    const decoration = isActiveLine && column + INDENT_GUIDE_COLUMNS === indentLength
+      ? activeIndentGuideDecoration
+      : indentGuideDecoration;
+    builder.add(lineStart + column, lineStart + column + 1, decoration);
+  }
+}
+
+function leadingWhitespaceLength(text: string): number {
+  const match = text.match(/^[\t ]+/);
+  return match ? match[0].length : 0;
 }
 
 interface IdeExtensionOptions {

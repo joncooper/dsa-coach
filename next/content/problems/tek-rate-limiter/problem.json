@@ -8,7 +8,7 @@
     "queue per key",
     "stream processing"
   ],
-  "prompt": "Process a stream of events `[[timestamp, user_id], ...]` already sorted by `timestamp` (integer seconds, non-decreasing). For each event, decide whether the request is accepted. The rule per user: a request is accepted only if strictly fewer than `limit` of that user's previously accepted requests have timestamps within the last `window` seconds (counting requests whose timestamp difference from the current one is strictly less than `window`). Rejected requests do not count toward the limit. Return a list of booleans with one entry per event, in input order, where `true` means accepted.",
+  "prompt": "Suppose you are building a simple API gateway. Requests arrive over time, and you need to decide whether each request should be accepted or rate-limited.\n\nEach event is `[timestamp, user_id]`. The events are already sorted by timestamp. Write `rateLimited(events, limit, window)` to return one boolean per request: `true` if it is accepted, `false` if it is rejected.\n\nThe rule is per user. A request is accepted only if that user has fewer than `limit` previously accepted requests in the recent window.\n\nUse accepted requests only when counting. Rejected requests do not consume capacity.\n\nThe recent window is `(timestamp - window, timestamp]`. That means a previous accepted request exactly `window` seconds old has expired and no longer counts, but requests at the current timestamp do count after they are accepted.\n\nDifferent users are independent. Duplicate timestamps are allowed. If there are no events, return an empty list.",
   "signature": {
     "name": "rateLimited",
     "inputs": [
@@ -401,13 +401,72 @@
         true
       ],
       "visibility": "hidden"
+    },
+    {
+      "name": "zero limit rejects everything",
+      "expected": [
+        false,
+        false,
+        false
+      ],
+      "args": [
+        [
+          [
+            1,
+            "u"
+          ],
+          [
+            2,
+            "u"
+          ],
+          [
+            100,
+            "v"
+          ]
+        ],
+        0,
+        10
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "same timestamp across users independent",
+      "expected": [
+        true,
+        true,
+        false,
+        false
+      ],
+      "args": [
+        [
+          [
+            5,
+            "a"
+          ],
+          [
+            5,
+            "b"
+          ],
+          [
+            5,
+            "a"
+          ],
+          [
+            5,
+            "b"
+          ]
+        ],
+        1,
+        10
+      ],
+      "visibility": "hidden"
     }
   ],
   "parts": [
     {
       "id": "part-2-token-bucket",
       "title": "Part 2: Token-bucket variant",
-      "prompt": "Now switch to a token-bucket scheme. Each user has a bucket that starts full with `capacity` tokens. Tokens refill at the rate of one token every `refill_period` seconds (integer). The bucket never holds more than `capacity` tokens — extra refills are dropped. Each event spends one token: if the bucket has at least one token at the moment of the event, accept and decrement; otherwise reject with no state change. Events are sorted by timestamp; a user's bucket is created on their first appearance.",
+      "prompt": "Now imagine the product team wants a burst-friendly limiter instead of a strict sliding-window limiter. Use a token bucket for each user.\n\nEach user's bucket starts full the first time that user appears. The bucket can hold at most `capacity` tokens. Every accepted request spends one token. If a user's bucket has no tokens at the request time, reject that request.\n\nTokens refill over time: one whole token every `refill_period` seconds. Extra tokens above `capacity` are dropped.\n\nWrite the token-bucket version so it returns one boolean per event in input order.\n\nBefore handling a user's request at time `t`, refill that user's bucket using only whole refill periods that have elapsed. If `elapsed // refill_period` tokens are earned, advance that user's refill anchor by that many full periods so leftover partial time carries forward.\n\nUsers are independent, and the input events are sorted by timestamp.",
       "signature": {
         "name": "token_bucket_rate_limited",
         "inputs": [
@@ -761,6 +820,70 @@
             true,
             false,
             false
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "zero capacity rejects everything",
+          "expected": [
+            false,
+            false,
+            false
+          ],
+          "args": [
+            [
+              [
+                1,
+                "u"
+              ],
+              [
+                10,
+                "u"
+              ],
+              [
+                20,
+                "v"
+              ]
+            ],
+            0,
+            5
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "large gap refills only to capacity",
+          "expected": [
+            true,
+            true,
+            true,
+            true,
+            false
+          ],
+          "args": [
+            [
+              [
+                0,
+                "u"
+              ],
+              [
+                1,
+                "u"
+              ],
+              [
+                100,
+                "u"
+              ],
+              [
+                100,
+                "u"
+              ],
+              [
+                100,
+                "u"
+              ]
+            ],
+            2,
+            10
           ],
           "visibility": "hidden"
         }

@@ -1,0 +1,48 @@
+{
+  "id": "ramp-prep",
+  "kind": "problem-set",
+  "title": "Ramp Prep",
+  "summary": "Practical Ramp-style drills focused on API traversal, temporal state, ledgers, sliding windows, and progressive in-memory systems.",
+  "entries": [
+    {
+      "problem": "ramp-url-maze",
+      "category": "api traversal",
+      "note": "BFS, retries, cycles, response parsing"
+    },
+    {
+      "problem": "ramp-flight-tracker",
+      "category": "temporal data",
+      "note": "per-user timelines, interval boundaries, sorting"
+    },
+    {
+      "problem": "ramp-recurring-transactions",
+      "category": "fintech ledger",
+      "note": "grouping, date cadence detection, month-end edge cases"
+    },
+    {
+      "problem": "recent-event-counts",
+      "category": "sliding window",
+      "note": "count visits in a recent time window"
+    },
+    {
+      "problem": "ramp-recent-spend-totals",
+      "category": "sliding window",
+      "note": "same recent-window shape with a rolling sum"
+    },
+    {
+      "problem": "ramp-recent-active-users",
+      "category": "sliding window",
+      "note": "same recent-window shape with distinct users and a frequency map"
+    },
+    {
+      "problem": "tek-rate-limiter",
+      "category": "sliding window",
+      "note": "one-minute visit counting, per-user rate limits"
+    },
+    {
+      "problem": "ramp-task-manager",
+      "category": "progressive OOD",
+      "note": "CRUD, priority sorting, quotas, assignments, overdue state"
+    }
+  ]
+}

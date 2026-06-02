@@ -1,0 +1,475 @@
+{
+  "id": "ramp-recurring-transactions",
+  "kind": "problem",
+  "title": "Recurring Transaction Detector",
+  "difficulty": "hard",
+  "concepts": [
+    "grouping",
+    "date arithmetic",
+    "ledger analysis"
+  ],
+  "prompt": "Suppose you are working on a finance product that tries to identify recurring charges: rent, subscriptions, payroll, gym memberships, and so on.\n\nYou are given a transaction history where each row is `[date, merchant, amount, currency]`. Dates use `YYYY-MM-DD`, and amounts are already normalized strings like `\"12.99\"`.\n\nWrite `recurringTransactions(transactions)` to find merchant/amount/currency groups that look recurring.\n\nA group is considered recurring if it has at least three dates following one of these cadences:\n\n- `DAILY`: consecutive dates one day apart.\n- `WEEKLY`: consecutive dates seven days apart.\n- `MONTHLY`: consecutive months on the same day-of-month.\n\nFor monthly charges, handle the common end-of-month case: January 31, February 28, and March 31 should count as monthly.\n\nGroup transactions by exact `merchant + amount + currency`. Do not do fuzzy merchant matching, amount tolerance, or currency conversion. If the same group has multiple transactions on the same date, count that date once for detecting the cadence.\n\nA recurring pattern can be a clean streak inside noisier data. Extra dates in the same group do not invalidate the streak.\n\nReturn rows `[merchant, amount, currency, cadence]`, sorted by merchant, amount, and currency. If a group qualifies for more than one cadence, keep the cadence with the longest streak; ties prefer `DAILY`, then `WEEKLY`, then `MONTHLY`. If nothing qualifies, return an empty list.",
+  "signature": {
+    "name": "recurringTransactions",
+    "inputs": [
+      {
+        "name": "transactions",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "daily recurrence",
+      "args": [
+        [
+          [
+            "2026-01-01",
+            "Coffee",
+            "4.00",
+            "USD"
+          ],
+          [
+            "2026-01-02",
+            "Coffee",
+            "4.00",
+            "USD"
+          ],
+          [
+            "2026-01-03",
+            "Coffee",
+            "4.00",
+            "USD"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          "Coffee",
+          "4.00",
+          "USD",
+          "DAILY"
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "weekly recurrence",
+      "args": [
+        [
+          [
+            "2026-01-01",
+            "Gym",
+            "25.00",
+            "USD"
+          ],
+          [
+            "2026-01-08",
+            "Gym",
+            "25.00",
+            "USD"
+          ],
+          [
+            "2026-01-15",
+            "Gym",
+            "25.00",
+            "USD"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          "Gym",
+          "25.00",
+          "USD",
+          "WEEKLY"
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "monthly end of month",
+      "args": [
+        [
+          [
+            "2026-01-31",
+            "Rent",
+            "2000.00",
+            "USD"
+          ],
+          [
+            "2026-02-28",
+            "Rent",
+            "2000.00",
+            "USD"
+          ],
+          [
+            "2026-03-31",
+            "Rent",
+            "2000.00",
+            "USD"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          "Rent",
+          "2000.00",
+          "USD",
+          "MONTHLY"
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "different amount is separate group",
+      "args": [
+        [
+          [
+            "2026-01-01",
+            "Cloud",
+            "10.00",
+            "USD"
+          ],
+          [
+            "2026-01-08",
+            "Cloud",
+            "11.00",
+            "USD"
+          ],
+          [
+            "2026-01-15",
+            "Cloud",
+            "10.00",
+            "USD"
+          ],
+          [
+            "2026-01-22",
+            "Cloud",
+            "10.00",
+            "USD"
+          ]
+        ]
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "longer cadence wins",
+      "args": [
+        [
+          [
+            "2026-01-01",
+            "Service",
+            "9.00",
+            "USD"
+          ],
+          [
+            "2026-01-02",
+            "Service",
+            "9.00",
+            "USD"
+          ],
+          [
+            "2026-01-03",
+            "Service",
+            "9.00",
+            "USD"
+          ],
+          [
+            "2026-01-10",
+            "Service",
+            "9.00",
+            "USD"
+          ],
+          [
+            "2026-01-17",
+            "Service",
+            "9.00",
+            "USD"
+          ],
+          [
+            "2026-01-24",
+            "Service",
+            "9.00",
+            "USD"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          "Service",
+          "9.00",
+          "USD",
+          "WEEKLY"
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "sorted output",
+      "args": [
+        [
+          [
+            "2026-01-01",
+            "Zoom",
+            "15.00",
+            "USD"
+          ],
+          [
+            "2026-02-01",
+            "Zoom",
+            "15.00",
+            "USD"
+          ],
+          [
+            "2026-03-01",
+            "Zoom",
+            "15.00",
+            "USD"
+          ],
+          [
+            "2026-01-01",
+            "AWS",
+            "100.00",
+            "USD"
+          ],
+          [
+            "2026-01-08",
+            "AWS",
+            "100.00",
+            "USD"
+          ],
+          [
+            "2026-01-15",
+            "AWS",
+            "100.00",
+            "USD"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          "AWS",
+          "100.00",
+          "USD",
+          "WEEKLY"
+        ],
+        [
+          "Zoom",
+          "15.00",
+          "USD",
+          "MONTHLY"
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "two transactions not recurring",
+      "args": [
+        [
+          [
+            "2026-01-01",
+            "Tool",
+            "5.00",
+            "USD"
+          ],
+          [
+            "2026-01-08",
+            "Tool",
+            "5.00",
+            "USD"
+          ]
+        ]
+      ],
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "monthly same day",
+      "args": [
+        [
+          [
+            "2026-01-15",
+            "Insurance",
+            "70.00",
+            "USD"
+          ],
+          [
+            "2026-02-15",
+            "Insurance",
+            "70.00",
+            "USD"
+          ],
+          [
+            "2026-03-15",
+            "Insurance",
+            "70.00",
+            "USD"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          "Insurance",
+          "70.00",
+          "USD",
+          "MONTHLY"
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicate same date ignored",
+      "expected": [
+        [
+          "Gym",
+          "50.00",
+          "USD",
+          "DAILY"
+        ]
+      ],
+      "args": [
+        [
+          [
+            "2026-01-01",
+            "Gym",
+            "50.00",
+            "USD"
+          ],
+          [
+            "2026-01-01",
+            "Gym",
+            "50.00",
+            "USD"
+          ],
+          [
+            "2026-01-02",
+            "Gym",
+            "50.00",
+            "USD"
+          ],
+          [
+            "2026-01-03",
+            "Gym",
+            "50.00",
+            "USD"
+          ]
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "currencies stay separate",
+      "expected": [],
+      "args": [
+        [
+          [
+            "2026-01-01",
+            "News",
+            "9.00",
+            "USD"
+          ],
+          [
+            "2026-01-08",
+            "News",
+            "9.00",
+            "EUR"
+          ],
+          [
+            "2026-01-15",
+            "News",
+            "9.00",
+            "USD"
+          ]
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "tie prefers daily",
+      "expected": [
+        [
+          "Transit",
+          "2.75",
+          "USD",
+          "DAILY"
+        ]
+      ],
+      "args": [
+        [
+          [
+            "2026-01-01",
+            "Transit",
+            "2.75",
+            "USD"
+          ],
+          [
+            "2026-01-02",
+            "Transit",
+            "2.75",
+            "USD"
+          ],
+          [
+            "2026-01-03",
+            "Transit",
+            "2.75",
+            "USD"
+          ],
+          [
+            "2026-01-10",
+            "Transit",
+            "2.75",
+            "USD"
+          ],
+          [
+            "2026-01-17",
+            "Transit",
+            "2.75",
+            "USD"
+          ]
+        ]
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "recurring_transactions",
+      "starterPath": "problems/ramp-recurring-transactions/solutions/python/starter.py",
+      "referencePath": "problems/ramp-recurring-transactions/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "recurringTransactions",
+      "starterPath": "problems/ramp-recurring-transactions/solutions/typescript/starter.ts",
+      "referencePath": "problems/ramp-recurring-transactions/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "RecurringTransactions",
+      "starterPath": "problems/ramp-recurring-transactions/solutions/go/starter.go",
+      "referencePath": "problems/ramp-recurring-transactions/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "recurringTransactions",
+      "starterPath": "problems/ramp-recurring-transactions/solutions/scala/starter.scala",
+      "referencePath": "problems/ramp-recurring-transactions/solutions/scala/reference.scala"
+    }
+  }
+}

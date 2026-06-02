@@ -1,0 +1,350 @@
+{
+  "id": "ramp-flight-tracker",
+  "kind": "problem",
+  "title": "Flight History Tracker",
+  "difficulty": "medium",
+  "concepts": [
+    "intervals",
+    "sorting",
+    "per-user timelines"
+  ],
+  "prompt": "Imagine you are building a small travel-status tool. You have a log of flights people have taken, and someone asks: at this exact time, where is each traveler?\n\nEach flight is recorded as `[user_id, from_airport, depart_time, to_airport, arrive_time]`. For example, `[\"u1\", \"SFO\", \"2026-06-01T09:00\", \"JFK\", \"2026-06-01T17:00\"]` means user `u1` leaves `SFO` at 9:00 and arrives at `JFK` at 17:00. The flight list may not be sorted.\n\nWrite `userLocations(flights, query_time)` so it returns one `[user_id, status]` row for every user who appears in the flight log.\n\nFor each user:\n\n- If none of their flights has departed yet, their status is `\"UNKNOWN\"`.\n- If `query_time` is during one of their flights, their status is `\"IN_FLIGHT:FROM->TO\"`.\n- Otherwise, their status is the airport where their most recent completed flight landed.\n\nDeparture time counts as being on the flight. Arrival time counts as already being at the destination. In other words, a flight is active when `depart_time <= query_time < arrive_time`.\n\nThe timestamps are strings in `YYYY-MM-DDTHH:MM` format, so normal string comparison works for ordering them. If a user's records overlap, do not try to repair the itinerary; use the latest flight that has started by `query_time`.\n\nReturn the rows sorted by `user_id`. If there are no flights, return an empty list.",
+  "signature": {
+    "name": "userLocations",
+    "inputs": [
+      {
+        "name": "flights",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "query_time",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "single user in flight",
+      "args": [
+        [
+          [
+            "u1",
+            "SFO",
+            "2026-06-01T09:00",
+            "JFK",
+            "2026-06-01T17:00"
+          ]
+        ],
+        "2026-06-01T10:00"
+      ],
+      "expected": [
+        [
+          "u1",
+          "IN_FLIGHT:SFO->JFK"
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "arrival boundary",
+      "args": [
+        [
+          [
+            "u1",
+            "SFO",
+            "2026-06-01T09:00",
+            "JFK",
+            "2026-06-01T17:00"
+          ]
+        ],
+        "2026-06-01T17:00"
+      ],
+      "expected": [
+        [
+          "u1",
+          "JFK"
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "multiple users sorted",
+      "args": [
+        [
+          [
+            "b",
+            "LAX",
+            "2026-06-01T08:00",
+            "SEA",
+            "2026-06-01T10:00"
+          ],
+          [
+            "a",
+            "BOS",
+            "2026-06-01T11:00",
+            "MIA",
+            "2026-06-01T14:00"
+          ]
+        ],
+        "2026-06-01T10:30"
+      ],
+      "expected": [
+        [
+          "a",
+          "UNKNOWN"
+        ],
+        [
+          "b",
+          "SEA"
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "between connecting flights",
+      "args": [
+        [
+          [
+            "u1",
+            "SFO",
+            "2026-06-01T09:00",
+            "ORD",
+            "2026-06-01T13:00"
+          ],
+          [
+            "u1",
+            "ORD",
+            "2026-06-01T15:00",
+            "BOS",
+            "2026-06-01T18:00"
+          ]
+        ],
+        "2026-06-01T14:00"
+      ],
+      "expected": [
+        [
+          "u1",
+          "ORD"
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "second flight active",
+      "args": [
+        [
+          [
+            "u1",
+            "SFO",
+            "2026-06-01T09:00",
+            "ORD",
+            "2026-06-01T13:00"
+          ],
+          [
+            "u1",
+            "ORD",
+            "2026-06-01T15:00",
+            "BOS",
+            "2026-06-01T18:00"
+          ]
+        ],
+        "2026-06-01T16:00"
+      ],
+      "expected": [
+        [
+          "u1",
+          "IN_FLIGHT:ORD->BOS"
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "out of order input",
+      "args": [
+        [
+          [
+            "u1",
+            "DEN",
+            "2026-06-01T12:00",
+            "SEA",
+            "2026-06-01T15:00"
+          ],
+          [
+            "u1",
+            "AUS",
+            "2026-06-01T06:00",
+            "DEN",
+            "2026-06-01T09:00"
+          ]
+        ],
+        "2026-06-01T10:00"
+      ],
+      "expected": [
+        [
+          "u1",
+          "DEN"
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "departure boundary",
+      "args": [
+        [
+          [
+            "u1",
+            "SFO",
+            "2026-06-01T09:00",
+            "JFK",
+            "2026-06-01T17:00"
+          ]
+        ],
+        "2026-06-01T09:00"
+      ],
+      "expected": [
+        [
+          "u1",
+          "IN_FLIGHT:SFO->JFK"
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "overlap uses latest started flight",
+      "args": [
+        [
+          [
+            "u1",
+            "A",
+            "2026-06-01T09:00",
+            "B",
+            "2026-06-01T18:00"
+          ],
+          [
+            "u1",
+            "C",
+            "2026-06-01T12:00",
+            "D",
+            "2026-06-01T13:00"
+          ]
+        ],
+        "2026-06-01T12:30"
+      ],
+      "expected": [
+        [
+          "u1",
+          "IN_FLIGHT:C->D"
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty input",
+      "expected": [],
+      "args": [
+        [],
+        "2026-01-01T00:00"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "after all flights final airport",
+      "expected": [
+        [
+          "u1",
+          "JFK"
+        ]
+      ],
+      "args": [
+        [
+          [
+            "u1",
+            "SFO",
+            "2026-01-01T09:00",
+            "SEA",
+            "2026-01-01T11:00"
+          ],
+          [
+            "u1",
+            "SEA",
+            "2026-01-01T12:00",
+            "JFK",
+            "2026-01-01T18:00"
+          ]
+        ],
+        "2026-01-02T09:00"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "overlap uses latest started event",
+      "expected": [
+        [
+          "u1",
+          "D"
+        ]
+      ],
+      "args": [
+        [
+          [
+            "u1",
+            "A",
+            "2026-01-01T09:00",
+            "B",
+            "2026-01-01T18:00"
+          ],
+          [
+            "u1",
+            "C",
+            "2026-01-01T12:00",
+            "D",
+            "2026-01-01T13:00"
+          ]
+        ],
+        "2026-01-01T14:00"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "user_locations",
+      "starterPath": "problems/ramp-flight-tracker/solutions/python/starter.py",
+      "referencePath": "problems/ramp-flight-tracker/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "userLocations",
+      "starterPath": "problems/ramp-flight-tracker/solutions/typescript/starter.ts",
+      "referencePath": "problems/ramp-flight-tracker/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "UserLocations",
+      "starterPath": "problems/ramp-flight-tracker/solutions/go/starter.go",
+      "referencePath": "problems/ramp-flight-tracker/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "userLocations",
+      "starterPath": "problems/ramp-flight-tracker/solutions/scala/starter.scala",
+      "referencePath": "problems/ramp-flight-tracker/solutions/scala/reference.scala"
+    }
+  }
+}

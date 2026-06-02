@@ -1,0 +1,374 @@
+{
+  "id": "ramp-url-maze",
+  "kind": "problem",
+  "title": "URL Maze Crawler",
+  "difficulty": "medium",
+  "concepts": [
+    "BFS",
+    "API traversal",
+    "retries",
+    "visited set"
+  ],
+  "prompt": "Suppose we have a small internal web challenge where each page either links to more pages, is a dead end, or is the exit. Starting from one URL, find the first exit page you can reach.\n\nIn a real system you would make HTTP requests. Here, the responses are already modeled for you in `pages`. Each page is a row `[url, kind, payload, failures]`:\n\n- `url` is the page URL.\n- `kind` is `\"LINKS\"`, `\"EXIT\"`, or `\"DEAD\"`.\n- For a `\"LINKS\"` page, `payload` is the ordered list of URLs found on that page.\n- For `\"EXIT\"` and `\"DEAD\"` pages, `payload` is ignored.\n- `failures` is how many temporary failures happen before that page can be read successfully.\n\nWrite `findExitUrl(pages, start, max_retries)`.\n\nCrawl breadth-first from `start`, following links in the order they appear. If reading a page fails, retry that same URL later. A page can eventually be read if `failures <= max_retries`; if it would need more retries than that, skip it. Missing URLs can be ignored.\n\nOnly mark a URL visited after you successfully read it. That matters because a temporarily failing page may need to be retried.\n\nReturn the URL of the first successfully read `\"EXIT\"` page in BFS order. If no readable exit is reachable, return `\"\"`.",
+  "signature": {
+    "name": "findExitUrl",
+    "inputs": [
+      {
+        "name": "pages",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "any"
+            }
+          }
+        }
+      },
+      {
+        "name": "start",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "max_retries",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "string"
+    }
+  },
+  "tests": [
+    {
+      "name": "direct exit",
+      "args": [
+        [
+          [
+            "/start",
+            "EXIT",
+            [],
+            0
+          ]
+        ],
+        "/start",
+        1
+      ],
+      "expected": "/start",
+      "visibility": "visible"
+    },
+    {
+      "name": "simple branch",
+      "args": [
+        [
+          [
+            "/start",
+            "LINKS",
+            [
+              "/a",
+              "/b"
+            ],
+            0
+          ],
+          [
+            "/a",
+            "DEAD",
+            [],
+            0
+          ],
+          [
+            "/b",
+            "EXIT",
+            [],
+            0
+          ]
+        ],
+        "/start",
+        1
+      ],
+      "expected": "/b",
+      "visibility": "visible"
+    },
+    {
+      "name": "cycle does not loop",
+      "args": [
+        [
+          [
+            "/start",
+            "LINKS",
+            [
+              "/a"
+            ],
+            0
+          ],
+          [
+            "/a",
+            "LINKS",
+            [
+              "/start",
+              "/exit"
+            ],
+            0
+          ],
+          [
+            "/exit",
+            "EXIT",
+            [],
+            0
+          ]
+        ],
+        "/start",
+        1
+      ],
+      "expected": "/exit",
+      "visibility": "visible"
+    },
+    {
+      "name": "retry succeeds",
+      "args": [
+        [
+          [
+            "/start",
+            "LINKS",
+            [
+              "/flaky"
+            ],
+            0
+          ],
+          [
+            "/flaky",
+            "EXIT",
+            [],
+            2
+          ]
+        ],
+        "/start",
+        2
+      ],
+      "expected": "/flaky",
+      "visibility": "hidden"
+    },
+    {
+      "name": "too many failures skips page",
+      "args": [
+        [
+          [
+            "/start",
+            "LINKS",
+            [
+              "/flaky",
+              "/fallback"
+            ],
+            0
+          ],
+          [
+            "/flaky",
+            "EXIT",
+            [],
+            3
+          ],
+          [
+            "/fallback",
+            "EXIT",
+            [],
+            0
+          ]
+        ],
+        "/start",
+        2
+      ],
+      "expected": "/fallback",
+      "visibility": "hidden"
+    },
+    {
+      "name": "bfs returns nearest exit",
+      "args": [
+        [
+          [
+            "/start",
+            "LINKS",
+            [
+              "/left",
+              "/right"
+            ],
+            0
+          ],
+          [
+            "/left",
+            "LINKS",
+            [
+              "/deep"
+            ],
+            0
+          ],
+          [
+            "/right",
+            "EXIT",
+            [],
+            0
+          ],
+          [
+            "/deep",
+            "EXIT",
+            [],
+            0
+          ]
+        ],
+        "/start",
+        1
+      ],
+      "expected": "/right",
+      "visibility": "hidden"
+    },
+    {
+      "name": "missing start",
+      "args": [
+        [
+          [
+            "/a",
+            "EXIT",
+            [],
+            0
+          ]
+        ],
+        "/missing",
+        1
+      ],
+      "expected": "",
+      "visibility": "hidden"
+    },
+    {
+      "name": "missing child ignored",
+      "args": [
+        [
+          [
+            "/start",
+            "LINKS",
+            [
+              "/missing",
+              "/exit"
+            ],
+            0
+          ],
+          [
+            "/exit",
+            "EXIT",
+            [],
+            0
+          ]
+        ],
+        "/start",
+        1
+      ],
+      "expected": "/exit",
+      "visibility": "hidden"
+    },
+    {
+      "name": "dead start has no exit",
+      "expected": "",
+      "args": [
+        [
+          [
+            "/start",
+            "DEAD",
+            [],
+            0
+          ]
+        ],
+        "/start",
+        1
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "zero retries skips flaky branch",
+      "expected": "/exit",
+      "args": [
+        [
+          [
+            "/start",
+            "LINKS",
+            [
+              "/flaky",
+              "/exit"
+            ],
+            0
+          ],
+          [
+            "/flaky",
+            "EXIT",
+            [],
+            1
+          ],
+          [
+            "/exit",
+            "EXIT",
+            [],
+            0
+          ]
+        ],
+        "/start",
+        0
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "duplicate links do not change bfs result",
+      "expected": "/b",
+      "args": [
+        [
+          [
+            "/start",
+            "LINKS",
+            [
+              "/a",
+              "/a",
+              "/b"
+            ],
+            0
+          ],
+          [
+            "/a",
+            "DEAD",
+            [],
+            0
+          ],
+          [
+            "/b",
+            "EXIT",
+            [],
+            0
+          ]
+        ],
+        "/start",
+        2
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "find_exit_url",
+      "starterPath": "problems/ramp-url-maze/solutions/python/starter.py",
+      "referencePath": "problems/ramp-url-maze/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "findExitUrl",
+      "starterPath": "problems/ramp-url-maze/solutions/typescript/starter.ts",
+      "referencePath": "problems/ramp-url-maze/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "FindExitUrl",
+      "starterPath": "problems/ramp-url-maze/solutions/go/starter.go",
+      "referencePath": "problems/ramp-url-maze/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "findExitUrl",
+      "starterPath": "problems/ramp-url-maze/solutions/scala/starter.scala",
+      "referencePath": "problems/ramp-url-maze/solutions/scala/reference.scala"
+    }
+  }
+}
