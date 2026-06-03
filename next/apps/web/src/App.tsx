@@ -16,6 +16,7 @@ import type { NextUserData, NextWorkspaceState, WorkspaceEditorBuffer, Workspace
 import { API_BASE } from "./apiBase";
 import { BasicCodeEditor, CodeEditor } from "./CodeEditor";
 import { CoachPanel } from "./CoachPanel";
+import { ScenarioSetScreen, ScenarioWorkspaceScreen, type ScenarioAttemptSummary } from "./ScenarioScreens";
 import {
   contentStats as legacyContentStats,
   course as legacyCourse,
@@ -43,7 +44,9 @@ interface ContentStatus {
     tracks: number;
     modules: number;
     problemSets: number;
+    scenarioSets: number;
     problems: number;
+    scenarios: number;
   };
 }
 
@@ -65,6 +68,8 @@ type AppView =
   | { kind: "lesson"; lessonId: string }
   | { kind: "quiz"; quizId: string }
   | { kind: "assessment"; problemId: string }
+  | { kind: "scenario-set"; id: string }
+  | { kind: "scenario"; scenarioId: string; attemptId?: string }
   | { kind: "problem"; origin?: ProblemOrigin };
 
 type CollectionViewModel = {
@@ -82,7 +87,8 @@ type CollectionViewModel = {
 type SidebarSearchHit =
   | { kind: "lesson"; id: string; title: string }
   | { kind: "problem"; id: string; title: string }
-  | { kind: "assessment"; id: string; title: string };
+  | { kind: "assessment"; id: string; title: string }
+  | { kind: "scenario"; id: string; title: string };
 
 type OutputPanel = "results" | "stdout" | "errors" | "scratchpad" | "notes" | "history";
 const outputPanels: OutputPanel[] = ["results", "stdout", "errors", "scratchpad", "notes", "history"];
@@ -229,6 +235,7 @@ export function App() {
   const [solutionOpen, setSolutionOpen] = useState(false);
   const [solutionCode, setSolutionCode] = useState("");
   const [splitRatio, setSplitRatio] = useState(34);
+  const [scenarioAttempts, setScenarioAttempts] = useState<ScenarioAttemptSummary[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -317,9 +324,12 @@ export function App() {
   const assessmentSets = graph?.problemSets.filter((set) => set.id === "assessments") ?? [];
   const librarySets = graph?.problemSets.filter((set) => set.id.startsWith("lib-")) ?? [];
   const practiceSets = graph?.problemSets.filter((set) => set.id !== "assessments" && !set.id.startsWith("lib-")) ?? [];
+  const scenarioSets = graph?.scenarioSets ?? [];
   const sidebarModules = graph ? legacyOrderedModules(graph) : [];
   const activeContainer = graph && selectedProblem ? containerForProblemView(graph, selectedProblem.id, currentView) : undefined;
   const selectedCollection = graph && currentView.kind === "collection" ? collectionForScope(graph, currentView.scope) : undefined;
+  const selectedScenarioSet = graph && currentView.kind === "scenario-set" ? graph.scenarioSets.find((set) => set.id === currentView.id) : undefined;
+  const selectedScenario = graph && currentView.kind === "scenario" ? graph.scenarios.find((scenario) => scenario.id === currentView.scenarioId) : undefined;
   const sidebarActiveScope: SidebarScope = currentView.kind === "collection" ? sidebarScope : { kind: "all" };
   const siblingProblemIds = graph && selectedProblem ? problemIdsForContainer(graph, activeContainer) : [];
   const currentProblemIndex = siblingProblemIds.indexOf(selectedProblemId);
@@ -393,6 +403,26 @@ export function App() {
     setSelectedPartId("");
     setCurrentView({ kind: "assessment", problemId });
   }, [code, currentView.kind, selectedLanguage, selectedPartId, selectedProblemId]);
+
+  const openScenarioSet = useCallback((id: string) => {
+    flushCurrentWorkspaceBuffer();
+    setCurrentView({ kind: "scenario-set", id });
+  }, [code, currentView.kind, selectedLanguage, selectedPartId, selectedProblemId]);
+
+  const openScenario = useCallback((scenarioId: string, attemptId?: string) => {
+    flushCurrentWorkspaceBuffer();
+    setCurrentView({ kind: "scenario", scenarioId, attemptId });
+  }, [code, currentView.kind, selectedLanguage, selectedPartId, selectedProblemId]);
+
+  const refreshScenarioAttempts = useCallback(async () => {
+    const response = await safeGetJson<{ attempts: ScenarioAttemptSummary[] }>("/scenarios/attempts");
+    setScenarioAttempts(response?.attempts ?? []);
+  }, []);
+
+  useEffect(() => {
+    if (loadState.status !== "ready") return;
+    void refreshScenarioAttempts();
+  }, [loadState.status, refreshScenarioAttempts]);
 
   const updateSidebarCollapsed = useCallback((next: boolean) => {
     setSidebarCollapsed(next);
@@ -487,12 +517,17 @@ export function App() {
           setCurrentView({ kind: "problem" });
         } else if (currentView.kind === "problem" && currentView.origin && !containerForScope(nextGraph, currentView.origin)) {
           setCurrentView({ kind: "problem" });
+        } else if (currentView.kind === "scenario-set" && !nextGraph.scenarioSets.some((set) => set.id === currentView.id)) {
+          setCurrentView({ kind: "dashboard" });
+        } else if (currentView.kind === "scenario" && !nextGraph.scenarios.some((scenario) => scenario.id === currentView.scenarioId)) {
+          setCurrentView({ kind: "dashboard" });
         }
       } else {
         setSelectedProblemId("");
         setSelectedPartId("");
         setCurrentView({ kind: "dashboard" });
       }
+      void refreshScenarioAttempts();
       setStorageStatus(`Content reloaded from ${nextStatus.contentRoot}.`);
     } catch (error) {
       setStorageStatus(`Content reload failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -1249,6 +1284,7 @@ export function App() {
                     if (result.kind === "lesson") openLesson(result.id);
                     if (result.kind === "problem") selectProblem(result.id);
                     if (result.kind === "assessment") openAssessment(result.id);
+                    if (result.kind === "scenario") openScenario(result.id);
                   }}
                 >
                   <span>{titleCase(result.kind)}</span>
@@ -1270,6 +1306,25 @@ export function App() {
                     onClick={() => openCollection({ kind: "problem-set", id: set.id })}
                   >
                     <span aria-hidden="true"><ClockIcon /></span>
+                    {set.title}
+                  </button>
+                ))}
+              </nav>
+            </>
+          ) : null}
+
+          {scenarioSets.length ? (
+            <>
+              <p className="sidebar-eyebrow">Interview simulations</p>
+              <nav className="chapter-nav" aria-label="Interview simulations">
+                {scenarioSets.map((set) => (
+                  <button
+                    type="button"
+                    key={set.id}
+                    className={currentView.kind === "scenario-set" && currentView.id === set.id ? "active" : ""}
+                    onClick={() => openScenarioSet(set.id)}
+                  >
+                    <span aria-hidden="true"><TerminalSquareIcon /></span>
                     {set.title}
                   </button>
                 ))}
@@ -1370,7 +1425,13 @@ export function App() {
       <main
         ref={mainPanelRef}
         className={`main-panel ${
-          currentView.kind === "problem" ? "problem-page" : currentView.kind === "assessment" ? "assessment-main" : "content-page"
+          currentView.kind === "problem"
+            ? "problem-page"
+            : currentView.kind === "assessment"
+              ? "assessment-main"
+              : currentView.kind === "scenario"
+                ? "scenario-main"
+                : "content-page"
         }`}
       >
         {currentView.kind === "dashboard" && graph ? (
@@ -1385,6 +1446,7 @@ export function App() {
             onOpenCollection={openCollection}
             onOpenProblem={selectProblem}
             onOpenAssessment={openAssessment}
+            onOpenScenarioSet={openScenarioSet}
           />
         ) : null}
 
@@ -1399,6 +1461,31 @@ export function App() {
             onOpenAssessment={openAssessment}
             onOpenLesson={openLesson}
             onOpenQuiz={openQuiz}
+          />
+        ) : null}
+
+        {currentView.kind === "scenario-set" && graph && selectedScenarioSet ? (
+          <ScenarioSetScreen
+            graph={graph}
+            scenarioSet={selectedScenarioSet}
+            attempts={scenarioAttempts}
+            sidebarCollapsed={workspaceSidebarCollapsed}
+            onShowSidebar={() => updateSidebarCollapsed(false)}
+            onOpenScenario={openScenario}
+          />
+        ) : null}
+
+        {currentView.kind === "scenario" && graph && selectedScenario ? (
+          <ScenarioWorkspaceScreen
+            scenario={selectedScenario}
+            attemptId={currentView.attemptId}
+            sidebarCollapsed={workspaceSidebarCollapsed}
+            onShowSidebar={() => updateSidebarCollapsed(false)}
+            onBack={() => {
+              const set = graph.scenarioSets.find((candidate) => candidate.entries.some((entry) => entry.scenario === selectedScenario.id));
+              setCurrentView({ kind: "scenario-set", id: set?.id ?? "ramp-ai-backend" });
+            }}
+            onAttemptsChanged={() => void refreshScenarioAttempts()}
           />
         ) : null}
 
@@ -2054,7 +2141,8 @@ function DashboardScreen({
   onExportCoachLog,
   onOpenCollection,
   onOpenProblem,
-  onOpenAssessment
+  onOpenAssessment,
+  onOpenScenarioSet
 }: {
   graph: ContentGraph;
   userData: NextUserData | null;
@@ -2066,6 +2154,7 @@ function DashboardScreen({
   onOpenCollection: (scope: Extract<SidebarScope, { kind: "module" | "problem-set" }>) => void;
   onOpenProblem: (problemId: string) => void;
   onOpenAssessment: (problemId: string) => void;
+  onOpenScenarioSet: (id: string) => void;
 }) {
   const completed = userData?.progress.filter((record) => record.status === "complete").length ?? 0;
   const legacyTrackableTotal = legacyContentStats.lessonCount + legacyContentStats.totalProblemCount + legacyContentStats.quizCount;
@@ -2074,6 +2163,7 @@ function DashboardScreen({
   const recentProblem = recentAttemptProblem(graph, userData);
   const assessmentProblems = assessmentProblemsForGraph(graph);
   const practiceSets = graph.problemSets.filter((set) => set.id !== "assessments" && !set.id.startsWith("lib-"));
+  const scenarioSets = graph.scenarioSets;
   const modules = legacyOrderedModules(graph);
   return (
     <section className="page stack">
@@ -2130,6 +2220,31 @@ function DashboardScreen({
                 <p className="muted inline-markdown"><InlineMarkdown text={assessmentBlurb(problem)} /></p>
                 <footer>
                   <span>{isProblemComplete(userData, problem.id) ? "Completed" : "Not attempted"}</span>
+                  <ArrowRightIcon />
+                </footer>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {scenarioSets.length ? (
+        <section className="assessment-promo scenario-promo" aria-labelledby="scenario-promo-heading">
+          <div className="section-heading">
+            <h2 id="scenario-promo-heading">AI Backend Interview Simulations</h2>
+            <p>Repo-based drills for the Ramp live coding round: read, plan, use AI, extend, test, and explain</p>
+          </div>
+          <div className="assessment-promo-cards">
+            {scenarioSets.map((set) => (
+              <button key={set.id} className="assessment-promo-card scenario-promo-card" type="button" onClick={() => onOpenScenarioSet(set.id)}>
+                <span className="eyebrow">
+                  <TerminalSquareIcon />
+                  Workspace drill
+                </span>
+                <h3>{set.title}</h3>
+                <p className="muted">{set.summary}</p>
+                <footer>
+                  <span>{set.entries.length} scenarios</span>
                   <ArrowRightIcon />
                 </footer>
               </button>
@@ -5784,7 +5899,11 @@ function searchSidebar(graph: ContentGraph, query: string): SidebarSearchHit[] {
     .filter((problem) => `${problem.title} ${problem.concepts.join(" ")} ${assessmentArchetype(problem)}`.toLowerCase().includes(normalized))
     .slice(0, 3)
     .map((problem) => ({ kind: "assessment" as const, id: problem.id, title: problem.title }));
-  return [...lessons, ...problems, ...assessments];
+  const scenarios = graph.scenarios
+    .filter((scenario) => `${scenario.title} ${scenario.summary} ${scenario.concepts.join(" ")}`.toLowerCase().includes(normalized))
+    .slice(0, 4)
+    .map((scenario) => ({ kind: "scenario" as const, id: scenario.id, title: scenario.title }));
+  return [...lessons, ...problems, ...assessments, ...scenarios];
 }
 
 function containerForProblemView(graph: ContentGraph, problemId: string, view: AppView): ContentContainer | undefined {

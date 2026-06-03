@@ -1,0 +1,28 @@
+{
+  "id": "ramp-ai-backend",
+  "kind": "scenario-set",
+  "title": "Ramp AI Backend Drills",
+  "summary": "Repo-based Python backend simulations for Ramp's AI-required live coding round: understand existing code, direct AI well, ship an MVP, test it, and explain tradeoffs.",
+  "entries": [
+    {
+      "scenario": "ramp-ledger-reconciliation",
+      "category": "record matching",
+      "note": "one-to-one financial reconciliation with ambiguity"
+    },
+    {
+      "scenario": "ramp-transaction-sync",
+      "category": "sync client",
+      "note": "pagination, retries, de-dupe, high-water marks"
+    },
+    {
+      "scenario": "ramp-webhook-idempotency",
+      "category": "event processing",
+      "note": "duplicate and out-of-order payment events"
+    },
+    {
+      "scenario": "ramp-receipt-matcher",
+      "category": "record matching",
+      "note": "attach receipts to likely transactions with review fallback"
+    }
+  ]
+}

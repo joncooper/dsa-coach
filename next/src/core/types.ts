@@ -4,6 +4,8 @@ export type ContentKind =
   | "lesson"
   | "problem"
   | "problem-set"
+  | "scenario"
+  | "scenario-set"
   | "quiz"
   | "assessment";
 
@@ -44,6 +46,20 @@ export interface ProblemSet {
   title: string;
   summary: string;
   entries: ProblemSetEntry[];
+}
+
+export interface ScenarioSetEntry {
+  scenario: string;
+  category?: string;
+  note?: string;
+}
+
+export interface ScenarioSet {
+  id: string;
+  kind: "scenario-set";
+  title: string;
+  summary: string;
+  entries: ScenarioSetEntry[];
 }
 
 export type Difficulty = "warmup" | "easy" | "medium" | "hard";
@@ -104,12 +120,60 @@ export interface Problem {
   languages: Record<LanguageId, ProblemLanguageSupport>;
 }
 
+export interface ScenarioEvidence {
+  source: "official_email" | "recent_forum" | "recent_question_bank" | "older_pattern" | "synthetic";
+  observedAt: string;
+  confidence: "high" | "medium" | "low";
+  note: string;
+}
+
+export interface ScenarioRubricMetric {
+  id: string;
+  label: string;
+  weight: number;
+  excellent: string;
+}
+
+export interface ScenarioCheckpoint {
+  id: string;
+  minute: number;
+  title: string;
+  prompt: string;
+}
+
+export interface ScenarioCommand {
+  command: string;
+  args: string[];
+  timeoutMs?: number;
+}
+
+export interface Scenario {
+  id: string;
+  kind: "scenario";
+  title: string;
+  difficulty: Difficulty;
+  concepts: string[];
+  summary: string;
+  promptPath: string;
+  templatePath: string;
+  hiddenTestsPath: string;
+  visibleTestCommand: ScenarioCommand;
+  hiddenTestCommand: ScenarioCommand;
+  editablePaths: string[];
+  timeboxMinutes: number;
+  evidence: ScenarioEvidence;
+  rubric: ScenarioRubricMetric[];
+  checkpoints: ScenarioCheckpoint[];
+}
+
 export interface ContentGraph {
   version: number;
   tracks: Track[];
   modules: Module[];
   problemSets: ProblemSet[];
+  scenarioSets: ScenarioSet[];
   problems: Problem[];
+  scenarios: Scenario[];
 }
 
 export type RunnerStrategy =

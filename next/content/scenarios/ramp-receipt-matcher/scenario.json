@@ -1,0 +1,34 @@
+{
+  "id": "ramp-receipt-matcher",
+  "kind": "scenario",
+  "title": "Receipt Matcher",
+  "difficulty": "medium",
+  "concepts": ["record matching", "confidence", "manual review", "date windows"],
+  "summary": "Extend a receipt attachment service to match receipts to likely transactions while sending ambiguous cases to manual review.",
+  "promptPath": "scenarios/ramp-receipt-matcher/prompt.md",
+  "templatePath": "scenarios/ramp-receipt-matcher/template",
+  "hiddenTestsPath": "scenarios/ramp-receipt-matcher/hidden-tests",
+  "visibleTestCommand": {"command": "python", "args": ["-m", "unittest", "discover", "-s", "tests", "-v"], "timeoutMs": 30000},
+  "hiddenTestCommand": {"command": "python", "args": ["-m", "unittest", "discover", "-s", "tests", "-v"], "timeoutMs": 30000},
+  "editablePaths": ["src", "tests"],
+  "timeboxMinutes": 60,
+  "evidence": {"source": "official_email", "observedAt": "2026-06-03", "confidence": "medium", "note": "A realistic data-driven workflow that connects related records and requires MVP tradeoffs."},
+  "rubric": [
+    {"id": "comprehension", "label": "Codebase comprehension", "weight": 12, "excellent": "Explains the current exact attachment behavior and data model."},
+    {"id": "framing", "label": "Problem framing", "weight": 10, "excellent": "Clarifies matching criteria, ambiguity, confidence, and review output."},
+    {"id": "ai_direction", "label": "AI direction", "weight": 15, "excellent": "Uses AI for cases and review while owning scoring choices."},
+    {"id": "command", "label": "Command of solution", "weight": 15, "excellent": "Defends why a receipt attaches, remains unmatched, or goes to review."},
+    {"id": "mvp", "label": "MVP judgment", "weight": 10, "excellent": "Implements practical deterministic matching without overbuilding ML/fuzzy search."},
+    {"id": "correctness", "label": "Correctness", "weight": 15, "excellent": "Handles amount/date/vendor matches, ambiguous candidates, and unmatched receipts."},
+    {"id": "testing", "label": "Testing and validation", "weight": 10, "excellent": "Tests obvious, ambiguous, and negative cases."},
+    {"id": "tradeoffs", "label": "Tradeoff reasoning", "weight": 6, "excellent": "Names confidence threshold and production data quality limitations."},
+    {"id": "communication", "label": "Communication and cadence", "weight": 7, "excellent": "Keeps interviewer oriented around deterministic matching rules."}
+  ],
+  "checkpoints": [
+    {"id": "read", "minute": 5, "title": "Read the code", "prompt": "Summarize how receipts are currently attached."},
+    {"id": "frame", "minute": 12, "title": "Frame ambiguity", "prompt": "What matching and ambiguity rules would you clarify?"},
+    {"id": "plan", "minute": 20, "title": "MVP plan", "prompt": "What deterministic MVP will you build and test?"},
+    {"id": "risk", "minute": 40, "title": "Risk check", "prompt": "What match case is most likely wrong?"},
+    {"id": "final", "minute": 60, "title": "Final explanation", "prompt": "Explain matching confidence, manual review, validation, and AI usage."}
+  ]
+}

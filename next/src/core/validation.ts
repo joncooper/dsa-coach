@@ -1,7 +1,6 @@
 import { access } from "node:fs/promises";
 import { resolve } from "node:path";
-import type { ContentGraph, ContentKind, ContentRef, LanguagePack, Problem, ProblemLanguageSupport } from "./types.js";
-
+import type { ContentGraph, ContentKind, ContentRef, LanguagePack, Problem, ProblemLanguageSupport, Scenario } from "./types.js";
 export interface ValidationResult {
   ok: boolean;
   errors: string[];
@@ -12,16 +11,20 @@ export function validateContentGraph(graph: ContentGraph, languagePacks: Languag
   const languages = new Set(languagePacks.map((pack) => pack.id));
   const moduleIds = new Set(graph.modules.map((module) => module.id));
   const problemSetIds = new Set(graph.problemSets.map((set) => set.id));
+  const scenarioSetIds = new Set(graph.scenarioSets.map((set) => set.id));
   const problemIds = new Set(graph.problems.map((problem) => problem.id));
+  const scenarioIds = new Set(graph.scenarios.map((scenario) => scenario.id));
 
   assertUnique("track", graph.tracks.map((track) => track.id), errors);
   assertUnique("module", graph.modules.map((module) => module.id), errors);
   assertUnique("problem set", graph.problemSets.map((set) => set.id), errors);
+  assertUnique("scenario set", graph.scenarioSets.map((set) => set.id), errors);
   assertUnique("problem", graph.problems.map((problem) => problem.id), errors);
+  assertUnique("scenario", graph.scenarios.map((scenario) => scenario.id), errors);
 
   for (const track of graph.tracks) {
     for (const entry of track.entries) {
-      if (!refExists(entry, moduleIds, problemSetIds, problemIds)) {
+      if (!refExists(entry, moduleIds, problemSetIds, scenarioSetIds, problemIds, scenarioIds)) {
         errors.push(`Track ${track.id} references missing ${entry.kind}:${entry.id}`);
       }
     }
@@ -29,7 +32,7 @@ export function validateContentGraph(graph: ContentGraph, languagePacks: Languag
 
   for (const module of graph.modules) {
     for (const entry of module.sequence) {
-      if (!refExists(entry, moduleIds, problemSetIds, problemIds)) {
+      if (!refExists(entry, moduleIds, problemSetIds, scenarioSetIds, problemIds, scenarioIds)) {
         errors.push(`Module ${module.id} references missing ${entry.kind}:${entry.id}`);
       }
     }
@@ -45,8 +48,19 @@ export function validateContentGraph(graph: ContentGraph, languagePacks: Languag
     }
   }
 
+  for (const set of graph.scenarioSets) {
+    assertUnique(`scenario in set ${set.id}`, set.entries.map((entry) => entry.scenario), errors);
+    for (const entry of set.entries) {
+      if (!scenarioIds.has(entry.scenario)) errors.push(`Scenario set ${set.id} references missing scenario:${entry.scenario}`);
+    }
+  }
+
   for (const problem of graph.problems) {
     validateProblem(problem, languages, errors);
+  }
+
+  for (const scenario of graph.scenarios) {
+    validateScenario(scenario, errors);
   }
 
   return { ok: errors.length === 0, errors };
@@ -61,6 +75,19 @@ export async function validateContentFiles(graph: ContentGraph, contentRoot: str
     for (const part of problem.parts ?? []) {
       for (const [language, support] of Object.entries(part.languages ?? {})) {
         await assertSupportFiles(`${problem.id}#${part.id}`, language, support, contentRoot, errors);
+      }
+    }
+  }
+  for (const scenario of graph.scenarios) {
+    for (const [field, path] of Object.entries({
+      promptPath: scenario.promptPath,
+      templatePath: scenario.templatePath,
+      hiddenTestsPath: scenario.hiddenTestsPath
+    })) {
+      try {
+        await access(resolve(contentRoot, path));
+      } catch {
+        errors.push(`Scenario ${scenario.id} ${field} points to missing path ${path}`);
       }
     }
   }
@@ -96,6 +123,21 @@ function validateProblem(problem: Problem, languages: Set<string>, errors: strin
   }
 }
 
+function validateScenario(scenario: Scenario, errors: string[]) {
+  if (!scenario.title.trim()) errors.push(`Scenario ${scenario.id} missing title`);
+  if (!scenario.summary.trim()) errors.push(`Scenario ${scenario.id} missing summary`);
+  if (!scenario.promptPath.trim()) errors.push(`Scenario ${scenario.id} missing promptPath`);
+  if (!scenario.templatePath.trim()) errors.push(`Scenario ${scenario.id} missing templatePath`);
+  if (!scenario.hiddenTestsPath.trim()) errors.push(`Scenario ${scenario.id} missing hiddenTestsPath`);
+  if (!scenario.visibleTestCommand.command.trim()) errors.push(`Scenario ${scenario.id} missing visible test command`);
+  if (!scenario.hiddenTestCommand.command.trim()) errors.push(`Scenario ${scenario.id} missing hidden test command`);
+  if (scenario.timeboxMinutes <= 0) errors.push(`Scenario ${scenario.id} timeboxMinutes must be positive`);
+  if (!scenario.rubric.length) errors.push(`Scenario ${scenario.id} has no rubric`);
+  if (!scenario.checkpoints.length) errors.push(`Scenario ${scenario.id} has no checkpoints`);
+  const totalWeight = scenario.rubric.reduce((sum, metric) => sum + metric.weight, 0);
+  if (totalWeight !== 100) errors.push(`Scenario ${scenario.id} rubric weights total ${totalWeight}, expected 100`);
+}
+
 async function assertSupportFiles(
   problemLabel: string,
   language: string,
@@ -129,11 +171,15 @@ function refExists(
   ref: ContentRef,
   moduleIds: Set<string>,
   problemSetIds: Set<string>,
-  problemIds: Set<string>
+  scenarioSetIds: Set<string>,
+  problemIds: Set<string>,
+  scenarioIds: Set<string>
 ): boolean {
   if (ref.kind === "module") return moduleIds.has(ref.id);
   if (ref.kind === "problem-set") return problemSetIds.has(ref.id);
+  if (ref.kind === "scenario-set") return scenarioSetIds.has(ref.id);
   if (ref.kind === "problem") return problemIds.has(ref.id);
+  if (ref.kind === "scenario") return scenarioIds.has(ref.id);
   return ref.kind === ("lesson" as ContentKind) || ref.kind === ("quiz" as ContentKind)
     ? true
     : false;

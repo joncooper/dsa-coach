@@ -8,8 +8,10 @@ import { LspManager } from "../lsp/manager.js";
 import type { LspCompletionRequest, LspDocumentRequest, LspPositionRequest } from "../lsp/types.js";
 import { LocalRunner } from "../runner/localRunner.js";
 import { ScratchpadRunner } from "../runner/scratchpadRunner.js";
+import { codexStatus } from "../ai/codexProvider.js";
 import { loadContentGraph } from "../content/loadContentGraph.js";
 import { readProblemSource, type SourceKind } from "./source.js";
+import { ScenarioRunner } from "../scenarios/scenarioRunner.js";
 
 export type BuildMode = "development" | "release";
 
@@ -41,7 +43,9 @@ export interface ContentStatus {
     tracks: number;
     modules: number;
     problemSets: number;
+    scenarioSets: number;
     problems: number;
+    scenarios: number;
   };
 }
 
@@ -166,7 +170,9 @@ function statusForGraph(
       tracks: graph.tracks.length,
       modules: graph.modules.length,
       problemSets: graph.problemSets.length,
-      problems: graph.problems.length
+      scenarioSets: graph.scenarioSets.length,
+      problems: graph.problems.length,
+      scenarios: graph.scenarios.length
     },
     ...(reloadedAt ? { reloadedAt } : {})
   };
@@ -223,9 +229,69 @@ async function handleRequest(
   if (req.method === "GET" && url.pathname === "/coach/status") {
     return json(res, 200, await coachStatus());
   }
+  if (req.method === "GET" && url.pathname === "/codex/status") {
+    return json(res, 200, await codexStatus());
+  }
   if (req.method === "POST" && url.pathname === "/coach/chat") {
     const value = JSON.parse(await readBody(req)) as { messages?: CoachChatMessage[] };
     return json(res, 200, { message: await coachChat(value.messages ?? []) });
+  }
+  if (req.method === "GET" && url.pathname === "/scenarios/attempts") {
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, { attempts: await runner.listAttempts() });
+  }
+  if (req.method === "GET" && url.pathname === "/scenarios/prompt") {
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, { prompt: await runner.prompt(requiredParam(url, "scenarioId")) });
+  }
+  if (req.method === "GET" && url.pathname === "/scenarios/attempt") {
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, { attempt: await runner.readAttempt(requiredParam(url, "attemptId")) });
+  }
+  if (req.method === "POST" && url.pathname === "/scenarios/start") {
+    const value = JSON.parse(await readBody(req)) as { scenarioId?: string };
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, { attempt: await runner.start(requiredString(value.scenarioId, "scenarioId")) });
+  }
+  if (req.method === "POST" && url.pathname === "/scenarios/run-visible") {
+    const value = JSON.parse(await readBody(req)) as { attemptId?: string };
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, await runner.runVisible(requiredString(value.attemptId, "attemptId")));
+  }
+  if (req.method === "POST" && url.pathname === "/scenarios/submit-hidden") {
+    const value = JSON.parse(await readBody(req)) as { attemptId?: string };
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, await runner.submitHidden(requiredString(value.attemptId, "attemptId")));
+  }
+  if (req.method === "GET" && url.pathname === "/scenarios/diff") {
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, { diff: await runner.diff(requiredParam(url, "attemptId")) });
+  }
+  if (req.method === "POST" && url.pathname === "/scenarios/checkpoint") {
+    const value = JSON.parse(await readBody(req)) as { attemptId?: string; checkpointId?: string; answer?: string };
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, {
+      attempt: await runner.saveCheckpoint(
+        requiredString(value.attemptId, "attemptId"),
+        requiredString(value.checkpointId, "checkpointId"),
+        value.answer ?? ""
+      )
+    });
+  }
+  if (req.method === "POST" && url.pathname === "/scenarios/coach") {
+    const value = JSON.parse(await readBody(req)) as { attemptId?: string; message?: string };
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, await runner.coach(requiredString(value.attemptId, "attemptId"), requiredString(value.message, "message")));
+  }
+  if (req.method === "POST" && url.pathname === "/scenarios/judge") {
+    const value = JSON.parse(await readBody(req)) as { attemptId?: string; finalExplanation?: string };
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, await runner.judge(requiredString(value.attemptId, "attemptId"), value.finalExplanation ?? ""));
+  }
+  if (req.method === "POST" && url.pathname === "/scenarios/open") {
+    const value = JSON.parse(await readBody(req)) as { attemptId?: string; target?: "cursor" | "vscode" | "finder" };
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, await runner.openAttempt(requiredString(value.attemptId, "attemptId"), value.target ?? "finder"));
   }
   if (req.method === "GET" && url.pathname === "/user-data") {
     return json(res, 200, { userData: await readStoredJson(options, "user-data.json") });
@@ -328,6 +394,15 @@ function requiredParam(url: URL, name: string): string {
   const value = url.searchParams.get(name);
   if (!value) throw new Error(`Missing query parameter ${name}`);
   return value;
+}
+
+function requiredString(value: string | undefined, name: string): string {
+  if (!value?.trim()) throw new Error(`Missing field ${name}`);
+  return value;
+}
+
+function scenarioRunnerFor(state: ContentRuntimeState, options: RunnerDaemonOptions): ScenarioRunner {
+  return new ScenarioRunner(state.graph, state.contentRoot, resolveUserDataRoot(options));
 }
 
 function publicContentGraph(graph: ContentGraph): ContentGraph {

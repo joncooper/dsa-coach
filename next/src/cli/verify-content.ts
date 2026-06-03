@@ -37,5 +37,10 @@ if (errors.length) {
 
 console.log(
   `Content graph OK: ${graph.tracks.length} tracks, ${graph.modules.length} modules, ` +
-    `${graph.problemSets.length} problem sets, ${graph.problems.length} problems.`
+    `${graph.problemSets.length} problem sets, ${countLabel(graph.scenarioSets.length, "scenario set")}, ` +
+    `${graph.problems.length} problems, ${countLabel(graph.scenarios.length, "scenario")}.`
 );
+
+function countLabel(count: number, label: string): string {
+  return `${count} ${label}${count === 1 ? "" : "s"}`;
+}

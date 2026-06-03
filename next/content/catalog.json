@@ -74,6 +74,10 @@
           "id": "ramp-prep"
         },
         {
+          "kind": "scenario-set",
+          "id": "ramp-ai-backend"
+        },
+        {
           "kind": "problem-set",
           "id": "aoc-year-1"
         },
@@ -124,6 +128,9 @@
     "problem-sets/assessments.json",
     "problem-sets/lib-sortedcontainers.json",
     "problem-sets/lib-ordered-dict.json"
+  ],
+  "scenarioSets": [
+    "scenario-sets/ramp-ai-backend.json"
   ],
   "problems": [
     "problems/sum-positive-readings/problem.json",
@@ -392,5 +399,11 @@
     "problems/asm-banking/problem.json",
     "problems/asm-in-memory-db/problem.json",
     "problems/asm-working-hours/problem.json"
+  ],
+  "scenarios": [
+    "scenarios/ramp-ledger-reconciliation/scenario.json",
+    "scenarios/ramp-transaction-sync/scenario.json",
+    "scenarios/ramp-webhook-idempotency/scenario.json",
+    "scenarios/ramp-receipt-matcher/scenario.json"
   ]
 }

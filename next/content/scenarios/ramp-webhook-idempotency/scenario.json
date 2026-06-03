@@ -1,0 +1,34 @@
+{
+  "id": "ramp-webhook-idempotency",
+  "kind": "scenario",
+  "title": "Webhook Idempotency",
+  "difficulty": "medium",
+  "concepts": ["events", "idempotency", "state machines", "ordering"],
+  "summary": "Extend a payment webhook handler so duplicate and out-of-order events do not corrupt payment state.",
+  "promptPath": "scenarios/ramp-webhook-idempotency/prompt.md",
+  "templatePath": "scenarios/ramp-webhook-idempotency/template",
+  "hiddenTestsPath": "scenarios/ramp-webhook-idempotency/hidden-tests",
+  "visibleTestCommand": {"command": "python", "args": ["-m", "unittest", "discover", "-s", "tests", "-v"], "timeoutMs": 30000},
+  "hiddenTestCommand": {"command": "python", "args": ["-m", "unittest", "discover", "-s", "tests", "-v"], "timeoutMs": 30000},
+  "editablePaths": ["src", "tests"],
+  "timeboxMinutes": 60,
+  "evidence": {"source": "official_email", "observedAt": "2026-06-03", "confidence": "medium", "note": "A realistic financial backend extension emphasizing state, correctness, and edge cases."},
+  "rubric": [
+    {"id": "comprehension", "label": "Codebase comprehension", "weight": 12, "excellent": "Explains current happy-path event application and state storage."},
+    {"id": "framing", "label": "Problem framing", "weight": 10, "excellent": "Clarifies duplicate event IDs, status precedence, unknown events, and audit needs."},
+    {"id": "ai_direction", "label": "AI direction", "weight": 15, "excellent": "Uses AI to inspect transition edge cases but keeps state-machine decisions explicit."},
+    {"id": "command", "label": "Command of solution", "weight": 15, "excellent": "Can defend why stale events are ignored and duplicates are safe."},
+    {"id": "mvp", "label": "MVP judgment", "weight": 10, "excellent": "Adds idempotency and ordering without replacing the whole handler."},
+    {"id": "correctness", "label": "Correctness", "weight": 15, "excellent": "Handles duplicate, stale, terminal, and missing-payment cases."},
+    {"id": "testing", "label": "Testing and validation", "weight": 10, "excellent": "Tests duplicate delivery and out-of-order status transitions."},
+    {"id": "tradeoffs", "label": "Tradeoff reasoning", "weight": 6, "excellent": "Names production persistence, replay, and audit-log limitations."},
+    {"id": "communication", "label": "Communication and cadence", "weight": 7, "excellent": "Explains event invariants clearly as they evolve."}
+  ],
+  "checkpoints": [
+    {"id": "read", "minute": 5, "title": "Read the code", "prompt": "What state does the handler currently keep, and where does corruption happen?"},
+    {"id": "frame", "minute": 12, "title": "Frame ambiguity", "prompt": "What transition and duplicate rules need clarification?"},
+    {"id": "plan", "minute": 20, "title": "MVP plan", "prompt": "What is your state-machine invariant and test plan?"},
+    {"id": "risk", "minute": 40, "title": "Risk check", "prompt": "What event sequence might still break your implementation?"},
+    {"id": "final", "minute": 60, "title": "Final explanation", "prompt": "Explain duplicate safety, stale-event handling, validation, and AI usage."}
+  ]
+}

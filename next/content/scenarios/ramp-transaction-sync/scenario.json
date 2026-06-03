@@ -1,0 +1,34 @@
+{
+  "id": "ramp-transaction-sync",
+  "kind": "scenario",
+  "title": "Transaction Sync Client",
+  "difficulty": "medium",
+  "concepts": ["pagination", "retries", "dedupe", "sync state"],
+  "summary": "Extend a small transaction sync client from one-page import to robust pagination, retry, de-dupe, and high-water mark behavior.",
+  "promptPath": "scenarios/ramp-transaction-sync/prompt.md",
+  "templatePath": "scenarios/ramp-transaction-sync/template",
+  "hiddenTestsPath": "scenarios/ramp-transaction-sync/hidden-tests",
+  "visibleTestCommand": {"command": "python", "args": ["-m", "unittest", "discover", "-s", "tests", "-v"], "timeoutMs": 30000},
+  "hiddenTestCommand": {"command": "python", "args": ["-m", "unittest", "discover", "-s", "tests", "-v"], "timeoutMs": 30000},
+  "editablePaths": ["src", "tests"],
+  "timeboxMinutes": 60,
+  "evidence": {"source": "official_email", "observedAt": "2026-06-03", "confidence": "medium", "note": "Maps to backend workflow extension, realistic financial data movement, and practical API robustness."},
+  "rubric": [
+    {"id": "comprehension", "label": "Codebase comprehension", "weight": 12, "excellent": "Explains the API/store boundary and current one-page limitation before coding."},
+    {"id": "framing", "label": "Problem framing", "weight": 10, "excellent": "Clarifies retryable errors, cursor semantics, duplicate IDs, and partial failure behavior."},
+    {"id": "ai_direction", "label": "AI direction", "weight": 15, "excellent": "Uses AI for edge cases and review while choosing the sync invariant personally."},
+    {"id": "command", "label": "Command of solution", "weight": 15, "excellent": "Owns the high-water mark and idempotency design."},
+    {"id": "mvp", "label": "MVP judgment", "weight": 10, "excellent": "Adds a small loop/retry path without building a framework."},
+    {"id": "correctness", "label": "Correctness", "weight": 15, "excellent": "Handles pagination, duplicate transactions, retryable failures, and cursor updates."},
+    {"id": "testing", "label": "Testing and validation", "weight": 10, "excellent": "Validates multi-page and retry behavior with deterministic tests."},
+    {"id": "tradeoffs", "label": "Tradeoff reasoning", "weight": 6, "excellent": "Names production concerns like backoff, observability, and transactional persistence."},
+    {"id": "communication", "label": "Communication and cadence", "weight": 7, "excellent": "Keeps a clear running status of what has been proven."}
+  ],
+  "checkpoints": [
+    {"id": "read", "minute": 5, "title": "Read the code", "prompt": "Summarize the API/store flow and the current limitation."},
+    {"id": "frame", "minute": 12, "title": "Frame ambiguity", "prompt": "What assumptions are you making about retry and cursor behavior?"},
+    {"id": "plan", "minute": 20, "title": "MVP plan", "prompt": "State your sync invariant and test plan."},
+    {"id": "risk", "minute": 40, "title": "Risk check", "prompt": "What failure mode worries you most right now?"},
+    {"id": "final", "minute": 60, "title": "Final explanation", "prompt": "Explain what is robust, what is not production-grade yet, and how AI helped."}
+  ]
+}

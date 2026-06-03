@@ -1,0 +1,47 @@
+{
+  "id": "ramp-ledger-reconciliation",
+  "kind": "scenario",
+  "title": "Ledger Reconciliation",
+  "difficulty": "medium",
+  "concepts": ["financial records", "matching", "ambiguity", "MVP design"],
+  "summary": "Extend an existing exact-ID reconciler so it can compare related internal ledger rows and external bank rows in a realistic one-to-one matching workflow.",
+  "promptPath": "scenarios/ramp-ledger-reconciliation/prompt.md",
+  "templatePath": "scenarios/ramp-ledger-reconciliation/template",
+  "hiddenTestsPath": "scenarios/ramp-ledger-reconciliation/hidden-tests",
+  "visibleTestCommand": {
+    "command": "python",
+    "args": ["-m", "unittest", "discover", "-s", "tests", "-v"],
+    "timeoutMs": 30000
+  },
+  "hiddenTestCommand": {
+    "command": "python",
+    "args": ["-m", "unittest", "discover", "-s", "tests", "-v"],
+    "timeoutMs": 30000
+  },
+  "editablePaths": ["src", "tests"],
+  "timeboxMinutes": 60,
+  "evidence": {
+    "source": "official_email",
+    "observedAt": "2026-06-03",
+    "confidence": "high",
+    "note": "Based on Ramp's wording: extend an existing Python backend system and build logic that connects or compares related records in a realistic data-driven scenario."
+  },
+  "rubric": [
+    {"id": "comprehension", "label": "Codebase comprehension", "weight": 12, "excellent": "Accurately explains current exact-ID flow, report shape, and where matching belongs before editing."},
+    {"id": "framing", "label": "Problem framing", "weight": 10, "excellent": "Clarifies matching rules, tie behavior, date tolerance, and one-to-one assignment."},
+    {"id": "ai_direction", "label": "AI direction", "weight": 15, "excellent": "Uses AI for repo summary, edge cases, tests, and review without delegating ownership."},
+    {"id": "command", "label": "Command of solution", "weight": 15, "excellent": "Can defend the matching invariant and reject broad rewrites or unsafe AI suggestions."},
+    {"id": "mvp", "label": "MVP judgment", "weight": 10, "excellent": "Ships a small practical extension without redesigning the whole service."},
+    {"id": "correctness", "label": "Correctness", "weight": 15, "excellent": "Handles exact matches, fuzzy candidates, one-to-one use, unmatched rows, and ambiguity."},
+    {"id": "testing", "label": "Testing and validation", "weight": 10, "excellent": "Adds or explains focused tests and runs visible/hidden checks frequently."},
+    {"id": "tradeoffs", "label": "Tradeoff reasoning", "weight": 6, "excellent": "Names limitations such as merchant normalization weakness and production matching confidence."},
+    {"id": "communication", "label": "Communication and cadence", "weight": 7, "excellent": "Narrates checkpoints, risk, and next action at a steady pace."}
+  ],
+  "checkpoints": [
+    {"id": "read", "minute": 5, "title": "Read the code", "prompt": "Summarize the current implementation in 3 bullets. Where does the new behavior belong?"},
+    {"id": "frame", "minute": 12, "title": "Frame ambiguity", "prompt": "What clarifying questions would you ask the interviewer? What assumptions are you making for the MVP?"},
+    {"id": "plan", "minute": 20, "title": "MVP plan", "prompt": "What is your implementation plan and what tests prove it?"},
+    {"id": "risk", "minute": 40, "title": "Risk check", "prompt": "What is the biggest remaining risk or failing case?"},
+    {"id": "final", "minute": 60, "title": "Final explanation", "prompt": "Explain your invariant, tradeoff, validation steps, and how AI helped."}
+  ]
+}
