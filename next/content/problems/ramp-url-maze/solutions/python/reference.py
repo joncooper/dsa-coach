@@ -24,19 +24,37 @@ def find_final_url(start_url: str, max_retries: int) -> str | None:
         url = queue.popleft()
         response = read_with_retries(url, max_retries)
 
-        if response == "congrats":
+        if response == "congrats" or response_body(response) == "congrats":
             return url
 
-        if not isinstance(response, dict):
-            continue
-
-        urls = response.get("urls")
-        if not isinstance(urls, list):
-            continue
-
-        for next_url in urls:
+        for next_url in next_urls_from(response):
             if isinstance(next_url, str) and next_url not in seen:
                 seen.add(next_url)
                 queue.append(next_url)
 
+    return None
+
+
+def next_urls_from(response: object) -> list[str]:
+    if not isinstance(response, dict):
+        return []
+
+    if response.get("status") in (301, 302):
+        location = response.get("location")
+        return [location] if isinstance(location, str) else []
+
+    body = response.get("body") if response.get("status") == 200 else response
+    if not isinstance(body, dict):
+        return []
+
+    urls = body.get("urls")
+    if not isinstance(urls, list):
+        return []
+
+    return [url for url in urls if isinstance(url, str)]
+
+
+def response_body(response: object) -> object | None:
+    if isinstance(response, dict) and response.get("status") == 200:
+        return response.get("body")
     return None

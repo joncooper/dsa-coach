@@ -9,27 +9,45 @@ object Solution {
       val url = queue.dequeue()
       val response = readWithRetries(url, maxRetries)
 
-      if (response == "congrats") return Some(url)
+      if (response == "congrats" || responseBody(response).contains("congrats")) return Some(url)
 
-      response match {
-        case body: Map[_, _] =>
-          body.asInstanceOf[Map[String, Any]].get("urls") match {
-            case Some(urls: Seq[_]) =>
-              for (next <- urls) {
-                next match {
-                  case nextUrl: String if !seen.contains(nextUrl) =>
-                    seen += nextUrl
-                    queue.enqueue(nextUrl)
-                  case _ =>
-                }
-              }
-            case _ =>
-          }
-        case _ =>
+      for (nextUrl <- nextUrlsFrom(response)) {
+        if (!seen.contains(nextUrl)) {
+          seen += nextUrl
+          queue.enqueue(nextUrl)
+        }
       }
     }
 
     None
+  }
+
+  private def nextUrlsFrom(response: Any): Seq[String] = response match {
+    case body: Map[_, _] =>
+      val responseMap = body.asInstanceOf[Map[String, Any]]
+      status(response) match {
+        case Some(code) if code == 301 || code == 302 =>
+          responseMap.get("location") match {
+            case Some(location: String) => Seq(location)
+            case _ => Seq.empty
+          }
+        case Some(200) =>
+          urlsFromBody(responseMap.getOrElse("body", null))
+        case _ =>
+          urlsFromBody(response)
+      }
+    case _ =>
+      Seq.empty
+  }
+
+  private def urlsFromBody(body: Any): Seq[String] = body match {
+    case linkBody: Map[_, _] =>
+      linkBody.asInstanceOf[Map[String, Any]].get("urls") match {
+        case Some(urls: Seq[_]) => urls.collect { case url: String => url }
+        case _ => Seq.empty
+      }
+    case _ =>
+      Seq.empty
   }
 
   private def readWithRetries(url: String, maxRetries: Int): Any = {
@@ -42,6 +60,12 @@ object Solution {
       }
     }
     null
+  }
+
+  private def responseBody(response: Any): Option[Any] = response match {
+    case body: Map[_, _] if status(response).contains(200) =>
+      body.asInstanceOf[Map[String, Any]].get("body")
+    case _ => None
   }
 
   private def status(response: Any): Option[Int] = response match {

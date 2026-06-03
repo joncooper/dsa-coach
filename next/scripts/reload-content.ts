@@ -35,10 +35,9 @@ if (!baseUrl) {
 }
 
 const endpoint = new URL("/content/reload", baseUrl);
-const res = await fetch(endpoint, {
-  method: "POST",
-  headers: { "content-type": "application/json" },
-  body: "{}"
+const res = await fetchReload(endpoint).catch((error: unknown) => {
+  reportConnectionFailure(endpoint, runtimePath, runtime, error);
+  process.exit(1);
 });
 const payload = await readResponse(res);
 
@@ -67,6 +66,45 @@ async function readRuntimeStatus(path: string): Promise<RuntimeStatus | undefine
   } catch {
     return undefined;
   }
+}
+
+async function fetchReload(endpoint: URL): Promise<Response> {
+  return fetch(endpoint, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: "{}"
+  });
+}
+
+function reportConnectionFailure(endpoint: URL, runtimePath: string, runtime: RuntimeStatus | undefined, error: unknown) {
+  console.error(`Could not connect to DSA Coach host at ${endpoint.href}.`);
+  console.error(`Runtime file: ${resolve(runtimePath)}`);
+  if (runtime?.pid) console.error(`Runtime pid: ${runtime.pid}`);
+  if (runtime?.startedAt) console.error(`Runtime startedAt: ${runtime.startedAt}`);
+  if (runtime?.contentRoot) console.error(`Runtime contentRoot: ${runtime.contentRoot}`);
+  console.error(`Error: ${errorText(error)}`);
+
+  if (looksLikeSandboxSocketBlock(error)) {
+    console.error("");
+    console.error("This looks like the command sandbox blocked Bun/Node from opening a localhost socket.");
+    console.error("The desktop app may still be healthy. Check with a direct curl probe, or run this helper outside the sandbox.");
+  } else {
+    console.error("");
+    console.error("The runtime file may be stale, the desktop host may be down, or the local probe may have failed.");
+  }
+}
+
+function errorText(error: unknown): string {
+  if (error instanceof Error) {
+    const code = "code" in error ? ` ${(error as { code?: unknown }).code}` : "";
+    return `${error.name}${code}: ${error.message}`;
+  }
+  return String(error);
+}
+
+function looksLikeSandboxSocketBlock(error: unknown): boolean {
+  const text = JSON.stringify(error, Object.getOwnPropertyNames(error));
+  return /FailedToOpenSocket|EPERM|operation not permitted/i.test(text);
 }
 
 async function readResponse(res: Response): Promise<ReloadPayload | undefined> {

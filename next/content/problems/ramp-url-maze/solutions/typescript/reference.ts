@@ -24,15 +24,31 @@ export function findFinalUrl(startUrl: string, maxRetries: number): string | nul
     const url = queue[head];
     const response = readWithRetries(url, maxRetries);
 
-    if (response === "congrats") return url;
-    if (!isRecord(response) || !Array.isArray(response.urls)) continue;
+    if (response === "congrats" || responseBody(response) === "congrats") return url;
 
-    for (const nextUrl of response.urls) {
-      if (typeof nextUrl !== "string" || seen.has(nextUrl)) continue;
+    for (const nextUrl of nextUrlsFrom(response)) {
+      if (seen.has(nextUrl)) continue;
       seen.add(nextUrl);
       queue.push(nextUrl);
     }
   }
 
+  return null;
+}
+
+function nextUrlsFrom(response: unknown): string[] {
+  if (!isRecord(response)) return [];
+
+  if ((response.status === 301 || response.status === 302) && typeof response.location === "string") {
+    return [response.location];
+  }
+
+  const body = response.status === 200 ? response.body : response;
+  if (!isRecord(body) || !Array.isArray(body.urls)) return [];
+  return body.urls.filter((url): url is string => typeof url === "string");
+}
+
+function responseBody(response: unknown): unknown {
+  if (isRecord(response) && response.status === 200) return response.body;
   return null;
 }

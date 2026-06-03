@@ -11,20 +11,12 @@ func FindFinalURL(startURL string, maxRetries int) *string {
 		if text, ok := response.(string); ok && text == "congrats" {
 			return strPtr(url)
 		}
-
-		body, ok := response.(map[string]any)
-		if !ok {
-			continue
+		if text, ok := responseBody(response).(string); ok && text == "congrats" {
+			return strPtr(url)
 		}
 
-		urls, ok := body["urls"].([]any)
-		if !ok {
-			continue
-		}
-
-		for _, next := range urls {
-			nextURL, ok := next.(string)
-			if !ok || seen[nextURL] {
+		for _, nextURL := range nextURLsFrom(response) {
+			if seen[nextURL] {
 				continue
 			}
 			seen[nextURL] = true
@@ -33,6 +25,44 @@ func FindFinalURL(startURL string, maxRetries int) *string {
 	}
 
 	return nil
+}
+
+func nextURLsFrom(response any) []string {
+	body, ok := response.(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	if code := status(response); code == 301 || code == 302 {
+		location, ok := body["location"].(string)
+		if !ok {
+			return nil
+		}
+		return []string{location}
+	}
+
+	linkBody := response
+	if status(response) == 200 {
+		linkBody = body["body"]
+	}
+
+	linkMap, ok := linkBody.(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	urls, ok := linkMap["urls"].([]any)
+	if !ok {
+		return nil
+	}
+
+	nextURLs := make([]string, 0, len(urls))
+	for _, next := range urls {
+		if nextURL, ok := next.(string); ok {
+			nextURLs = append(nextURLs, nextURL)
+		}
+	}
+	return nextURLs
 }
 
 func readWithRetries(url string, maxRetries int) any {
@@ -47,6 +77,14 @@ func readWithRetries(url string, maxRetries int) any {
 		return response
 	}
 	return nil
+}
+
+func responseBody(response any) any {
+	body, ok := response.(map[string]any)
+	if !ok || status(response) != 200 {
+		return nil
+	}
+	return body["body"]
 }
 
 func status(response any) int {

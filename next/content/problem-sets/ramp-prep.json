@@ -15,6 +15,21 @@
       "note": "per-user timelines, interval boundaries, sorting"
     },
     {
+      "problem": "ramp-merge-time-blocks",
+      "category": "intervals",
+      "note": "sort by start time, merge overlaps and touching blocks"
+    },
+    {
+      "problem": "ramp-insert-maintenance-window",
+      "category": "intervals",
+      "note": "insert a new interval into a clean schedule and merge"
+    },
+    {
+      "problem": "ramp-covered-service-time",
+      "category": "intervals",
+      "note": "compute total covered duration without double-counting overlaps"
+    },
+    {
       "problem": "ramp-recurring-transactions",
       "category": "fintech ledger",
       "note": "grouping, date cadence detection, month-end edge cases"

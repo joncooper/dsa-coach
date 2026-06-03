@@ -10,7 +10,7 @@
     "retries",
     "cycle detection"
   ],
-  "prompt": "I give you a starting URL and a tiny HTTP-like helper. When you fetch a URL, the response may point you at more URLs. Somewhere in that maze there may be a response whose body is exactly `\"congrats\"`.\n\nWrite `find_final_url(start_url, max_retries)`.\n\nYour job is to crawl from `start_url` and return the URL whose response is `\"congrats\"`. Return `None`/`null` if you cannot reach one.\n\nIn a real interview this would probably be an HTTP client or a provided helper. In this app, the test harness provides the helper and backs it with hidden test data:\n\n- Python: call `fetch_url(url)`.\n- TypeScript: call `fetchUrl(url)`.\n- Go: call `FetchURL(url)`.\n- Scala: call `MazeApi.fetchUrl(url)`.\n\nEach call returns one response body. A body can be:\n\n- The string `\"congrats\"`: you found the answer; return the URL you just fetched.\n- An object/dict/map containing `\"urls\"`: those are the next URLs discovered from this page, in order.\n- An object/dict/map with `\"status\": 503`: a temporary failure for this URL.\n- Anything else: treat it as a dead end.\n\nSome URLs are flaky. If a fetch returns status `503`, retry that same URL immediately, up to `max_retries` extra times. For example, if a URL returns `503`, then `503`, then `\"congrats\"`, it is reachable when `max_retries` is `2`, but not when `max_retries` is `1`.\n\nThe maze can contain cycles and duplicate links. Do not get stuck repeatedly processing the same URL. If several successful URLs could lead to `\"congrats\"`, return the one reachable in the fewest number of link hops from `start_url`. If there is still a tie, use the order in which URLs are returned by the API.\n\nThe hidden service behaves like this: each URL has a response transcript. The first time you fetch it, you receive the first response; the second time, the second response; after the transcript runs out, the service keeps returning the last response.\n\nVisible example A:\n\n```python\n# hidden fake service\n{\n  \"http://start\": {\"urls\": [\"http://a\", \"http://b\"]},\n  \"http://a\": {\"message\": \"nothing here\"},\n  \"http://b\": \"congrats\"\n}\n\nfind_final_url(\"http://start\", 2) == \"http://b\"\n```\n\nVisible example B:\n\n```python\n# hidden fake service\n{\n  \"s\": {\"urls\": [\"r\"]},\n  \"r\": [{\"status\": 503}, {\"status\": 503}, \"congrats\"]\n}\n\nfind_final_url(\"s\", 2) == \"r\"\n```\n\nYou do not need real network access, sleeps, exponential backoff, threads, or async code. Focus on the crawling logic, retry boundary, response parsing, and cycle safety.",
+  "prompt": "I give you a starting URL and a tiny HTTP-like helper. When you fetch a URL, the response may point you at more URLs. Somewhere in that maze there may be a successful response whose body is exactly `\"congrats\"`.\n\nWrite `find_final_url(start_url, max_retries)`.\n\nYour job is to crawl from `start_url` and return the URL whose response body is `\"congrats\"`. Return `None`/`null` if you cannot reach one.\n\nIn a real interview this would probably be an HTTP client or a provided helper. In this app, the test harness provides the helper and backs it with hidden test data:\n\n- Python: call `fetch_url(url)`.\n- TypeScript: call `fetchUrl(url)`.\n- Go: call `FetchURL(url)`.\n- Scala: call `MazeApi.fetchUrl(url)`.\n\nEach call returns one HTTP-like response object. A response can be:\n\n- `{\"status\": 200, \"body\": \"congrats\"}`: you found the answer; return the URL you just fetched.\n- `{\"status\": 200, \"body\": {\"urls\": [...]}}`: those URLs are the next URLs discovered from this page, in order.\n- `{\"status\": 301, \"location\": \"...\"}` or `{\"status\": 302, \"location\": \"...\"}`: a redirect. Treat the location as the single next URL discovered from this response.\n- `{\"status\": 404}`: the URL is not found; treat it as a dead end.\n- `{\"status\": 503}`: a temporary failure for this URL.\n- Anything malformed or missing the expected fields: treat it as a dead end.\n\nSome URLs are flaky. If a fetch returns status `503`, retry that same URL immediately, up to `max_retries` extra times. For example, if a URL returns `503`, then `503`, then `200` with body `\"congrats\"`, it is reachable when `max_retries` is `2`, but not when `max_retries` is `1`.\n\nRedirects can chain or cycle. A redirect counts like following one discovered URL for closest/tie-breaking purposes. Do not return a redirecting URL unless its own successful body is `\"congrats\"`; follow its `location` and return the eventual URL that produces `\"congrats\"`.\n\nThe maze can contain cycles and duplicate links. Do not get stuck repeatedly processing the same URL. If several successful URLs could lead to `\"congrats\"`, return the one reachable in the fewest number of link hops from `start_url`. If there is still a tie, use the order in which URLs are returned by the API.\n\nThe hidden service behaves like this: each URL has a response transcript. The first time you fetch it, you receive the first response; the second time, the second response; after the transcript runs out, the service keeps returning the last response.\n\nVisible example A:\n\n```python\n# hidden fake service\n{\n  \"http://start\": {\"status\": 200, \"body\": {\"urls\": [\"http://a\", \"http://b\"]}},\n  \"http://a\": {\"status\": 200, \"body\": {\"message\": \"nothing here\"}},\n  \"http://b\": {\"status\": 200, \"body\": \"congrats\"}\n}\n\nfind_final_url(\"http://start\", 2) == \"http://b\"\n```\n\nVisible example B:\n\n```python\n# hidden fake service\n{\n  \"s\": {\"status\": 200, \"body\": {\"urls\": [\"r\"]}},\n  \"r\": [{\"status\": 503}, {\"status\": 503}, {\"status\": 200, \"body\": \"congrats\"}]\n}\n\nfind_final_url(\"s\", 2) == \"r\"\n```\n\nVisible example C:\n\n```python\n# hidden fake service\n{\n  \"s\": {\"status\": 200, \"body\": {\"urls\": [\"old\"]}},\n  \"old\": {\"status\": 302, \"location\": \"new\"},\n  \"new\": {\"status\": 200, \"body\": \"congrats\"}\n}\n\nfind_final_url(\"s\", 2) == \"new\"\n```\n\nYou do not need real network access, sleeps, exponential backoff, threads, or async code. Focus on the crawling logic, retry boundary, response parsing, redirects, and cycle safety.",
   "signature": {
     "name": "findFinalUrl",
     "inputs": [
@@ -40,7 +40,10 @@
         3
       ],
       "fixture": {
-        "done": "congrats"
+        "done": {
+          "status": 200,
+          "body": "congrats"
+        }
       },
       "expected": "done",
       "visibility": "visible"
@@ -53,16 +56,25 @@
       ],
       "fixture": {
         "http://start": {
-          "urls": [
-            "http://a",
-            "http://b"
-          ],
-          "meta": 1
+          "status": 200,
+          "body": {
+            "urls": [
+              "http://a",
+              "http://b"
+            ],
+            "meta": 1
+          }
         },
         "http://a": {
-          "message": "nothing here"
+          "status": 200,
+          "body": {
+            "message": "nothing here"
+          }
         },
-        "http://b": "congrats"
+        "http://b": {
+          "status": 200,
+          "body": "congrats"
+        }
       },
       "expected": "http://b",
       "visibility": "visible"
@@ -75,9 +87,12 @@
       ],
       "fixture": {
         "s": {
-          "urls": [
-            "r"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "r"
+            ]
+          }
         },
         "r": [
           {
@@ -86,10 +101,40 @@
           {
             "status": 503
           },
-          "congrats"
+          {
+            "status": 200,
+            "body": "congrats"
+          }
         ]
       },
       "expected": "r",
+      "visibility": "visible"
+    },
+    {
+      "name": "redirect reaches exit",
+      "args": [
+        "s",
+        1
+      ],
+      "fixture": {
+        "s": {
+          "status": 200,
+          "body": {
+            "urls": [
+              "old"
+            ]
+          }
+        },
+        "old": {
+          "status": 302,
+          "location": "new"
+        },
+        "new": {
+          "status": 200,
+          "body": "congrats"
+        }
+      },
+      "expected": "new",
       "visibility": "visible"
     },
     {
@@ -100,18 +145,27 @@
       ],
       "fixture": {
         "u1": {
-          "urls": [
-            "u2"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "u2"
+            ]
+          }
         },
         "u2": {
-          "urls": [
-            "u1",
-            "u3"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "u1",
+              "u3"
+            ]
+          }
         },
         "u3": {
-          "info": "dead end"
+          "status": 200,
+          "body": {
+            "info": "dead end"
+          }
         }
       },
       "expected": null,
@@ -125,18 +179,30 @@
       ],
       "fixture": {
         "start": {
-          "urls": [
-            "left",
-            "right"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "left",
+              "right"
+            ]
+          }
         },
         "left": {
-          "urls": [
-            "deep"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "deep"
+            ]
+          }
         },
-        "right": "congrats",
-        "deep": "congrats"
+        "right": {
+          "status": 200,
+          "body": "congrats"
+        },
+        "deep": {
+          "status": 200,
+          "body": "congrats"
+        }
       },
       "expected": "right",
       "visibility": "hidden"
@@ -149,23 +215,38 @@
       ],
       "fixture": {
         "start": {
-          "urls": [
-            "left",
-            "right"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "left",
+              "right"
+            ]
+          }
         },
         "left": {
-          "urls": [
-            "left-exit"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "left-exit"
+            ]
+          }
         },
         "right": {
-          "urls": [
-            "right-exit"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "right-exit"
+            ]
+          }
         },
-        "left-exit": "congrats",
-        "right-exit": "congrats"
+        "left-exit": {
+          "status": 200,
+          "body": "congrats"
+        },
+        "right-exit": {
+          "status": 200,
+          "body": "congrats"
+        }
       },
       "expected": "left-exit",
       "visibility": "hidden"
@@ -178,10 +259,13 @@
       ],
       "fixture": {
         "root": {
-          "urls": [
-            "slow",
-            "fallback"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "slow",
+              "fallback"
+            ]
+          }
         },
         "slow": [
           {
@@ -190,9 +274,15 @@
           {
             "status": 503
           },
-          "congrats"
+          {
+            "status": 200,
+            "body": "congrats"
+          }
         ],
-        "fallback": "congrats"
+        "fallback": {
+          "status": 200,
+          "body": "congrats"
+        }
       },
       "expected": "fallback",
       "visibility": "hidden"
@@ -205,9 +295,12 @@
       ],
       "fixture": {
         "root": {
-          "urls": [
-            "slow"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "slow"
+            ]
+          }
         },
         "slow": [
           {
@@ -226,14 +319,139 @@
       ],
       "fixture": {
         "start": {
-          "urls": [
-            "missing",
-            "exit"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "missing",
+              "exit"
+            ]
+          }
         },
-        "exit": "congrats"
+        "exit": {
+          "status": 200,
+          "body": "congrats"
+        }
       },
       "expected": "exit",
+      "visibility": "hidden"
+    },
+    {
+      "name": "explicit 404 is a dead end",
+      "args": [
+        "start",
+        2
+      ],
+      "fixture": {
+        "start": {
+          "status": 200,
+          "body": {
+            "urls": [
+              "gone",
+              "exit"
+            ]
+          }
+        },
+        "gone": {
+          "status": 404
+        },
+        "exit": {
+          "status": 200,
+          "body": "congrats"
+        }
+      },
+      "expected": "exit",
+      "visibility": "hidden"
+    },
+    {
+      "name": "redirect cycle falls through",
+      "args": [
+        "start",
+        2
+      ],
+      "fixture": {
+        "start": {
+          "status": 200,
+          "body": {
+            "urls": [
+              "old",
+              "exit"
+            ]
+          }
+        },
+        "old": {
+          "status": 301,
+          "location": "loop"
+        },
+        "loop": {
+          "status": 302,
+          "location": "old"
+        },
+        "exit": {
+          "status": 200,
+          "body": "congrats"
+        }
+      },
+      "expected": "exit",
+      "visibility": "hidden"
+    },
+    {
+      "name": "malformed redirect is a dead end",
+      "args": [
+        "start",
+        2
+      ],
+      "fixture": {
+        "start": {
+          "status": 200,
+          "body": {
+            "urls": [
+              "bad",
+              "exit"
+            ]
+          }
+        },
+        "bad": {
+          "status": 302,
+          "location": 123
+        },
+        "exit": {
+          "status": 200,
+          "body": "congrats"
+        }
+      },
+      "expected": "exit",
+      "visibility": "hidden"
+    },
+    {
+      "name": "redirect does not outrank closer success",
+      "args": [
+        "start",
+        2
+      ],
+      "fixture": {
+        "start": {
+          "status": 200,
+          "body": {
+            "urls": [
+              "moved",
+              "direct"
+            ]
+          }
+        },
+        "moved": {
+          "status": 302,
+          "location": "deep"
+        },
+        "direct": {
+          "status": 200,
+          "body": "congrats"
+        },
+        "deep": {
+          "status": 200,
+          "body": "congrats"
+        }
+      },
+      "expected": "direct",
       "visibility": "hidden"
     },
     {
@@ -244,18 +462,27 @@
       ],
       "fixture": {
         "start": {
-          "urls": [
-            "a",
-            "a",
-            "b"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "a",
+              "a",
+              "b"
+            ]
+          }
         },
         "a": {
-          "urls": [
-            "start"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "start"
+            ]
+          }
         },
-        "b": "congrats"
+        "b": {
+          "status": 200,
+          "body": "congrats"
+        }
       },
       "expected": "b",
       "visibility": "hidden"
@@ -268,19 +495,28 @@
       ],
       "fixture": {
         "root": {
-          "urls": [
-            "bad",
-            "good"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "bad",
+              "good"
+            ]
+          }
         },
         "bad": [
-          [
-            1,
-            2,
-            3
-          ]
+          {
+            "status": 200,
+            "body": [
+              1,
+              2,
+              3
+            ]
+          }
         ],
-        "good": "congrats"
+        "good": {
+          "status": 200,
+          "body": "congrats"
+        }
       },
       "expected": "good",
       "visibility": "hidden"
@@ -293,15 +529,24 @@
       ],
       "fixture": {
         "root": {
-          "urls": [
-            "weird",
-            "exit"
-          ]
+          "status": 200,
+          "body": {
+            "urls": [
+              "weird",
+              "exit"
+            ]
+          }
         },
         "weird": {
-          "urls": "exit"
+          "status": 200,
+          "body": {
+            "urls": "exit"
+          }
         },
-        "exit": "congrats"
+        "exit": {
+          "status": 200,
+          "body": "congrats"
+        }
       },
       "expected": "exit",
       "visibility": "hidden"
@@ -313,7 +558,10 @@
         2
       ],
       "fixture": {
-        "elsewhere": "congrats"
+        "elsewhere": {
+          "status": 200,
+          "body": "congrats"
+        }
       },
       "expected": null,
       "visibility": "hidden"

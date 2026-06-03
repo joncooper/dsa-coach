@@ -1,0 +1,272 @@
+{
+  "id": "ramp-insert-maintenance-window",
+  "kind": "problem",
+  "title": "Insert Maintenance Window",
+  "difficulty": "medium",
+  "concepts": [
+    "intervals",
+    "merge intervals",
+    "sorted input"
+  ],
+  "prompt": "Imagine you have an existing list of maintenance windows for a service. The existing windows are already sorted by start time and do not overlap. Now a new maintenance window is added, and it may overlap one or more of the existing windows.\n\nEach window is `[start, end]`, covering the half-open interval `[start, end)`. Write `insertMaintenanceWindow(blocks, new_block)` so it returns the updated schedule after inserting `new_block` and merging anything that overlaps.\n\nTouching windows should merge too. For example, inserting `[3, 5]` into `[[1, 3], [5, 8]]` should return `[[1, 8]]`, because there is no gap between the windows.\n\nKeep the result sorted by start time. If there are no existing windows, return a list containing only the new window.",
+  "signature": {
+    "name": "insertMaintenanceWindow",
+    "inputs": [
+      {
+        "name": "blocks",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "new_block",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "merge across middle",
+      "args": [
+        [
+          [
+            1,
+            3
+          ],
+          [
+            6,
+            9
+          ]
+        ],
+        [
+          2,
+          7
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          9
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "fits in gap",
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            5,
+            7
+          ]
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          5,
+          7
+        ]
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "touches both sides",
+      "args": [
+        [
+          [
+            1,
+            3
+          ],
+          [
+            5,
+            8
+          ]
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          8
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "before all windows",
+      "args": [
+        [
+          [
+            5,
+            7
+          ],
+          [
+            10,
+            12
+          ]
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          2
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          10,
+          12
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "after all windows",
+      "args": [
+        [
+          [
+            1,
+            2
+          ]
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          2
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "absorbs many windows",
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            7,
+            9
+          ],
+          [
+            12,
+            14
+          ]
+        ],
+        [
+          3,
+          13
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          14
+        ]
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "empty existing schedule",
+      "args": [
+        [],
+        [
+          8,
+          10
+        ]
+      ],
+      "expected": [
+        [
+          8,
+          10
+        ]
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "insert_maintenance_window",
+      "starterPath": "problems/ramp-insert-maintenance-window/solutions/python/starter.py",
+      "referencePath": "problems/ramp-insert-maintenance-window/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "insertMaintenanceWindow",
+      "starterPath": "problems/ramp-insert-maintenance-window/solutions/typescript/starter.ts",
+      "referencePath": "problems/ramp-insert-maintenance-window/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "InsertMaintenanceWindow",
+      "starterPath": "problems/ramp-insert-maintenance-window/solutions/go/starter.go",
+      "referencePath": "problems/ramp-insert-maintenance-window/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "insertMaintenanceWindow",
+      "starterPath": "problems/ramp-insert-maintenance-window/solutions/scala/starter.scala",
+      "referencePath": "problems/ramp-insert-maintenance-window/solutions/scala/reference.scala"
+    }
+  }
+}
