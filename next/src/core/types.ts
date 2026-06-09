@@ -102,6 +102,7 @@ export interface ProblemPart {
   id: string;
   title: string;
   prompt: string;
+  timeboxMinutes?: number;
   signature?: FunctionSignature;
   tests: ProblemTest[];
   languages?: Record<LanguageId, ProblemLanguageSupport>;
@@ -113,6 +114,7 @@ export interface Problem {
   title: string;
   difficulty: Difficulty;
   concepts: string[];
+  timeboxMinutes?: number;
   prompt: string;
   signature: FunctionSignature;
   tests: ProblemTest[];

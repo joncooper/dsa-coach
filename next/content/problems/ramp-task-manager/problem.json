@@ -3,13 +3,14 @@
   "kind": "problem",
   "title": "Progressive Task Manager APIs",
   "difficulty": "hard",
+  "timeboxMinutes": 90,
   "concepts": [
     "stateful design",
     "dispatch",
     "sorting",
     "intervals"
   ],
-  "prompt": "Suppose an interviewer asks you to build a tiny in-memory task-management backend. The system receives a list of operations, and for each operation you return the result as a string.\n\nThink of this as a miniature API server with no database: tasks live in memory, users live in memory, and assignments have time ranges.\n\nWrite `taskManager(operations)`. Every operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nTasks have an id, name, priority, and creation order. Task ids are assigned as `task_1`, `task_2`, and so on. Users have a quota: the maximum number of active assignments they can have at one time.\n\nSupported operations:\n\n- `[\"ADD\", timestamp, name, priority]`: create a task and return its new id.\n- `[\"GET\", timestamp, task_id]`: return `\"name|priority\"` for an existing task, or `\"\"` if the task does not exist.\n- `[\"UPDATE\", timestamp, task_id, new_name, new_priority]`: update an existing task. Return `\"true\"` if it existed, otherwise `\"false\"`.\n- `[\"SEARCH\", timestamp, text, limit]`: return up to `limit` task ids whose current names contain `text`. Sort by priority descending, then creation order ascending.\n- `[\"ADD_USER\", timestamp, user_id, quota]`: add a user. Return `\"false\"` if the user already exists; otherwise return `\"true\"`.\n- `[\"ASSIGN\", timestamp, task_id, user_id, finish_time]`: assign a task to a user from `timestamp` until absolute time `finish_time`. Return `\"false\"` if the task or user does not exist, if `finish_time <= timestamp`, or if the user is already at their active-assignment quota. Otherwise return `\"true\"`.\n- `[\"COMPLETE\", timestamp, task_id, user_id]`: complete that user's active unfinished assignment for the task. Return `\"true\"` if one exists, otherwise `\"false\"`.\n- `[\"USER_TASKS\", timestamp, user_id]`: return that user's active unfinished task ids at `timestamp`, sorted by task priority descending, then creation order ascending.\n- `[\"OVERDUE\", timestamp, user_id]`: return that user's unfinished task ids whose finish time is `<= timestamp`, in assignment order.\n\nAn assignment is active when `start <= timestamp < finish_time`. Completed assignments are not active and are not overdue.\n\nFor operations that return a list of ids, join the ids with commas. If the list is empty, return `\"\"`. Numeric fields such as timestamps, priorities, quotas, finish times, and limits are provided as strings.",
+  "prompt": "Suppose an interviewer asks you to build the first slice of a tiny in-memory task-management backend. The system receives a list of operations, and for each operation you return the result as a string.\n\nWrite `taskManager(operations)`. Every operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add users, assignments, completion, and overdue state to the same function. For now, keep the implementation small, but structure it as a clean dispatcher so the next levels have somewhere obvious to go.\n\n**Level 1 operations**\n\n- [\"ADD\", timestamp, name, priority]: create a task and return its new id.\n- [\"GET\", timestamp, task_id]: return `\"name|priority\"` for an existing task, or `\"\"` if the task does not exist.\n\nTasks have an id, name, priority, and creation order. Task ids are assigned as `task_1`, `task_2`, and so on. Numeric fields such as timestamps and priorities are provided as strings.\n\nAt this level, timestamps are included to match the later API shape, but they do not affect behavior yet.",
   "signature": {
     "name": "taskManager",
     "inputs": [
@@ -58,533 +59,38 @@
       "visibility": "visible"
     },
     {
-      "name": "search priority then creation order",
+      "name": "missing get and sequential ids",
       "args": [
         [
-          [
-            "ADD",
-            "1",
-            "api docs",
-            "3"
-          ],
-          [
-            "ADD",
-            "2",
-            "api retry",
-            "5"
-          ],
-          [
-            "ADD",
-            "3",
-            "api auth",
-            "5"
-          ],
-          [
-            "SEARCH",
-            "4",
-            "api",
-            "10"
-          ]
-        ]
-      ],
-      "expected": [
-        "task_1",
-        "task_2",
-        "task_3",
-        "task_2,task_3,task_1"
-      ],
-      "visibility": "visible"
-    },
-    {
-      "name": "quota blocks assignment",
-      "args": [
-        [
-          [
-            "ADD_USER",
-            "1",
-            "u1",
-            "1"
-          ],
-          [
-            "ADD",
-            "2",
-            "a",
-            "1"
-          ],
-          [
-            "ADD",
-            "3",
-            "b",
-            "1"
-          ],
-          [
-            "ASSIGN",
-            "4",
-            "task_1",
-            "u1",
-            "10"
-          ],
-          [
-            "ASSIGN",
-            "5",
-            "task_2",
-            "u1",
-            "12"
-          ]
-        ]
-      ],
-      "expected": [
-        "true",
-        "task_1",
-        "task_2",
-        "true",
-        "false"
-      ],
-      "visibility": "visible"
-    },
-    {
-      "name": "completion frees quota",
-      "args": [
-        [
-          [
-            "ADD_USER",
-            "1",
-            "u1",
-            "1"
-          ],
-          [
-            "ADD",
-            "2",
-            "a",
-            "1"
-          ],
-          [
-            "ADD",
-            "3",
-            "b",
-            "1"
-          ],
-          [
-            "ASSIGN",
-            "4",
-            "task_1",
-            "u1",
-            "10"
-          ],
-          [
-            "COMPLETE",
-            "6",
-            "task_1",
-            "u1"
-          ],
-          [
-            "ASSIGN",
-            "7",
-            "task_2",
-            "u1",
-            "12"
-          ],
-          [
-            "USER_TASKS",
-            "8",
-            "u1"
-          ]
-        ]
-      ],
-      "expected": [
-        "true",
-        "task_1",
-        "task_2",
-        "true",
-        "true",
-        "true",
-        "task_2"
-      ],
-      "visibility": "hidden"
-    },
-    {
-      "name": "overdue ignores completed",
-      "args": [
-        [
-          [
-            "ADD_USER",
-            "1",
-            "u1",
-            "2"
-          ],
-          [
-            "ADD",
-            "2",
-            "a",
-            "1"
-          ],
-          [
-            "ADD",
-            "3",
-            "b",
-            "1"
-          ],
-          [
-            "ASSIGN",
-            "4",
-            "task_1",
-            "u1",
-            "6"
-          ],
-          [
-            "ASSIGN",
-            "4",
-            "task_2",
-            "u1",
-            "7"
-          ],
-          [
-            "COMPLETE",
-            "5",
-            "task_1",
-            "u1"
-          ],
-          [
-            "OVERDUE",
-            "8",
-            "u1"
-          ]
-        ]
-      ],
-      "expected": [
-        "true",
-        "task_1",
-        "task_2",
-        "true",
-        "true",
-        "true",
-        "task_2"
-      ],
-      "visibility": "hidden"
-    },
-    {
-      "name": "update affects search and get",
-      "args": [
-        [
-          [
-            "ADD",
-            "1",
-            "old",
-            "1"
-          ],
-          [
-            "UPDATE",
-            "2",
-            "task_1",
-            "new name",
-            "9"
-          ],
           [
             "GET",
-            "3",
+            "0",
             "task_1"
           ],
           [
-            "SEARCH",
-            "4",
-            "new",
-            "1"
-          ]
-        ]
-      ],
-      "expected": [
-        "task_1",
-        "true",
-        "new name|9",
-        "task_1"
-      ],
-      "visibility": "hidden"
-    },
-    {
-      "name": "missing entities",
-      "args": [
-        [
-          [
-            "UPDATE",
+            "ADD",
             "1",
-            "task_9",
-            "x",
-            "1"
+            "alpha",
+            "2"
+          ],
+          [
+            "ADD",
+            "2",
+            "beta",
+            "3"
           ],
           [
             "GET",
-            "2",
-            "task_9"
-          ],
-          [
-            "ASSIGN",
             "3",
-            "task_9",
-            "u9",
-            "10"
-          ],
-          [
-            "COMPLETE",
-            "4",
-            "task_9",
-            "u9"
-          ],
-          [
-            "USER_TASKS",
-            "5",
-            "u9"
+            "task_2"
           ]
         ]
       ],
       "expected": [
-        "false",
         "",
-        "false",
-        "false",
-        ""
-      ],
-      "visibility": "hidden"
-    },
-    {
-      "name": "finish boundary inactive",
-      "args": [
-        [
-          [
-            "ADD_USER",
-            "1",
-            "u1",
-            "1"
-          ],
-          [
-            "ADD",
-            "2",
-            "a",
-            "1"
-          ],
-          [
-            "ASSIGN",
-            "3",
-            "task_1",
-            "u1",
-            "5"
-          ],
-          [
-            "USER_TASKS",
-            "5",
-            "u1"
-          ],
-          [
-            "COMPLETE",
-            "5",
-            "task_1",
-            "u1"
-          ],
-          [
-            "OVERDUE",
-            "5",
-            "u1"
-          ]
-        ]
-      ],
-      "expected": [
-        "true",
-        "task_1",
-        "true",
-        "",
-        "false",
-        "task_1"
-      ],
-      "visibility": "hidden"
-    },
-    {
-      "name": "search limit zero",
-      "expected": [
-        "task_1",
-        ""
-      ],
-      "args": [
-        [
-          [
-            "ADD",
-            "0",
-            "alpha",
-            "5"
-          ],
-          [
-            "SEARCH",
-            "1",
-            "a",
-            "0"
-          ]
-        ]
-      ],
-      "visibility": "hidden"
-    },
-    {
-      "name": "duplicate user rejected",
-      "expected": [
-        "true",
-        "false"
-      ],
-      "args": [
-        [
-          [
-            "ADD_USER",
-            "0",
-            "u",
-            "1"
-          ],
-          [
-            "ADD_USER",
-            "1",
-            "u",
-            "2"
-          ]
-        ]
-      ],
-      "visibility": "hidden"
-    },
-    {
-      "name": "finished assignment frees quota but remains overdue",
-      "expected": [
         "task_1",
         "task_2",
-        "true",
-        "true",
-        "true",
-        "task_1"
-      ],
-      "args": [
-        [
-          [
-            "ADD",
-            "0",
-            "first",
-            "1"
-          ],
-          [
-            "ADD",
-            "0",
-            "second",
-            "1"
-          ],
-          [
-            "ADD_USER",
-            "0",
-            "u",
-            "1"
-          ],
-          [
-            "ASSIGN",
-            "3",
-            "task_1",
-            "u",
-            "5"
-          ],
-          [
-            "ASSIGN",
-            "5",
-            "task_2",
-            "u",
-            "8"
-          ],
-          [
-            "OVERDUE",
-            "5",
-            "u"
-          ]
-        ]
-      ],
-      "visibility": "hidden"
-    },
-    {
-      "name": "user tasks sort by priority",
-      "expected": [
-        "task_1",
-        "task_2",
-        "true",
-        "true",
-        "true",
-        "task_2,task_1"
-      ],
-      "args": [
-        [
-          [
-            "ADD",
-            "0",
-            "low",
-            "1"
-          ],
-          [
-            "ADD",
-            "0",
-            "high",
-            "9"
-          ],
-          [
-            "ADD_USER",
-            "0",
-            "u",
-            "2"
-          ],
-          [
-            "ASSIGN",
-            "1",
-            "task_1",
-            "u",
-            "10"
-          ],
-          [
-            "ASSIGN",
-            "1",
-            "task_2",
-            "u",
-            "10"
-          ],
-          [
-            "USER_TASKS",
-            "2",
-            "u"
-          ]
-        ]
-      ],
-      "visibility": "hidden"
-    },
-    {
-      "name": "search matches substring",
-      "args": [
-        [
-          [
-            "ADD",
-            "0",
-            "billing api",
-            "1"
-          ],
-          [
-            "SEARCH",
-            "1",
-            "api",
-            "5"
-          ],
-          [
-            "SEARCH",
-            "2",
-            "bill",
-            "5"
-          ],
-          [
-            "SEARCH",
-            "3",
-            "ling",
-            "5"
-          ]
-        ]
-      ],
-      "expected": [
-        "task_1",
-        "task_1",
-        "task_1",
-        "task_1"
+        "beta|3"
       ],
       "visibility": "hidden"
     }
@@ -610,5 +116,1293 @@
       "starterPath": "problems/ramp-task-manager/solutions/scala/starter.scala",
       "referencePath": "problems/ramp-task-manager/solutions/scala/reference.scala"
     }
-  }
+  },
+  "parts": [
+    {
+      "id": "level-2-search",
+      "title": "Level 2: Update and Search",
+      "prompt": "Suppose an interviewer asks you to build the first slice of a tiny in-memory task-management backend. The system receives a list of operations, and for each operation you return the result as a string.\n\nWrite `taskManager(operations)`. Every operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add users, assignments, completion, and overdue state to the same function. For now, keep the implementation small, but structure it as a clean dispatcher so the next levels have somewhere obvious to go.\n\n**Level 1 operations**\n\n- [\"ADD\", timestamp, name, priority]: create a task and return its new id.\n- [\"GET\", timestamp, task_id]: return `\"name|priority\"` for an existing task, or `\"\"` if the task does not exist.\n\nTasks have an id, name, priority, and creation order. Task ids are assigned as `task_1`, `task_2`, and so on. Numeric fields such as timestamps and priorities are provided as strings.\n\nAt this level, timestamps are included to match the later API shape, but they do not affect behavior yet.\n\n**Level 2 operations**\n\nAdd task updates and search. The Level 1 operations must keep working.\n\n- [\"UPDATE\", timestamp, task_id, new_name, new_priority]: update an existing task. Return `\"true\"` if it existed, otherwise `\"false\"`.\n- [\"SEARCH\", timestamp, text, limit]: return up to `limit` task ids whose current names contain `text`. Sort by priority descending, then creation order ascending.\n\nFor operations that return a list of ids, join ids with commas. If the list is empty, return `\"\"`. A limit of `0` returns `\"\"`.",
+      "tests": [
+        {
+          "name": "add and get",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "write docs",
+                "5"
+              ],
+              [
+                "GET",
+                "2",
+                "task_1"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "write docs|5"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "search priority then creation order",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "api docs",
+                "3"
+              ],
+              [
+                "ADD",
+                "2",
+                "api retry",
+                "5"
+              ],
+              [
+                "ADD",
+                "3",
+                "api auth",
+                "5"
+              ],
+              [
+                "SEARCH",
+                "4",
+                "api",
+                "10"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "task_2",
+            "task_3",
+            "task_2,task_3,task_1"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "missing get and sequential ids",
+          "args": [
+            [
+              [
+                "GET",
+                "0",
+                "task_1"
+              ],
+              [
+                "ADD",
+                "1",
+                "alpha",
+                "2"
+              ],
+              [
+                "ADD",
+                "2",
+                "beta",
+                "3"
+              ],
+              [
+                "GET",
+                "3",
+                "task_2"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "task_1",
+            "task_2",
+            "beta|3"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "update affects search and get",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "old",
+                "1"
+              ],
+              [
+                "UPDATE",
+                "2",
+                "task_1",
+                "new name",
+                "9"
+              ],
+              [
+                "GET",
+                "3",
+                "task_1"
+              ],
+              [
+                "SEARCH",
+                "4",
+                "new",
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "true",
+            "new name|9",
+            "task_1"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "search limit zero",
+          "expected": [
+            "task_1",
+            ""
+          ],
+          "args": [
+            [
+              [
+                "ADD",
+                "0",
+                "alpha",
+                "5"
+              ],
+              [
+                "SEARCH",
+                "1",
+                "a",
+                "0"
+              ]
+            ]
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "search matches substring",
+          "args": [
+            [
+              [
+                "ADD",
+                "0",
+                "billing api",
+                "1"
+              ],
+              [
+                "SEARCH",
+                "1",
+                "api",
+                "5"
+              ],
+              [
+                "SEARCH",
+                "2",
+                "bill",
+                "5"
+              ],
+              [
+                "SEARCH",
+                "3",
+                "ling",
+                "5"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "task_1",
+            "task_1",
+            "task_1"
+          ],
+          "visibility": "hidden"
+        }
+      ]
+    },
+    {
+      "id": "level-3-assignments",
+      "title": "Level 3: Users and Assignments",
+      "prompt": "Suppose an interviewer asks you to build the first slice of a tiny in-memory task-management backend. The system receives a list of operations, and for each operation you return the result as a string.\n\nWrite `taskManager(operations)`. Every operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add users, assignments, completion, and overdue state to the same function. For now, keep the implementation small, but structure it as a clean dispatcher so the next levels have somewhere obvious to go.\n\n**Level 1 operations**\n\n- [\"ADD\", timestamp, name, priority]: create a task and return its new id.\n- [\"GET\", timestamp, task_id]: return `\"name|priority\"` for an existing task, or `\"\"` if the task does not exist.\n\nTasks have an id, name, priority, and creation order. Task ids are assigned as `task_1`, `task_2`, and so on. Numeric fields such as timestamps and priorities are provided as strings.\n\nAt this level, timestamps are included to match the later API shape, but they do not affect behavior yet.\n\n**Level 2 operations**\n\nAdd task updates and search. The Level 1 operations must keep working.\n\n- [\"UPDATE\", timestamp, task_id, new_name, new_priority]: update an existing task. Return `\"true\"` if it existed, otherwise `\"false\"`.\n- [\"SEARCH\", timestamp, text, limit]: return up to `limit` task ids whose current names contain `text`. Sort by priority descending, then creation order ascending.\n\nFor operations that return a list of ids, join ids with commas. If the list is empty, return `\"\"`. A limit of `0` returns `\"\"`.\n\n**Level 3 operations**\n\nAdd users and active assignments. The Level 1 and Level 2 operations must keep working.\n\nUsers have a quota: the maximum number of active assignments they can have at one time.\n\n- [\"ADD_USER\", timestamp, user_id, quota]: add a user. Return `\"false\"` if the user already exists; otherwise return `\"true\"`.\n- [\"ASSIGN\", timestamp, task_id, user_id, finish_time]: assign a task to a user from `timestamp` until absolute time `finish_time`. Return `\"false\"` if the task or user does not exist, if `finish_time <= timestamp`, or if the user is already at their active-assignment quota. Otherwise return `\"true\"`.\n- [\"USER_TASKS\", timestamp, user_id]: return that user's active unfinished task ids at `timestamp`, sorted by task priority descending, then creation order ascending.\n\nAn assignment is active when `start <= timestamp < finish_time`. At this level, assignments become inactive automatically when their finish time passes.",
+      "tests": [
+        {
+          "name": "add and get",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "write docs",
+                "5"
+              ],
+              [
+                "GET",
+                "2",
+                "task_1"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "write docs|5"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "search priority then creation order",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "api docs",
+                "3"
+              ],
+              [
+                "ADD",
+                "2",
+                "api retry",
+                "5"
+              ],
+              [
+                "ADD",
+                "3",
+                "api auth",
+                "5"
+              ],
+              [
+                "SEARCH",
+                "4",
+                "api",
+                "10"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "task_2",
+            "task_3",
+            "task_2,task_3,task_1"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "quota blocks assignment",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "1",
+                "u1",
+                "1"
+              ],
+              [
+                "ADD",
+                "2",
+                "a",
+                "1"
+              ],
+              [
+                "ADD",
+                "3",
+                "b",
+                "1"
+              ],
+              [
+                "ASSIGN",
+                "4",
+                "task_1",
+                "u1",
+                "10"
+              ],
+              [
+                "ASSIGN",
+                "5",
+                "task_2",
+                "u1",
+                "12"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "task_1",
+            "task_2",
+            "true",
+            "false"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "active tasks for user",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "1",
+                "u1",
+                "2"
+              ],
+              [
+                "ADD",
+                "2",
+                "low",
+                "1"
+              ],
+              [
+                "ADD",
+                "3",
+                "high",
+                "9"
+              ],
+              [
+                "ASSIGN",
+                "4",
+                "task_1",
+                "u1",
+                "10"
+              ],
+              [
+                "ASSIGN",
+                "4",
+                "task_2",
+                "u1",
+                "10"
+              ],
+              [
+                "USER_TASKS",
+                "5",
+                "u1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "task_2,task_1"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "missing get and sequential ids",
+          "args": [
+            [
+              [
+                "GET",
+                "0",
+                "task_1"
+              ],
+              [
+                "ADD",
+                "1",
+                "alpha",
+                "2"
+              ],
+              [
+                "ADD",
+                "2",
+                "beta",
+                "3"
+              ],
+              [
+                "GET",
+                "3",
+                "task_2"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "task_1",
+            "task_2",
+            "beta|3"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "update affects search and get",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "old",
+                "1"
+              ],
+              [
+                "UPDATE",
+                "2",
+                "task_1",
+                "new name",
+                "9"
+              ],
+              [
+                "GET",
+                "3",
+                "task_1"
+              ],
+              [
+                "SEARCH",
+                "4",
+                "new",
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "true",
+            "new name|9",
+            "task_1"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "search limit zero",
+          "expected": [
+            "task_1",
+            ""
+          ],
+          "args": [
+            [
+              [
+                "ADD",
+                "0",
+                "alpha",
+                "5"
+              ],
+              [
+                "SEARCH",
+                "1",
+                "a",
+                "0"
+              ]
+            ]
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "duplicate user rejected",
+          "expected": [
+            "true",
+            "false"
+          ],
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "0",
+                "u",
+                "1"
+              ],
+              [
+                "ADD_USER",
+                "1",
+                "u",
+                "2"
+              ]
+            ]
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "invalid assignments fail",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "1",
+                "u1",
+                "1"
+              ],
+              [
+                "ADD",
+                "2",
+                "a",
+                "1"
+              ],
+              [
+                "ASSIGN",
+                "3",
+                "task_9",
+                "u1",
+                "9"
+              ],
+              [
+                "ASSIGN",
+                "4",
+                "task_1",
+                "u9",
+                "9"
+              ],
+              [
+                "ASSIGN",
+                "5",
+                "task_1",
+                "u1",
+                "5"
+              ],
+              [
+                "USER_TASKS",
+                "6",
+                "u1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "task_1",
+            "false",
+            "false",
+            "false",
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "finished assignment frees quota",
+          "args": [
+            [
+              [
+                "ADD",
+                "0",
+                "first",
+                "1"
+              ],
+              [
+                "ADD",
+                "0",
+                "second",
+                "1"
+              ],
+              [
+                "ADD_USER",
+                "0",
+                "u",
+                "1"
+              ],
+              [
+                "ASSIGN",
+                "3",
+                "task_1",
+                "u",
+                "5"
+              ],
+              [
+                "ASSIGN",
+                "5",
+                "task_2",
+                "u",
+                "8"
+              ],
+              [
+                "USER_TASKS",
+                "6",
+                "u"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "true",
+            "task_2"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "user tasks sort by priority",
+          "expected": [
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "true",
+            "task_2,task_1"
+          ],
+          "args": [
+            [
+              [
+                "ADD",
+                "0",
+                "low",
+                "1"
+              ],
+              [
+                "ADD",
+                "0",
+                "high",
+                "9"
+              ],
+              [
+                "ADD_USER",
+                "0",
+                "u",
+                "2"
+              ],
+              [
+                "ASSIGN",
+                "1",
+                "task_1",
+                "u",
+                "10"
+              ],
+              [
+                "ASSIGN",
+                "1",
+                "task_2",
+                "u",
+                "10"
+              ],
+              [
+                "USER_TASKS",
+                "2",
+                "u"
+              ]
+            ]
+          ],
+          "visibility": "hidden"
+        }
+      ]
+    },
+    {
+      "id": "level-4-completion-overdue",
+      "title": "Level 4: Completion and Overdue",
+      "prompt": "Suppose an interviewer asks you to build the first slice of a tiny in-memory task-management backend. The system receives a list of operations, and for each operation you return the result as a string.\n\nWrite `taskManager(operations)`. Every operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add users, assignments, completion, and overdue state to the same function. For now, keep the implementation small, but structure it as a clean dispatcher so the next levels have somewhere obvious to go.\n\n**Level 1 operations**\n\n- [\"ADD\", timestamp, name, priority]: create a task and return its new id.\n- [\"GET\", timestamp, task_id]: return `\"name|priority\"` for an existing task, or `\"\"` if the task does not exist.\n\nTasks have an id, name, priority, and creation order. Task ids are assigned as `task_1`, `task_2`, and so on. Numeric fields such as timestamps and priorities are provided as strings.\n\nAt this level, timestamps are included to match the later API shape, but they do not affect behavior yet.\n\n**Level 2 operations**\n\nAdd task updates and search. The Level 1 operations must keep working.\n\n- [\"UPDATE\", timestamp, task_id, new_name, new_priority]: update an existing task. Return `\"true\"` if it existed, otherwise `\"false\"`.\n- [\"SEARCH\", timestamp, text, limit]: return up to `limit` task ids whose current names contain `text`. Sort by priority descending, then creation order ascending.\n\nFor operations that return a list of ids, join ids with commas. If the list is empty, return `\"\"`. A limit of `0` returns `\"\"`.\n\n**Level 3 operations**\n\nAdd users and active assignments. The Level 1 and Level 2 operations must keep working.\n\nUsers have a quota: the maximum number of active assignments they can have at one time.\n\n- [\"ADD_USER\", timestamp, user_id, quota]: add a user. Return `\"false\"` if the user already exists; otherwise return `\"true\"`.\n- [\"ASSIGN\", timestamp, task_id, user_id, finish_time]: assign a task to a user from `timestamp` until absolute time `finish_time`. Return `\"false\"` if the task or user does not exist, if `finish_time <= timestamp`, or if the user is already at their active-assignment quota. Otherwise return `\"true\"`.\n- [\"USER_TASKS\", timestamp, user_id]: return that user's active unfinished task ids at `timestamp`, sorted by task priority descending, then creation order ascending.\n\nAn assignment is active when `start <= timestamp < finish_time`. At this level, assignments become inactive automatically when their finish time passes.\n\n**Level 4 operations**\n\nAdd completion and overdue reporting. All earlier levels must keep working.\n\n- [\"COMPLETE\", timestamp, task_id, user_id]: complete that user's active unfinished assignment for the task. Return `\"true\"` if one exists, otherwise `\"false\"`.\n- [\"OVERDUE\", timestamp, user_id]: return that user's unfinished task ids whose finish time is `<= timestamp`, in assignment order.\n\nCompleted assignments are not active and are not overdue. Finished but uncompleted assignments are not active, but they are overdue once `finish_time <= timestamp`.",
+      "tests": [
+        {
+          "name": "add and get",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "write docs",
+                "5"
+              ],
+              [
+                "GET",
+                "2",
+                "task_1"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "write docs|5"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "search priority then creation order",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "api docs",
+                "3"
+              ],
+              [
+                "ADD",
+                "2",
+                "api retry",
+                "5"
+              ],
+              [
+                "ADD",
+                "3",
+                "api auth",
+                "5"
+              ],
+              [
+                "SEARCH",
+                "4",
+                "api",
+                "10"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "task_2",
+            "task_3",
+            "task_2,task_3,task_1"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "quota blocks assignment",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "1",
+                "u1",
+                "1"
+              ],
+              [
+                "ADD",
+                "2",
+                "a",
+                "1"
+              ],
+              [
+                "ADD",
+                "3",
+                "b",
+                "1"
+              ],
+              [
+                "ASSIGN",
+                "4",
+                "task_1",
+                "u1",
+                "10"
+              ],
+              [
+                "ASSIGN",
+                "5",
+                "task_2",
+                "u1",
+                "12"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "task_1",
+            "task_2",
+            "true",
+            "false"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "active tasks for user",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "1",
+                "u1",
+                "2"
+              ],
+              [
+                "ADD",
+                "2",
+                "low",
+                "1"
+              ],
+              [
+                "ADD",
+                "3",
+                "high",
+                "9"
+              ],
+              [
+                "ASSIGN",
+                "4",
+                "task_1",
+                "u1",
+                "10"
+              ],
+              [
+                "ASSIGN",
+                "4",
+                "task_2",
+                "u1",
+                "10"
+              ],
+              [
+                "USER_TASKS",
+                "5",
+                "u1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "task_2,task_1"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "completion frees quota",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "1",
+                "u1",
+                "1"
+              ],
+              [
+                "ADD",
+                "2",
+                "a",
+                "1"
+              ],
+              [
+                "ADD",
+                "3",
+                "b",
+                "1"
+              ],
+              [
+                "ASSIGN",
+                "4",
+                "task_1",
+                "u1",
+                "10"
+              ],
+              [
+                "COMPLETE",
+                "6",
+                "task_1",
+                "u1"
+              ],
+              [
+                "ASSIGN",
+                "7",
+                "task_2",
+                "u1",
+                "12"
+              ],
+              [
+                "USER_TASKS",
+                "8",
+                "u1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "true",
+            "task_2"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "missing get and sequential ids",
+          "args": [
+            [
+              [
+                "GET",
+                "0",
+                "task_1"
+              ],
+              [
+                "ADD",
+                "1",
+                "alpha",
+                "2"
+              ],
+              [
+                "ADD",
+                "2",
+                "beta",
+                "3"
+              ],
+              [
+                "GET",
+                "3",
+                "task_2"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "task_1",
+            "task_2",
+            "beta|3"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "update affects search and get",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "old",
+                "1"
+              ],
+              [
+                "UPDATE",
+                "2",
+                "task_1",
+                "new name",
+                "9"
+              ],
+              [
+                "GET",
+                "3",
+                "task_1"
+              ],
+              [
+                "SEARCH",
+                "4",
+                "new",
+                "1"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "true",
+            "new name|9",
+            "task_1"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "overdue ignores completed",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "1",
+                "u1",
+                "2"
+              ],
+              [
+                "ADD",
+                "2",
+                "a",
+                "1"
+              ],
+              [
+                "ADD",
+                "3",
+                "b",
+                "1"
+              ],
+              [
+                "ASSIGN",
+                "4",
+                "task_1",
+                "u1",
+                "6"
+              ],
+              [
+                "ASSIGN",
+                "4",
+                "task_2",
+                "u1",
+                "7"
+              ],
+              [
+                "COMPLETE",
+                "5",
+                "task_1",
+                "u1"
+              ],
+              [
+                "OVERDUE",
+                "8",
+                "u1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "true",
+            "task_2"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "missing entities",
+          "args": [
+            [
+              [
+                "UPDATE",
+                "1",
+                "task_9",
+                "x",
+                "1"
+              ],
+              [
+                "GET",
+                "2",
+                "task_9"
+              ],
+              [
+                "ASSIGN",
+                "3",
+                "task_9",
+                "u9",
+                "10"
+              ],
+              [
+                "COMPLETE",
+                "4",
+                "task_9",
+                "u9"
+              ],
+              [
+                "USER_TASKS",
+                "5",
+                "u9"
+              ],
+              [
+                "OVERDUE",
+                "6",
+                "u9"
+              ]
+            ]
+          ],
+          "expected": [
+            "false",
+            "",
+            "false",
+            "false",
+            "",
+            ""
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "finish boundary inactive",
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "1",
+                "u1",
+                "1"
+              ],
+              [
+                "ADD",
+                "2",
+                "a",
+                "1"
+              ],
+              [
+                "ASSIGN",
+                "3",
+                "task_1",
+                "u1",
+                "5"
+              ],
+              [
+                "USER_TASKS",
+                "5",
+                "u1"
+              ],
+              [
+                "COMPLETE",
+                "5",
+                "task_1",
+                "u1"
+              ],
+              [
+                "OVERDUE",
+                "5",
+                "u1"
+              ]
+            ]
+          ],
+          "expected": [
+            "true",
+            "task_1",
+            "true",
+            "",
+            "false",
+            "task_1"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "duplicate user rejected",
+          "expected": [
+            "true",
+            "false"
+          ],
+          "args": [
+            [
+              [
+                "ADD_USER",
+                "0",
+                "u",
+                "1"
+              ],
+              [
+                "ADD_USER",
+                "1",
+                "u",
+                "2"
+              ]
+            ]
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "finished assignment frees quota but remains overdue",
+          "expected": [
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "true",
+            "task_1"
+          ],
+          "args": [
+            [
+              [
+                "ADD",
+                "0",
+                "first",
+                "1"
+              ],
+              [
+                "ADD",
+                "0",
+                "second",
+                "1"
+              ],
+              [
+                "ADD_USER",
+                "0",
+                "u",
+                "1"
+              ],
+              [
+                "ASSIGN",
+                "3",
+                "task_1",
+                "u",
+                "5"
+              ],
+              [
+                "ASSIGN",
+                "5",
+                "task_2",
+                "u",
+                "8"
+              ],
+              [
+                "OVERDUE",
+                "5",
+                "u"
+              ]
+            ]
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "user tasks sort by priority",
+          "expected": [
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "true",
+            "task_2,task_1"
+          ],
+          "args": [
+            [
+              [
+                "ADD",
+                "0",
+                "low",
+                "1"
+              ],
+              [
+                "ADD",
+                "0",
+                "high",
+                "9"
+              ],
+              [
+                "ADD_USER",
+                "0",
+                "u",
+                "2"
+              ],
+              [
+                "ASSIGN",
+                "1",
+                "task_1",
+                "u",
+                "10"
+              ],
+              [
+                "ASSIGN",
+                "1",
+                "task_2",
+                "u",
+                "10"
+              ],
+              [
+                "USER_TASKS",
+                "2",
+                "u"
+              ]
+            ]
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "search matches substring",
+          "args": [
+            [
+              [
+                "ADD",
+                "0",
+                "billing api",
+                "1"
+              ],
+              [
+                "SEARCH",
+                "1",
+                "api",
+                "5"
+              ],
+              [
+                "SEARCH",
+                "2",
+                "bill",
+                "5"
+              ],
+              [
+                "SEARCH",
+                "3",
+                "ling",
+                "5"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "task_1",
+            "task_1",
+            "task_1"
+          ],
+          "visibility": "hidden"
+        }
+      ]
+    }
+  ]
 }

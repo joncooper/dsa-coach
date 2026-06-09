@@ -229,6 +229,7 @@ export function App() {
   const [lastRunIncludedHidden, setLastRunIncludedHidden] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [promptPaneCollapsed, setPromptPaneCollapsed] = useState(false);
+  const [activeProblemPendingMs, setActiveProblemPendingMs] = useState(0);
   const preferencesLoadedRef = useRef(false);
   const [starred, setStarred] = useState(false);
   const [hintCount, setHintCount] = useState(0);
@@ -339,7 +340,9 @@ export function App() {
   const promptConstraints = selectedProblem ? problemConstraints(selectedProblem, selectedPart, activeSignature) : [];
   const splitStyle = { "--prompt-width": `${splitRatio}%`, "--dock-height": `${dockHeight}px` } as CSSProperties;
   const canReloadContent = contentStatus?.reloadAvailable === true;
-  const activeProblemTimeMs = selectedProblemId ? activeTimeForProblem(userData, selectedProblemId) : 0;
+  const persistedActiveProblemTimeMs = selectedProblemId ? activeTimeForProblem(userData, selectedProblemId) : 0;
+  const activeProblemTimeMs = persistedActiveProblemTimeMs + (currentView.kind === "problem" ? activeProblemPendingMs : 0);
+  const activeTimeboxMinutes = selectedPart?.timeboxMinutes ?? selectedProblem?.timeboxMinutes;
 
   useEffect(() => {
     setMobileNavOpen(false);
@@ -760,7 +763,10 @@ export function App() {
   }, [currentView.kind, scratchpadCode, selectedLanguage, selectedProblemId]);
 
   useEffect(() => {
-    if (currentView.kind !== "problem" || !selectedProblemId) return;
+    if (currentView.kind !== "problem" || !selectedProblemId) {
+      setActiveProblemPendingMs(0);
+      return;
+    }
 
     const workspaceId = problemWorkspaceId(selectedProblemId, selectedPartId || undefined);
     let active = isDocumentActive();
@@ -778,6 +784,7 @@ export function App() {
     const flush = () => {
       const delta = pendingMs;
       pendingMs = 0;
+      setActiveProblemPendingMs(0);
       persistDelta(delta);
     };
 
@@ -785,6 +792,7 @@ export function App() {
       const now = Date.now();
       if (active) pendingMs += Math.min(now - lastTick, activeTimeTickCapMs);
       lastTick = now;
+      setActiveProblemPendingMs(pendingMs);
       if (pendingMs >= activeTimeFlushMs) flush();
     };
 
@@ -804,6 +812,7 @@ export function App() {
     return () => {
       tick();
       flush();
+      setActiveProblemPendingMs(0);
       window.clearInterval(interval);
       window.removeEventListener("focus", refreshActiveState);
       window.removeEventListener("blur", refreshActiveState);
@@ -1581,6 +1590,14 @@ export function App() {
               {selectedProblem ? (
                 <div className="tag-row compact-tags">
                   <span>{selectedProblem.difficulty}</span>
+                  {activeTimeboxMinutes ? (
+                    <span
+                      className={`timebox-chip ${isTimeboxOver(activeTimeboxMinutes, activeProblemTimeMs) ? "is-over" : ""}`}
+                      title={`${formatDuration(activeProblemTimeMs)} active time used`}
+                    >
+                      <ClockIcon /> {problemTimeboxStatusLabel(activeTimeboxMinutes, activeProblemTimeMs)}
+                    </span>
+                  ) : null}
                   {!selectedPart ? <span>default</span> : null}
                   {selectedProblem.concepts.slice(0, 3).map((concept) => <span key={concept}>{concept}</span>)}
                 </div>
@@ -3440,6 +3457,7 @@ function AssessmentFlowScreen({
                 setCode(value);
                 setSaveState("saving");
               }}
+              onRun={(includeHidden) => void runAssessment(includeHidden)}
             />
           </div>
           <div className="workspace-bottom assessment-bottom">
@@ -4108,7 +4126,9 @@ function ProblemRow({
     <button className={`row-link ${variant === "module" ? "module-row" : ""}`} type="button" onClick={onOpen}>
       {variant === "module" && problem.id.includes("-bonus-") ? <SparkleIcon /> : <TerminalSquareIcon />}
       <span className="row-title">{problem.title}</span>
-      <span className={`difficulty-badge is-${problem.difficulty}`}>{problem.difficulty}</span>
+      <span className={`difficulty-badge is-${problem.difficulty}`}>
+        {problem.timeboxMinutes ? `${problem.difficulty} / ${problem.timeboxMinutes}m` : problem.difficulty}
+      </span>
       <span className={done ? "status-dot complete" : "status-dot"}>{done ? "✓" : ""}</span>
     </button>
   );
@@ -6038,6 +6058,20 @@ function assessmentArchetype(problem: Problem): string {
   if (problem.id === "asm-banking") return "Banking / ledger";
   if (problem.id === "asm-in-memory-db") return "In-memory DB";
   return titleCase(problem.concepts[0] ?? "assessment");
+}
+
+function problemTimeboxLabel(problem: Problem): string {
+  return problem.timeboxMinutes ? `${problem.timeboxMinutes} min` : "";
+}
+
+function problemTimeboxStatusLabel(timeboxMinutes: number, activeMs: number): string {
+  const budgetMs = timeboxMinutes * 60_000;
+  if (activeMs >= budgetMs) return `${timeboxMinutes} min · +${formatRemaining(activeMs - budgetMs)}`;
+  return `${timeboxMinutes} min · ${formatRemaining(budgetMs - activeMs)} left`;
+}
+
+function isTimeboxOver(timeboxMinutes: number, activeMs: number): boolean {
+  return activeMs >= timeboxMinutes * 60_000;
 }
 
 function assessmentIntro(problem: Problem): string {

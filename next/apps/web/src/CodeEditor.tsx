@@ -28,7 +28,7 @@ import {
 } from "@codemirror/language";
 import { type Diagnostic as CodeMirrorDiagnostic, linter } from "@codemirror/lint";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { Compartment, EditorState, RangeSetBuilder, type Extension } from "@codemirror/state";
+import { Compartment, EditorState, Prec, RangeSetBuilder, type Extension } from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
@@ -168,7 +168,7 @@ export function CodeEditor({ value, language, problemId, partId, signature, supp
         doc: value,
         extensions: [
           ...editorBaseExtensions,
-          keymap.of([
+          Prec.highest(keymap.of([
             {
               key: "Mod-Enter",
               run: () => {
@@ -185,7 +185,7 @@ export function CodeEditor({ value, language, problemId, partId, signature, supp
                 return true;
               }
             }
-          ]),
+          ])),
           languageSlot.of(languageExtension(language)),
           ideSlot.of(ideExtensions({
             language,

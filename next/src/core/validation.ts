@@ -95,6 +95,9 @@ export async function validateContentFiles(graph: ContentGraph, contentRoot: str
 }
 
 function validateProblem(problem: Problem, languages: Set<string>, errors: string[]) {
+  if (problem.timeboxMinutes !== undefined && problem.timeboxMinutes <= 0) {
+    errors.push(`Problem ${problem.id} timeboxMinutes must be positive`);
+  }
   if (!problem.tests.some((test) => test.visibility === "visible")) {
     errors.push(`Problem ${problem.id} has no visible tests`);
   }
@@ -108,6 +111,9 @@ function validateProblem(problem: Problem, languages: Set<string>, errors: strin
     if (!support.referencePath.trim()) errors.push(`Problem ${problem.id}/${language} missing referencePath`);
   }
   for (const part of problem.parts ?? []) {
+    if (part.timeboxMinutes !== undefined && part.timeboxMinutes <= 0) {
+      errors.push(`Problem ${problem.id} part ${part.id} timeboxMinutes must be positive`);
+    }
     if (!part.tests.some((test) => test.visibility === "visible")) {
       errors.push(`Problem ${problem.id} part ${part.id} has no visible tests`);
     }
