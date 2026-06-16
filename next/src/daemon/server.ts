@@ -387,7 +387,7 @@ async function handleRequest(
     const result = await content.current().lsp.definition(JSON.parse(body) as LspPositionRequest);
     return json(res, 200, result);
   }
-  if (req.method === "GET" && options.staticRoot && (await serveStatic(res, url, options.staticRoot))) {
+  if (req.method === "GET" && options.staticRoot && (await serveStatic(res, url, options))) {
     return;
   }
 
@@ -497,8 +497,9 @@ function resolveUserDataRoot(options: RunnerDaemonOptions): string {
   return resolve(options.userDataRoot ?? process.env.DSA_COACH_USER_DATA_DIR ?? ".user-data");
 }
 
-async function serveStatic(res: ServerResponse, url: URL, staticRoot: string): Promise<boolean> {
-  const root = resolve(staticRoot);
+async function serveStatic(res: ServerResponse, url: URL, options: RunnerDaemonOptions): Promise<boolean> {
+  if (!options.staticRoot) return false;
+  const root = resolve(options.staticRoot);
   const pathname = staticPathname(url.pathname);
   const target = resolve(root, `.${pathname}`);
   if (!isInsideRoot(root, target)) return false;
@@ -508,10 +509,15 @@ async function serveStatic(res: ServerResponse, url: URL, staticRoot: string): P
 
   res.writeHead(200, {
     "content-type": contentType(file),
-    "cache-control": file.includes(`${sep}assets${sep}`) ? "public, max-age=31536000, immutable" : "no-cache"
+    "cache-control": staticCacheControl(options, file)
   });
   res.end(await readFile(file));
   return true;
+}
+
+function staticCacheControl(options: RunnerDaemonOptions, file: string): string {
+  if (options.buildMode !== "release") return "no-store";
+  return file.includes(`${sep}assets${sep}`) ? "public, max-age=31536000, immutable" : "no-cache";
 }
 
 function staticPathname(pathname: string): string {

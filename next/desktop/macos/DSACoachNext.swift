@@ -109,6 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func createWindow() {
         let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .nonPersistent()
         webView = WKWebView(frame: .zero, configuration: configuration)
         webView.allowsBackForwardNavigationGestures = true
 

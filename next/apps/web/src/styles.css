@@ -132,9 +132,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 72px;
+  min-height: 64px;
   border-bottom: 1px solid var(--line);
-  padding: 12px 18px;
+  padding: 10px 18px;
   background: rgba(255, 253, 248, 0.92);
 }
 
@@ -193,18 +193,18 @@
 .scenario-phase-strip {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
   border-bottom: 1px solid var(--line);
-  padding: 8px 18px 10px;
+  padding: 6px 18px 8px;
   background: #faf8f1;
 }
 
 .scenario-phase-step {
   position: relative;
   min-width: 0;
-  padding-top: 8px;
+  padding-top: 7px;
   color: var(--muted);
-  font-size: 0.74rem;
+  font-size: 0.7rem;
 }
 
 .scenario-phase-step::before {
@@ -249,17 +249,18 @@
 }
 
 .scenario-interview-layout {
-  grid-template-columns: minmax(280px, 25vw) minmax(440px, 1fr) minmax(270px, 22vw);
+  grid-template-columns: clamp(340px, 28vw, 430px) minmax(520px, 1fr) clamp(280px, 21vw, 350px);
   border-top: 0;
+  background: #fbfaf5;
 }
 
 .scenario-prompt-pane {
   min-width: 0;
-  max-height: calc(100vh - 116px);
+  max-height: calc(100vh - 108px);
   overflow: auto;
   border-right: 1px solid var(--line);
-  padding: 16px;
-  background: var(--paper);
+  padding: 14px 16px;
+  background: #fffdf8;
 }
 
 .scenario-live-left-pane {
@@ -273,19 +274,19 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 4px;
-  background: var(--paper-soft);
+  border-radius: 7px;
+  padding: 3px;
+  background: #eee9dd;
 }
 
 .scenario-pane-tabs button {
-  min-height: 34px;
+  min-height: 32px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 5px;
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   font-weight: 850;
 }
 
@@ -353,11 +354,11 @@
 .scenario-main-pane {
   display: grid;
   align-content: start;
-  gap: 16px;
+  gap: 14px;
   min-width: 0;
-  max-height: calc(100vh - 116px);
+  max-height: calc(100vh - 108px);
   overflow: auto;
-  padding: 16px;
+  padding: 14px;
 }
 
 .scenario-session-pane {
@@ -377,8 +378,7 @@
 
 .scenario-workbench,
 .scenario-test-output,
-.scenario-debrief-panel,
-.scenario-interviewer-pane {
+.scenario-debrief-panel {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--paper);
@@ -398,7 +398,7 @@
   justify-content: space-between;
   gap: 12px;
   border-bottom: 1px solid var(--line);
-  padding: 12px 14px;
+  padding: 10px 14px;
 }
 
 .scenario-workbench code {
@@ -411,8 +411,14 @@
 }
 
 .scenario-diff-editor {
-  min-height: 360px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 240px;
   background: #fbfcfa;
+}
+
+.scenario-diff-editor.empty {
+  min-height: 190px;
 }
 
 .scenario-diff-editor-tab {
@@ -429,13 +435,37 @@
 }
 
 .scenario-diff-editor pre {
-  min-height: 320px;
-  max-height: 46vh;
+  min-height: 210px;
+  max-height: 38vh;
   margin: 0;
   overflow: auto;
   border-radius: 0;
   padding: 14px;
   background: #fbfcfa;
+}
+
+.scenario-empty-diff {
+  display: grid;
+  min-height: 158px;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  padding: 20px;
+  background: #fbfcfa;
+  color: var(--muted);
+  text-align: center;
+}
+
+.scenario-empty-diff strong {
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.scenario-empty-diff p {
+  max-width: 320px;
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
 }
 
 .scenario-test-output {
@@ -453,15 +483,16 @@
 .scenario-interviewer-pane {
   display: grid;
   align-content: start;
-  gap: 14px;
-  max-height: calc(100vh - 116px);
+  gap: 12px;
+  max-height: calc(100vh - 108px);
   overflow: auto;
   border-top: 0;
   border-right: 0;
   border-bottom: 0;
   border-radius: 0;
   border-left: 1px solid var(--line);
-  padding: 16px;
+  padding: 14px;
+  background: #f8f6ee;
   box-shadow: none;
 }
 
@@ -492,14 +523,19 @@
 .scenario-interviewer-input,
 .scenario-debrief-lock {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 12px;
-  background: #fffefa;
+  border-radius: 7px;
+  padding: 10px;
+  background: #fffdf8;
 }
 
 .scenario-transcript {
   display: grid;
   gap: 10px;
+  border-color: transparent;
+  border-bottom-color: var(--line);
+  border-radius: 0;
+  padding: 0 0 10px;
+  background: transparent;
 }
 
 .scenario-transcript h3,
@@ -549,7 +585,7 @@
 }
 
 .scenario-interviewer-card {
-  border-left: 3px solid rgba(9, 107, 114, 0.5);
+  border-left: 2px solid rgba(9, 107, 114, 0.5);
 }
 
 .scenario-interviewer-card.quiet {
@@ -577,7 +613,7 @@
 }
 
 .scenario-debrief-lock {
-  background: var(--paper-soft);
+  background: #eee9dd;
   font-weight: 750;
 }
 

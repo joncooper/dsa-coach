@@ -341,6 +341,23 @@ export function ScenarioWorkspaceScreen({
   const remainingMinutes = Math.max(0, scenario.timeboxMinutes - elapsedMinutes);
   const phaseState = interviewPhaseState(scenario.timeboxMinutes, elapsedMinutes);
   const interviewerQuestion = currentInterviewerQuestion(phaseState.active.label, latestCoachTurns[0]);
+  const rightRailQuestion = debriefOpen
+    ? "The live interview is over. Add your final explanation, then use the debrief tools below the test output."
+    : interviewerQuestion;
+  const timeCheckCopy = debriefOpen
+    ? "Session ended. Review the visible failures, run hidden tests if useful, then generate the debrief."
+    : attempt
+      ? `${Math.ceil(remainingMinutes)} minutes remaining. ${phaseState.active.label} is the active pacing band.`
+      : "Timer starts when the session starts.";
+  const interviewerInputLabel = debriefOpen ? "Interview chat closed" : "Ask or answer out loud";
+  const interviewerInputPlaceholder = debriefOpen
+    ? "Live interviewer input is disabled after ending the session."
+    : isOnsiteInterview
+      ? "Ask a clarification, or tell the interviewer what you are about to do."
+      : "Ask for review, tests, or a subtle nudge.";
+  const debriefLockCopy = debriefOpen
+    ? "Debrief is open below. Add a final explanation, run hidden tests, then generate feedback."
+    : "Debrief unlocks when you end the session.";
 
   return (
     <section className={`scenario-workspace ${isOnsiteInterview ? "scenario-onsite-workspace" : ""}`}>
@@ -490,9 +507,16 @@ export function ScenarioWorkspaceScreen({
                     <button type="button" className="primary-button compact-button" onClick={() => void openAttempt("cursor")}>Cursor</button>
                   </div>
                 </header>
-                <div className="scenario-diff-editor">
+                <div className={`scenario-diff-editor ${diff ? "" : "empty"}`}>
                   <div className="scenario-diff-editor-tab">current diff</div>
-                  <pre><code>{diff || "# No changes yet. Open the workspace and start with the smallest useful implementation.\n"}</code></pre>
+                  {diff ? (
+                    <pre><code>{diff}</code></pre>
+                  ) : (
+                    <div className="scenario-empty-diff">
+                      <strong>No changes yet</strong>
+                      <p>Open the workspace, make a first small change, then run tests.</p>
+                    </div>
+                  )}
                 </div>
               </section>
 
@@ -571,30 +595,30 @@ export function ScenarioWorkspaceScreen({
 
           <section className="scenario-interviewer-card">
             <h3>Current question</h3>
-            <p>{interviewerQuestion}</p>
+            <p>{rightRailQuestion}</p>
           </section>
 
           <section className="scenario-interviewer-card quiet">
             <h3>Time check</h3>
-            <p>{attempt ? `${Math.ceil(remainingMinutes)} minutes remaining. ${phaseState.active.label} is the active pacing band.` : "Timer starts when the session starts."}</p>
+            <p>{timeCheckCopy}</p>
           </section>
 
           <section className="scenario-interviewer-input">
-            <label htmlFor="scenario-interviewer-message">Ask or answer out loud</label>
+            <label htmlFor="scenario-interviewer-message">{interviewerInputLabel}</label>
             <textarea
               id="scenario-interviewer-message"
               value={coachInput}
               onChange={(event) => setCoachInput(event.target.value)}
               rows={4}
-              placeholder={isOnsiteInterview ? "Ask a clarification, or tell the interviewer what you are about to do." : "Ask for review, tests, or a subtle nudge."}
+              placeholder={interviewerInputPlaceholder}
               disabled={!attempt || debriefOpen}
             />
             <button type="button" className="primary-button compact-button" onClick={() => void askCoach()} disabled={Boolean(busy) || !coachInput.trim() || !attempt || debriefOpen}>
-              Send
+              {debriefOpen ? "Closed" : "Send"}
             </button>
           </section>
 
-          <p className="scenario-debrief-lock">{debriefOpen ? "Debrief is open below the test output." : "Debrief unlocks when you end the session."}</p>
+          <p className="scenario-debrief-lock">{debriefLockCopy}</p>
         </aside>
       </div>
     </section>

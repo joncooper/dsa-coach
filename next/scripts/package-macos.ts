@@ -31,6 +31,7 @@ writeFileSync(resolve(contents, "Info.plist"), infoPlist(), "utf8");
 writeFileSync(resolve(resources, "app-root"), "app\n", "utf8");
 createAppIcon();
 copyRuntime();
+copySharedRuntimeModules();
 copyVendoredRuntimes();
 copyBundledBun();
 
@@ -65,6 +66,19 @@ function copyRuntime() {
   for (const path of [".runner-cache/toolchains"]) {
     if (existsSync(resolve(root, path))) copyPath(path);
   }
+}
+
+function copySharedRuntimeModules() {
+  const source = resolve(root, "..", "shared");
+  const destination = resolve(resources, "shared");
+  if (!existsSync(source)) return;
+  rmSync(destination, { recursive: true, force: true });
+  mkdirSync(dirname(destination), { recursive: true });
+  cpSync(source, destination, {
+    recursive: true,
+    preserveTimestamps: true,
+    filter: (path) => !path.includes("/.DS_Store")
+  });
 }
 
 function copyPath(relativePath: string, options: { dereference?: boolean } = {}) {
