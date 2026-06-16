@@ -6,6 +6,7 @@ import type { ContentGraph, Scenario, ScenarioCheckpoint } from "../core/types.j
 import { runCodexText } from "../ai/codexProvider.js";
 import { resolvePythonRuntime } from "../runner/pythonRuntime.js";
 import { runSandboxedProcess, type SandboxProcessResult } from "../runner/processSandbox.js";
+import { COACH_MARKDOWN_FORMATTING_RULES } from "../../../shared/coachFormatting.js";
 
 export interface ScenarioAttempt {
   attemptId: string;
@@ -191,6 +192,7 @@ export class ScenarioRunner {
         "If the scenario says it is a no-AI onsite rehearsal, behave as an observer/interviewer, not as an implementation copilot.",
         "If the scenario says AI use is expected, evaluate whether the candidate remains in command while using AI.",
         "Focus on codebase comprehension, command of solution, MVP judgment, testing, debugging, and communication.",
+        COACH_MARKDOWN_FORMATTING_RULES,
         "",
         `Scenario: ${scenario.title}`,
         prompt,

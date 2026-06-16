@@ -5,6 +5,8 @@
 // want the solution, hand it over (once), and make the hand-over a teaching
 // moment rather than a refusal. Never refuse the same ask twice.
 
+import { COACH_MARKDOWN_FORMATTING_RULES } from "../../shared/coachFormatting";
+
 export interface CoachFailedTest {
   name: string;
   expected: string;
@@ -75,8 +77,8 @@ You are given the problem's authored hints, reference solution, and walkthrough 
 TONE & FORMAT
 - Encouraging and concrete. Never say "wrong", "incorrect", or "you failed". Say what is close to working and what to adjust.
 - Acknowledge what the learner already got right before the correction.
-- Markdown. Short paragraphs, one idea each. Bullet lists for multiple suggestions.
-- Wrap identifiers, keywords, and function names in backticks.
+
+${COACH_MARKDOWN_FORMATTING_RULES}
 - Be concise: 2-4 short paragraphs unless you are delivering a full solution.`;
 
 function fence(code: string): string {
@@ -185,10 +187,8 @@ WHEN THE LEARNER GOT A QUIZ QUESTION WRONG
 - Then explain why it is wrong and why the correct answer is correct, concretely.
 - Be encouraging. Never say "wrong" harshly; say what the choice gets right and where it falls short.
 
-FORMAT
-- Markdown. Short paragraphs, one idea each. Bullet lists for multiple points.
-- Wrap identifiers, keywords, and code in backticks.
-- You may use a short fenced code block when a few lines of Python make it concrete.`;
+${COACH_MARKDOWN_FORMATTING_RULES}
+- Prefer Python for code examples unless the lesson is explicitly about another language.`;
 
 /** Strip the `:::` interactive-block fence lines from a lesson body. */
 function stripLessonMarkup(body: string): string {

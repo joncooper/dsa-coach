@@ -1,4 +1,5 @@
 import type { RunDiagnostic, RunResult } from "../../../src/core/types";
+import { COACH_MARKDOWN_FORMATTING_RULES } from "../../../../shared/coachFormatting";
 
 export interface CoachTurn {
   role: "user" | "assistant";
@@ -44,7 +45,8 @@ Non-negotiable rules:
 - Meet the learner's approach before suggesting a different algorithm.
 - Most failures are small local bugs, boundary cases, missing invariants, or state-update issues. Look for those first.
 - No cheerleading, no emojis, no generic reassurance. Avoid phrases like "great job", "fantastic question", "absolutely correct", "you are one line away", and "I understand your frustration."
-- Use concise Markdown. Wrap identifiers in backticks.`;
+
+${COACH_MARKDOWN_FORMATTING_RULES}`;
 
 const modeSystems: Record<CoachMode, string> = {
   hint: `${commonRules}
@@ -64,11 +66,12 @@ Use the learner's current code and latest run result as the source of truth.
 - Start from the failing test, traceback, diagnostic, stdout, stderr, or mismatch when available.
 - If a diagnostic includes a file, line, column, actual value, expected value, or traceback location, cite that concrete detail explicitly. Use the word "line" when a line number is available.
 - If a failed test has expected/actual values, open with an observation that quotes both values, for example: "Expected X, but actual was Y." Then interpret the bug.
-- If the actual value is null/undefined for a function problem, check for a missing return value or missing result collection before deeper algorithm changes.
+- If the actual value is null/undefined for a function problem, check for a missing return value or missing result collection before deeper algorithm changes. If that explains the failure, stop there unless the learner asks for a deeper algorithm review.
 - Identify the most likely local bug in their code before proposing any alternate approach.
 - Suggest the smallest practical fix or diagnostic check.
-- Keep the answer compact. Prefer under 150 words unless the learner asks for a deeper walkthrough.
-- Tiny local snippets are allowed, but do not rewrite the whole function unless the learner explicitly asks for the solution.`,
+- Keep the answer compact. Prefer under 120 words unless the learner asks for a deeper walkthrough.
+- Use prose by default. Do not include fenced code in Debug mode unless the learner explicitly asks for code with words like "show code" or "write the function". If a tiny fix helps, describe it inline, such as "guard the user lookup before reading the quota."
+- Do not provide sample functions, replacement blocks, or a reference-style algorithm unless the learner explicitly asks for the solution.`,
   explain: `${commonRules}
 
 MODE: EXPLAIN
@@ -148,7 +151,7 @@ function buildDebugContext(args: CoachMessageArgs): ContextSection[] {
     stdoutSection(args.result),
     {
       title: "Coach contract",
-      body: "Debug mode: diagnose the current implementation. If failed tests are shown, start by quoting the expected and actual values. Then suggest the smallest local fix or diagnostic check."
+      body: "Debug mode: diagnose the current implementation. If failed tests are shown, start by quoting the expected and actual values. Then suggest the smallest local fix or diagnostic check. Keep it prose-only unless the learner explicitly asks for code."
     }
   ]);
 }
@@ -284,9 +287,13 @@ function failedTestsSection(failedVisible: RunResult["tests"], limit: number): C
 function diagnosticsSection(result: RunResult | null): ContextSection | null {
   const diagnostics = result?.diagnostics ?? [];
   if (!diagnostics.length) return null;
+  const primary = diagnostics.find((diagnostic) => diagnostic.line);
+  const primaryLine = primary?.line
+    ? `Primary location to mention: ${primary.file ? `${primary.file} ` : ""}line ${primary.line}.`
+    : "";
   return {
-    title: "Diagnostics",
-    body: diagnostics.slice(0, 4).map(formatDiagnostic).join("\n")
+    title: "Line-numbered diagnostics",
+    body: [primaryLine, ...diagnostics.slice(0, 4).map(formatDiagnostic)].filter(Boolean).join("\n")
   };
 }
 

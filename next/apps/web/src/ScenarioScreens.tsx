@@ -78,13 +78,14 @@ export function ScenarioSetScreen({
   onOpenScenario: (scenarioId: string, attemptId?: string) => void;
 }) {
   const latestByScenario = useMemo(() => latestAttemptsByScenario(attempts), [attempts]);
+  const isOnsiteSet = scenarioSet.id === "ramp-onsite-coding";
 
   return (
     <section className="page stack scenario-index-page">
       <div className="page-header">
         {sidebarCollapsed ? <button type="button" className="secondary-button compact-button" onClick={onShowSidebar}>Show sidebar</button> : null}
         <div className="page-header-main">
-          <p className="eyebrow">AI backend interview simulator</p>
+          <p className="eyebrow">{isOnsiteSet ? "Onsite interview rehearsal" : "AI backend interview simulator"}</p>
           <h1>{scenarioSet.title}</h1>
           <p className="lead">{scenarioSet.summary}</p>
         </div>
@@ -92,17 +93,19 @@ export function ScenarioSetScreen({
 
       <section className="scenario-guidance">
         <div>
-          <h2>How to run a drill</h2>
+          <h2>{isOnsiteSet ? "How to run a rehearsal" : "How to run a drill"}</h2>
           <p>
-            Start a scenario, open the generated Python workspace in your editor, and treat Codex like the interview AI tool:
-            ask it to inspect, propose tests, review diffs, and pressure-test your plan while you stay in command.
+            {isOnsiteSet
+              ? "Start a scenario, work in the generated Python workspace, and treat the Codex panel like a sparse interviewer: clarifying questions, time checks, and a debrief after the session."
+              : "Start a scenario, open the generated Python workspace in your editor, and treat Codex like the interview AI tool: ask it to inspect, propose tests, review diffs, and pressure-test your plan while you stay in command."}
           </p>
         </div>
         <div>
-          <h2>What this scores</h2>
+          <h2>{isOnsiteSet ? "What the debrief scores" : "What this scores"}</h2>
           <p>
-            The judge looks at codebase comprehension, framing, AI direction, MVP judgment, correctness, testing,
-            tradeoffs, and communication. Passing tests is necessary, but not the whole signal.
+            {isOnsiteSet
+              ? "The live round stays fair and low-signal. After you end it, the debrief evaluates framing, invariants, correctness, tests, tradeoffs, and communication."
+              : "The judge looks at codebase comprehension, framing, AI direction, MVP judgment, correctness, testing, tradeoffs, and communication. Passing tests is necessary, but not the whole signal."}
           </p>
         </div>
       </section>
@@ -161,9 +164,13 @@ export function ScenarioWorkspaceScreen({
   const [diff, setDiff] = useState("");
   const [checkpointDrafts, setCheckpointDrafts] = useState<Record<string, string>>({});
   const [coachInput, setCoachInput] = useState("");
-  const [coachResponse, setCoachResponse] = useState("");
   const [finalExplanation, setFinalExplanation] = useState("");
   const [codexStatus, setCodexStatus] = useState<CodexStatus | null>(null);
+  const [leftTab, setLeftTab] = useState<"prompt" | "plan" | "scratchpad">("prompt");
+  const [scenarioScratchpad, setScenarioScratchpad] = useState("");
+  const [sessionEnded, setSessionEnded] = useState(false);
+  const [timerPaused, setTimerPaused] = useState(false);
+  const [clockNow, setClockNow] = useState(() => Date.now());
 
   useEffect(() => {
     let alive = true;
@@ -190,8 +197,10 @@ export function ScenarioWorkspaceScreen({
     let alive = true;
     setAttempt(null);
     setDiff("");
-    setCoachResponse("");
     setCheckpointDrafts({});
+    setSessionEnded(false);
+    setTimerPaused(false);
+    setLeftTab("prompt");
     if (!attemptId) return () => {
       alive = false;
     };
@@ -213,12 +222,21 @@ export function ScenarioWorkspaceScreen({
     };
   }, [attemptId]);
 
+  useEffect(() => {
+    if (timerPaused) return undefined;
+    const timer = window.setInterval(() => setClockNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [timerPaused]);
+
   async function startAttempt() {
     await withBusy("Starting scenario", async () => {
       const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary }>("/scenarios/start", { scenarioId: scenario.id });
       setAttempt(nextAttempt);
       setCheckpointDrafts({});
       setDiff("");
+      setSessionEnded(false);
+      setTimerPaused(false);
+      setClockNow(Date.now());
       onAttemptsChanged();
     });
   }
@@ -271,13 +289,12 @@ export function ScenarioWorkspaceScreen({
 
   async function askCoach() {
     if (!attempt || !coachInput.trim()) return;
-    await withBusy("Asking Codex coach", async () => {
-      const { attempt: nextAttempt, response } = await postJson<{ attempt: ScenarioAttemptSummary; response: string }>(
+    await withBusy("Asking interviewer", async () => {
+      const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary; response: string }>(
         "/scenarios/coach",
         { attemptId: attempt.attemptId, message: coachInput }
       );
       setAttempt(nextAttempt);
-      setCoachResponse(response);
       setCoachInput("");
       onAttemptsChanged();
     });
@@ -315,175 +332,333 @@ export function ScenarioWorkspaceScreen({
 
   const latestVisible = attempt?.visibleRuns[0];
   const latestHidden = attempt?.hiddenRuns[0];
-  const latestCoachTurn = attempt?.aiTurns.find((turn) => turn.kind === "coach");
+  const latestCoachTurns = attempt?.aiTurns.filter((turn) => turn.kind === "coach").slice(0, 3) ?? [];
   const workspacePath = attempt?.workspacePath;
+  const isOnsiteInterview = isOnsiteScenario(scenario, prompt);
+  const debriefOpen = sessionEnded || Boolean(attempt?.judge);
+  const elapsedMs = attempt ? Math.max(0, clockNow - Date.parse(attempt.startedAt)) : 0;
+  const elapsedMinutes = elapsedMs / 60000;
+  const remainingMinutes = Math.max(0, scenario.timeboxMinutes - elapsedMinutes);
+  const phaseState = interviewPhaseState(scenario.timeboxMinutes, elapsedMinutes);
+  const interviewerQuestion = currentInterviewerQuestion(phaseState.active.label, latestCoachTurns[0]);
 
   return (
-    <section className="scenario-workspace">
-      <header className="problem-context-bar scenario-context-bar">
-        {sidebarCollapsed ? <button type="button" className="secondary-button compact-button" onClick={onShowSidebar}>Show sidebar</button> : null}
-        <div className="problem-context-main">
-          <p className="problem-breadcrumb">
-            <span>Ramp AI Backend Drills</span>
-            <span>/</span>
-            <span>{scenario.difficulty}</span>
-          </p>
-          <div className="problem-title-row">
-            <h1>{scenario.title}</h1>
-            <div className="tag-row compact-tags">
-              {scenario.concepts.slice(0, 4).map((concept) => <span key={concept}>{concept}</span>)}
-            </div>
+    <section className={`scenario-workspace ${isOnsiteInterview ? "scenario-onsite-workspace" : ""}`}>
+      <header className="scenario-interview-header">
+        <div className="scenario-interview-title">
+          {sidebarCollapsed ? <button type="button" className="secondary-button compact-button" onClick={onShowSidebar}>Show sidebar</button> : null}
+          <button type="button" className="secondary-button compact-button" onClick={onBack}>Back</button>
+          <div>
+            <p className="problem-breadcrumb">
+              <span>{isOnsiteInterview ? "Ramp Prep / Onsite Rehearsal" : "Ramp AI Backend Drills"}</span>
+              <span>/</span>
+              <span>{scenario.difficulty}</span>
+            </p>
+            <h1>{isOnsiteInterview ? `Ramp Onsite: ${scenario.title}` : scenario.title}</h1>
           </div>
         </div>
-        <div className="problem-context-actions">
-          <button type="button" className="secondary-button compact-button" onClick={onBack}>Back to drills</button>
-          {attempt ? (
-            <>
-              <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("finder")}>Finder</button>
-              <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("vscode")}>VS Code</button>
-              <button type="button" className="primary-button compact-button" onClick={() => void openAttempt("cursor")}>Cursor</button>
-            </>
-          ) : null}
+        <div className="scenario-interview-actions">
+          <div className="scenario-timer" aria-label="Elapsed interview time">
+            <span>{attempt ? formatClock(elapsedMs) : "--:--"}</span>
+            <small>{timerPaused ? "Paused" : "Elapsed"}</small>
+          </div>
+          <button
+            type="button"
+            className="secondary-button compact-button"
+            onClick={() => setTimerPaused((paused) => !paused)}
+            disabled={!attempt}
+          >
+            {timerPaused ? "Resume" : "Pause"}
+          </button>
+          <button type="button" className="primary-button compact-button" onClick={() => void runVisible()} disabled={Boolean(busy) || !attempt}>
+            Run tests
+          </button>
+          <button
+            type="button"
+            className="secondary-button compact-button scenario-danger-button"
+            onClick={() => {
+              setSessionEnded(true);
+              setTimerPaused(true);
+            }}
+            disabled={!attempt}
+          >
+            End session
+          </button>
         </div>
       </header>
+
+      <div className="scenario-phase-strip" aria-label="Interview pacing timeline">
+        {phaseState.phases.map((phase, index) => (
+          <div key={phase.label} className={`scenario-phase-step ${index < phaseState.activeIndex ? "done" : ""} ${index === phaseState.activeIndex ? "active" : ""}`}>
+            <span>{phase.label}</span>
+            <small>{phase.minutes} min</small>
+          </div>
+        ))}
+      </div>
 
       {error ? <p className="scenario-error" role="alert">{error}</p> : null}
       {busy ? <p className="scenario-busy">{busy}...</p> : null}
 
-      <div className="scenario-layout">
-        <aside className="scenario-prompt-pane">
-          <section className="prompt-primary">
-            <div className="prompt-primary-heading">
-              <h2>Interviewer prompt</h2>
-            </div>
-            {prompt ? <ScenarioMarkdown content={prompt} /> : <p className="muted">Loading prompt...</p>}
-          </section>
-
-          <section className="scenario-rubric">
-            <h2>Rubric</h2>
-            {scenario.rubric.map((metric) => (
-              <details key={metric.id}>
-                <summary>{metric.label} <span>{metric.weight}%</span></summary>
-                <p>{metric.excellent}</p>
-              </details>
+      <div className="scenario-layout scenario-interview-layout">
+        <aside className="scenario-prompt-pane scenario-live-left-pane">
+          <div className="scenario-pane-tabs" role="tablist" aria-label="Scenario workspace tabs">
+            {(["prompt", "plan", "scratchpad"] as const).map((tab) => (
+              <button key={tab} type="button" className={leftTab === tab ? "active" : ""} onClick={() => setLeftTab(tab)}>
+                {tab[0].toUpperCase() + tab.slice(1)}
+              </button>
             ))}
-          </section>
+          </div>
+
+          {leftTab === "prompt" ? (
+            <section className="prompt-primary scenario-tab-panel">
+              <div className="prompt-primary-heading">
+                <h2>Prompt</h2>
+              </div>
+              {prompt ? <ScenarioMarkdown content={prompt} /> : <p className="muted">Loading prompt...</p>}
+            </section>
+          ) : null}
+
+          {leftTab === "plan" ? (
+            <section className="scenario-tab-panel scenario-plan-panel">
+              <div className="section-heading">
+                <h2>Your plan</h2>
+                <p>Candidate-authored notes. The interviewer does not score this live.</p>
+              </div>
+              {scenario.checkpoints.map((checkpoint) => (
+                <article key={checkpoint.id} className="scenario-plan-note">
+                  <header>
+                    <span>{checkpoint.minute} min</span>
+                    <strong>{checkpoint.title}</strong>
+                  </header>
+                  <p>{checkpoint.prompt}</p>
+                  <textarea
+                    value={checkpointDrafts[checkpoint.id] ?? ""}
+                    onChange={(event) => setCheckpointDrafts((drafts) => ({ ...drafts, [checkpoint.id]: event.target.value }))}
+                    rows={3}
+                    disabled={!attempt}
+                  />
+                  <button type="button" className="secondary-button compact-button" onClick={() => void saveCheckpoint(checkpoint)} disabled={Boolean(busy) || !attempt}>
+                    Save note
+                  </button>
+                </article>
+              ))}
+            </section>
+          ) : null}
+
+          {leftTab === "scratchpad" ? (
+            <section className="scenario-tab-panel scenario-plan-panel">
+              <div className="section-heading">
+                <h2>Scratchpad</h2>
+                <p>Private notes for assumptions, examples, and questions you want to ask out loud.</p>
+              </div>
+              <textarea
+                className="scenario-freeform-notes"
+                value={scenarioScratchpad}
+                onChange={(event) => setScenarioScratchpad(event.target.value)}
+                rows={16}
+                placeholder="Examples, invariants, unresolved questions..."
+              />
+            </section>
+          ) : null}
         </aside>
 
-        <main className="scenario-main-pane">
+        <main className="scenario-main-pane scenario-session-pane">
           {!attempt ? (
             <section className="scenario-start-card">
               <p className="eyebrow">{scenario.timeboxMinutes} minute simulation</p>
-              <h2>Start a fresh workspace</h2>
+              <h2>{isOnsiteInterview ? "Start mock interview" : "Start a fresh workspace"}</h2>
               <p>
-                This creates a local Python repo with starter code and tests. Use the generated workspace like the live interview backend.
+                {isOnsiteInterview
+                  ? "This creates a local Python repo with starter code and tests. Work from the prompt, talk through your approach, and keep Codex in interviewer mode."
+                  : "This creates a local Python repo with starter code and tests. Use the generated workspace like the live interview backend."}
               </p>
               <button type="button" className="primary-button" onClick={() => void startAttempt()} disabled={Boolean(busy)}>
-                Start scenario
+                Start session
               </button>
             </section>
           ) : (
             <>
-              <section className="scenario-control-card">
-                <div>
-                  <p className="eyebrow">Workspace</p>
-                  <code>{workspacePath}</code>
-                </div>
-                <div className="scenario-action-row">
-                  <button type="button" className="secondary-button compact-button" onClick={() => void runVisible()} disabled={Boolean(busy)}>
-                    Run visible tests
-                  </button>
-                  <button type="button" className="primary-button compact-button" onClick={() => void submitHidden()} disabled={Boolean(busy)}>
-                    Submit hidden tests
-                  </button>
-                  <button type="button" className="secondary-button compact-button" onClick={() => void refreshDiff()} disabled={Boolean(busy)}>
-                    Refresh diff
-                  </button>
-                </div>
-              </section>
-
-              <section className="scenario-results-grid">
-                <ScenarioResultCard label="Visible tests" result={latestVisible} />
-                <ScenarioResultCard label="Hidden submit" result={latestHidden} />
-              </section>
-
-              <section className="scenario-checkpoints">
-                <div className="section-heading">
-                  <h2>Interview checkpoints</h2>
-                  <p>Use these to rehearse the process signal, not just the final answer.</p>
-                </div>
-                {scenario.checkpoints.map((checkpoint) => (
-                  <article key={checkpoint.id} className="scenario-checkpoint">
-                    <header>
-                      <span>{checkpoint.minute} min</span>
-                      <h3>{checkpoint.title}</h3>
-                    </header>
-                    <p>{checkpoint.prompt}</p>
-                    <textarea
-                      value={checkpointDrafts[checkpoint.id] ?? ""}
-                      onChange={(event) => setCheckpointDrafts((drafts) => ({ ...drafts, [checkpoint.id]: event.target.value }))}
-                      rows={3}
-                    />
-                    <button type="button" className="secondary-button compact-button" onClick={() => void saveCheckpoint(checkpoint)} disabled={Boolean(busy)}>
-                      Save checkpoint
-                    </button>
-                  </article>
-                ))}
-              </section>
-
-              <section className="scenario-ai-card">
-                <div className="section-heading">
-                  <h2>Codex coach</h2>
-                  <p>{codexStatus?.available ? "Using your local Codex login through the SDK." : `Codex unavailable${codexStatus?.reason ? `: ${codexStatus.reason}` : "."}`}</p>
-                </div>
-                <textarea
-                  value={coachInput}
-                  onChange={(event) => setCoachInput(event.target.value)}
-                  rows={4}
-                  placeholder="Ask for review, edge cases, test ideas, or a subtle hint. Do not ask it to take over."
-                />
-                <div className="scenario-action-row">
-                  <button type="button" className="primary-button compact-button" onClick={() => void askCoach()} disabled={Boolean(busy) || !coachInput.trim()}>
-                    Ask coach
-                  </button>
-                </div>
-                {coachResponse || latestCoachTurn ? (
-                  <div className="scenario-ai-response">
-                    <ScenarioMarkdown content={coachResponse || latestCoachTurn?.response || ""} />
+              <section className="scenario-workbench">
+                <header>
+                  <div>
+                    <p className="eyebrow">Workspace</p>
+                    <code>{workspacePath}</code>
                   </div>
-                ) : null}
+                  <div className="scenario-action-row">
+                    <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("finder")}>Finder</button>
+                    <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("vscode")}>VS Code</button>
+                    <button type="button" className="primary-button compact-button" onClick={() => void openAttempt("cursor")}>Cursor</button>
+                  </div>
+                </header>
+                <div className="scenario-diff-editor">
+                  <div className="scenario-diff-editor-tab">current diff</div>
+                  <pre><code>{diff || "# No changes yet. Open the workspace and start with the smallest useful implementation.\n"}</code></pre>
+                </div>
               </section>
 
-              <section className="scenario-ai-card">
+              <section className="scenario-test-output">
                 <div className="section-heading">
-                  <h2>Final judge</h2>
-                  <p>Paste the explanation you would give the interviewer, then get rubric-calibrated feedback.</p>
+                  <h2>Test output</h2>
+                  <p>{latestVisible ? "Latest visible run." : "Run tests when you have a candidate implementation."}</p>
                 </div>
-                <textarea
-                  value={finalExplanation}
-                  onChange={(event) => setFinalExplanation(event.target.value)}
-                  rows={4}
-                  placeholder="Explain your assumptions, invariant, tests run, tradeoffs, and how you used AI."
-                />
-                <button type="button" className="primary-button compact-button" onClick={() => void judgeAttempt()} disabled={Boolean(busy)}>
-                  Judge attempt
-                </button>
-                {attempt.judge ? <JudgeReport report={attempt.judge} /> : null}
+                <ScenarioResultCard label="Visible tests" result={latestVisible} />
               </section>
 
-              <section className="scenario-diff-card">
-                <div className="section-heading">
-                  <h2>Current diff</h2>
-                  <p>What the judge and coach will inspect.</p>
-                </div>
-                <pre><code>{diff || "(no changes yet)"}</code></pre>
-              </section>
+              {debriefOpen ? (
+                <section className="scenario-debrief-panel">
+                  <div className="section-heading">
+                    <h2>Debrief Studio</h2>
+                    <p>Detailed feedback is intentionally held until the session ends.</p>
+                  </div>
+                  <textarea
+                    value={finalExplanation}
+                    onChange={(event) => setFinalExplanation(event.target.value)}
+                    rows={4}
+                    placeholder="Explain your assumptions, invariant, tests run, tradeoffs, and where you got stuck."
+                  />
+                  <div className="scenario-action-row">
+                    <button type="button" className="secondary-button compact-button" onClick={() => void submitHidden()} disabled={Boolean(busy)}>
+                      Run hidden tests
+                    </button>
+                    <button type="button" className="primary-button compact-button" onClick={() => void judgeAttempt()} disabled={Boolean(busy)}>
+                      Generate debrief
+                    </button>
+                  </div>
+                  {latestHidden ? <ScenarioResultCard label="Hidden submit" result={latestHidden} /> : null}
+                  {attempt.judge ? <JudgeReport report={attempt.judge} /> : null}
+                  <section className="scenario-rubric">
+                    <h2>Rubric</h2>
+                    {scenario.rubric.map((metric) => (
+                      <details key={metric.id}>
+                        <summary>{metric.label} <span>{metric.weight}%</span></summary>
+                        <p>{metric.excellent}</p>
+                      </details>
+                    ))}
+                  </section>
+                </section>
+              ) : null}
             </>
           )}
         </main>
+
+        <aside className="scenario-interviewer-pane">
+          <header>
+            <div>
+              <p className="eyebrow">Codex SDK</p>
+              <h2>{isOnsiteInterview ? "Interviewer" : "Scenario coach"}</h2>
+            </div>
+            <span>{codexStatus?.available ? codexStatus.model ?? "ready" : "offline"}</span>
+          </header>
+
+          <section className="scenario-transcript">
+            <h3>Live transcript</h3>
+            {latestCoachTurns.length ? (
+              latestCoachTurns.slice().reverse().map((turn) => (
+                <div key={turn.id} className="scenario-transcript-turn">
+                  <p><strong>You</strong> <span>{formatTime(turn.createdAt)}</span></p>
+                  <p>{turn.userMessage}</p>
+                  <p><strong>{isOnsiteInterview ? "Interviewer" : "Codex"}</strong></p>
+                  <ScenarioMarkdown content={turn.response} />
+                </div>
+              ))
+            ) : (
+              <div className="scenario-transcript-turn">
+                <p><strong>{isOnsiteInterview ? "Interviewer" : "Codex"}</strong></p>
+                <p>{isOnsiteInterview ? "Start by restating the contract and calling out the first ambiguity you would clarify." : "Ask for a review, test strategy, or scenario-specific pressure test when you are ready."}</p>
+              </div>
+            )}
+          </section>
+
+          <section className="scenario-interviewer-card">
+            <h3>Current question</h3>
+            <p>{interviewerQuestion}</p>
+          </section>
+
+          <section className="scenario-interviewer-card quiet">
+            <h3>Time check</h3>
+            <p>{attempt ? `${Math.ceil(remainingMinutes)} minutes remaining. ${phaseState.active.label} is the active pacing band.` : "Timer starts when the session starts."}</p>
+          </section>
+
+          <section className="scenario-interviewer-input">
+            <label htmlFor="scenario-interviewer-message">Ask or answer out loud</label>
+            <textarea
+              id="scenario-interviewer-message"
+              value={coachInput}
+              onChange={(event) => setCoachInput(event.target.value)}
+              rows={4}
+              placeholder={isOnsiteInterview ? "Ask a clarification, or tell the interviewer what you are about to do." : "Ask for review, tests, or a subtle nudge."}
+              disabled={!attempt || debriefOpen}
+            />
+            <button type="button" className="primary-button compact-button" onClick={() => void askCoach()} disabled={Boolean(busy) || !coachInput.trim() || !attempt || debriefOpen}>
+              Send
+            </button>
+          </section>
+
+          <p className="scenario-debrief-lock">{debriefOpen ? "Debrief is open below the test output." : "Debrief unlocks when you end the session."}</p>
+        </aside>
       </div>
     </section>
   );
+}
+
+interface InterviewPhase {
+  label: string;
+  minutes: number;
+  endMinute: number;
+}
+
+function isOnsiteScenario(scenario: Scenario, prompt: string): boolean {
+  const text = `${scenario.id} ${scenario.title} ${scenario.summary} ${scenario.evidence.note} ${prompt}`.toLowerCase();
+  return text.includes("onsite") || text.includes("no-ai") || text.includes("no ai");
+}
+
+function interviewPhaseState(timeboxMinutes: number, elapsedMinutes: number): { phases: InterviewPhase[]; active: InterviewPhase; activeIndex: number } {
+  const weights = [
+    ["Read", 0.14],
+    ["Clarify", 0.12],
+    ["Design", 0.2],
+    ["Build", 0.34],
+    ["Test", 0.14],
+    ["Review", 0.06]
+  ] as const;
+  let endMinute = 0;
+  const phases = weights.map(([label, weight], index) => {
+    const minutes = index === weights.length - 1
+      ? Math.max(1, Math.round(timeboxMinutes - endMinute))
+      : Math.max(1, Math.round(timeboxMinutes * weight));
+    endMinute += minutes;
+    return { label, minutes, endMinute };
+  });
+  const foundIndex = phases.findIndex((phase) => elapsedMinutes < phase.endMinute);
+  const activeIndex = foundIndex === -1 ? phases.length - 1 : foundIndex;
+  return { phases, active: phases[activeIndex], activeIndex };
+}
+
+function currentInterviewerQuestion(phase: string, latestTurn?: ScenarioAiTurn): string {
+  if (latestTurn) return "Before you keep coding, say what changed in your plan and why.";
+  if (phase === "Read") return "Restate the contract and the output shape before you design.";
+  if (phase === "Clarify") return "What assumption would you ask the interviewer to confirm?";
+  if (phase === "Design") return "What invariant does your data model need to preserve?";
+  if (phase === "Build") return "Talk through the invariant before changing the code.";
+  if (phase === "Test") return "Which edge case should prove the implementation is not just passing the happy path?";
+  return "Summarize the tradeoff you would call out before handing this in.";
+}
+
+function formatClock(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours) return `${hours}:${pad2(minutes)}:${pad2(seconds)}`;
+  return `${minutes}:${pad2(seconds)}`;
+}
+
+function formatTime(iso: string): string {
+  return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+}
+
+function pad2(value: number): string {
+  return value.toString().padStart(2, "0");
 }
 
 function ScenarioResultCard({ label, result }: { label: string; result?: ScenarioCommandResult }) {

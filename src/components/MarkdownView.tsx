@@ -41,6 +41,7 @@ function renderMarkdown(content: string): ReactNode[] {
   let listOrdered = false;
   let paragraphLines: string[] = [];
   let codeLines: string[] = [];
+  let codeLanguage = "";
   let mathLines: string[] = [];
   let inCode = false;
   let inMath = false;
@@ -68,11 +69,15 @@ function renderMarkdown(content: string): ReactNode[] {
   const flushCode = () => {
     if (!codeLines.length) return;
     nodes.push(
-      <pre key={`code-${nodes.length}`}>
-        <code>{codeLines.join("\n")}</code>
-      </pre>
+      <div key={`code-${nodes.length}`} className="markdown-code-block">
+        {codeLanguage ? <div className="markdown-code-label">{codeLanguage}</div> : null}
+        <pre>
+          <code>{codeLines.join("\n")}</code>
+        </pre>
+      </div>
     );
     codeLines = [];
+    codeLanguage = "";
   };
 
   const flushMath = () => {
@@ -81,7 +86,8 @@ function renderMarkdown(content: string): ReactNode[] {
     mathLines = [];
   };
 
-  lines.forEach((line) => {
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
     if (line.startsWith("```")) {
       if (inCode) {
         inCode = false;
@@ -90,13 +96,14 @@ function renderMarkdown(content: string): ReactNode[] {
         flushParagraph();
         flushList();
         inCode = true;
+        codeLanguage = line.slice(3).trim().split(/\s+/)[0] ?? "";
       }
-      return;
+      continue;
     }
 
     if (inCode) {
       codeLines.push(line);
-      return;
+      continue;
     }
 
     // Display-math fence: a line that is exactly `$$`, `\[` or `\]` opens or
@@ -111,12 +118,12 @@ function renderMarkdown(content: string): ReactNode[] {
         flushList();
         inMath = true;
       }
-      return;
+      continue;
     }
 
     if (inMath) {
       mathLines.push(line);
-      return;
+      continue;
     }
 
     // Single-line display math: `$$...$$` or `\[...\]` on its own line.
@@ -125,13 +132,22 @@ function renderMarkdown(content: string): ReactNode[] {
       flushParagraph();
       flushList();
       nodes.push(mathNode(display, true, `math-${nodes.length}`));
-      return;
+      continue;
     }
 
     if (!trimmed) {
       flushParagraph();
       flushList();
-      return;
+      continue;
+    }
+
+    if (isTableStart(lines, index)) {
+      flushParagraph();
+      flushList();
+      const table = collectTable(lines, index);
+      nodes.push(renderTable(table.rows, `table-${nodes.length}`));
+      index = table.nextIndex - 1;
+      continue;
     }
 
     const unordered = line.match(/^\s*[-*]\s+(.+)$/);
@@ -140,7 +156,7 @@ function renderMarkdown(content: string): ReactNode[] {
       if (listItems.length && listOrdered) flushList();
       listOrdered = false;
       listItems.push(unordered[1]);
-      return;
+      continue;
     }
 
     const ordered = line.match(/^\s*\d+[.)]\s+(.+)$/);
@@ -149,7 +165,7 @@ function renderMarkdown(content: string): ReactNode[] {
       if (listItems.length && !listOrdered) flushList();
       listOrdered = true;
       listItems.push(ordered[1]);
-      return;
+      continue;
     }
 
     const heading = line.match(/^(#{1,4})\s+(.+)$/);
@@ -162,7 +178,7 @@ function renderMarkdown(content: string): ReactNode[] {
       else if (level === 2) nodes.push(<h2 key={`h2-${nodes.length}`}>{body}</h2>);
       else if (level === 3) nodes.push(<h3 key={`h3-${nodes.length}`}>{body}</h3>);
       else nodes.push(<h4 key={`h4-${nodes.length}`}>{body}</h4>);
-      return;
+      continue;
     }
 
     const quote = line.match(/^>\s+(.+)$/);
@@ -170,18 +186,78 @@ function renderMarkdown(content: string): ReactNode[] {
       flushParagraph();
       flushList();
       nodes.push(<blockquote key={`quote-${nodes.length}`}>{renderInline(quote[1])}</blockquote>);
-      return;
+      continue;
     }
 
     flushList();
     paragraphLines.push(line);
-  });
+  }
 
   flushParagraph();
   flushList();
   flushCode();
   flushMath();
   return nodes;
+}
+
+function isTableStart(lines: string[], index: number): boolean {
+  const header = lines[index]?.trim();
+  const separator = lines[index + 1]?.trim();
+  return Boolean(header && separator && parseTableRow(header).length > 1 && isTableSeparator(separator));
+}
+
+function collectTable(lines: string[], startIndex: number): { rows: string[][]; nextIndex: number } {
+  const rows: string[][] = [];
+  let index = startIndex;
+  rows.push(parseTableRow(lines[index]));
+  index += 2; // Skip the separator row.
+  while (index < lines.length) {
+    const trimmed = lines[index].trim();
+    if (!trimmed || !trimmed.includes("|")) break;
+    const row = parseTableRow(trimmed);
+    if (row.length < 2) break;
+    rows.push(row);
+    index += 1;
+  }
+  return { rows, nextIndex: index };
+}
+
+function parseTableRow(line: string): string[] {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+function isTableSeparator(line: string): boolean {
+  const cells = parseTableRow(line);
+  return cells.length > 1 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function renderTable(rows: string[][], key: string): ReactNode {
+  const [head = [], ...body] = rows;
+  return (
+    <div key={key} className="markdown-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {head.map((cell, index) => <th key={`${index}-${cell}`}>{renderInline(cell)}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {body.map((row, rowIndex) => (
+            <tr key={`${rowIndex}-${row.join("|")}`}>
+              {head.map((_, cellIndex) => (
+                <td key={`${cellIndex}-${row[cellIndex] ?? ""}`}>{renderInline(row[cellIndex] ?? "")}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 function renderInline(line: string): ReactNode[] {

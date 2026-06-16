@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { buildCoachMessages, type CoachMessageArgs, type CoachMode } from "../apps/web/src/coachMessages";
+import { COACH_MARKDOWN_FORMATTING_RULES } from "../../shared/coachFormatting";
 
 const referenceCode = "def recent_event_counts(timestamps, window):\n    return [i + 1 for i in range(len(timestamps))]";
 
@@ -46,6 +47,7 @@ describe("coach prompt context", () => {
 
     expect(messages.map((message) => message.content).join("\n")).not.toContain(referenceCode);
     expect(messages.at(0)?.content).toContain(`MODE: ${mode.toUpperCase()}`);
+    expect(messages.at(0)?.content).toContain(COACH_MARKDOWN_FORMATTING_RULES);
   });
 
   test("solution requests are allowed to include reference code", () => {
@@ -102,8 +104,8 @@ describe("coach prompt context", () => {
     }));
 
     const finalMessage = messages.at(-1)?.content ?? "";
-    expect(finalMessage).toContain("Diagnostics");
-    expect(finalMessage).toContain("solution.py, line 105");
+    expect(finalMessage).toContain("Line-numbered diagnostics");
+    expect(finalMessage).toContain("solution.py line 105");
     expect(finalMessage).toContain("quota");
     expect(finalMessage).toContain("stderr:");
   });

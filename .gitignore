@@ -10,6 +10,7 @@ vite.config.d.ts
 playwright.config.js
 playwright.config.d.ts
 .gstack/
+.codex-backups/
 .venv/
 .runner-cache/
 home/
@@ -18,3 +19,4 @@ next/home/
 next/.runner-cache/
 next/.scala-build/
 next/.user-data/
+next/runtime.json

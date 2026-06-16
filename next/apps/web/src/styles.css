@@ -122,8 +122,122 @@
   background: #f7f5ef;
 }
 
-.scenario-context-bar {
+.scenario-context-bar,
+.scenario-interview-header {
   flex: 0 0 auto;
+}
+
+.scenario-interview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 72px;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 18px;
+  background: rgba(255, 253, 248, 0.92);
+}
+
+.scenario-interview-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.scenario-interview-title h1 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 1.28rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scenario-interview-title .problem-breadcrumb {
+  margin-bottom: 2px;
+  font-size: 0.78rem;
+}
+
+.scenario-interview-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: fit-content;
+}
+
+.scenario-timer {
+  display: grid;
+  justify-items: end;
+  min-width: 72px;
+  color: var(--ink);
+}
+
+.scenario-timer span {
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 0.92rem;
+  font-weight: 850;
+}
+
+.scenario-timer small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.scenario-danger-button {
+  border-color: rgba(180, 35, 24, 0.32);
+  color: var(--red);
+}
+
+.scenario-phase-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding: 8px 18px 10px;
+  background: #faf8f1;
+}
+
+.scenario-phase-step {
+  position: relative;
+  min-width: 0;
+  padding-top: 8px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.scenario-phase-step::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: #d8d2c5;
+}
+
+.scenario-phase-step.done::before,
+.scenario-phase-step.active::before {
+  background: var(--teal);
+}
+
+.scenario-phase-step span,
+.scenario-phase-step small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scenario-phase-step span {
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.scenario-phase-step.active span {
+  color: var(--teal);
 }
 
 .scenario-layout {
@@ -134,13 +248,106 @@
   border-top: 1px solid var(--line);
 }
 
+.scenario-interview-layout {
+  grid-template-columns: minmax(280px, 25vw) minmax(440px, 1fr) minmax(270px, 22vw);
+  border-top: 0;
+}
+
 .scenario-prompt-pane {
   min-width: 0;
-  max-height: calc(100vh - 76px);
+  max-height: calc(100vh - 116px);
   overflow: auto;
   border-right: 1px solid var(--line);
-  padding: 22px;
+  padding: 16px;
   background: var(--paper);
+}
+
+.scenario-live-left-pane {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.scenario-pane-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px;
+  background: var(--paper-soft);
+}
+
+.scenario-pane-tabs button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.scenario-pane-tabs button.active {
+  background: var(--row-bg);
+  color: var(--ink);
+  box-shadow: 0 1px 4px rgba(29, 37, 40, 0.08);
+}
+
+.scenario-tab-panel {
+  min-width: 0;
+}
+
+.scenario-plan-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.scenario-plan-note {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 11px;
+  background: #fffefa;
+}
+
+.scenario-plan-note header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.scenario-plan-note header span {
+  color: var(--teal);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.scenario-plan-note p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.scenario-plan-note textarea,
+.scenario-freeform-notes,
+.scenario-debrief-panel textarea,
+.scenario-interviewer-input textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fffefa;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.scenario-freeform-notes {
+  min-height: 360px;
 }
 
 .scenario-main-pane {
@@ -148,16 +355,230 @@
   align-content: start;
   gap: 16px;
   min-width: 0;
-  max-height: calc(100vh - 76px);
+  max-height: calc(100vh - 116px);
   overflow: auto;
-  padding: 22px;
+  padding: 16px;
+}
+
+.scenario-session-pane {
+  background: #fbfaf5;
 }
 
 .scenario-start-card,
 .scenario-control-card,
 .scenario-ai-card,
-.scenario-diff-card {
+.scenario-diff-card,
+.scenario-workbench,
+.scenario-test-output,
+.scenario-debrief-panel,
+.scenario-interviewer-pane {
   padding: 20px;
+}
+
+.scenario-workbench,
+.scenario-test-output,
+.scenario-debrief-panel,
+.scenario-interviewer-pane {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.scenario-workbench {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.scenario-workbench > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 14px;
+}
+
+.scenario-workbench code {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scenario-diff-editor {
+  min-height: 360px;
+  background: #fbfcfa;
+}
+
+.scenario-diff-editor-tab {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 0 12px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.scenario-diff-editor pre {
+  min-height: 320px;
+  max-height: 46vh;
+  margin: 0;
+  overflow: auto;
+  border-radius: 0;
+  padding: 14px;
+  background: #fbfcfa;
+}
+
+.scenario-test-output {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.scenario-debrief-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.scenario-interviewer-pane {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  max-height: calc(100vh - 116px);
+  overflow: auto;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  border-left: 1px solid var(--line);
+  padding: 16px;
+  box-shadow: none;
+}
+
+.scenario-interviewer-pane > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.scenario-interviewer-pane > header h2 {
+  margin: 0;
+  font-size: 1.04rem;
+}
+
+.scenario-interviewer-pane > header > span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--paper-soft);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+
+.scenario-transcript,
+.scenario-interviewer-card,
+.scenario-interviewer-input,
+.scenario-debrief-lock {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fffefa;
+}
+
+.scenario-transcript {
+  display: grid;
+  gap: 10px;
+}
+
+.scenario-transcript h3,
+.scenario-interviewer-card h3 {
+  margin: 0 0 6px;
+  font-size: 0.86rem;
+}
+
+.scenario-transcript-turn {
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.scenario-transcript-turn:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.scenario-transcript-turn p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.scenario-transcript-turn p strong {
+  color: var(--ink);
+}
+
+.scenario-transcript-turn p span {
+  float: right;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.scenario-transcript-turn .scenario-markdown {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.scenario-transcript-turn .scenario-markdown p,
+.scenario-transcript-turn .scenario-markdown ul {
+  margin-bottom: 8px;
+}
+
+.scenario-interviewer-card {
+  border-left: 3px solid rgba(9, 107, 114, 0.5);
+}
+
+.scenario-interviewer-card.quiet {
+  border-left-color: var(--line);
+  background: var(--paper-soft);
+}
+
+.scenario-interviewer-card p,
+.scenario-debrief-lock {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.scenario-interviewer-input {
+  display: grid;
+  gap: 8px;
+}
+
+.scenario-interviewer-input label {
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.scenario-debrief-lock {
+  background: var(--paper-soft);
+  font-weight: 750;
 }
 
 .scenario-control-card {
@@ -4991,7 +5412,8 @@ select {
 }
 
 .coach-msg-bot .markdown code,
-.coach-msg-bot .markdown pre {
+.coach-msg-bot .markdown pre,
+.coach-msg-bot .markdown table {
   border-radius: 6px;
   background: var(--code-bg);
   color: var(--code-ink);
@@ -5003,14 +5425,38 @@ select {
   font-size: 0.88em;
 }
 
+.coach-msg-bot .markdown .markdown-code-block {
+  margin: 0 0 0.85rem;
+}
+
+.coach-msg-bot .markdown .markdown-code-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  padding: 2px 8px;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .coach-msg-bot .markdown pre {
   max-width: 100%;
-  margin: 0 0 0.85rem;
+  margin: 0;
   overflow-x: auto;
   padding: 10px;
   font-size: 0.82rem;
   line-height: 1.5;
   white-space: pre;
+}
+
+.coach-msg-bot .markdown .markdown-code-label + pre {
+  border-top-left-radius: 0;
 }
 
 .coach-msg-bot .markdown pre code {
@@ -5033,6 +5479,42 @@ select {
 
 .coach-msg-bot .markdown .math-inline {
   white-space: nowrap;
+}
+
+.coach-msg-bot .markdown .markdown-table-wrap {
+  max-width: 100%;
+  margin: 0 0 0.85rem;
+  overflow-x: auto;
+}
+
+.coach-msg-bot .markdown table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  background: var(--row-bg);
+  font-size: 0.8rem;
+}
+
+.coach-msg-bot .markdown th,
+.coach-msg-bot .markdown td {
+  border-bottom: 1px solid var(--line);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.coach-msg-bot .markdown th {
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.coach-msg-bot .markdown td {
+  color: var(--ink);
 }
 
 .coach-feedback {

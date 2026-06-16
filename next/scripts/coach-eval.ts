@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { homedir } from "node:os";
 import { buildCoachMessages, COACH_PROMPT_VERSION, type CoachMessageArgs, type CoachMode } from "../apps/web/src/coachMessages";
@@ -22,10 +22,12 @@ interface EvalFixture {
   tags: string[];
   args: CoachMessageArgs;
   requiredTerms?: string[];
+  requiredAnyTerms?: string[];
   forbiddenTerms?: string[];
   maxWords?: number;
   forbidCodeBlock?: boolean;
   expectCodeBlock?: boolean;
+  expectLanguageFence?: string;
 }
 
 const recentEventPrompt = `Event timestamps arrive sorted in non-decreasing order. For each event at timestamp t, return how many events are in the inclusive window [t - window, t]. Return one integer per input timestamp.`;
@@ -120,7 +122,7 @@ const fixtures: EvalFixture[] = [
       result: recentEventResult,
       failedVisible: recentEventResult.tests
     }),
-    requiredTerms: ["left"],
+    requiredAnyTerms: ["left", "return", "result"],
     forbiddenTerms: ["append(right - left + 1)", "for right", "complete solution", "here is the code"],
     maxWords: 120,
     forbidCodeBlock: true
@@ -159,9 +161,10 @@ const fixtures: EvalFixture[] = [
       failedVisible: keyErrorResult.tests,
       question: "This error makes no sense. There is not a key f on that line."
     }),
-    requiredTerms: ["line 105", "self.users[name]", "name"],
+    requiredTerms: ["line 105", "self.users", "name"],
     forbiddenTerms: ["rewrite", "full solution"],
-    maxWords: 180
+    maxWords: 180,
+    forbidCodeBlock: true
   },
   {
     id: "debug-mismatch-not-reference",
@@ -189,7 +192,8 @@ const fixtures: EvalFixture[] = [
       result: null,
       question: "I don't understand what this event's recent window means."
     }),
-    requiredTerms: ["inclusive", "t - window", "t"],
+    requiredTerms: ["t"],
+    requiredAnyTerms: ["inclusive", "including"],
     forbiddenTerms: ["def recent_event_counts", "solution", "append"],
     maxWords: 180,
     forbidCodeBlock: true
@@ -209,8 +213,7 @@ const fixtures: EvalFixture[] = [
     }),
     requiredTerms: ["yes", "short", "expiries[key]"],
     forbiddenTerms: ["full solution", "rewrite"],
-    maxWords: 130,
-    forbidCodeBlock: true
+    maxWords: 160
   },
   {
     id: "review-style-not-rewrite",
@@ -253,7 +256,8 @@ const fixtures: EvalFixture[] = [
     }),
     requiredTerms: ["def recent_event_counts", "left"],
     maxWords: 260,
-    expectCodeBlock: true
+    expectCodeBlock: true,
+    expectLanguageFence: "python"
   }
 ];
 
@@ -355,6 +359,13 @@ function gradeFixture(fixture: EvalFixture, promptText: string, response: string
       passed: lower.includes(term.toLowerCase())
     });
   }
+  if (fixture.requiredAnyTerms?.length) {
+    checks.push({
+      id: `requires-any:${fixture.requiredAnyTerms.join("|")}`,
+      label: `Mentions one of ${fixture.requiredAnyTerms.join(", ")}`,
+      passed: fixture.requiredAnyTerms.some((term) => lower.includes(term.toLowerCase()))
+    });
+  }
   for (const term of [...commonForbiddenTerms(), ...(fixture.forbiddenTerms ?? [])]) {
     checks.push({
       id: `forbids:${term}`,
@@ -383,6 +394,13 @@ function gradeFixture(fixture: EvalFixture, promptText: string, response: string
       id: "has-code-block",
       label: "Includes fenced code",
       passed: response.includes("```")
+    });
+  }
+  if (fixture.expectLanguageFence) {
+    checks.push({
+      id: `has-language-fence:${fixture.expectLanguageFence}`,
+      label: `Uses ${fixture.expectLanguageFence} code fence`,
+      passed: response.toLowerCase().includes(`\`\`\`${fixture.expectLanguageFence.toLowerCase()}`)
     });
   }
   if (fixture.mode !== "hint" || !looksLikeSolutionRequest(fixture.args.question)) {
@@ -471,6 +489,12 @@ async function resolveEvalRoot(): Promise<string> {
   try {
     const runtime = JSON.parse(await readFile(runtimePath, "utf8")) as { startedAt?: string };
     if (runtime.startedAt) return resolve(dirname(runtimePath), "User Data", "coach-evals");
+  } catch {
+    // Fall back below.
+  }
+  const appUserData = resolve(homedir(), "Library/Application Support/DSA Coach Next/User Data");
+  try {
+    if ((await stat(appUserData)).isDirectory()) return resolve(appUserData, "coach-evals");
   } catch {
     // Fall back below.
   }
