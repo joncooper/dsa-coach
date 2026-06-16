@@ -2,6 +2,7 @@ import { type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEv
 import type { ContentGraph, Scenario, ScenarioCheckpoint, ScenarioSet } from "../../../src/core/types";
 import { API_BASE } from "./apiBase";
 import { BasicCodeEditor } from "./CodeEditor";
+import { OpenNavigationButton, PanelCloseIcon, PanelOpenIcon, ShowSidebarButton } from "./SidebarControls";
 
 export interface ScenarioAttemptSummary {
   attemptId: string;
@@ -78,6 +79,7 @@ export function ScenarioSetScreen({
   attempts,
   sidebarCollapsed,
   onShowSidebar,
+  onOpenMobileNav,
   onOpenScenario
 }: {
   graph: ContentGraph;
@@ -85,6 +87,7 @@ export function ScenarioSetScreen({
   attempts: ScenarioAttemptSummary[];
   sidebarCollapsed: boolean;
   onShowSidebar: () => void;
+  onOpenMobileNav: () => void;
   onOpenScenario: (scenarioId: string, attemptId?: string) => void;
 }) {
   const latestByScenario = useMemo(() => latestAttemptsByScenario(attempts), [attempts]);
@@ -93,7 +96,8 @@ export function ScenarioSetScreen({
   return (
     <section className="page stack scenario-index-page">
       <div className="page-header">
-        {sidebarCollapsed ? <button type="button" className="secondary-button compact-button" onClick={onShowSidebar}>Show sidebar</button> : null}
+        <OpenNavigationButton onClick={onOpenMobileNav} />
+        {sidebarCollapsed ? <ShowSidebarButton onClick={onShowSidebar} /> : null}
         <div className="page-header-main">
           <p className="eyebrow">{isOnsiteSet ? "Onsite interview rehearsal" : "AI backend interview simulator"}</p>
           <h1>{scenarioSet.title}</h1>
@@ -157,6 +161,7 @@ export function ScenarioWorkspaceScreen({
   attemptId,
   sidebarCollapsed,
   onShowSidebar,
+  onOpenMobileNav,
   onBack,
   onAttemptsChanged
 }: {
@@ -164,6 +169,7 @@ export function ScenarioWorkspaceScreen({
   attemptId?: string;
   sidebarCollapsed: boolean;
   onShowSidebar: () => void;
+  onOpenMobileNav: () => void;
   onBack: () => void;
   onAttemptsChanged: () => void;
 }) {
@@ -559,7 +565,8 @@ export function ScenarioWorkspaceScreen({
     <section className={`scenario-workspace ${isOnsiteInterview ? "scenario-onsite-workspace" : ""}`}>
       <header className="scenario-interview-header">
         <div className="scenario-interview-title">
-          {sidebarCollapsed ? <button type="button" className="secondary-button compact-button" onClick={onShowSidebar}>Show sidebar</button> : null}
+          <OpenNavigationButton onClick={onOpenMobileNav} />
+          {sidebarCollapsed ? <ShowSidebarButton onClick={onShowSidebar} /> : null}
           <button type="button" className="secondary-button compact-button" onClick={onBack}>Back</button>
           <div>
             <p className="problem-breadcrumb">
@@ -729,6 +736,7 @@ export function ScenarioWorkspaceScreen({
                       ariaLabel={`${activeFile.path} editor`}
                       onChange={updateActiveFile}
                       onRun={runFromEditor}
+                      className="code-editor scenario-basic-editor"
                     />
                   ) : (
                     <div className="scenario-empty-diff">
@@ -768,7 +776,7 @@ export function ScenarioWorkspaceScreen({
 
               {!testsCollapsed && !debriefOpen ? (
                 <div
-                  className="scenario-tests-resizer"
+                  className="dock-resize-handle scenario-tests-resizer"
                   role="separator"
                   aria-label="Resize tests pane"
                   aria-orientation="horizontal"
@@ -780,9 +788,7 @@ export function ScenarioWorkspaceScreen({
                   onPointerDown={handleTestsResizePointerDown}
                   onMouseDown={handleTestsResizeMouseDown}
                   onKeyDown={handleTestsResizerKeyDown}
-                >
-                  <span />
-                </div>
+                />
               ) : null}
 
               <section className="scenario-test-output">
@@ -1024,13 +1030,15 @@ function ScenarioTestsPane({
     return (
       <button
         type="button"
-        className={`scenario-tests-collapsed-bar ${result?.status ?? "idle"}`}
+        className={`output-dock-restore-button scenario-tests-collapsed-bar ${result?.status ?? "idle"}`}
         onClick={() => onCollapsedChange(false)}
         aria-controls="scenario-tests-pane"
         aria-expanded="false"
       >
+        <PanelOpenIcon />
         <span className="scenario-tests-collapsed-title">Tests</span>
         <strong>{`${countLabel} · ${statusLabel}`}</strong>
+        {result ? <span className={result.status === "passed" ? "tab-dot" : "tab-dot error"} /> : null}
         <span className="scenario-tests-collapsed-action">Restore</span>
       </button>
     );
@@ -1038,17 +1046,6 @@ function ScenarioTestsPane({
 
   return (
     <div className="scenario-tests-pane" id="scenario-tests-pane">
-      <button
-        type="button"
-        className="scenario-tests-collapse-button"
-        onClick={() => onCollapsedChange(true)}
-        aria-label="Minimize tests pane"
-        aria-controls="scenario-tests-pane"
-        aria-expanded="true"
-        title="Minimize tests pane"
-      >
-        -
-      </button>
       <header className="scenario-tests-tabs" role="tablist" aria-label="Scenario test panes">
         <button
           type="button"
@@ -1080,6 +1077,17 @@ function ScenarioTestsPane({
             disabled={Boolean(busy) || !canRun}
           >
             Run Tests
+          </button>
+          <button
+            type="button"
+            className="dock-collapse-button scenario-tests-collapse-button"
+            onClick={() => onCollapsedChange(true)}
+            aria-label="Minimize tests pane"
+            aria-controls="scenario-tests-pane"
+            aria-expanded="true"
+            title="Minimize tests pane"
+          >
+            <PanelCloseIcon />
           </button>
         </div>
       </header>

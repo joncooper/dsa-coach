@@ -18,6 +18,7 @@ import { API_BASE } from "./apiBase";
 import { BasicCodeEditor, CodeEditor } from "./CodeEditor";
 import { CoachPanel } from "./CoachPanel";
 import { ScenarioSetScreen, ScenarioWorkspaceScreen, type ScenarioAttemptSummary } from "./ScenarioScreens";
+import { OpenNavigationButton, ShowSidebarButton } from "./SidebarControls";
 import {
   contentStats as legacyContentStats,
   course as legacyCourse,
@@ -1314,7 +1315,7 @@ export function App() {
     );
   }
 
-  const workspaceViewActive = currentView.kind === "problem" || currentView.kind === "assessment";
+  const workspaceViewActive = currentView.kind === "problem" || currentView.kind === "assessment" || currentView.kind === "scenario-set" || currentView.kind === "scenario";
   const problemFocusActive = currentView.kind === "problem" && focusMode;
   const workspaceSidebarCollapsed = workspaceViewActive && sidebarCollapsed && !mobileNavOpen;
   const coachVisible = currentView.kind === "problem" && coachOpen && !focusMode;
@@ -1566,6 +1567,10 @@ export function App() {
             attempts={scenarioAttempts}
             sidebarCollapsed={workspaceSidebarCollapsed}
             onShowSidebar={() => updateSidebarCollapsed(false)}
+            onOpenMobileNav={() => {
+              updateSidebarCollapsed(false);
+              setMobileNavOpen(true);
+            }}
             onOpenScenario={openScenario}
           />
         ) : null}
@@ -1576,6 +1581,10 @@ export function App() {
             attemptId={currentView.attemptId}
             sidebarCollapsed={workspaceSidebarCollapsed}
             onShowSidebar={() => updateSidebarCollapsed(false)}
+            onOpenMobileNav={() => {
+              updateSidebarCollapsed(false);
+              setMobileNavOpen(true);
+            }}
             onBack={() => {
               const set = graph.scenarioSets.find((candidate) => candidate.entries.some((entry) => entry.scenario === selectedScenario.id));
               setCurrentView({ kind: "scenario-set", id: set?.id ?? "ramp-ai-backend" });
@@ -1641,29 +1650,14 @@ export function App() {
         {currentView.kind === "problem" ? (
           <>
           <header className="problem-context-bar">
-          <button
-            type="button"
-            className="problem-nav-toggle"
-            aria-label="Open navigation menu"
+          <OpenNavigationButton
             onClick={() => {
               updateSidebarCollapsed(false);
               setMobileNavOpen(true);
             }}
-          >
-            <MenuIcon />
-          </button>
+          />
           {workspaceSidebarCollapsed ? (
-            <button
-              type="button"
-              className="sidebar-show-toggle inline"
-            aria-label="Show sidebar"
-            title="Show sidebar"
-            onClick={() => {
-              updateSidebarCollapsed(false);
-            }}
-          >
-            <PanelOpenIcon />
-          </button>
+            <ShowSidebarButton onClick={() => updateSidebarCollapsed(false)} />
           ) : null}
           <div className="problem-context-main">
             <p className="problem-breadcrumb">
@@ -5486,14 +5480,6 @@ function renderInline(text: string): ReactNode[] {
 
 function InlineMarkdown({ text }: { text: string }) {
   return <>{renderInline(text)}</>;
-}
-
-function ShowSidebarButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button type="button" className="sidebar-show-toggle inline" aria-label="Show sidebar" title="Show sidebar" onClick={onClick}>
-      <PanelOpenIcon />
-    </button>
-  );
 }
 
 function BookMarkIcon() {

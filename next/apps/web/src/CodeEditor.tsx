@@ -82,9 +82,10 @@ interface BasicCodeEditorProps {
   ariaLabel: string;
   onChange: (value: string) => void;
   onRun?: (includeHidden: boolean) => void;
+  className?: string;
 }
 
-export function BasicCodeEditor({ value, language, ariaLabel, onChange, onRun }: BasicCodeEditorProps) {
+export function BasicCodeEditor({ value, language, ariaLabel, onChange, onRun, className = "code-editor" }: BasicCodeEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
@@ -158,7 +159,7 @@ export function BasicCodeEditor({ value, language, ariaLabel, onChange, onRun }:
     });
   }, [language, languageSlot]);
 
-  return <div ref={hostRef} />;
+  return <div className={className} ref={hostRef} />;
 }
 
 export function CodeEditor({ value, language, problemId, partId, signature, support, onChange, onRun }: CodeEditorProps) {
