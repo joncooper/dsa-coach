@@ -2657,7 +2657,7 @@ function DashboardScreen({
             <button key={set.id} className="dashboard-track-card" type="button" onClick={() => onOpenScenarioSet(set.id)}>
               <p className="eyebrow">
                 <TerminalSquareIcon />
-                AI live coding
+                {set.id === "ramp-onsite-coding" ? "Onsite rehearsal" : "AI live coding"}
               </p>
               <h3>{set.title}</h3>
               <p>{set.summary}</p>

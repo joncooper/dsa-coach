@@ -360,15 +360,15 @@ export function ScenarioWorkspaceScreen({
         <div className="scenario-interview-actions">
           <div className="scenario-timer" aria-label="Elapsed interview time">
             <span>{attempt ? formatClock(elapsedMs) : "--:--"}</span>
-            <small>{timerPaused ? "Paused" : "Elapsed"}</small>
+            <small>{debriefOpen ? "Ended" : timerPaused ? "Paused" : "Elapsed"}</small>
           </div>
           <button
             type="button"
             className="secondary-button compact-button"
             onClick={() => setTimerPaused((paused) => !paused)}
-            disabled={!attempt}
+            disabled={!attempt || debriefOpen}
           >
-            {timerPaused ? "Resume" : "Pause"}
+            {debriefOpen ? "Ended" : timerPaused ? "Resume" : "Pause"}
           </button>
           <button type="button" className="primary-button compact-button" onClick={() => void runVisible()} disabled={Boolean(busy) || !attempt}>
             Run tests
@@ -380,7 +380,7 @@ export function ScenarioWorkspaceScreen({
               setSessionEnded(true);
               setTimerPaused(true);
             }}
-            disabled={!attempt}
+            disabled={!attempt || debriefOpen}
           >
             End session
           </button>
