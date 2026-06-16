@@ -58,6 +58,76 @@
       "problem": "ramp-task-manager",
       "category": "progressive OOD",
       "note": "CRUD, priority sorting, quotas, assignments, overdue state"
+    },
+    {
+      "problem": "ramp-hotel-reservation-system",
+      "category": "stateful design",
+      "note": "in-memory reservations, interval availability, deterministic room assignment"
+    },
+    {
+      "problem": "ramp-travel-api-pagination-basics",
+      "category": "travel API",
+      "note": "API pagination, cursor pagination, response parsing"
+    },
+    {
+      "problem": "ramp-travel-api-auth-filter",
+      "category": "travel API",
+      "note": "API authentication, server-side filtering, cursor pagination"
+    },
+    {
+      "problem": "ramp-travel-api-rate-limit-backoff",
+      "category": "travel API",
+      "note": "rate limits, retry-after, cursor pagination"
+    },
+    {
+      "problem": "ramp-travel-api-flaky-transactions",
+      "category": "travel API",
+      "note": "retry loops, 5xx errors, exponential backoff"
+    },
+    {
+      "problem": "ramp-travel-api-debug-broken-fetch",
+      "category": "travel API",
+      "note": "debugging, cursor pagination, API contracts"
+    },
+    {
+      "problem": "ramp-travel-api-top-spenders",
+      "category": "travel API",
+      "note": "multi-step API workflow, aggregation, sorting"
+    },
+    {
+      "problem": "ramp-travel-api-weekly-spend",
+      "category": "travel API",
+      "note": "date bucketing, aggregation, pagination"
+    },
+    {
+      "problem": "ramp-travel-api-async-trip-enrichment",
+      "category": "travel API",
+      "note": "asyncio fan-out/fan-in, order preservation"
+    },
+    {
+      "problem": "ramp-travel-api-async-receipt-ocr",
+      "category": "travel API",
+      "note": "bounded concurrency, per-item errors"
+    },
+    {
+      "problem": "ramp-travel-api-async-employee-spend",
+      "category": "travel API",
+      "note": "bounded async fan-out, aggregation"
+    },
+    {
+      "problem": "ramp-travel-api-expense-outbox-sync",
+      "category": "travel API",
+      "note": "idempotent writes, outbox processing, stable identifiers"
+    },
+    {
+      "problem": "ramp-travel-api-receipt-matching",
+      "category": "travel API",
+      "note": "hash joins, messy data, one-to-one matching"
+    },
+    {
+      "problem": "ramp-travel-api-date-window-matching",
+      "category": "travel API",
+      "note": "date windows, joins, API pagination"
     }
   ]
 }

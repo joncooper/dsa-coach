@@ -1,0 +1,171 @@
+{
+  "id": "ramp-travel-api-weekly-spend",
+  "kind": "problem",
+  "title": "Travel API Weekly Spend Rollup",
+  "difficulty": "medium",
+  "concepts": [
+    "date bucketing",
+    "aggregation",
+    "pagination"
+  ],
+  "timeboxMinutes": 25,
+  "prompt": "Finance wants weekly spend totals across all transactions.\n\nWrite `weekly_spend(base_url, token)`. Fetch every transaction, bucket each transaction into the week whose Monday contains that transaction's date, and sum `amount_cents` per week.\n\nReturn contract:\n\n- Return `dict[str, int]`.\n- Keys are Monday ISO date strings, e.g. `\"2026-04-06\"`.\n- Values are total integer cents spent in that Monday-through-Sunday week.\n- Omit weeks with no transactions.\n- Return `{}` if there are no transactions.\n\nExample:\n\n```python\n2026-04-06 Monday    amount 100 -> bucket \"2026-04-06\"\n2026-04-12 Sunday    amount 200 -> bucket \"2026-04-06\"\n2026-04-13 Monday    amount 300 -> bucket \"2026-04-13\"\n\nreturn {\"2026-04-06\": 300, \"2026-04-13\": 300}\n```\n\nEndpoint details:\n\n- `GET /v1/transactions` is paginated and requires auth.\n- Transaction timestamps are ISO strings; use the date part `timestamp[:10]`.\n- In Python, `date.weekday()` returns `0` for Monday and `6` for Sunday.\n\nThe test harness passes `token` into your function. Do not define or hardcode it; use the `token` parameter when building the `Authorization` header.\n\nInvariants and corner cases:\n\n- Sunday belongs to the previous Monday's bucket.\n- Do not group by calendar month or by the transaction's own date string.\n- Sum integer cents exactly; do not use floating point dollars.\n- Fetch every transaction page.\n\nShared fake API note: this uses the in-process `requests` mock described in the Ramp Travel module guide; there is no real network.\n\nValidation focus: Monday week starts, Sunday boundary, exact cent totals, empty input, and pagination.",
+  "signature": {
+    "name": "weeklySpend",
+    "inputs": [
+      {
+        "name": "base_url",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "token",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "object"
+    }
+  },
+  "tests": [
+    {
+      "name": "visible: Sunday rolls into previous Monday",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "pageCaps": {
+          "transactions": 2
+        },
+        "transactions": [
+          {
+            "id": "txn_monday",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 100,
+            "category": "travel",
+            "timestamp": "2026-04-06T09:00:00Z"
+          },
+          {
+            "id": "txn_sunday",
+            "employee_id": "emp_002",
+            "card_id": "card_002",
+            "merchant": "merchant",
+            "amount_cents": 200,
+            "category": "travel",
+            "timestamp": "2026-04-12T18:00:00Z"
+          },
+          {
+            "id": "txn_next_monday",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 300,
+            "category": "travel",
+            "timestamp": "2026-04-13T01:00:00Z"
+          }
+        ]
+      },
+      "expected": {
+        "2026-04-06": 300,
+        "2026-04-13": 300
+      },
+      "visibility": "visible"
+    },
+    {
+      "name": "hidden: previous Sunday and midweek totals",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "pageCaps": {
+          "transactions": 2
+        },
+        "transactions": [
+          {
+            "id": "txn_prev_sunday",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 50,
+            "category": "travel",
+            "timestamp": "2026-04-05T23:00:00Z"
+          },
+          {
+            "id": "txn_monday",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 100,
+            "category": "travel",
+            "timestamp": "2026-04-06T09:00:00Z"
+          },
+          {
+            "id": "txn_sunday",
+            "employee_id": "emp_002",
+            "card_id": "card_002",
+            "merchant": "merchant",
+            "amount_cents": 200,
+            "category": "travel",
+            "timestamp": "2026-04-12T18:00:00Z"
+          },
+          {
+            "id": "txn_next_monday",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 300,
+            "category": "travel",
+            "timestamp": "2026-04-13T01:00:00Z"
+          },
+          {
+            "id": "txn_wednesday",
+            "employee_id": "emp_003",
+            "card_id": "card_003",
+            "merchant": "merchant",
+            "amount_cents": 400,
+            "category": "travel",
+            "timestamp": "2026-04-15T10:00:00Z"
+          }
+        ]
+      },
+      "expected": {
+        "2026-03-30": 50,
+        "2026-04-06": 300,
+        "2026-04-13": 700
+      },
+      "visibility": "hidden"
+    },
+    {
+      "name": "hidden: empty transactions",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "pageCaps": {
+          "transactions": 2
+        },
+        "transactions": []
+      },
+      "expected": {},
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "weekly_spend",
+      "starterPath": "problems/ramp-travel-api-weekly-spend/solutions/python/starter.py",
+      "referencePath": "problems/ramp-travel-api-weekly-spend/solutions/python/reference.py"
+    }
+  }
+}

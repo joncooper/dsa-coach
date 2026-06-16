@@ -1,0 +1,203 @@
+{
+  "id": "ramp-travel-api-date-window-matching",
+  "kind": "problem",
+  "title": "Travel API Date Window Matching",
+  "difficulty": "medium",
+  "concepts": [
+    "date windows",
+    "joins",
+    "API pagination"
+  ],
+  "timeboxMinutes": 30,
+  "prompt": "Finance wants to reconcile card transactions against approved trips.\n\nWrite `match_transactions_to_trips(base_url, token)`. Fetch all transactions and all trips. Return a mapping from transaction id to trip id for transactions whose date falls inside a trip for the same employee.\n\nA transaction matches a trip when:\n\n- `txn[\"employee_id\"] == trip[\"employee_id\"]`\n- `trip[\"start_date\"] <= txn_date <= trip[\"end_date\"]`\n\nUse only the date portion of the transaction timestamp: `txn[\"timestamp\"][:10]`.\n\nReturn contract:\n\n- Return `dict[str, str]`, shaped like `{\"txn_001\": \"trip_001\"}`.\n- Keys are transaction ids. Values are trip ids.\n- Skip transactions outside all trips.\n- If multiple trips for the same employee overlap and both match, choose the first matching trip returned by the trips API.\n- If there are no matches, return `{}`.\n\nEndpoint details:\n\n- `GET /v1/transactions` is paginated and requires auth.\n- `GET /v1/trips` is paginated, requires auth, and may return `429` with `Retry-After`; retry the same trips request after a `429`.\n\nThe test harness passes `token` into your function. Do not define or hardcode it; use the `token` parameter when building the `Authorization` header.\n\nInvariants and corner cases:\n\n- Start and end dates are inclusive.\n- Same date but wrong employee is not a match.\n- A one-day trip matches transactions on that date.\n- Do not advance the trips cursor after a 429.\n\nShared fake API note: this uses the in-process `requests` mock described in the Ramp Travel module guide; there is no real network.\n\nValidation focus: same-employee join, inclusive date boundaries, one-day trips, no outside matches, overlapping-trip tie behavior, and 429 handling.",
+  "signature": {
+    "name": "matchTransactionsToTrips",
+    "inputs": [
+      {
+        "name": "base_url",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "token",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "object"
+    }
+  },
+  "tests": [
+    {
+      "name": "visible: inclusive boundaries and one-day trips",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "pageCaps": {
+          "transactions": 2,
+          "trips": 2
+        },
+        "transactions": [
+          {
+            "id": "txn_w1",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 1100,
+            "category": "travel",
+            "timestamp": "2026-01-10T08:00:00Z"
+          },
+          {
+            "id": "txn_w2",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 1200,
+            "category": "travel",
+            "timestamp": "2026-01-12T23:00:00Z"
+          },
+          {
+            "id": "txn_w3",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 1300,
+            "category": "travel",
+            "timestamp": "2026-01-14T12:00:00Z"
+          },
+          {
+            "id": "txn_w4",
+            "employee_id": "emp_002",
+            "card_id": "card_002",
+            "merchant": "merchant",
+            "amount_cents": 1400,
+            "category": "travel",
+            "timestamp": "2026-01-11T09:00:00Z"
+          }
+        ],
+        "trips": [
+          {
+            "id": "trip_w1",
+            "employee_id": "emp_001",
+            "destination": "SFO",
+            "start_date": "2026-01-10",
+            "end_date": "2026-01-12",
+            "total_cost_cents": 100000
+          },
+          {
+            "id": "trip_w2",
+            "employee_id": "emp_001",
+            "destination": "SEA",
+            "start_date": "2026-01-15",
+            "end_date": "2026-01-20",
+            "total_cost_cents": 90000
+          },
+          {
+            "id": "trip_w3",
+            "employee_id": "emp_002",
+            "destination": "NYC",
+            "start_date": "2026-01-11",
+            "end_date": "2026-01-11",
+            "total_cost_cents": 50000
+          }
+        ]
+      },
+      "expected": {
+        "txn_w1": "trip_w1",
+        "txn_w2": "trip_w1",
+        "txn_w4": "trip_w3"
+      },
+      "visibility": "visible"
+    },
+    {
+      "name": "hidden: overlapping trips choose API order and trips retry",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "pageCaps": {
+          "transactions": 2,
+          "trips": 2
+        },
+        "tripRateLimitOnce": [
+          ""
+        ],
+        "transactions": [
+          {
+            "id": "txn_h1",
+            "employee_id": "emp_009",
+            "card_id": "card_009",
+            "merchant": "merchant",
+            "amount_cents": 100,
+            "category": "travel",
+            "timestamp": "2026-02-06T01:00:00Z"
+          },
+          {
+            "id": "txn_h2",
+            "employee_id": "emp_010",
+            "card_id": "card_010",
+            "merchant": "merchant",
+            "amount_cents": 200,
+            "category": "travel",
+            "timestamp": "2026-02-03T23:59:00Z"
+          },
+          {
+            "id": "txn_h3",
+            "employee_id": "emp_010",
+            "card_id": "card_010",
+            "merchant": "merchant",
+            "amount_cents": 300,
+            "category": "travel",
+            "timestamp": "2026-02-04T00:00:00Z"
+          }
+        ],
+        "trips": [
+          {
+            "id": "trip_h1",
+            "employee_id": "emp_009",
+            "destination": "AUS",
+            "start_date": "2026-02-01",
+            "end_date": "2026-02-10",
+            "total_cost_cents": 1000
+          },
+          {
+            "id": "trip_h2",
+            "employee_id": "emp_009",
+            "destination": "DEN",
+            "start_date": "2026-02-05",
+            "end_date": "2026-02-08",
+            "total_cost_cents": 1000
+          },
+          {
+            "id": "trip_h3",
+            "employee_id": "emp_010",
+            "destination": "BOS",
+            "start_date": "2026-02-03",
+            "end_date": "2026-02-03",
+            "total_cost_cents": 1000
+          }
+        ]
+      },
+      "expected": {
+        "txn_h1": "trip_h1",
+        "txn_h2": "trip_h3"
+      },
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "match_transactions_to_trips",
+      "starterPath": "problems/ramp-travel-api-date-window-matching/solutions/python/starter.py",
+      "referencePath": "problems/ramp-travel-api-date-window-matching/solutions/python/reference.py"
+    }
+  }
+}

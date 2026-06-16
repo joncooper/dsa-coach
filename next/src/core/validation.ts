@@ -39,6 +39,19 @@ export function validateContentGraph(graph: ContentGraph, languagePacks: Languag
     for (const problemId of module.bonus ?? []) {
       if (!problemIds.has(problemId)) errors.push(`Module ${module.id} bonus references missing problem:${problemId}`);
     }
+    const sequenceProblemIds = new Set(module.sequence.filter((entry) => entry.kind === "problem").map((entry) => entry.id));
+    assertUnique(`section in module ${module.id}`, module.sections?.map((section) => section.id) ?? [], errors);
+    const sectionProblemIds: string[] = [];
+    for (const section of module.sections ?? []) {
+      if (!section.id.trim()) errors.push(`Module ${module.id} has a section with missing id`);
+      if (!section.label.trim()) errors.push(`Module ${module.id} section ${section.id} missing label`);
+      for (const problemId of section.problems) {
+        sectionProblemIds.push(problemId);
+        if (!problemIds.has(problemId)) errors.push(`Module ${module.id} section ${section.id} references missing problem:${problemId}`);
+        if (!sequenceProblemIds.has(problemId)) errors.push(`Module ${module.id} section ${section.id} references problem outside module sequence:${problemId}`);
+      }
+    }
+    assertUnique(`section problem in module ${module.id}`, sectionProblemIds, errors);
   }
 
   for (const set of graph.problemSets) {

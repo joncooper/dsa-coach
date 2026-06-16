@@ -21,6 +21,7 @@
     "package:mac": "bun run scripts/package-macos.ts",
     "package:mac:release": "bun run scripts/package-macos.ts --release",
     "reload:content": "bun run scripts/reload-content.ts",
+    "coach:eval": "bun run scripts/coach-eval.ts",
     "web:dev": "vite --host 127.0.0.1 --config apps/web/vite.config.ts",
     "web:preview": "vite preview --host 127.0.0.1 --config apps/web/vite.config.ts"
   },

@@ -28,7 +28,7 @@ import {
 } from "@codemirror/language";
 import { type Diagnostic as CodeMirrorDiagnostic, linter } from "@codemirror/lint";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { Compartment, EditorState, Prec, RangeSetBuilder, type Extension } from "@codemirror/state";
+import { Compartment, EditorState, Prec, RangeSetBuilder, Transaction, type Extension } from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
@@ -123,7 +123,8 @@ export function BasicCodeEditor({ value, language, ariaLabel, onChange }: BasicC
     const current = view.state.doc.toString();
     if (current === value) return;
     view.dispatch({
-      changes: { from: 0, to: current.length, insert: value }
+      changes: { from: 0, to: current.length, insert: value },
+      annotations: Transaction.addToHistory.of(false)
     });
   }, [value]);
 
@@ -219,7 +220,8 @@ export function CodeEditor({ value, language, problemId, partId, signature, supp
     const current = view.state.doc.toString();
     if (current === value) return;
     view.dispatch({
-      changes: { from: 0, to: current.length, insert: value }
+      changes: { from: 0, to: current.length, insert: value },
+      annotations: Transaction.addToHistory.of(false)
     });
   }, [value]);
 
@@ -395,7 +397,7 @@ const editorTheme = EditorView.theme({
   },
   ".cm-scroller": {
     fontFamily: "\"SFMono-Regular\", Consolas, monospace",
-    fontSize: "0.92rem",
+    fontSize: "var(--editor-font-size, 15px)",
     lineHeight: "1.55"
   },
   ".cm-content": {

@@ -118,4 +118,29 @@ describe("local runner", () => {
       expect(result.status).toBe("passed");
     }
   });
+
+  test("awaits async Python reference entrypoints when process runner verification is enabled", async () => {
+    if (process.env.DSA_COACH_TEST_PROCESS_RUNNERS !== "1") return;
+    const graph = await loadContentGraph();
+    const runner = new LocalRunner(graph);
+    const problemIds = [
+      "ramp-travel-api-async-trip-enrichment",
+      "ramp-travel-api-async-receipt-ocr",
+      "ramp-travel-api-async-employee-spend"
+    ];
+    for (const problemId of problemIds) {
+      const problem = graph.problems.find((candidate) => candidate.id === problemId);
+      if (!problem) throw new Error(`missing ${problemId}`);
+      const support = problem.languages.python;
+      const code = await readFile(resolve(defaultContentRoot, support.referencePath), "utf8");
+      const result = await runner.run({
+        language: "python",
+        problemId,
+        code,
+        includeHidden: true,
+        timeoutMs: 10000
+      });
+      expect(result.status).toBe("passed");
+    }
+  });
 });

@@ -111,6 +111,11 @@ export interface UserCoachLogRecord {
   conversationId: string;
   problemId: string;
   partTitle?: string;
+  partId?: string;
+  language?: string;
+  mode?: string;
+  surface?: string;
+  workspaceId?: string;
   model: string;
   promptVersion: string;
   userMessage: string | null;

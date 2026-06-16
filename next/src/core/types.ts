@@ -32,6 +32,17 @@ export interface Module {
   concepts: string[];
   sequence: ContentRef[];
   bonus?: string[];
+  guideTitle?: string;
+  guideBody?: string;
+  guideBullets?: string[];
+  sections?: ModuleSection[];
+}
+
+export interface ModuleSection {
+  id: string;
+  label: string;
+  blurb?: string;
+  problems: string[];
 }
 
 export interface ProblemSetEntry {

@@ -1,0 +1,233 @@
+{
+  "id": "ramp-travel-api-flaky-transactions",
+  "kind": "problem",
+  "title": "Travel API Flaky Transactions",
+  "difficulty": "medium",
+  "concepts": [
+    "retry loops",
+    "5xx errors",
+    "exponential backoff"
+  ],
+  "timeboxMinutes": 25,
+  "prompt": "During an incident, the transactions endpoint sometimes returns temporary 500 errors.\n\nWrite `fetch_all_transactions(base_url, token)`. Fetch every transaction from `GET {base_url}/v1/transactions`, always including `broken=1` in the query params. Retry 5xx responses for the same page with bounded exponential backoff, then continue pagination after the page succeeds.\n\nReturn contract:\n\n- Return `list[dict]`.\n- Each dict should be one transaction object from the API, unchanged.\n- Preserve API order.\n- Return `[]` if there are no transactions.\n\nTransaction shape:\n\n```python\n{\"id\": \"txn_001\", \"employee_id\": \"emp_001\", \"card_id\": \"card_001\", \"merchant\": \"United\", \"amount_cents\": 120000, \"category\": \"travel\", \"timestamp\": \"2026-04-01T12:00:00Z\"}\n```\n\nEndpoint details:\n\n- `GET {base_url}/v1/transactions` requires the bearer auth header.\n- Use params like `{\"limit\": 20, \"broken\": 1, \"cursor\": cursor}`.\n- Success response: `{\"data\": [...], \"next_cursor\": \"...\" | None}`.\n- Retry `status_code >= 500`. Treat 4xx as a real error.\n\nThe test harness passes `token` into your function. Do not define or hardcode it; use the `token` parameter when building the `Authorization` header.\n\nInvariants and corner cases:\n\n- Do not omit `broken=1`; hidden tests require it.\n- Retry the same cursor after a 5xx. Do not advance the cursor on a failed response.\n- Reset your retry/backoff logic after a successful page.\n- Do not duplicate transactions after a retry.\n\nShared fake API note: this uses the in-process `requests` mock described in the Ramp Travel module guide; there is no real network.\n\nValidation focus: required query flag, bounded retry, later-page failures, pagination, and no duplicates.",
+  "signature": {
+    "name": "fetchAllTransactions",
+    "inputs": [
+      {
+        "name": "base_url",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "token",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "any"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "visible: first page has one transient 500",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "requireBroken": true,
+        "pageCaps": {
+          "transactions": 2
+        },
+        "transactionFailures": {
+          "": 1
+        },
+        "transactions": [
+          {
+            "id": "txn_001",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "United",
+            "amount_cents": 120000,
+            "category": "travel",
+            "timestamp": "2026-04-01T12:00:00Z"
+          },
+          {
+            "id": "txn_002",
+            "employee_id": "emp_002",
+            "card_id": "card_002",
+            "merchant": "Delta",
+            "amount_cents": 90000,
+            "category": "travel",
+            "timestamp": "2026-04-04T12:00:00Z"
+          },
+          {
+            "id": "txn_003",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "Cafe",
+            "amount_cents": 45000,
+            "category": "travel",
+            "timestamp": "2026-04-09T12:00:00Z"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "id": "txn_001",
+          "employee_id": "emp_001",
+          "card_id": "card_001",
+          "merchant": "United",
+          "amount_cents": 120000,
+          "category": "travel",
+          "timestamp": "2026-04-01T12:00:00Z"
+        },
+        {
+          "id": "txn_002",
+          "employee_id": "emp_002",
+          "card_id": "card_002",
+          "merchant": "Delta",
+          "amount_cents": 90000,
+          "category": "travel",
+          "timestamp": "2026-04-04T12:00:00Z"
+        },
+        {
+          "id": "txn_003",
+          "employee_id": "emp_001",
+          "card_id": "card_001",
+          "merchant": "Cafe",
+          "amount_cents": 45000,
+          "category": "travel",
+          "timestamp": "2026-04-09T12:00:00Z"
+        }
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "hidden: second page has two transient 500s",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "requireBroken": true,
+        "pageCaps": {
+          "transactions": 2
+        },
+        "transactionFailures": {
+          "2": 2
+        },
+        "transactions": [
+          {
+            "id": "txn_001",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "United",
+            "amount_cents": 120000,
+            "category": "travel",
+            "timestamp": "2026-04-01T12:00:00Z"
+          },
+          {
+            "id": "txn_002",
+            "employee_id": "emp_002",
+            "card_id": "card_002",
+            "merchant": "Delta",
+            "amount_cents": 90000,
+            "category": "travel",
+            "timestamp": "2026-04-04T12:00:00Z"
+          },
+          {
+            "id": "txn_003",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "Cafe",
+            "amount_cents": 45000,
+            "category": "travel",
+            "timestamp": "2026-04-09T12:00:00Z"
+          },
+          {
+            "id": "txn_004",
+            "employee_id": "emp_003",
+            "card_id": "card_003",
+            "merchant": "Hotel",
+            "amount_cents": 170000,
+            "category": "travel",
+            "timestamp": "2026-04-11T12:00:00Z"
+          },
+          {
+            "id": "txn_005",
+            "employee_id": "emp_004",
+            "card_id": "card_004",
+            "merchant": "Airline",
+            "amount_cents": 400000,
+            "category": "travel",
+            "timestamp": "2026-04-16T12:00:00Z"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "id": "txn_001",
+          "employee_id": "emp_001",
+          "card_id": "card_001",
+          "merchant": "United",
+          "amount_cents": 120000,
+          "category": "travel",
+          "timestamp": "2026-04-01T12:00:00Z"
+        },
+        {
+          "id": "txn_002",
+          "employee_id": "emp_002",
+          "card_id": "card_002",
+          "merchant": "Delta",
+          "amount_cents": 90000,
+          "category": "travel",
+          "timestamp": "2026-04-04T12:00:00Z"
+        },
+        {
+          "id": "txn_003",
+          "employee_id": "emp_001",
+          "card_id": "card_001",
+          "merchant": "Cafe",
+          "amount_cents": 45000,
+          "category": "travel",
+          "timestamp": "2026-04-09T12:00:00Z"
+        },
+        {
+          "id": "txn_004",
+          "employee_id": "emp_003",
+          "card_id": "card_003",
+          "merchant": "Hotel",
+          "amount_cents": 170000,
+          "category": "travel",
+          "timestamp": "2026-04-11T12:00:00Z"
+        },
+        {
+          "id": "txn_005",
+          "employee_id": "emp_004",
+          "card_id": "card_004",
+          "merchant": "Airline",
+          "amount_cents": 400000,
+          "category": "travel",
+          "timestamp": "2026-04-16T12:00:00Z"
+        }
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "fetch_all_transactions",
+      "starterPath": "problems/ramp-travel-api-flaky-transactions/solutions/python/starter.py",
+      "referencePath": "problems/ramp-travel-api-flaky-transactions/solutions/python/reference.py"
+    }
+  }
+}

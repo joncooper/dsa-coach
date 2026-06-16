@@ -13,6 +13,7 @@ import type {
 } from "../../../src/core/types";
 import { migrateLegacyBackup, type LegacyBackupPayload } from "../../../src/storage/legacyMigration";
 import type { NextUserData, NextWorkspaceState, WorkspaceEditorBuffer, WorkspaceSelection } from "../../../src/storage/userData";
+import type { CoachEvalSuiteReport } from "../../../src/coach/evalTypes";
 import { API_BASE } from "./apiBase";
 import { BasicCodeEditor, CodeEditor } from "./CodeEditor";
 import { CoachPanel } from "./CoachPanel";
@@ -32,6 +33,11 @@ type LoadState =
   | { status: "loading" }
   | { status: "ready"; graph: ContentGraph; languages: LanguagePack[] }
   | { status: "error"; message: string };
+
+const defaultEditorFontSize = 15;
+const minEditorFontSize = 11;
+const maxEditorFontSize = 24;
+const editorFontSizePreferenceKey = "workspace:editorFontSize";
 
 interface ContentStatus {
   ok: true;
@@ -80,14 +86,21 @@ type CollectionViewModel = {
   eyebrow: string;
   sideTitle: string;
   sideBody: string;
+  sideBullets?: string[];
   problems: Problem[];
+  sections?: CollectionGroup[];
   entries?: ContentGraph["problemSets"][number]["entries"];
 };
 
+type CollectionGroup = { id: string; label: string; blurb?: string; problems: Problem[] };
+
 type SidebarSearchHit =
   | { kind: "lesson"; id: string; title: string }
+  | { kind: "module"; id: string; title: string }
+  | { kind: "problem-set"; id: string; title: string }
   | { kind: "problem"; id: string; title: string }
   | { kind: "assessment"; id: string; title: string }
+  | { kind: "scenario-set"; id: string; title: string }
   | { kind: "scenario"; id: string; title: string };
 
 type OutputPanel = "results" | "stdout" | "errors" | "scratchpad" | "notes" | "history";
@@ -160,6 +173,10 @@ interface AssessmentScorecard {
   generatedAt: string;
 }
 
+interface ProblemPauseState {
+  pausedAt: string;
+}
+
 interface AssessmentEventRecord {
   id: string;
   assessmentId: string;
@@ -209,6 +226,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<MobileWorkspaceTab>("prompt");
   const [activeOutputPanel, setActiveOutputPanel] = useState<OutputPanel>("results");
+  const [outputDockCollapsed, setOutputDockCollapsed] = useState(false);
   const [dockHeight, setDockHeight] = useState(260);
   const dockDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
   const runAbortRef = useRef<AbortController | null>(null);
@@ -229,6 +247,7 @@ export function App() {
   const [lastRunIncludedHidden, setLastRunIncludedHidden] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [promptPaneCollapsed, setPromptPaneCollapsed] = useState(false);
+  const [editorFontSize, setEditorFontSize] = useState(defaultEditorFontSize);
   const [activeProblemPendingMs, setActiveProblemPendingMs] = useState(0);
   const preferencesLoadedRef = useRef(false);
   const [starred, setStarred] = useState(false);
@@ -341,8 +360,11 @@ export function App() {
   const splitStyle = { "--prompt-width": `${splitRatio}%`, "--dock-height": `${dockHeight}px` } as CSSProperties;
   const canReloadContent = contentStatus?.reloadAvailable === true;
   const persistedActiveProblemTimeMs = selectedProblemId ? activeTimeForProblem(userData, selectedProblemId) : 0;
-  const activeProblemTimeMs = persistedActiveProblemTimeMs + (currentView.kind === "problem" ? activeProblemPendingMs : 0);
   const activeTimeboxMinutes = selectedPart?.timeboxMinutes ?? selectedProblem?.timeboxMinutes;
+  const activeProblemPauseState = selectedProblemId ? problemPauseStateForProblem(userData, selectedProblemId) : undefined;
+  const problemTimeboxPaused = Boolean(activeTimeboxMinutes && activeProblemPauseState);
+  const activeProblemTimeMs = persistedActiveProblemTimeMs + (currentView.kind === "problem" && !problemTimeboxPaused ? activeProblemPendingMs : 0);
+  const appShellStyle = { "--editor-font-size": `${editorFontSize}px` } as CSSProperties;
 
   useEffect(() => {
     setMobileNavOpen(false);
@@ -566,6 +588,18 @@ export function App() {
       void reloadContent();
       return;
     }
+    if (command === "font-size-increase") {
+      changeEditorFontSize(1);
+      return;
+    }
+    if (command === "font-size-decrease") {
+      changeEditorFontSize(-1);
+      return;
+    }
+    if (command === "font-size-reset") {
+      resetEditorFontSize();
+      return;
+    }
     if (command === "toggle-sidebar") {
       const next = !sidebarCollapsed;
       updateSidebarCollapsed(next);
@@ -590,7 +624,9 @@ export function App() {
     exportCoachLog,
     exportUserData,
     focusSidebarSearch,
+    changeEditorFontSize,
     openDashboard,
+    resetEditorFontSize,
     selectedProblem,
     sidebarCollapsed,
     triggerLegacyImport,
@@ -731,8 +767,10 @@ export function App() {
     setDockHeight(clampDockHeight(numberPreference(current, "workspace:bottomDockHeight", 260)));
     setSplitRatio(numberPreference(current, "workspace:splitRatio", 34));
     setShowHiddenDiagnostics(preferenceValue<boolean>(current, "workspace:showHiddenDiagnostics", false) === true);
+    setOutputDockCollapsed(preferenceValue<boolean>(current, "workspace:outputDockCollapsed", false) === true);
     setSidebarCollapsed(preferenceValue<boolean>(current, "workspace:sidebarCollapsed", false) === true);
     setFocusMode(preferenceValue<boolean>(current, "workspace:focusMode", false) === true);
+    setEditorFontSize(clampEditorFontSize(numberPreference(current, editorFontSizePreferenceKey, defaultEditorFontSize)));
     const storedMobileTab = preferenceValue(current, "workspace:activeMobileTab", "prompt");
     if (isMobileWorkspaceTab(storedMobileTab)) setActiveMobileTab(storedMobileTab);
   }, [userData]);
@@ -763,7 +801,7 @@ export function App() {
   }, [currentView.kind, scratchpadCode, selectedLanguage, selectedProblemId]);
 
   useEffect(() => {
-    if (currentView.kind !== "problem" || !selectedProblemId) {
+    if (currentView.kind !== "problem" || !selectedProblemId || problemTimeboxPaused) {
       setActiveProblemPendingMs(0);
       return;
     }
@@ -819,13 +857,21 @@ export function App() {
       window.removeEventListener("pagehide", flush);
       document.removeEventListener("visibilitychange", refreshActiveState);
     };
-  }, [currentView.kind, selectedPartId, selectedProblemId]);
+  }, [currentView.kind, selectedPartId, selectedProblemId, problemTimeboxPaused]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       const isEditing = Boolean(target?.closest("input, textarea, [contenteditable='true'], .cm-editor"));
       if (event.defaultPrevented) return;
+      if (isEditorFontSizeShortcut(event)) {
+        event.preventDefault();
+        const action = editorFontSizeShortcutAction(event);
+        if (action === "increase") changeEditorFontSize(1);
+        if (action === "decrease") changeEditorFontSize(-1);
+        if (action === "reset") resetEditorFontSize();
+        return;
+      }
       if ((event.metaKey || event.ctrlKey) && event.key === ",") {
         event.preventDefault();
         setSettingsOpen(true);
@@ -868,12 +914,32 @@ export function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   });
 
+  function changeEditorFontSize(delta: number) {
+    setEditorFontSize((current) => {
+      const next = clampEditorFontSize(current + delta);
+      if (next !== current) void savePreference(editorFontSizePreferenceKey, next);
+      setStorageStatus(`Editor font size: ${next}px.`);
+      return next;
+    });
+  }
+
+  function resetEditorFontSize() {
+    setEditorFontSize((current) => {
+      const next = defaultEditorFontSize;
+      if (next !== current) void savePreference(editorFontSizePreferenceKey, next);
+      setStorageStatus(`Editor font size reset to ${next}px.`);
+      return next;
+    });
+  }
+
   async function run(includeHidden: boolean) {
     if (!selectedProblem || busy) return;
     const controller = new AbortController();
     runAbortRef.current = controller;
     setBusy(true);
     setResult(null);
+    setActiveOutputPanel("results");
+    setActiveMobileTab("results");
     setLastRunIncludedHidden(includeHidden);
     try {
       const nextResult = await postJson<RunResult>("/run", {
@@ -1125,6 +1191,20 @@ export function App() {
     await updateUserData((current) => upsertPreference(current, key, value), "Preference saved");
   }
 
+  async function pauseProblemTimebox() {
+    if (!selectedProblemId || !activeTimeboxMinutes || problemTimeboxPaused) return;
+    const pausedAt = new Date().toISOString();
+    await updateUserData(
+      (current) => upsertPreference(current, problemPausePreferenceKey(selectedProblemId), { pausedAt }),
+      "Timer paused"
+    );
+  }
+
+  async function resumeProblemTimebox() {
+    if (!selectedProblemId || !activeTimeboxMinutes || !problemTimeboxPaused) return;
+    await updateUserData((current) => removePreference(current, problemPausePreferenceKey(selectedProblemId)), "Timer resumed");
+  }
+
   async function saveScratchpad(problemId: string, language: LanguageId, nextCode: string) {
     await updateUserData((current) => upsertScratchpad(current, problemId, language, nextCode), "Scratchpad saved");
   }
@@ -1241,7 +1321,7 @@ export function App() {
   const activeSolutionDetails = selectedProblem ? problemSolutionDetails(selectedProblem, selectedPart) : undefined;
 
   return (
-    <div className={`app-shell ${workspaceSidebarCollapsed ? "sidebar-collapsed" : ""} ${problemFocusActive ? "problem-focus-mode" : ""}`}>
+    <div className={`app-shell ${workspaceSidebarCollapsed ? "sidebar-collapsed" : ""} ${problemFocusActive ? "problem-focus-mode" : ""}`} style={appShellStyle}>
       {workspaceViewActive ? (
         <button
           type="button"
@@ -1291,9 +1371,13 @@ export function App() {
                   key={`${result.kind}-${result.id}`}
                   onClick={() => {
                     if (result.kind === "lesson") openLesson(result.id);
+                    if (result.kind === "module") openCollection({ kind: "module", id: result.id });
+                    if (result.kind === "problem-set") openCollection({ kind: "problem-set", id: result.id });
                     if (result.kind === "problem") selectProblem(result.id);
                     if (result.kind === "assessment") openAssessment(result.id);
+                    if (result.kind === "scenario-set") openScenarioSet(result.id);
                     if (result.kind === "scenario") openScenario(result.id);
+                    setSidebarQuery("");
                   }}
                 >
                   <span>{titleCase(result.kind)}</span>
@@ -1301,6 +1385,8 @@ export function App() {
                 </button>
               ))}
             </div>
+          ) : sidebarQuery.trim() ? (
+            <p className="search-empty">No matches</p>
           ) : null}
 
           {assessmentSets.length ? (
@@ -1592,14 +1678,15 @@ export function App() {
                   <span>{selectedProblem.difficulty}</span>
                   {activeTimeboxMinutes ? (
                     <span
-                      className={`timebox-chip ${isTimeboxOver(activeTimeboxMinutes, activeProblemTimeMs) ? "is-over" : ""}`}
-                      title={`${formatDuration(activeProblemTimeMs)} active time used`}
+                      className={`timebox-chip ${isTimeboxOver(activeTimeboxMinutes, activeProblemTimeMs) ? "is-over" : ""} ${problemTimeboxPaused ? "is-paused" : ""}`}
+                      title={`${formatDuration(activeProblemTimeMs)} active time used${activeProblemPauseState ? `; paused at ${formatShortTime(activeProblemPauseState.pausedAt)}` : ""}`}
                     >
                       <ClockIcon /> {problemTimeboxStatusLabel(activeTimeboxMinutes, activeProblemTimeMs)}
+                      {problemTimeboxPaused ? <span className="timebox-paused-tag">paused</span> : null}
                     </span>
                   ) : null}
                   {!selectedPart ? <span>default</span> : null}
-                  {selectedProblem.concepts.slice(0, 3).map((concept) => <span key={concept}>{concept}</span>)}
+                  {(selectedProblem.concepts ?? []).slice(0, 3).map((concept) => <span key={concept}>{concept}</span>)}
                 </div>
               ) : null}
             </div>
@@ -1612,6 +1699,20 @@ export function App() {
                 onClick={() => openCollection(activeContainer.kind === "module" ? { kind: "module", id: activeContainer.id } : { kind: "problem-set", id: activeContainer.id })}
               >
                 {activeContainer.kind === "module" ? "Back to chapter" : `Back to ${activeContainer.title}`}
+              </button>
+            ) : null}
+            {activeTimeboxMinutes ? (
+              <button
+                type="button"
+                className={`secondary-button compact-button timebox-pause-button ${problemTimeboxPaused ? "active" : ""}`}
+                aria-pressed={problemTimeboxPaused}
+                title={problemTimeboxPaused ? "Resume active-time tracking" : "Pause active-time tracking"}
+                onClick={() => {
+                  void (problemTimeboxPaused ? resumeProblemTimebox() : pauseProblemTimebox());
+                }}
+              >
+                {problemTimeboxPaused ? <PlayIcon /> : <PauseIcon />}
+                {problemTimeboxPaused ? "Resume timer" : "Pause timer"}
               </button>
             ) : null}
             {previousProblemId ? (
@@ -1832,7 +1933,7 @@ export function App() {
               </button>
             ) : null}
 
-            <section className={`workspace editor-pane ${!selectedPack?.runner.installedByDefault ? "has-notice" : ""}`} ref={workspaceRef}>
+            <section className={`workspace editor-pane ${!selectedPack?.runner.installedByDefault ? "has-notice" : ""} ${outputDockCollapsed ? "output-collapsed" : ""}`} ref={workspaceRef}>
               <div className={`workspace-toolbar mobile-pane ${activeMobileTab === "code" || activeMobileTab === "results" ? "active" : ""}`}>
                 <div className="toolbar-status-group">
                   <span className={`run-status ${busy ? "loading" : result?.status ?? "idle"}`}>{runStatus}</span>
@@ -1937,6 +2038,7 @@ export function App() {
 
               <div className={`workspace-editor mobile-pane ${activeMobileTab === "code" ? "active" : ""}`}>
                 <CodeEditor
+                  key={`${selectedProblem.id}:${selectedPartId || ""}:${selectedLanguage}:${sourceKind}`}
                   value={code}
                   language={selectedLanguage}
                   problemId={selectedProblem.id}
@@ -1966,6 +2068,11 @@ export function App() {
                 lastRunIncludedHidden={lastRunIncludedHidden}
                 nextProblemId={nextProblemId}
                 dockHeight={dockHeight}
+                collapsed={outputDockCollapsed}
+                onCollapsedChange={(collapsed) => {
+                  setOutputDockCollapsed(collapsed);
+                  void savePreference("workspace:outputDockCollapsed", collapsed);
+                }}
                 onNoteChange={setNoteText}
                 onPanelChange={(panel) => {
                   setActiveOutputPanel(panel);
@@ -2074,6 +2181,12 @@ function SettingsDialog({
   onExportCoachLog: () => void;
   onReloadContent: () => void;
 }) {
+  const [view, setView] = useState<"main" | "coach-evals">("main");
+  const [evalReports, setEvalReports] = useState<CoachEvalSuiteReport[]>([]);
+  const [selectedEvalReport, setSelectedEvalReport] = useState("");
+  const [evalStatus, setEvalStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [evalError, setEvalError] = useState("");
+
   useEffect(() => {
     if (!open) return;
     function handleKeyDown(event: KeyboardEvent) {
@@ -2083,69 +2196,316 @@ function SettingsDialog({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose, open]);
 
+  useEffect(() => {
+    if (open) return;
+    setView("main");
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || view !== "coach-evals" || evalStatus !== "idle") return;
+    void loadCoachEvalReports();
+  }, [evalStatus, open, view]);
+
+  async function loadCoachEvalReports() {
+    setEvalStatus("loading");
+    setEvalError("");
+    try {
+      const value = await getJson<{ reports: CoachEvalSuiteReport[] }>("/coach/evals");
+      setEvalReports(value.reports);
+      setSelectedEvalReport((current) => current && value.reports.some((report) => report.generatedAt === current)
+        ? current
+        : value.reports[0]?.generatedAt ?? "");
+      setEvalStatus("ready");
+    } catch (error) {
+      setEvalError(error instanceof Error ? error.message : String(error));
+      setEvalStatus("error");
+    }
+  }
+
   if (!open) return null;
+
+  const selectedReport = evalReports.find((report) => report.generatedAt === selectedEvalReport) ?? evalReports[0];
 
   return (
     <div className="settings-overlay" role="presentation" onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose();
     }}>
-      <section className="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <section className={`settings-dialog ${view === "coach-evals" ? "settings-dialog-wide" : ""}`} role="dialog" aria-modal="true" aria-labelledby="settings-title">
         <header className="settings-dialog-header">
           <div>
-            <p className="eyebrow">Preferences</p>
-            <h1 id="settings-title">Settings</h1>
+            <p className="eyebrow">{view === "coach-evals" ? "Prompt tuning" : "Preferences"}</p>
+            <h1 id="settings-title">{view === "coach-evals" ? "Coach evals" : "Settings"}</h1>
           </div>
-          <button type="button" className="icon-button compact-button" onClick={onClose} aria-label="Close settings">
-            <CloseIcon />
-          </button>
+          <div className="settings-header-actions">
+            {view === "coach-evals" ? (
+              <button type="button" className="secondary-button compact-button" onClick={() => setView("main")}>
+                Back to settings
+              </button>
+            ) : null}
+            <button type="button" className="icon-button compact-button" onClick={onClose} aria-label="Close settings">
+              <CloseIcon />
+            </button>
+          </div>
         </header>
 
-        <div className="settings-dialog-grid">
-          <section className="settings-section settings-card" aria-label="Language">
-            <h2>Language</h2>
-            <p className="muted">Default language for problem workspaces and scratchpads.</p>
-            <select value={selectedLanguage} onChange={(event) => onLanguageChange(event.target.value as LanguageId)}>
-              {supportedLanguages.map((language) => (
-                <option key={language.id} value={language.id}>
-                  {language.label}{language.runner.installedByDefault ? "" : " (not installed)"}
-                </option>
-              ))}
-            </select>
-          </section>
+        {view === "coach-evals" ? (
+          <CoachEvalSettingsView
+            reports={evalReports}
+            selectedReport={selectedReport}
+            selectedReportId={selectedEvalReport}
+            status={evalStatus}
+            error={evalError}
+            onSelectReport={setSelectedEvalReport}
+            onRefresh={() => void loadCoachEvalReports()}
+          />
+        ) : (
+          <div className="settings-dialog-grid">
+            <section className="settings-section settings-card" aria-label="Language">
+              <h2>Language</h2>
+              <p className="muted">Default language for problem workspaces and scratchpads.</p>
+              <select value={selectedLanguage} onChange={(event) => onLanguageChange(event.target.value as LanguageId)}>
+                {supportedLanguages.map((language) => (
+                  <option key={language.id} value={language.id}>
+                    {language.label}{language.runner.installedByDefault ? "" : " (not installed)"}
+                  </option>
+                ))}
+              </select>
+            </section>
 
-          <section className="settings-section settings-card" aria-label="Data">
-            <h2>Data</h2>
-            <p className="storage-status">{storageStatus}</p>
-            <div className="settings-actions">
-              <button type="button" className="secondary-button compact-button" onClick={onImportProgress}>
-                <UploadIcon />
-                Import progress
-              </button>
-              <button type="button" className="secondary-button compact-button" onClick={onExportProgress}>
-                <DownloadIcon />
-                Export progress
-              </button>
-              <button type="button" className="secondary-button compact-button" onClick={onExportCoachLog}>
-                <FlaskIcon />
-                Export coach log
-              </button>
-              {contentStatus?.reloadAvailable ? (
-                <button type="button" className="secondary-button compact-button" onClick={onReloadContent}>
-                  <ResetIcon />
-                  Reload content
+            <section className="settings-section settings-card" aria-label="Data">
+              <h2>Data</h2>
+              <p className="storage-status">{storageStatus}</p>
+              <div className="settings-actions">
+                <button type="button" className="secondary-button compact-button" onClick={onImportProgress}>
+                  <UploadIcon />
+                  Import progress
                 </button>
+                <button type="button" className="secondary-button compact-button" onClick={onExportProgress}>
+                  <DownloadIcon />
+                  Export progress
+                </button>
+                <button type="button" className="secondary-button compact-button" onClick={onExportCoachLog}>
+                  <FlaskIcon />
+                  Export coach log
+                </button>
+                <button type="button" className="secondary-button compact-button" onClick={() => {
+                  setView("coach-evals");
+                  setEvalStatus("idle");
+                }}>
+                  <FlaskIcon />
+                  View coach evals
+                </button>
+                {contentStatus?.reloadAvailable ? (
+                  <button type="button" className="secondary-button compact-button" onClick={onReloadContent}>
+                    <ResetIcon />
+                    Reload content
+                  </button>
+                ) : null}
+              </div>
+              {contentStatus?.reloadAvailable ? (
+                <p className="muted">Content root: {contentStatus.contentRoot}</p>
               ) : null}
-            </div>
-            {contentStatus?.reloadAvailable ? (
-              <p className="muted">Content root: {contentStatus.contentRoot}</p>
-            ) : null}
-            {migrationError ? <p className="migration-error">{migrationError}</p> : null}
-            {userData ? <MigrationSummary userData={userData} /> : <p className="muted">No migrated user data loaded.</p>}
-          </section>
+              {migrationError ? <p className="migration-error">{migrationError}</p> : null}
+              {userData ? <MigrationSummary userData={userData} /> : <p className="muted">No migrated user data loaded.</p>}
+            </section>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function CoachEvalSettingsView({
+  reports,
+  selectedReport,
+  selectedReportId,
+  status,
+  error,
+  onSelectReport,
+  onRefresh
+}: {
+  reports: CoachEvalSuiteReport[];
+  selectedReport?: CoachEvalSuiteReport;
+  selectedReportId: string;
+  status: "idle" | "loading" | "ready" | "error";
+  error: string;
+  onSelectReport: (id: string) => void;
+  onRefresh: () => void;
+}) {
+  if (status === "loading") {
+    return (
+      <section className="settings-section settings-card coach-eval-empty">
+        <h2>Coach evals</h2>
+        <p className="muted">Loading eval reports...</p>
+      </section>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <section className="settings-section settings-card coach-eval-empty">
+        <h2>Coach evals</h2>
+        <p className="migration-error">{error}</p>
+        <button type="button" className="secondary-button compact-button" onClick={onRefresh}>
+          <ResetIcon />
+          Retry
+        </button>
+      </section>
+    );
+  }
+
+  if (!selectedReport) {
+    return (
+      <section className="settings-section settings-card coach-eval-empty">
+        <h2>Coach evals</h2>
+        <p className="muted">No coach eval reports have been generated yet.</p>
+        <pre><code>cd next{"\n"}bun run coach:eval</code></pre>
+        <button type="button" className="secondary-button compact-button" onClick={onRefresh}>
+          <ResetIcon />
+          Refresh
+        </button>
+      </section>
+    );
+  }
+
+  const summary = selectedReport.summary;
+  const casePassRate = percent(summary.passedCases, summary.totalCases);
+  const checkPassRate = percent(summary.passedChecks, summary.totalChecks);
+  const modes: Array<keyof typeof summary.byMode> = ["hint", "debug", "explain", "review"];
+  const failedCases = selectedReport.cases.filter((item) => !item.passed);
+
+  return (
+    <div className="coach-eval-view">
+      <section className="settings-section settings-card coach-eval-toolbar">
+        <div>
+          <h2>Reports</h2>
+          <p className="muted">Prompt tuning history generated by `bun run coach:eval`.</p>
+        </div>
+        <div className="coach-eval-controls">
+          <select value={selectedReportId} onChange={(event) => onSelectReport(event.target.value)}>
+            {reports.map((report) => (
+              <option key={report.generatedAt} value={report.generatedAt}>
+                {formatDateTime(report.generatedAt)} · {report.summary.passedCases}/{report.summary.totalCases} · {report.promptVersion}
+              </option>
+            ))}
+          </select>
+          <button type="button" className="secondary-button compact-button" onClick={onRefresh}>
+            <ResetIcon />
+            Refresh
+          </button>
+        </div>
+      </section>
+
+      <section className="coach-eval-summary-grid" aria-label="Eval summary">
+        <div className="settings-card coach-eval-stat">
+          <span>Cases</span>
+          <strong>{summary.passedCases}/{summary.totalCases}</strong>
+          <small>{casePassRate} passing</small>
+        </div>
+        <div className="settings-card coach-eval-stat">
+          <span>Checks</span>
+          <strong>{summary.passedChecks}/{summary.totalChecks}</strong>
+          <small>{checkPassRate} passing</small>
+        </div>
+        <div className="settings-card coach-eval-stat">
+          <span>Provider</span>
+          <strong>{selectedReport.provider}</strong>
+          <small>{selectedReport.model}</small>
+        </div>
+        <div className="settings-card coach-eval-stat">
+          <span>Prompt</span>
+          <strong>{selectedReport.promptVersion}</strong>
+          <small>{formatDateTime(selectedReport.generatedAt)}</small>
+        </div>
+      </section>
+
+      <section className="settings-section settings-card">
+        <h2>Mode breakdown</h2>
+        <div className="coach-eval-mode-grid">
+          {modes.map((mode) => {
+            const row = summary.byMode[mode];
+            return (
+              <div key={mode} className="coach-eval-mode-card">
+                <strong>{mode}</strong>
+                <span>{row.passedCases}/{row.totalCases} cases</span>
+                <small>{row.passedChecks}/{row.totalChecks} checks</small>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="settings-section settings-card">
+        <h2>{failedCases.length ? "Failed cases" : "Failed cases"}</h2>
+        {failedCases.length ? (
+          <div className="coach-eval-case-list">
+            {failedCases.map((item) => <CoachEvalCaseCard key={item.id} item={item} initiallyOpen />)}
+          </div>
+        ) : (
+          <p className="coach-eval-pass-note">No failed cases in this run.</p>
+        )}
+      </section>
+
+      <section className="settings-section settings-card">
+        <h2>All cases</h2>
+        <div className="coach-eval-case-list">
+          {selectedReport.cases.map((item) => <CoachEvalCaseCard key={item.id} item={item} />)}
         </div>
       </section>
     </div>
   );
+}
+
+function CoachEvalCaseCard({ item, initiallyOpen = false }: { item: CoachEvalSuiteReport["cases"][number]; initiallyOpen?: boolean }) {
+  const failedChecks = item.checks.filter((check) => !check.passed);
+  return (
+    <details className={`coach-eval-case ${item.passed ? "passed" : "failed"}`} open={initiallyOpen}>
+      <summary>
+        <span className="coach-eval-case-title">{item.mode} / {item.title}</span>
+        <span className={`coach-eval-status ${item.passed ? "passed" : "failed"}`}>{item.passed ? "pass" : "fail"}</span>
+      </summary>
+      <div className="coach-eval-case-body">
+        <dl className="coach-eval-context">
+          <div>
+            <dt>Reference</dt>
+            <dd>{item.promptContext.includesReference ? "included" : "omitted"}</dd>
+          </div>
+          <div>
+            <dt>Code</dt>
+            <dd>{item.promptContext.includesLearnerCode ? "included" : "omitted"}</dd>
+          </div>
+          <div>
+            <dt>Run state</dt>
+            <dd>{item.promptContext.includesRunState ? "included" : "omitted"}</dd>
+          </div>
+          <div>
+            <dt>Prompt size</dt>
+            <dd>{item.promptContext.charCount.toLocaleString()} chars</dd>
+          </div>
+        </dl>
+        <p className="coach-eval-question">{item.userQuestion}</p>
+        {failedChecks.length ? (
+          <ul className="coach-eval-failures">
+            {failedChecks.map((check) => (
+              <li key={check.id}>{check.label}{check.detail ? ` (${check.detail})` : ""}</li>
+            ))}
+          </ul>
+        ) : null}
+        <pre className="coach-eval-response"><code>{item.response}</code></pre>
+      </div>
+    </details>
+  );
+}
+
+function percent(value: number, total: number): string {
+  if (!total) return "0%";
+  return `${Math.round((value / total) * 100)}%`;
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
 }
 
 function DashboardScreen({
@@ -2153,9 +2513,6 @@ function DashboardScreen({
   userData,
   sidebarCollapsed,
   onShowSidebar,
-  onImportLegacyBackup,
-  onExportProgress,
-  onExportCoachLog,
   onOpenCollection,
   onOpenProblem,
   onOpenAssessment,
@@ -2169,148 +2526,224 @@ function DashboardScreen({
   onExportProgress: () => void;
   onExportCoachLog: () => void;
   onOpenCollection: (scope: Extract<SidebarScope, { kind: "module" | "problem-set" }>) => void;
-  onOpenProblem: (problemId: string) => void;
+  onOpenProblem: (problemId: string, origin?: ProblemOrigin) => void;
   onOpenAssessment: (problemId: string) => void;
   onOpenScenarioSet: (id: string) => void;
 }) {
-  const completed = userData?.progress.filter((record) => record.status === "complete").length ?? 0;
-  const legacyTrackableTotal = legacyContentStats.lessonCount + legacyContentStats.totalProblemCount + legacyContentStats.quizCount;
-  const completePercent = legacyTrackableTotal ? Math.round((completed / legacyTrackableTotal) * 100) : 0;
+  const runnableProblems = graph.problems.length;
+  const completed = completedCount(userData, graph.problems.map((problem) => problem.id));
+  const completePercent = runnableProblems ? Math.round((completed / runnableProblems) * 100) : 0;
   const dueReviews = dueReviewCount(userData);
   const recentProblem = recentAttemptProblem(graph, userData);
+  const recentProblems = recentAttemptProblems(graph, userData, 5);
+  const recommendedProblems = dashboardRecommendations(graph, userData, recentProblem?.problem.id);
   const assessmentProblems = assessmentProblemsForGraph(graph);
   const practiceSets = graph.problemSets.filter((set) => set.id !== "assessments" && !set.id.startsWith("lib-"));
   const scenarioSets = graph.scenarioSets;
   const modules = legacyOrderedModules(graph);
   return (
-    <section className="page stack">
+    <section className="page dashboard-page stack">
       <div className="page-header">
         {sidebarCollapsed ? <ShowSidebarButton onClick={onShowSidebar} /> : null}
         <div className="page-header-main">
-          <p className="eyebrow">Local course</p>
+          <p className="eyebrow">Local practice</p>
           <h1>DSA Coach</h1>
+          <p className="lead">Pick up where you left off, drill Ramp-style workflows, or move through the core course.</p>
         </div>
-        <DashboardActions
-          onImportProgress={onImportLegacyBackup}
-          onExportProgress={onExportProgress}
-          onExportCoachLog={onExportCoachLog}
-        />
       </div>
 
-      <div className="dashboard-summary">
-        <div className="dashboard-stat-strip" aria-label="Course overview">
-          <span><strong>{completePercent}%</strong> complete</span>
-          <span aria-hidden="true">·</span>
-          <span><strong>{legacyContentStats.totalProblemCount}</strong> runnable problems</span>
-          <span aria-hidden="true">·</span>
-          <span><strong>{dueReviews}</strong> reviews due</span>
+      <div className="dashboard-overview" aria-label="Course overview">
+        <div>
+          <strong>{completePercent}%</strong>
+          <span>complete</span>
         </div>
-        {recentProblem ? (
-          <button className="resume-card" type="button" onClick={() => onOpenProblem(recentProblem.problem.id)}>
+        <div>
+          <strong>{completed}/{runnableProblems}</strong>
+          <span>problems finished</span>
+        </div>
+        <div>
+          <strong>{dueReviews}</strong>
+          <span>reviews due</span>
+        </div>
+      </div>
+
+      <div className="dashboard-hero-grid">
+        <section className="dashboard-panel continue-panel" aria-labelledby="continue-heading">
+          <div className="section-heading compact-heading">
             <div>
-              <p className="eyebrow">Continue working</p>
-              <h2>{recentProblem.problem.title}</h2>
-              <p className="muted">Last run {recentProblem.passed ? "passed" : "did not pass"} · {recentProblem.problem.difficulty}</p>
+              <p className="eyebrow">Continue</p>
+              <h2 id="continue-heading">Current workspace</h2>
             </div>
-            <span className="resume-card-cta" aria-hidden="true">
-              <TerminalSquareIcon />
-              Resume <ArrowRightIcon />
-            </span>
-          </button>
-        ) : null}
+          </div>
+          {recentProblem ? (
+            <button className="resume-card refined-resume-card" type="button" onClick={() => onOpenProblem(recentProblem.problem.id, dashboardOriginForProblem(graph, recentProblem.problem.id))}>
+              <div>
+                <h3>{recentProblem.problem.title}</h3>
+                <p className="muted">Last run {recentProblem.passed ? "passed" : "did not pass"} · {recentProblem.problem.difficulty}</p>
+              </div>
+              <span className="resume-card-cta" aria-hidden="true">
+                Resume <ArrowRightIcon />
+              </span>
+            </button>
+          ) : (
+            <div className="dashboard-empty-state">
+              <h3>No active workspace yet</h3>
+              <p>Start with a recommended drill or open a module from the sidebar.</p>
+            </div>
+          )}
+        </section>
+
+        <section className="dashboard-panel" aria-labelledby="recommended-heading">
+          <div className="section-heading compact-heading">
+            <div>
+              <p className="eyebrow">Next up</p>
+              <h2 id="recommended-heading">Recommended drills</h2>
+            </div>
+          </div>
+          <div className="dashboard-row-list">
+            {recommendedProblems.map((problem) => (
+              <DashboardProblemRow key={problem.id} problem={problem} done={isProblemComplete(userData, problem.id)} onOpen={() => onOpenProblem(problem.id, dashboardOriginForProblem(graph, problem.id))} />
+            ))}
+          </div>
+        </section>
       </div>
 
-      {assessmentProblems.length ? (
-        <section className="assessment-promo" aria-labelledby="assessment-promo-heading">
-          <div className="section-heading">
-            <h2 id="assessment-promo-heading">CodeSignal ICF Practice</h2>
-            <p>Timed, four-level evolving problems — train the format, not just the algorithm</p>
+      {recentProblems.length ? (
+        <section className="dashboard-panel" aria-labelledby="recent-heading">
+          <div className="section-heading compact-heading">
+            <div>
+              <p className="eyebrow">Recent</p>
+              <h2 id="recent-heading">Recent work</h2>
+            </div>
           </div>
-          <div className="assessment-promo-cards">
-            {assessmentProblems.map((problem) => (
-              <button key={problem.id} className="assessment-promo-card" type="button" onClick={() => onOpenAssessment(problem.id)}>
+          <div className="recent-work-grid">
+            {recentProblems.map((entry) => (
+              <button key={entry.problem.id} className="recent-work-item" type="button" onClick={() => onOpenProblem(entry.problem.id, dashboardOriginForProblem(graph, entry.problem.id))}>
+                <span className={entry.passed ? "status-pill passed" : "status-pill failed"}>{entry.passed ? "passed" : "needs work"}</span>
+                <strong>{entry.problem.title}</strong>
+                <small>{entry.problem.difficulty} · {formatProblemHistoryTime(entry.at)}</small>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="dashboard-section" aria-labelledby="tracks-heading">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Tracks</p>
+            <h2 id="tracks-heading">Interview practice tracks</h2>
+          </div>
+          <p>Jump into the mode you want without scanning the whole catalog.</p>
+        </div>
+        <div className="dashboard-track-grid">
+          {assessmentProblems.length ? (
+            <article className="dashboard-track-card">
+              <p className="eyebrow"><ClockIcon /> CodeSignal ICF</p>
+              <h3>Timed progressive levels</h3>
+              <p>Four-level evolving problems for format practice.</p>
+              <div className="dashboard-track-list">
+                {assessmentProblems.slice(0, 4).map((problem) => (
+                  <button key={problem.id} type="button" onClick={() => onOpenAssessment(problem.id)}>
+                    <span>{problem.title}</span>
+                    <ArrowRightIcon />
+                  </button>
+                ))}
+              </div>
+            </article>
+          ) : null}
+
+          {scenarioSets.map((set) => (
+            <button key={set.id} className="dashboard-track-card" type="button" onClick={() => onOpenScenarioSet(set.id)}>
+              <p className="eyebrow">
+                <TerminalSquareIcon />
+                AI live coding
+              </p>
+              <h3>{set.title}</h3>
+              <p>{set.summary}</p>
+              <footer>
+                <span>{set.entries.length} scenarios</span>
+                <ArrowRightIcon />
+              </footer>
+            </button>
+          ))}
+
+          {practiceSets.slice(0, 4).map((set) => (
+            <button key={set.id} className="dashboard-track-card" type="button" onClick={() => onOpenCollection({ kind: "problem-set", id: set.id })}>
+              <p className="eyebrow"><SparkleIcon /> Problem set</p>
+              <h3>{set.title}</h3>
+              <p>{set.summary}</p>
+              <footer>
+                <span>{completedCount(userData, set.entries.map((entry) => entry.problem))}/{set.entries.length} done</span>
+                <ArrowRightIcon />
+              </footer>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="dashboard-section" aria-labelledby="modules-heading">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Course</p>
+            <h2 id="modules-heading">Core modules</h2>
+          </div>
+          <p>{legacyContentStats.chapterCount} chapters · {legacyContentStats.guidedProblemCount} guided problems · {legacyContentStats.quizCount} quizzes</p>
+        </div>
+        <div className="module-table">
+          {modules.map((module, index) => {
+            const meta = legacyModuleMeta(module.id);
+            const ids = module.sequence.filter((entry) => entry.kind === "problem").map((entry) => entry.id);
+            const done = completedCount(userData, ids);
+            const percent = ids.length ? Math.round((done / ids.length) * 100) : 0;
+            return (
+              <button className="module-table-row" key={module.id} type="button" onClick={() => onOpenCollection({ kind: "module", id: module.id })}>
+                <span className="chapter-number">{String(index + 1).padStart(2, "0")}</span>
+                <span>
+                  <strong>{meta?.title ?? module.title}</strong>
+                  <small>{meta?.summary ?? module.summary}</small>
+                </span>
+                <span className="module-progress">
+                  <span className="progress-line" aria-label={`${percent}% complete`}>
+                    <span style={{ width: `${percent}%` }} />
+                  </span>
+                  <small>{percent}%</small>
+                </span>
+                <ArrowRightIcon />
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <div className="dashboard-secondary-catalog" aria-label="Full catalog shortcuts">
+        {assessmentProblems.length ? (
+          <details>
+            <summary>All ICF practice problems</summary>
+            <div className="mini-card-grid">
+              {assessmentProblems.map((problem) => (
+                <button key={problem.id} type="button" onClick={() => onOpenAssessment(problem.id)}>
                 <span className="eyebrow">
                   <ClockIcon />
                   90 min · 4 levels
                 </span>
-                <h3>{problem.title}</h3>
-                <p className="muted inline-markdown"><InlineMarkdown text={assessmentBlurb(problem)} /></p>
-                <footer>
-                  <span>{isProblemComplete(userData, problem.id) ? "Completed" : "Not attempted"}</span>
-                  <ArrowRightIcon />
-                </footer>
+                  <strong>{problem.title}</strong>
+                  <small className="inline-markdown"><InlineMarkdown text={assessmentBlurb(problem)} /></small>
               </button>
             ))}
-          </div>
-        </section>
-      ) : null}
-
-      {scenarioSets.length ? (
-        <section className="assessment-promo scenario-promo" aria-labelledby="scenario-promo-heading">
-          <div className="section-heading">
-            <h2 id="scenario-promo-heading">AI Backend Interview Simulations</h2>
-            <p>Repo-based drills for the Ramp live coding round: read, plan, use AI, extend, test, and explain</p>
-          </div>
-          <div className="assessment-promo-cards">
-            {scenarioSets.map((set) => (
-              <button key={set.id} className="assessment-promo-card scenario-promo-card" type="button" onClick={() => onOpenScenarioSet(set.id)}>
-                <span className="eyebrow">
-                  <TerminalSquareIcon />
-                  Workspace drill
-                </span>
-                <h3>{set.title}</h3>
-                <p className="muted">{set.summary}</p>
-                <footer>
-                  <span>{set.entries.length} scenarios</span>
-                  <ArrowRightIcon />
-                </footer>
-              </button>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {practiceSets.length ? (
-        <section aria-labelledby="problem-sets-heading" className="problem-set-grid">
-          <div className="section-heading">
-            <h2 id="problem-sets-heading">Problem Sets</h2>
-            <p>Focused, interview-calibrated practice outside the core modules</p>
-          </div>
-          <div className="problem-set-cards">
-            {practiceSets.map((set) => (
-              <ProblemSetCard key={set.id} graph={graph} set={set} userData={userData} onOpen={() => onOpenCollection({ kind: "problem-set", id: set.id })} />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <div className="section-heading">
-        <h2>Modules</h2>
-        <p>{legacyContentStats.chapterCount} chapters, {legacyContentStats.guidedProblemCount} guided problems, {legacyContentStats.bonusProblemCount} bonus drills, {legacyContentStats.quizCount} quizzes</p>
-      </div>
-      <div className="chapter-grid">
-        {modules.map((module, index) => {
-          const meta = legacyModuleMeta(module.id);
-          const ids = module.sequence.filter((entry) => entry.kind === "problem").map((entry) => entry.id);
-          const done = completedCount(userData, ids);
-          const percent = ids.length ? Math.round((done / ids.length) * 100) : 0;
-          return (
-            <button className="chapter-card" key={module.id} type="button" onClick={() => onOpenCollection({ kind: "module", id: module.id })}>
-              <div>
-                <span className="chapter-number">{String(index + 1).padStart(2, "0")}</span>
-                <h3>{meta?.title ?? module.title}</h3>
-                <p>{meta?.summary ?? module.summary}</p>
-              </div>
-              <div className="progress-line" aria-label={`${percent}% complete`}>
-                <span style={{ width: `${percent}%` }} />
-              </div>
-              <footer>
-                <span>{percent}% complete</span>
-                <ArrowRightIcon />
-              </footer>
-            </button>
-          );
-        })}
+            </div>
+          </details>
+        ) : null}
+        {practiceSets.length > 4 ? (
+          <details>
+            <summary>More problem sets</summary>
+            <div className="mini-card-grid">
+              {practiceSets.slice(4).map((set) => (
+                <ProblemSetCard key={set.id} graph={graph} set={set} userData={userData} onOpen={() => onOpenCollection({ kind: "problem-set", id: set.id })} />
+              ))}
+            </div>
+          </details>
+        ) : null}
       </div>
     </section>
   );
@@ -2386,6 +2819,53 @@ function ProblemSetCard({
   );
 }
 
+function DashboardProblemRow({ problem, done, onOpen }: { problem: Problem; done: boolean; onOpen: () => void }) {
+  return (
+    <button className="dashboard-problem-row" type="button" onClick={onOpen}>
+      <span className={done ? "status-dot complete" : "status-dot"}>{done ? <CheckCircleIcon /> : null}</span>
+      <span>
+        <strong>{problem.title}</strong>
+        <small>{problem.difficulty} · {(problem.concepts ?? []).slice(0, 2).join(" / ")}</small>
+      </span>
+      <ArrowRightIcon />
+    </button>
+  );
+}
+
+function CollectionOverview({
+  completed,
+  total,
+  percent,
+  groups
+}: {
+  completed: number;
+  total: number;
+  percent: number;
+  groups: Array<{ id: string; label: string; done: number; total: number }>;
+}) {
+  return (
+    <section className="collection-overview" aria-label="Collection progress">
+      <div className="collection-progress-summary">
+        <strong>{completed}/{total}</strong>
+        <span>complete</span>
+        <div className="progress-line" aria-label={`${percent}% complete`}>
+          <span style={{ width: `${percent}%` }} />
+        </div>
+      </div>
+      {groups.length ? (
+        <div className="collection-section-chips" aria-label="Sections">
+          {groups.map((group) => (
+            <span key={group.id}>
+              <strong>{group.label}</strong>
+              <small>{group.done}/{group.total}</small>
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function CollectionScreen({
   collection,
   graph,
@@ -2410,6 +2890,12 @@ function CollectionScreen({
   const completed = completedCount(userData, collection.problems.map((problem) => problem.id));
   const percent = collection.problems.length ? Math.round((completed / collection.problems.length) * 100) : 0;
   const groups = collectionGroups(collection);
+  const groupSummaries = groups.map((group) => ({
+    id: group.id,
+    label: group.label,
+    done: completedCount(userData, group.problems.map((problem) => problem.id)),
+    total: group.problems.length
+  }));
   const [activeSetCategory, setActiveSetCategory] = useState("all");
   const isAssessmentSet = collection.kind === "problem-set" && collection.id === "assessments";
   const legacyChapter = collection.kind === "module" ? legacyCourse.chapters.find((chapter) => chapter.id === collection.id) : undefined;
@@ -2423,6 +2909,20 @@ function CollectionScreen({
   const sideFooter = collection.id === "interview-prep"
     ? "Each problem keeps a separate workspace, notes, and history just like the modules. Run visible tests as you iterate, then submit hidden tests to verify the edge cases."
     : "Each problem keeps a separate workspace, notes, run history, and language-specific starter code.";
+  const guideAside = (
+    <aside className="bonus-panel set-aside">
+      <h2><SparkleIcon />{collection.sideTitle}</h2>
+      <p>{sideBody}</p>
+      {collection.sideBullets?.length ? (
+        <ul className="guide-list">
+          {collection.sideBullets.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : null}
+      <p className="muted">{sideFooter}</p>
+    </aside>
+  );
   useEffect(() => {
     setActiveSetCategory("all");
   }, [collection.id]);
@@ -2449,59 +2949,69 @@ function CollectionScreen({
           </div>
         </div>
 
-        {lessons.length ? (
-          <section className="chapter-group" aria-label="Lessons">
-            <div className="section-heading">
-              <h2>Lessons</h2>
-            </div>
-            <div className="chapter-rows">
-              {lessons.map((lesson) => (
-                <LessonRow
-                  key={lesson.id}
-                  lesson={lesson}
-                  done={isContentComplete(userData, "lesson", lesson.id)}
-                  onOpen={() => onOpenLesson(lesson.id)}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
+        <CollectionOverview completed={completed} total={collection.problems.length} percent={percent} groups={groupSummaries} />
 
-        {groups.map((group) => {
-          const done = completedCount(userData, group.problems.map((problem) => problem.id));
-          return (
-            <section className="chapter-group" aria-label={group.label} key={group.id}>
-              <div className="section-heading">
-                <h2>{group.label}</h2>
-                <p>{group.id === "guided" ? `${group.problems.length} core problems that build the module` : `${group.problems.length} extra problems — same patterns, more reps`}</p>
-              </div>
-              <div className="chapter-rows">
-                {group.problems.map((problem) => (
-                  <ProblemRow key={problem.id} problem={problem} done={isProblemComplete(userData, problem.id)} variant="module" onOpen={() => onOpenProblem(problem.id)} />
-                ))}
-              </div>
-              {done ? <p className="muted">{done}/{group.problems.length} complete</p> : null}
-            </section>
-          );
-        })}
+        <div className="content-columns">
+          <div className="stack">
+            {lessons.length ? (
+              <section className="chapter-group" aria-label="Lessons">
+                <div className="section-heading">
+                  <h2>Lessons</h2>
+                </div>
+                <div className="chapter-rows">
+                  {lessons.map((lesson) => (
+                    <LessonRow
+                      key={lesson.id}
+                      lesson={lesson}
+                      done={isContentComplete(userData, "lesson", lesson.id)}
+                      onOpen={() => onOpenLesson(lesson.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
-        {quizzes.length ? (
-          <section className="chapter-group" aria-label="Quiz">
-            <div className="section-heading">
-              <h2>Quiz</h2>
-            </div>
-            <div className="chapter-rows">
-              {quizzes.map((quiz) => (
-                <QuizRow
-                  key={quiz.id}
-                  quiz={quiz}
-                  done={isContentComplete(userData, "quiz", quiz.id)}
-                  onOpen={() => onOpenQuiz(quiz.id)}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
+            {groups.map((group) => {
+              const done = completedCount(userData, group.problems.map((problem) => problem.id));
+              const defaultBlurb = group.id === "guided"
+                ? `${group.problems.length} core problems that build the module`
+                : `${group.problems.length} extra problems — same patterns, more reps`;
+              return (
+                <section className="chapter-group" aria-label={group.label} key={group.id}>
+                  <div className="section-heading">
+                    <h2>{group.label}</h2>
+                    <p>{group.blurb ? `${group.blurb} · ${done}/${group.problems.length}` : `${defaultBlurb} · ${done}/${group.problems.length}`}</p>
+                  </div>
+                  <div className="chapter-rows">
+                    {group.problems.map((problem) => (
+                      <ProblemRow key={problem.id} problem={problem} done={isProblemComplete(userData, problem.id)} variant="module" onOpen={() => onOpenProblem(problem.id)} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+
+            {quizzes.length ? (
+              <section className="chapter-group" aria-label="Quiz">
+                <div className="section-heading">
+                  <h2>Quiz</h2>
+                </div>
+                <div className="chapter-rows">
+                  {quizzes.map((quiz) => (
+                    <QuizRow
+                      key={quiz.id}
+                      quiz={quiz}
+                      done={isContentComplete(userData, "quiz", quiz.id)}
+                      onOpen={() => onOpenQuiz(quiz.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </div>
+
+          {guideAside}
+        </div>
       </section>
     );
   }
@@ -2515,6 +3025,8 @@ function CollectionScreen({
           <p className="lead">{collection.summary}</p>
         </div>
       </div>
+
+      <CollectionOverview completed={completed} total={collection.problems.length} percent={percent} groups={groupSummaries} />
 
       <div className="content-columns">
         <div className="stack">
@@ -2582,11 +3094,7 @@ function CollectionScreen({
           )}
         </div>
 
-        <aside className="bonus-panel set-aside">
-          <h2><SparkleIcon />{collection.sideTitle}</h2>
-          <p>{sideBody}</p>
-          <p className="muted">{sideFooter}</p>
-        </aside>
+        {guideAside}
       </div>
     </section>
   );
@@ -3035,6 +3543,7 @@ function AssessmentFlowScreen({
   async function runAssessment(includeHidden: boolean) {
     if (!session || busy || isPaused || !pack?.runner.installedByDefault) return;
     setBusy(true);
+    setResult(null);
     setLastRunIncludedHidden(includeHidden);
     setActivePanel("results");
     const runStartedAt = new Date().toISOString();
@@ -5328,6 +5837,7 @@ function OutputDock({
   lastRunIncludedHidden,
   nextProblemId,
   dockHeight,
+  collapsed,
   noteText,
   recentRuns,
   activeProblemTimeMs,
@@ -5341,6 +5851,7 @@ function OutputDock({
   showHiddenDiagnostics,
   onNoteChange,
   onPanelChange,
+  onCollapsedChange,
   onScratchpadChange,
   onToggleHiddenDiagnostics,
   onDockPointerDown,
@@ -5357,6 +5868,7 @@ function OutputDock({
   lastRunIncludedHidden: boolean;
   nextProblemId: string | undefined;
   dockHeight: number;
+  collapsed: boolean;
   noteText: string;
   recentRuns: Array<{ result: RunResult; at: string; includeHidden: boolean }>;
   activeProblemTimeMs: number;
@@ -5372,6 +5884,7 @@ function OutputDock({
   onPanelChange: (panel: OutputPanel) => void;
   onScratchpadChange: (value: string) => void;
   onToggleHiddenDiagnostics: (value: boolean) => void;
+  onCollapsedChange: (collapsed: boolean) => void;
   onDockPointerDown: (event: PointerEvent<HTMLDivElement>) => void;
   onDockPointerMove: (event: PointerEvent<HTMLDivElement>) => void;
   onDockPointerUp: (event: PointerEvent<HTMLDivElement>) => void;
@@ -5383,25 +5896,55 @@ function OutputDock({
   const hasStdout = Boolean(result?.stdout.trim());
   const hasErrors = Boolean(result?.message || result?.stderr || result?.diagnostics?.length || result?.tests.some((test) => test.error || test.diagnostics?.length));
   const hasScratchpadOutput = Boolean(scratchpadResult?.stdout.trim() || scratchpadResult?.stderr.trim() || scratchpadResult?.message || scratchpadResult?.diagnostics?.length);
+
+  if (collapsed) {
+    return (
+      <section className={`workspace-bottom output-dock-collapsed mobile-pane ${mobileVisible ? "active" : ""}`} aria-label="Workspace output panels">
+        <button
+          className="output-dock-restore-button"
+          type="button"
+          aria-label="Open output pane"
+          title="Open output pane"
+          onClick={() => onCollapsedChange(false)}
+        >
+          <PanelOpenIcon />
+          <span>Output</span>
+          {hasErrors ? <span className="tab-dot error" /> : null}
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section className={`workspace-bottom mobile-pane ${mobileVisible ? "active" : ""}`} aria-label="Workspace output panels">
-      <div className="desktop-workspace-tabs" role="tablist" aria-label="Workspace output panels">
-        {outputPanels.map((panel) => (
-          <button
-            key={panel}
-            type="button"
-            role="tab"
-            aria-selected={activePanel === panel}
-            className={activePanel === panel ? "active" : ""}
-            onClick={() => onPanelChange(panel)}
-          >
-            {panel}
-            {panel === "stdout" && hasStdout ? <span className="tab-dot" /> : null}
-            {panel === "errors" && hasErrors ? <span className="tab-dot error" /> : null}
-            {panel === "scratchpad" && hasScratchpadOutput ? <span className={scratchpadResult?.status === "passed" ? "tab-dot" : "tab-dot error"} /> : null}
-            {panel === "history" && recentRuns.length ? <span className="tab-dot" /> : null}
-          </button>
-        ))}
+      <div className="desktop-workspace-tabs" aria-label="Workspace output panels">
+        <div className="workspace-tab-list" role="tablist" aria-label="Workspace output panels">
+          {outputPanels.map((panel) => (
+            <button
+              key={panel}
+              type="button"
+              role="tab"
+              aria-selected={activePanel === panel}
+              className={activePanel === panel ? "active" : ""}
+              onClick={() => onPanelChange(panel)}
+            >
+              {panel}
+              {panel === "stdout" && hasStdout ? <span className="tab-dot" /> : null}
+              {panel === "errors" && hasErrors ? <span className="tab-dot error" /> : null}
+              {panel === "scratchpad" && hasScratchpadOutput ? <span className={scratchpadResult?.status === "passed" ? "tab-dot" : "tab-dot error"} /> : null}
+              {panel === "history" && recentRuns.length ? <span className="tab-dot" /> : null}
+            </button>
+          ))}
+        </div>
+        <button
+          className="dock-collapse-button"
+          type="button"
+          aria-label="Collapse output pane"
+          title="Collapse output pane"
+          onClick={() => onCollapsedChange(true)}
+        >
+          <PanelCloseIcon />
+        </button>
       </div>
       <div
         className="dock-resize-handle"
@@ -5897,33 +6440,57 @@ function searchSidebar(graph: ContentGraph, query: string): SidebarSearchHit[] {
   const normalized = query.trim().toLowerCase();
   if (!normalized) return [];
   const assessmentIds = new Set(assessmentProblemsForGraph(graph).map((problem) => problem.id));
-  const graphProblemIds = new Set(graph.problems.map((problem) => problem.id));
   const lessons = legacyCourse.lessons
-    .filter((lesson) => `${lesson.title} ${lesson.concepts.join(" ")}`.toLowerCase().includes(normalized))
+    .filter((lesson) => searchMatches(normalized, lesson.title, lesson.concepts.join(" ")))
     .slice(0, 4)
     .map((lesson) => ({ kind: "lesson" as const, id: lesson.id, title: lesson.title }));
-  const legacyProblems = [
-    ...legacyCourse.problems,
-    ...legacyCourse.problemSets.flatMap((set) => set.problems)
-  ];
-  const seenProblems = new Set<string>();
-  const problems = legacyProblems
-    .filter((problem) => {
-      if (seenProblems.has(problem.id) || !graphProblemIds.has(problem.id) || assessmentIds.has(problem.id)) return false;
-      seenProblems.add(problem.id);
-      return `${problem.title} ${problem.patterns.join(" ")}`.toLowerCase().includes(normalized);
-    })
-    .slice(0, 6)
+
+  const modules = graph.modules
+    .filter((module) => searchMatches(normalized, module.title, module.summary, searchListText(module.concepts)))
+    .slice(0, 4)
+    .map((module) => ({ kind: "module" as const, id: module.id, title: module.title }));
+
+  const problemSets = graph.problemSets
+    .filter((set) => searchMatches(normalized, set.title, set.summary, set.id))
+    .slice(0, 4)
+    .map((set) => ({ kind: "problem-set" as const, id: set.id, title: set.title }));
+
+  const problems = graph.problems
+    .filter((problem) => !assessmentIds.has(problem.id) && searchMatches(
+      normalized,
+      problem.title,
+      problem.summary,
+      problem.difficulty,
+      searchListText(problem.concepts),
+      searchListText(problem.tags),
+      problem.id
+    ))
+    .slice(0, 8)
     .map((problem) => ({ kind: "problem" as const, id: problem.id, title: problem.title }));
+
   const assessments = assessmentProblemsForGraph(graph)
-    .filter((problem) => `${problem.title} ${problem.concepts.join(" ")} ${assessmentArchetype(problem)}`.toLowerCase().includes(normalized))
+    .filter((problem) => searchMatches(normalized, problem.title, problem.summary, searchListText(problem.concepts), assessmentArchetype(problem)))
     .slice(0, 3)
     .map((problem) => ({ kind: "assessment" as const, id: problem.id, title: problem.title }));
+
+  const scenarioSets = graph.scenarioSets
+    .filter((set) => searchMatches(normalized, set.title, set.summary, set.id))
+    .slice(0, 3)
+    .map((set) => ({ kind: "scenario-set" as const, id: set.id, title: set.title }));
+
   const scenarios = graph.scenarios
-    .filter((scenario) => `${scenario.title} ${scenario.summary} ${scenario.concepts.join(" ")}`.toLowerCase().includes(normalized))
+    .filter((scenario) => searchMatches(normalized, scenario.title, scenario.summary, scenario.difficulty, searchListText(scenario.concepts), scenario.id))
     .slice(0, 4)
     .map((scenario) => ({ kind: "scenario" as const, id: scenario.id, title: scenario.title }));
-  return [...lessons, ...problems, ...assessments, ...scenarios];
+  return [...modules, ...problemSets, ...scenarioSets, ...lessons, ...problems, ...assessments, ...scenarios].slice(0, 16);
+}
+
+function searchMatches(query: string, ...values: Array<string | undefined>): boolean {
+  return values.some((value) => value?.toLowerCase().includes(query));
+}
+
+function searchListText(value: string[] | undefined): string {
+  return Array.isArray(value) ? value.join(" ") : "";
 }
 
 function containerForProblemView(graph: ContentGraph, problemId: string, view: AppView): ContentContainer | undefined {
@@ -5967,15 +6534,27 @@ function collectionForScope(graph: ContentGraph, scope: Extract<SidebarScope, { 
     if (!module) return undefined;
     const meta = legacyModuleMeta(module.id);
     const problemIds = module.sequence.filter((entry) => entry.kind === "problem").map((entry) => entry.id);
+    const problems = problemIds.map((id) => graph.problems.find((problem) => problem.id === id)).filter((problem): problem is Problem => Boolean(problem));
+    const problemById = new Map(problems.map((problem) => [problem.id, problem]));
+    const sections = module.sections
+      ?.map((section) => ({
+        id: section.id,
+        label: section.label,
+        blurb: section.blurb,
+        problems: section.problems.map((id) => problemById.get(id)).filter((problem): problem is Problem => Boolean(problem))
+      }))
+      .filter((section) => section.problems.length);
     return {
       kind: "module",
       id: module.id,
       title: meta?.title ?? module.title,
       summary: meta?.summary ?? module.summary,
       eyebrow: `Module ${String(legacyOrderedModules(graph).findIndex((candidate) => candidate.id === module.id) + 1).padStart(2, "0")}`,
-      sideTitle: "How to use this module",
-      sideBody: "Work the guided problems in order first, then use the bonus drills for additional repetitions on the same concepts.",
-      problems: problemIds.map((id) => graph.problems.find((problem) => problem.id === id)).filter((problem): problem is Problem => Boolean(problem))
+      sideTitle: module.guideTitle ?? "How to use this module",
+      sideBody: module.guideBody ?? "Work the guided problems in order first, then use the bonus drills for additional repetitions on the same concepts.",
+      sideBullets: module.guideBullets,
+      problems,
+      sections
     };
   }
   const set = graph.problemSets.find((candidate) => candidate.id === scope.id);
@@ -6000,14 +6579,15 @@ function collectionForScope(graph: ContentGraph, scope: Extract<SidebarScope, { 
   };
 }
 
-function collectionGroups(collection: CollectionViewModel): Array<{ id: string; label: string; blurb?: string; problems: Problem[] }> {
+function collectionGroups(collection: CollectionViewModel): CollectionGroup[] {
   if (collection.kind === "module") {
+    if (collection.sections?.length) return collection.sections;
     const guided = collection.problems.filter((problem) => !problem.id.includes("-bonus-"));
     const bonus = collection.problems.filter((problem) => problem.id.includes("-bonus-"));
     return [
       guided.length ? { id: "guided", label: "Guided Problems", problems: guided } : undefined,
       bonus.length ? { id: "bonus", label: "Bonus Problems", problems: bonus } : undefined
-    ].filter((group): group is { id: string; label: string; problems: Problem[] } => Boolean(group));
+    ].filter((group): group is CollectionGroup => Boolean(group));
   }
   const entries = collection.entries ?? [];
   const categoryOrder = Array.from(new Set(entries.map((entry) => entry.category ?? "problems")));
@@ -6484,6 +7064,16 @@ function problemWorkspaceId(problemId: string, partId?: string): string {
   return partId ? `${problemId}:${partId}` : problemId;
 }
 
+function problemPausePreferenceKey(problemId: string): string {
+  return `problem:timebox-paused:${problemId}`;
+}
+
+function problemPauseStateForProblem(userData: NextUserData | null, problemId: string): ProblemPauseState | undefined {
+  const value = preferenceValue<unknown>(userData, problemPausePreferenceKey(problemId), undefined);
+  if (!value || typeof value !== "object" || !("pausedAt" in value) || typeof value.pausedAt !== "string") return undefined;
+  return { pausedAt: value.pausedAt };
+}
+
 function activeTimeForProblem(userData: NextUserData | null, problemId: string): number {
   return (userData?.activity ?? [])
     .filter((record) => record.workspaceId === problemId || record.workspaceId.startsWith(`${problemId}:`))
@@ -6598,6 +7188,13 @@ function upsertPreference(userData: NextUserData, key: string, value: unknown): 
   };
 }
 
+function removePreference(userData: NextUserData, key: string): NextUserData {
+  return {
+    ...userData,
+    preferences: userData.preferences.filter((record) => record.key !== key)
+  };
+}
+
 function addActivityTime(userData: NextUserData, workspaceId: string, deltaMs: number): NextUserData {
   const activeMs = Math.max(0, Math.round(deltaMs));
   if (!workspaceId || activeMs < 1000) return userData;
@@ -6680,6 +7277,23 @@ function numberPreference(userData: NextUserData | null, key: string, fallback: 
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+function clampEditorFontSize(value: number): number {
+  return Math.min(maxEditorFontSize, Math.max(minEditorFontSize, Math.round(value)));
+}
+
+function isEditorFontSizeShortcut(event: KeyboardEvent): boolean {
+  if (!(event.metaKey || event.ctrlKey) || event.altKey) return false;
+  return editorFontSizeShortcutAction(event) !== undefined;
+}
+
+function editorFontSizeShortcutAction(event: KeyboardEvent): "increase" | "decrease" | "reset" | undefined {
+  const key = event.key;
+  if (key === "+" || key === "=") return "increase";
+  if (key === "-" || key === "_") return "decrease";
+  if (key === "0") return "reset";
+  return undefined;
+}
+
 function isMobileWorkspaceTab(value: unknown): value is MobileWorkspaceTab {
   return typeof value === "string" && mobileWorkspaceTabs.includes(value as MobileWorkspaceTab);
 }
@@ -6718,6 +7332,60 @@ function recentAttemptProblem(graph: ContentGraph, userData: NextUserData | null
   if (!attempt) return undefined;
   const problem = graph.problems.find((candidate) => attempt.workspaceId === candidate.id || attempt.workspaceId.startsWith(`${candidate.id}:`));
   return problem ? { problem, passed: attempt.passed } : undefined;
+}
+
+function recentAttemptProblems(graph: ContentGraph, userData: NextUserData | null, limit: number): Array<{ problem: Problem; passed: boolean; at: string }> {
+  if (!userData?.attempts.length) return [];
+  const byProblem = new Map<string, { problem: Problem; passed: boolean; at: string }>();
+  for (const attempt of [...userData.attempts].sort((a, b) => b.createdAt.localeCompare(a.createdAt))) {
+    const problem = graph.problems.find((candidate) => attempt.workspaceId === candidate.id || attempt.workspaceId.startsWith(`${candidate.id}:`));
+    if (!problem || byProblem.has(problem.id)) continue;
+    byProblem.set(problem.id, { problem, passed: attempt.passed, at: attempt.createdAt });
+    if (byProblem.size >= limit) break;
+  }
+  return Array.from(byProblem.values());
+}
+
+function dashboardRecommendations(graph: ContentGraph, userData: NextUserData | null, currentProblemId?: string): Problem[] {
+  const recommended: Problem[] = [];
+  const seen = new Set<string>();
+  const addProblem = (problem: Problem | undefined) => {
+    if (!problem || seen.has(problem.id) || problem.id === currentProblemId) return;
+    seen.add(problem.id);
+    recommended.push(problem);
+  };
+  const prioritySets = ["ramp-travel-api", "ramp-prep", "interview-prep"];
+  for (const setId of prioritySets) {
+    const set = graph.problemSets.find((candidate) => candidate.id === setId);
+    for (const entry of set?.entries ?? []) {
+      const problem = graph.problems.find((candidate) => candidate.id === entry.problem);
+      if (!isProblemComplete(userData, entry.problem)) addProblem(problem);
+      if (recommended.length >= 5) return recommended;
+    }
+  }
+  for (const module of legacyOrderedModules(graph)) {
+    for (const entry of module.sequence) {
+      if (entry.kind !== "problem" || isProblemComplete(userData, entry.id)) continue;
+      addProblem(graph.problems.find((problem) => problem.id === entry.id));
+      if (recommended.length >= 5) return recommended;
+    }
+  }
+  for (const problem of graph.problems) {
+    addProblem(problem);
+    if (recommended.length >= 5) break;
+  }
+  return recommended;
+}
+
+function dashboardOriginForProblem(graph: ContentGraph, problemId: string): ProblemOrigin | undefined {
+  const prioritySet = ["ramp-travel-api", "ramp-prep", "interview-prep"]
+    .map((id) => graph.problemSets.find((set) => set.id === id))
+    .find((set) => set?.entries.some((entry) => entry.problem === problemId));
+  if (prioritySet) return { kind: "problem-set", id: prioritySet.id };
+  const problemSet = graph.problemSets.find((set) => set.id !== "assessments" && set.entries.some((entry) => entry.problem === problemId));
+  if (problemSet) return { kind: "problem-set", id: problemSet.id };
+  const module = graph.modules.find((candidate) => candidate.sequence.some((entry) => entry.kind === "problem" && entry.id === problemId));
+  return module ? { kind: "module", id: module.id } : undefined;
 }
 
 function titleCase(value: string): string {
@@ -6820,7 +7488,7 @@ function scopedProblems(graph: ContentGraph, scope: SidebarScope, query: string)
   return graph.problems.filter((problem) => {
     if (ids && !ids.has(problem.id)) return false;
     if (!normalized) return true;
-    return `${problem.title} ${problem.difficulty} ${problem.concepts.join(" ")}`.toLowerCase().includes(normalized);
+    return `${problem.title} ${problem.difficulty} ${searchListText(problem.concepts)}`.toLowerCase().includes(normalized);
   });
 }
 

@@ -86,6 +86,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         viewMenu.addItem(commandItem(title: "Toggle Coach", action: #selector(toggleCoach(_:)), keyEquivalent: "c", modifiers: [.command, .option]))
         viewMenu.addItem(commandItem(title: "Toggle Focus Mode", action: #selector(toggleFocusMode(_:)), keyEquivalent: "f", modifiers: [.command, .option]))
         viewMenu.addItem(NSMenuItem.separator())
+        viewMenu.addItem(commandItem(title: "Increase Editor Font Size", action: #selector(increaseEditorFontSize(_:)), keyEquivalent: "+"))
+        viewMenu.addItem(commandItem(title: "Decrease Editor Font Size", action: #selector(decreaseEditorFontSize(_:)), keyEquivalent: "-"))
+        viewMenu.addItem(commandItem(title: "Reset Editor Font Size", action: #selector(resetEditorFontSize(_:)), keyEquivalent: "0"))
+        viewMenu.addItem(NSMenuItem.separator())
         viewMenu.addItem(responderItem(title: "Enter Full Screen", action: #selector(NSWindow.toggleFullScreen(_:)), keyEquivalent: "f", modifiers: [.command, .control]))
 
         let navigateMenu = addMenu(title: "Navigate", to: mainMenu)
@@ -176,6 +180,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func reloadContent(_ sender: Any?) {
         sendWebCommand("reload-content")
+    }
+
+    @objc private func increaseEditorFontSize(_ sender: Any?) {
+        sendWebCommand("font-size-increase")
+    }
+
+    @objc private func decreaseEditorFontSize(_ sender: Any?) {
+        sendWebCommand("font-size-decrease")
+    }
+
+    @objc private func resetEditorFontSize(_ sender: Any?) {
+        sendWebCommand("font-size-reset")
     }
 
     @objc private func goBack(_ sender: Any?) {

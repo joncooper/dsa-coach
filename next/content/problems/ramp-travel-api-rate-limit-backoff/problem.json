@@ -1,0 +1,232 @@
+{
+  "id": "ramp-travel-api-rate-limit-backoff",
+  "kind": "problem",
+  "title": "Travel API Rate Limit Backoff",
+  "difficulty": "medium",
+  "concepts": [
+    "rate limits",
+    "retry-after",
+    "cursor pagination"
+  ],
+  "timeboxMinutes": 25,
+  "prompt": "The trips endpoint is paginated and may rate-limit you.\n\nWrite `fetch_all_trips(base_url, token)`. Return every trip dict from `GET {base_url}/v1/trips`, in API order. If a request returns `429`, read the `Retry-After` header, wait that many seconds, and retry the same request.\n\nReturn contract:\n\n- Return `list[dict]`.\n- Each dict should be one trip object from the API, unchanged.\n- Do not return a response object, status code, or nested `{\"data\": ...}` wrapper.\n- Return `[]` if there are no trips.\n\nTrip shape:\n\n```python\n{\"id\": \"trip_001\", \"employee_id\": \"emp_001\", \"destination\": \"SFO\", \"start_date\": \"2026-04-01\", \"end_date\": \"2026-04-03\", \"total_cost_cents\": 120000}\n```\n\nEndpoint details:\n\n- `GET {base_url}/v1/trips` requires the bearer auth header.\n- Success response: `{\"data\": [...], \"next_cursor\": \"...\" | None}`.\n- Rate-limit response: `status_code == 429`, `headers[\"Retry-After\"]` is a string number of seconds.\n\nThe test harness passes `token` into your function. Do not define or hardcode it; use the `token` parameter when building the `Authorization` header.\n\nInvariants and corner cases:\n\n- A `429` has no page data. Do not advance the cursor or append anything after a `429`.\n- Retry the same URL/params after a `429`.\n- Do not sleep between every successful request; only back off when rate-limited.\n- Preserve order and avoid duplicates.\n\nShared fake API note: this uses the in-process `requests` mock described in the Ramp Travel module guide; there is no real network.\n\nValidation focus: auth, pagination, first-page and later-page 429s, and retrying the same cursor.",
+  "signature": {
+    "name": "fetchAllTrips",
+    "inputs": [
+      {
+        "name": "base_url",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "token",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "any"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "visible: first page rate-limited once",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "pageCaps": {
+          "trips": 2
+        },
+        "tripRateLimitOnce": [
+          ""
+        ],
+        "trips": [
+          {
+            "id": "trip_001",
+            "employee_id": "emp_001",
+            "destination": "SFO",
+            "start_date": "2026-04-01",
+            "end_date": "2026-04-03",
+            "total_cost_cents": 120000
+          },
+          {
+            "id": "trip_002",
+            "employee_id": "emp_002",
+            "destination": "NYC",
+            "start_date": "2026-04-04",
+            "end_date": "2026-04-05",
+            "total_cost_cents": 90000
+          },
+          {
+            "id": "trip_003",
+            "employee_id": "emp_001",
+            "destination": "SEA",
+            "start_date": "2026-04-08",
+            "end_date": "2026-04-09",
+            "total_cost_cents": 45000
+          }
+        ]
+      },
+      "expected": [
+        {
+          "id": "trip_001",
+          "employee_id": "emp_001",
+          "destination": "SFO",
+          "start_date": "2026-04-01",
+          "end_date": "2026-04-03",
+          "total_cost_cents": 120000
+        },
+        {
+          "id": "trip_002",
+          "employee_id": "emp_002",
+          "destination": "NYC",
+          "start_date": "2026-04-04",
+          "end_date": "2026-04-05",
+          "total_cost_cents": 90000
+        },
+        {
+          "id": "trip_003",
+          "employee_id": "emp_001",
+          "destination": "SEA",
+          "start_date": "2026-04-08",
+          "end_date": "2026-04-09",
+          "total_cost_cents": 45000
+        }
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "hidden: later pages rate-limited once",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "pageCaps": {
+          "trips": 2
+        },
+        "tripRateLimitOnce": [
+          "2",
+          "4"
+        ],
+        "trips": [
+          {
+            "id": "trip_001",
+            "employee_id": "emp_001",
+            "destination": "SFO",
+            "start_date": "2026-04-01",
+            "end_date": "2026-04-03",
+            "total_cost_cents": 120000
+          },
+          {
+            "id": "trip_002",
+            "employee_id": "emp_002",
+            "destination": "NYC",
+            "start_date": "2026-04-04",
+            "end_date": "2026-04-05",
+            "total_cost_cents": 90000
+          },
+          {
+            "id": "trip_003",
+            "employee_id": "emp_001",
+            "destination": "SEA",
+            "start_date": "2026-04-08",
+            "end_date": "2026-04-09",
+            "total_cost_cents": 45000
+          },
+          {
+            "id": "trip_004",
+            "employee_id": "emp_003",
+            "destination": "ORD",
+            "start_date": "2026-04-10",
+            "end_date": "2026-04-12",
+            "total_cost_cents": 170000
+          },
+          {
+            "id": "trip_005",
+            "employee_id": "emp_004",
+            "destination": "LHR",
+            "start_date": "2026-04-15",
+            "end_date": "2026-04-20",
+            "total_cost_cents": 400000
+          }
+        ]
+      },
+      "expected": [
+        {
+          "id": "trip_001",
+          "employee_id": "emp_001",
+          "destination": "SFO",
+          "start_date": "2026-04-01",
+          "end_date": "2026-04-03",
+          "total_cost_cents": 120000
+        },
+        {
+          "id": "trip_002",
+          "employee_id": "emp_002",
+          "destination": "NYC",
+          "start_date": "2026-04-04",
+          "end_date": "2026-04-05",
+          "total_cost_cents": 90000
+        },
+        {
+          "id": "trip_003",
+          "employee_id": "emp_001",
+          "destination": "SEA",
+          "start_date": "2026-04-08",
+          "end_date": "2026-04-09",
+          "total_cost_cents": 45000
+        },
+        {
+          "id": "trip_004",
+          "employee_id": "emp_003",
+          "destination": "ORD",
+          "start_date": "2026-04-10",
+          "end_date": "2026-04-12",
+          "total_cost_cents": 170000
+        },
+        {
+          "id": "trip_005",
+          "employee_id": "emp_004",
+          "destination": "LHR",
+          "start_date": "2026-04-15",
+          "end_date": "2026-04-20",
+          "total_cost_cents": 400000
+        }
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "hidden: no trips",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "pageCaps": {
+          "trips": 2
+        },
+        "trips": []
+      },
+      "expected": [],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "fetch_all_trips",
+      "starterPath": "problems/ramp-travel-api-rate-limit-backoff/solutions/python/starter.py",
+      "referencePath": "problems/ramp-travel-api-rate-limit-backoff/solutions/python/reference.py"
+    }
+  }
+}

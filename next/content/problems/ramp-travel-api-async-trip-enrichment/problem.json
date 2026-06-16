@@ -1,0 +1,183 @@
+{
+  "id": "ramp-travel-api-async-trip-enrichment",
+  "kind": "problem",
+  "title": "Travel API Async Trip Enrichment",
+  "difficulty": "medium",
+  "concepts": [
+    "asyncio",
+    "fan-out/fan-in",
+    "order preservation"
+  ],
+  "timeboxMinutes": 25,
+  "prompt": "You are building a small backend helper that receives a list of trip ids and needs to fetch details for each trip.\n\nFetching one trip at a time works, but it is unnecessarily slow when the ids are independent. Use asyncio to fan out the requests, then gather the results back into the same order as the input ids.\n\nWrite `async def enrich_trips(base_url, token, trip_ids)`.\n\nFake async API:\n\n```python\nimport travel_api\n\ntrip = await travel_api.get_trip(base_url, token, trip_id)\n```\n\n`get_trip` returns a trip dict shaped like:\n\n```python\n{\"id\": \"trip_001\", \"employee_id\": \"emp_001\", \"destination\": \"SFO\", \"total_cost_cents\": 120000}\n```\n\nReturn contract:\n\n- Return `list[dict]`.\n- Return one result per input trip id, in the same order as `trip_ids`.\n- Each result should have exactly these keys:\n\n```python\n{\"trip_id\": \"trip_001\", \"employee_id\": \"emp_001\", \"destination\": \"SFO\", \"total_cost_cents\": 120000}\n```\n\n- If the same trip id appears more than once in `trip_ids`, return a row for each occurrence.\n- Return `[]` for an empty input list.\n\nFor this problem, all requested trip ids exist. You do not need retry logic, pagination, or error handling. Focus on writing a small, clear async fan-out/fan-in function.\n\nValidation focus: using awaitable calls correctly, preserving input order even when responses complete out of order, handling duplicate ids, and returning compact trip summaries.",
+  "signature": {
+    "name": "enrichTrips",
+    "inputs": [
+      {
+        "name": "base_url",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "token",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "trip_ids",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "visible: returns trip summaries in input order",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz",
+        [
+          "trip_002",
+          "trip_001",
+          "trip_003"
+        ]
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "tripYields": {
+          "trip_001": 3,
+          "trip_002": 1,
+          "trip_003": 2
+        },
+        "trips": [
+          {
+            "id": "trip_001",
+            "employee_id": "emp_001",
+            "destination": "SFO",
+            "total_cost_cents": 120000
+          },
+          {
+            "id": "trip_002",
+            "employee_id": "emp_002",
+            "destination": "NYC",
+            "total_cost_cents": 90000
+          },
+          {
+            "id": "trip_003",
+            "employee_id": "emp_003",
+            "destination": "SEA",
+            "total_cost_cents": 45000
+          }
+        ]
+      },
+      "expected": [
+        {
+          "trip_id": "trip_002",
+          "employee_id": "emp_002",
+          "destination": "NYC",
+          "total_cost_cents": 90000
+        },
+        {
+          "trip_id": "trip_001",
+          "employee_id": "emp_001",
+          "destination": "SFO",
+          "total_cost_cents": 120000
+        },
+        {
+          "trip_id": "trip_003",
+          "employee_id": "emp_003",
+          "destination": "SEA",
+          "total_cost_cents": 45000
+        }
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "visible: empty ids",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz",
+        []
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "trips": []
+      },
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "hidden: preserves duplicate trip ids",
+      "args": [
+        "mock://ramp",
+        "interview_token_123",
+        [
+          "trip_a",
+          "trip_b",
+          "trip_a"
+        ]
+      ],
+      "fixture": {
+        "token": "interview_token_123",
+        "tripYields": {
+          "trip_a": 2,
+          "trip_b": 1
+        },
+        "trips": [
+          {
+            "id": "trip_a",
+            "employee_id": "emp_010",
+            "destination": "LAX",
+            "total_cost_cents": 70000
+          },
+          {
+            "id": "trip_b",
+            "employee_id": "emp_011",
+            "destination": "BOS",
+            "total_cost_cents": 81000
+          }
+        ]
+      },
+      "expected": [
+        {
+          "trip_id": "trip_a",
+          "employee_id": "emp_010",
+          "destination": "LAX",
+          "total_cost_cents": 70000
+        },
+        {
+          "trip_id": "trip_b",
+          "employee_id": "emp_011",
+          "destination": "BOS",
+          "total_cost_cents": 81000
+        },
+        {
+          "trip_id": "trip_a",
+          "employee_id": "emp_010",
+          "destination": "LAX",
+          "total_cost_cents": 70000
+        }
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "enrich_trips",
+      "starterPath": "problems/ramp-travel-api-async-trip-enrichment/solutions/python/starter.py",
+      "referencePath": "problems/ramp-travel-api-async-trip-enrichment/solutions/python/reference.py"
+    }
+  }
+}

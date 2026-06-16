@@ -3,8 +3,8 @@ import type { LanguageId, Problem, ProblemPart, RunResult } from "../../../src/c
 import type { UserCoachLogRecord } from "../../../src/storage/userData";
 import { MarkdownView } from "../../../../src/components/MarkdownView";
 import { API_BASE } from "./apiBase";
-import { buildCoachMessages } from "./coachMessages";
-import type { CoachMessage } from "./coachMessages";
+import { buildCoachMessages, COACH_PROMPT_VERSION } from "./coachMessages";
+import type { CoachMessage, CoachMode } from "./coachMessages";
 
 interface CoachPanelProps {
   problem: Problem;
@@ -44,6 +44,13 @@ interface CoachConversation {
   turns: Turn[];
 }
 
+const coachModes: Array<{ id: CoachMode; label: string; description: string }> = [
+  { id: "hint", label: "Hint", description: "Small nudge, no code" },
+  { id: "debug", label: "Debug", description: "Use failing tests and current code" },
+  { id: "explain", label: "Explain", description: "Clarify the concept or spec" },
+  { id: "review", label: "Review", description: "Review approach, bugs, and tradeoffs" }
+];
+
 function newConversationId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -54,6 +61,7 @@ export function CoachPanel({ problem, part, language, code, result, coachLogs, v
   const [status, setStatus] = useState<CoachStatus | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
+  const [mode, setMode] = useState<CoachMode>(() => result && result.status !== "passed" ? "debug" : "hint");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -99,6 +107,7 @@ export function CoachPanel({ problem, part, language, code, result, coachLogs, v
       const messages = buildCoachMessages({
         turns: nextTurns,
         question: text,
+        mode,
         problemTitle: activeTitle,
         prompt: activePrompt,
         concepts: problem.concepts,
@@ -116,8 +125,13 @@ export function CoachPanel({ problem, part, language, code, result, coachLogs, v
         conversationId: conversationIdRef.current,
         problemId: problem.id,
         partTitle: part?.title,
+        mode,
+        surface: "problem",
+        language,
+        partId: part?.id,
+        workspaceId: part?.id ? `${problem.id}:${part.id}` : problem.id,
         model: status.model ?? "Local Ollama",
-        promptVersion: "next-coach-v1",
+        promptVersion: COACH_PROMPT_VERSION,
         userMessage: text,
         messages,
         response: response.message,
@@ -128,6 +142,7 @@ export function CoachPanel({ problem, part, language, code, result, coachLogs, v
           difficulty: problem.difficulty,
           language,
           entrypoint,
+          coachMode: mode,
           failedVisible,
           result
         },
@@ -213,6 +228,23 @@ export function CoachPanel({ problem, part, language, code, result, coachLogs, v
         </div>
       </header>
 
+      <div className="coach-mode-strip" role="tablist" aria-label="Coach mode">
+        {coachModes.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            role="tab"
+            aria-selected={mode === option.id}
+            className={mode === option.id ? "coach-mode-button active" : "coach-mode-button"}
+            title={option.description}
+            onClick={() => setMode(option.id)}
+          >
+            <span>{option.label}</span>
+            <small>{option.description}</small>
+          </button>
+        ))}
+      </div>
+
       <div className="coach-scroll" ref={scrollRef}>
         {status && !status.available ? (
           <div className="coach-offline">
@@ -230,7 +262,7 @@ export function CoachPanel({ problem, part, language, code, result, coachLogs, v
 
         {status?.available && !turns.length && !busy ? (
           <div className="coach-msg coach-msg-bot">
-            How can I help? Ask for a hint, a read on your approach, or a plain-English clarification of the problem &mdash; whatever you're stuck on.
+            {emptyCoachMessage(mode)}
           </div>
         ) : null}
 
@@ -278,7 +310,7 @@ export function CoachPanel({ problem, part, language, code, result, coachLogs, v
               void send();
             }
           }}
-          placeholder={status?.available ? "Ask a question - a hint, clarification, or 'show me the code'..." : "Coach unavailable"}
+          placeholder={status?.available ? coachPlaceholder(mode) : "Coach unavailable"}
           disabled={!status?.available || busy}
           rows={2}
         />
@@ -288,6 +320,20 @@ export function CoachPanel({ problem, part, language, code, result, coachLogs, v
       </div>
     </aside>
   );
+}
+
+function emptyCoachMessage(mode: CoachMode): string {
+  if (mode === "debug") return "Debug mode is on. Ask about the failing test, error, or current code path and I will stay close to your implementation.";
+  if (mode === "explain") return "Explain mode is on. Ask about the problem statement, an invariant, an API detail, or why an approach works.";
+  if (mode === "review") return "Review mode is on. Ask for a read on your implementation, edge cases, or style without getting a rewrite.";
+  return "Hint mode is on. Ask for a nudge and I will keep it small unless you explicitly ask for the solution.";
+}
+
+function coachPlaceholder(mode: CoachMode): string {
+  if (mode === "debug") return "Ask what is failing, what state is wrong, or why a test mismatches...";
+  if (mode === "explain") return "Ask for a clarification, invariant, trace, or plain-English explanation...";
+  if (mode === "review") return "Ask for a review of your approach, edge cases, or style...";
+  return "Ask for a small hint, next step, or sanity check...";
 }
 
 function CoachBotIcon() {

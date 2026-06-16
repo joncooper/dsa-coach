@@ -1,0 +1,185 @@
+{
+  "id": "ramp-travel-api-auth-filter",
+  "kind": "problem",
+  "title": "Travel API Auth And Filter",
+  "difficulty": "easy",
+  "concepts": [
+    "API authentication",
+    "server-side filtering",
+    "cursor pagination"
+  ],
+  "timeboxMinutes": 15,
+  "prompt": "You need every employee in the `engineering` department.\n\nWrite `fetch_engineers(base_url, token)`. Call `GET {base_url}/v1/employees`, pass a bearer auth header, ask the server for `department=engineering`, follow every cursor, and return the matching employee dictionaries.\n\nReturn contract:\n\n- Return `list[dict]`.\n- Each dict should be one employee object from the API, unchanged.\n- Return only employees whose `department` is exactly `\"engineering\"`.\n- Preserve the API order after filtering.\n- If no engineers exist, return `[]`.\n\nEmployee shape:\n\n```python\n{\"id\": \"emp_001\", \"name\": \"Ada Lovelace\", \"email\": \"emp_001@ramp.test\", \"department\": \"engineering\"}\n```\n\nEndpoint details:\n\n- `GET {base_url}/v1/employees` requires `headers={\"Authorization\": f\"Bearer {token}\"}`.\n- It supports `params={\"department\": \"engineering\", \"limit\": 5, \"cursor\": cursor}`.\n- Responses are paginated as `{\"data\": [...], \"next_cursor\": \"...\" | None}`.\n\nThe test harness passes `token` into your function. Do not define or hardcode it; use the `token` parameter when building the `Authorization` header.\n\nInvariants and corner cases:\n\n- Use the server-side `department` filter; the tests reject fetching all employees for this problem.\n- Start with no cursor, then pass back `next_cursor` until it is `None`.\n- Do not hardcode the token string. Hidden tests use a different token.\n- Do not return finance/product/sales employees.\n\nShared fake API note: this uses the in-process `requests` mock described in the Ramp Travel module guide; there is no real network.\n\nValidation focus: auth header, server-side filter, pagination, order, no duplicates, and custom-token hidden cases.",
+  "signature": {
+    "name": "fetchEngineers",
+    "inputs": [
+      {
+        "name": "base_url",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "token",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "any"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "visible: engineers across two pages",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "requireDepartmentFilter": true,
+        "pageCaps": {
+          "employees": 2
+        },
+        "employees": [
+          {
+            "id": "emp_001",
+            "name": "Ada Lovelace",
+            "email": "emp_001@ramp.test",
+            "department": "engineering"
+          },
+          {
+            "id": "emp_002",
+            "name": "Grace Hopper",
+            "email": "emp_002@ramp.test",
+            "department": "finance"
+          },
+          {
+            "id": "emp_003",
+            "name": "Katherine Johnson",
+            "email": "emp_003@ramp.test",
+            "department": "engineering"
+          },
+          {
+            "id": "emp_004",
+            "name": "Margaret Hamilton",
+            "email": "emp_004@ramp.test",
+            "department": "engineering"
+          },
+          {
+            "id": "emp_005",
+            "name": "Barbara Liskov",
+            "email": "emp_005@ramp.test",
+            "department": "product"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "id": "emp_001",
+          "name": "Ada Lovelace",
+          "email": "emp_001@ramp.test",
+          "department": "engineering"
+        },
+        {
+          "id": "emp_003",
+          "name": "Katherine Johnson",
+          "email": "emp_003@ramp.test",
+          "department": "engineering"
+        },
+        {
+          "id": "emp_004",
+          "name": "Margaret Hamilton",
+          "email": "emp_004@ramp.test",
+          "department": "engineering"
+        }
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "hidden: token parameter must be used",
+      "args": [
+        "mock://ramp",
+        "interview_token_123"
+      ],
+      "fixture": {
+        "token": "interview_token_123",
+        "requireDepartmentFilter": true,
+        "pageCaps": {
+          "employees": 1
+        },
+        "employees": [
+          {
+            "id": "emp_101",
+            "name": "Frances Allen",
+            "email": "emp_101@ramp.test",
+            "department": "engineering"
+          },
+          {
+            "id": "emp_102",
+            "name": "Mary Jackson",
+            "email": "emp_102@ramp.test",
+            "department": "sales"
+          },
+          {
+            "id": "emp_103",
+            "name": "Radia Perlman",
+            "email": "emp_103@ramp.test",
+            "department": "engineering"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "id": "emp_101",
+          "name": "Frances Allen",
+          "email": "emp_101@ramp.test",
+          "department": "engineering"
+        },
+        {
+          "id": "emp_103",
+          "name": "Radia Perlman",
+          "email": "emp_103@ramp.test",
+          "department": "engineering"
+        }
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "hidden: no engineers",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "requireDepartmentFilter": true,
+        "pageCaps": {
+          "employees": 2
+        },
+        "employees": [
+          {
+            "id": "emp_201",
+            "name": "Finance Person",
+            "email": "emp_201@ramp.test",
+            "department": "finance"
+          }
+        ]
+      },
+      "expected": [],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "fetch_engineers",
+      "starterPath": "problems/ramp-travel-api-auth-filter/solutions/python/starter.py",
+      "referencePath": "problems/ramp-travel-api-auth-filter/solutions/python/reference.py"
+    }
+  }
+}

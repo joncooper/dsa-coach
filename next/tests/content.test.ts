@@ -20,9 +20,10 @@ describe("content graph", () => {
       "binary-search",
       "backtracking",
       "dynamic-programming",
-      "interview-tools"
+      "interview-tools",
+      "ramp-travel-api"
     ]);
-    expect(graph.problems).toHaveLength(263);
+    expect(graph.problems).toHaveLength(280);
     expect(graph.modules.find((module) => module.id === "foundations")?.sequence).toHaveLength(18);
     expect(graph.modules.find((module) => module.id === "arrays-strings")?.sequence).toHaveLength(18);
     expect(graph.modules.find((module) => module.id === "hashing")?.sequence).toHaveLength(18);
@@ -36,6 +37,7 @@ describe("content graph", () => {
     expect(graph.modules.find((module) => module.id === "backtracking")?.sequence).toHaveLength(15);
     expect(graph.modules.find((module) => module.id === "dynamic-programming")?.sequence).toHaveLength(18);
     expect(graph.modules.find((module) => module.id === "interview-tools")?.sequence).toHaveLength(9);
+    expect(graph.modules.find((module) => module.id === "ramp-travel-api")?.sequence).toHaveLength(13);
     expect(graph.problemSets.map((set) => set.id)).toEqual([
       "interview-prep",
       "ramp-prep",
@@ -47,7 +49,7 @@ describe("content graph", () => {
       "lib-ordered-dict"
     ]);
     expect(graph.problemSets.find((set) => set.id === "interview-prep")?.entries).toHaveLength(18);
-    expect(graph.problemSets.find((set) => set.id === "ramp-prep")?.entries).toHaveLength(8);
+    expect(graph.problemSets.find((set) => set.id === "ramp-prep")?.entries).toHaveLength(25);
     expect(graph.problemSets.find((set) => set.id === "aoc-year-1")?.entries).toHaveLength(7);
     expect(graph.problemSets.find((set) => set.id === "aoc-year-2")?.entries).toHaveLength(7);
     expect(graph.problemSets.find((set) => set.id === "aoc-year-3")?.entries).toHaveLength(7);

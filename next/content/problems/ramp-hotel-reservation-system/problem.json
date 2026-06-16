@@ -1,0 +1,479 @@
+{
+  "id": "ramp-hotel-reservation-system",
+  "kind": "problem",
+  "title": "Hotel Reservation System",
+  "difficulty": "hard",
+  "timeboxMinutes": 60,
+  "concepts": [
+    "stateful design",
+    "intervals",
+    "indexing",
+    "deterministic assignment"
+  ],
+  "prompt": "Design a tiny in-memory hotel reservation backend.\n\nWrite `hotel_reservations(operations)`. Each operation is a list of strings. Return one string per operation, in the same order.\n\nThis is meant to feel like a coding-round version of \"design the hotel reservation system\": pick a clean state model, write a dispatcher, and keep the interval rules explicit.\n\nOperations:\n\n- `[\"ADD_ROOM\", timestamp, room_id, room_type]`: add a room. Return `\"true\"` if it was added, or `\"false\"` if that `room_id` already exists.\n- `[\"BOOK\", timestamp, guest_id, room_type, check_in, check_out]`: create a reservation for any available room of `room_type`. Return the new reservation id, or `\"\"` if no room is available or the date range is invalid.\n- `[\"CANCEL\", timestamp, reservation_id]`: cancel an active reservation. Return `\"true\"` if it existed and was active, otherwise `\"false\"`.\n- `[\"GET\", timestamp, reservation_id]`: return `\"guest_id|room_id|check_in|check_out\"` for an active reservation, or `\"\"` if the reservation is missing or canceled.\n- `[\"AVAILABLE\", timestamp, room_type, check_in, check_out]`: return the number of rooms of that type available for the requested stay, as a string. Return `\"0\"` for an invalid date range.\n- `[\"GUEST_RESERVATIONS\", timestamp, guest_id]`: return that guest's active reservation ids, sorted by check-in date ascending, then reservation creation order ascending. Join ids with commas; if there are none, return `\"\"`.\n\nReservation ids are assigned as `res_1`, `res_2`, and so on. A failed booking does not consume an id.\n\nDate strings are in `YYYY-MM-DD` format. Treat stays as half-open intervals: a reservation occupies `[check_in, check_out)`. That means a room booked from `2026-07-01` to `2026-07-03` can be booked again starting on `2026-07-03`. A date range is invalid when `check_out <= check_in`.\n\nWhen booking, choose the available room with the earliest room creation order among rooms of the requested type. Room ids are not sorted lexicographically unless that is also the creation order.\n\nValidation focus: data modeling, half-open interval overlap, cancellation freeing capacity, deterministic room selection, and secondary indexes for room and guest lookups.",
+  "signature": {
+    "name": "hotelReservations",
+    "inputs": [
+      {
+        "name": "operations",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "basic booking and availability",
+      "args": [
+        [
+          [
+            "ADD_ROOM",
+            "1",
+            "room_101",
+            "queen"
+          ],
+          [
+            "ADD_ROOM",
+            "2",
+            "room_102",
+            "queen"
+          ],
+          [
+            "BOOK",
+            "3",
+            "guest_a",
+            "queen",
+            "2026-07-01",
+            "2026-07-03"
+          ],
+          [
+            "GET",
+            "4",
+            "res_1"
+          ],
+          [
+            "AVAILABLE",
+            "5",
+            "queen",
+            "2026-07-02",
+            "2026-07-04"
+          ],
+          [
+            "BOOK",
+            "6",
+            "guest_b",
+            "queen",
+            "2026-07-02",
+            "2026-07-04"
+          ],
+          [
+            "AVAILABLE",
+            "7",
+            "queen",
+            "2026-07-02",
+            "2026-07-04"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "res_1",
+        "guest_a|room_101|2026-07-01|2026-07-03",
+        "1",
+        "res_2",
+        "0"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "cancel frees room",
+      "args": [
+        [
+          [
+            "ADD_ROOM",
+            "1",
+            "room_a",
+            "king"
+          ],
+          [
+            "BOOK",
+            "2",
+            "guest_a",
+            "king",
+            "2026-08-01",
+            "2026-08-05"
+          ],
+          [
+            "AVAILABLE",
+            "3",
+            "king",
+            "2026-08-02",
+            "2026-08-04"
+          ],
+          [
+            "CANCEL",
+            "4",
+            "res_1"
+          ],
+          [
+            "AVAILABLE",
+            "5",
+            "king",
+            "2026-08-02",
+            "2026-08-04"
+          ],
+          [
+            "CANCEL",
+            "6",
+            "res_1"
+          ],
+          [
+            "GET",
+            "7",
+            "res_1"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "res_1",
+        "0",
+        "true",
+        "1",
+        "false",
+        ""
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "guest reservations sorted by stay then creation",
+      "args": [
+        [
+          [
+            "ADD_ROOM",
+            "1",
+            "room_1",
+            "suite"
+          ],
+          [
+            "ADD_ROOM",
+            "2",
+            "room_2",
+            "suite"
+          ],
+          [
+            "BOOK",
+            "3",
+            "guest_a",
+            "suite",
+            "2026-09-10",
+            "2026-09-12"
+          ],
+          [
+            "BOOK",
+            "4",
+            "guest_a",
+            "suite",
+            "2026-09-01",
+            "2026-09-02"
+          ],
+          [
+            "GUEST_RESERVATIONS",
+            "5",
+            "guest_a"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "res_1",
+        "res_2",
+        "res_2,res_1"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "duplicate room and missing type",
+      "args": [
+        [
+          [
+            "ADD_ROOM",
+            "1",
+            "room_1",
+            "queen"
+          ],
+          [
+            "ADD_ROOM",
+            "2",
+            "room_1",
+            "king"
+          ],
+          [
+            "AVAILABLE",
+            "3",
+            "king",
+            "2026-07-01",
+            "2026-07-02"
+          ],
+          [
+            "BOOK",
+            "4",
+            "guest_a",
+            "king",
+            "2026-07-01",
+            "2026-07-02"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "false",
+        "0",
+        ""
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "back to back stays do not overlap",
+      "args": [
+        [
+          [
+            "ADD_ROOM",
+            "1",
+            "room_1",
+            "queen"
+          ],
+          [
+            "BOOK",
+            "2",
+            "guest_a",
+            "queen",
+            "2026-07-01",
+            "2026-07-03"
+          ],
+          [
+            "BOOK",
+            "3",
+            "guest_b",
+            "queen",
+            "2026-07-03",
+            "2026-07-05"
+          ],
+          [
+            "GET",
+            "4",
+            "res_2"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "res_1",
+        "res_2",
+        "guest_b|room_1|2026-07-03|2026-07-05"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "overlap blocks single room",
+      "args": [
+        [
+          [
+            "ADD_ROOM",
+            "1",
+            "room_1",
+            "queen"
+          ],
+          [
+            "BOOK",
+            "2",
+            "guest_a",
+            "queen",
+            "2026-07-01",
+            "2026-07-03"
+          ],
+          [
+            "BOOK",
+            "3",
+            "guest_b",
+            "queen",
+            "2026-07-02",
+            "2026-07-04"
+          ],
+          [
+            "AVAILABLE",
+            "4",
+            "queen",
+            "2026-07-02",
+            "2026-07-04"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "res_1",
+        "",
+        "0"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "invalid date ranges",
+      "args": [
+        [
+          [
+            "ADD_ROOM",
+            "1",
+            "room_1",
+            "queen"
+          ],
+          [
+            "BOOK",
+            "2",
+            "guest_a",
+            "queen",
+            "2026-07-03",
+            "2026-07-03"
+          ],
+          [
+            "BOOK",
+            "3",
+            "guest_a",
+            "queen",
+            "2026-07-04",
+            "2026-07-03"
+          ],
+          [
+            "AVAILABLE",
+            "4",
+            "queen",
+            "2026-07-04",
+            "2026-07-03"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "",
+        "",
+        "0"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "canceled reservation leaves guest list",
+      "args": [
+        [
+          [
+            "ADD_ROOM",
+            "1",
+            "room_1",
+            "queen"
+          ],
+          [
+            "ADD_ROOM",
+            "2",
+            "room_2",
+            "queen"
+          ],
+          [
+            "BOOK",
+            "3",
+            "guest_a",
+            "queen",
+            "2026-07-01",
+            "2026-07-03"
+          ],
+          [
+            "BOOK",
+            "4",
+            "guest_a",
+            "queen",
+            "2026-07-05",
+            "2026-07-06"
+          ],
+          [
+            "CANCEL",
+            "5",
+            "res_1"
+          ],
+          [
+            "GUEST_RESERVATIONS",
+            "6",
+            "guest_a"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "res_1",
+        "res_2",
+        "true",
+        "res_2"
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "uses room creation order",
+      "args": [
+        [
+          [
+            "ADD_ROOM",
+            "1",
+            "room_b",
+            "queen"
+          ],
+          [
+            "ADD_ROOM",
+            "2",
+            "room_a",
+            "queen"
+          ],
+          [
+            "BOOK",
+            "3",
+            "guest_a",
+            "queen",
+            "2026-07-01",
+            "2026-07-02"
+          ],
+          [
+            "GET",
+            "4",
+            "res_1"
+          ]
+        ]
+      ],
+      "expected": [
+        "true",
+        "true",
+        "res_1",
+        "guest_a|room_b|2026-07-01|2026-07-02"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "hotel_reservations",
+      "starterPath": "problems/ramp-hotel-reservation-system/solutions/python/starter.py",
+      "referencePath": "problems/ramp-hotel-reservation-system/solutions/python/reference.py"
+    }
+  }
+}

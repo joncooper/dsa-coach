@@ -1,0 +1,136 @@
+{
+  "id": "ramp-travel-api",
+  "kind": "module",
+  "title": "Ramp Travel API",
+  "order": 14,
+  "summary": "Ramp Travel API interview drills adapted from the MIT-licensed keroshanpillay/ramp-interview project: pagination, auth, retries, asyncio, outbox sync, joins, and spend rollups.",
+  "concepts": [
+    "API pagination",
+    "auth",
+    "retries",
+    "asyncio",
+    "outbox sync",
+    "joins",
+    "aggregation"
+  ],
+  "guideTitle": "Shared fake API",
+  "guideBody": "These problems all run against an in-process fake travel API. There is no real network, no external service, and no setup. The fake service is reset before every visible or hidden test.",
+  "guideBullets": [
+    "Synchronous HTTP problems use `import requests`; the fake `requests.get` and `requests.post` return objects with `.status_code`, `.headers`, `.json()`, `.text`, and `.raise_for_status()`.",
+    "Async problems use `import travel_api`; its methods are awaitable and intentionally yield control so ordering and concurrency bugs show up without real sleeping.",
+    "Always use the `base_url` and `token` parameters passed into the function. Hidden tests use different tokens.",
+    "Problem prompts describe only the endpoint or async method needed for that exercise; the shared fake API behavior is the same across the module."
+  ],
+  "sections": [
+    {
+      "id": "sync-api-basics",
+      "label": "Sync API Basics",
+      "blurb": "Pagination, auth, and request contracts",
+      "problems": [
+        "ramp-travel-api-pagination-basics",
+        "ramp-travel-api-auth-filter"
+      ]
+    },
+    {
+      "id": "resilience",
+      "label": "Resilience & Debugging",
+      "blurb": "Rate limits, flaky endpoints, and broken integration code",
+      "problems": [
+        "ramp-travel-api-rate-limit-backoff",
+        "ramp-travel-api-flaky-transactions",
+        "ramp-travel-api-debug-broken-fetch"
+      ]
+    },
+    {
+      "id": "aggregation",
+      "label": "Aggregation Workflows",
+      "blurb": "Multi-step reads and spend rollups",
+      "problems": [
+        "ramp-travel-api-top-spenders",
+        "ramp-travel-api-weekly-spend"
+      ]
+    },
+    {
+      "id": "asyncio",
+      "label": "Asyncio Workflows",
+      "blurb": "Fan-out, bounded concurrency, and async aggregation",
+      "problems": [
+        "ramp-travel-api-async-trip-enrichment",
+        "ramp-travel-api-async-receipt-ocr",
+        "ramp-travel-api-async-employee-spend"
+      ]
+    },
+    {
+      "id": "writes",
+      "label": "Writes & Outbox Sync",
+      "blurb": "Stable client request ids and idempotent write semantics",
+      "problems": [
+        "ramp-travel-api-expense-outbox-sync"
+      ]
+    },
+    {
+      "id": "matching",
+      "label": "Matching & Reconciliation",
+      "blurb": "Hash joins, date windows, and messy finance data",
+      "problems": [
+        "ramp-travel-api-receipt-matching",
+        "ramp-travel-api-date-window-matching"
+      ]
+    }
+  ],
+  "sequence": [
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-pagination-basics"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-auth-filter"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-rate-limit-backoff"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-flaky-transactions"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-debug-broken-fetch"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-top-spenders"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-weekly-spend"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-async-trip-enrichment"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-async-receipt-ocr"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-async-employee-spend"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-expense-outbox-sync"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-receipt-matching"
+    },
+    {
+      "kind": "problem",
+      "id": "ramp-travel-api-date-window-matching"
+    }
+  ],
+  "bonus": []
+}

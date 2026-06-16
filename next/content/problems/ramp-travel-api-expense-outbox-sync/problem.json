@@ -1,0 +1,216 @@
+{
+  "id": "ramp-travel-api-expense-outbox-sync",
+  "kind": "problem",
+  "title": "Travel API Expense Outbox Sync",
+  "difficulty": "medium",
+  "concepts": [
+    "idempotent writes",
+    "outbox processing",
+    "API request shaping",
+    "stable identifiers"
+  ],
+  "timeboxMinutes": 30,
+  "prompt": "You are working on a small background sync job for travel expenses.\n\nThe product has a local outbox of expense drafts that were created while the user was offline. When the network comes back, your job sends those drafts to the travel API. The annoying part is that the outbox can replay the same draft more than once. Maybe the app crashed mid-sync, maybe a worker retried a batch, or maybe the same local file was read twice.\n\nEach draft has a stable `client_request_id`. That id represents one logical attempt to create one expense. If the same `client_request_id` appears again, it is the same logical draft being replayed, not a new expense.\n\nWrite `sync_expense_outbox(base_url, token, drafts)`.\n\nFor each draft, submit the expense to the API and return a compact result showing which server expense id belongs to that client request id.\n\nInput shape:\n\n```python\n{\n    \"client_request_id\": \"draft-001\",\n    \"employee_id\": \"emp_001\",\n    \"amount_cents\": 1299,\n    \"merchant\": \"Sweetgreen\",\n    \"memo\": \"team lunch\",        # optional\n}\n```\n\nAPI contract:\n\n- POST to `{base_url}/v1/expenses`.\n- Send bearer auth with the provided `token`.\n- Send an idempotency key for the logical draft. Use the draft's `client_request_id` as that key.\n- Send only the expense fields as the JSON body. `client_request_id` is local metadata and should not be included in the API payload.\n- The API returns the created expense record as JSON, including a server `id` and `created_at`.\n\nReturn contract:\n\n- Return `list[dict]`.\n- Return one result per input draft, in the same order as `drafts`.\n- Each result should have exactly this shape:\n\n```python\n{\"client_request_id\": \"draft-001\", \"expense_id\": \"exp_0001\", \"created_at\": \"2026-04-30T12:00:00Z\"}\n```\n\n- If a `client_request_id` appears more than once, the repeated draft should map to the same server expense id as the first occurrence.\n- Return `[]` if `drafts` is empty.\n\nShared fake API note: this uses the in-process `requests` mock described in the Ramp Travel module guide; there is no real network.\n\nValidation focus: stable idempotency keys, not leaking local metadata into the POST body, preserving input order, duplicate draft replay, custom auth token, and returning a compact per-draft result.",
+  "signature": {
+    "name": "syncExpenseOutbox",
+    "inputs": [
+      {
+        "name": "base_url",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "token",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "drafts",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "visible: syncs drafts and preserves replay identity",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz",
+        [
+          {
+            "client_request_id": "draft-001",
+            "employee_id": "emp_001",
+            "amount_cents": 1299,
+            "merchant": "Sweetgreen",
+            "memo": "team lunch"
+          },
+          {
+            "client_request_id": "draft-002",
+            "employee_id": "emp_002",
+            "amount_cents": 4500,
+            "merchant": "Taxi"
+          },
+          {
+            "client_request_id": "draft-001",
+            "employee_id": "emp_001",
+            "amount_cents": 1299,
+            "merchant": "Sweetgreen",
+            "memo": "team lunch"
+          }
+        ]
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "rejectExpenseMetadata": true
+      },
+      "expected": [
+        {
+          "client_request_id": "draft-001",
+          "expense_id": "exp_0001",
+          "created_at": "2026-04-30T12:00:00Z"
+        },
+        {
+          "client_request_id": "draft-002",
+          "expense_id": "exp_0002",
+          "created_at": "2026-04-30T12:00:00Z"
+        },
+        {
+          "client_request_id": "draft-001",
+          "expense_id": "exp_0001",
+          "created_at": "2026-04-30T12:00:00Z"
+        }
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "visible: empty outbox",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz",
+        []
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "rejectExpenseMetadata": true
+      },
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "hidden: cached request id from an earlier run",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz",
+        [
+          {
+            "client_request_id": "offline-123",
+            "employee_id": "emp_009",
+            "amount_cents": 7800,
+            "merchant": "Hotel"
+          },
+          {
+            "client_request_id": "offline-124",
+            "employee_id": "emp_009",
+            "amount_cents": 1800,
+            "merchant": "Train"
+          }
+        ]
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "rejectExpenseMetadata": true,
+        "idempotencyCache": {
+          "offline-123": {
+            "id": "exp_cached_123",
+            "employee_id": "emp_009",
+            "amount_cents": 7800,
+            "merchant": "Hotel",
+            "created_at": "2026-04-01T09:00:00Z"
+          }
+        }
+      },
+      "expected": [
+        {
+          "client_request_id": "offline-123",
+          "expense_id": "exp_cached_123",
+          "created_at": "2026-04-01T09:00:00Z"
+        },
+        {
+          "client_request_id": "offline-124",
+          "expense_id": "exp_0001",
+          "created_at": "2026-04-30T12:00:00Z"
+        }
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "hidden: uses provided token and keeps all input rows",
+      "args": [
+        "mock://ramp",
+        "interview_token_456",
+        [
+          {
+            "client_request_id": "draft-a",
+            "employee_id": "emp_010",
+            "amount_cents": 1000,
+            "merchant": "Coffee"
+          },
+          {
+            "client_request_id": "draft-b",
+            "employee_id": "emp_010",
+            "amount_cents": 2000,
+            "merchant": "Lunch"
+          },
+          {
+            "client_request_id": "draft-a",
+            "employee_id": "emp_010",
+            "amount_cents": 1000,
+            "merchant": "Coffee"
+          }
+        ]
+      ],
+      "fixture": {
+        "token": "interview_token_456",
+        "rejectExpenseMetadata": true
+      },
+      "expected": [
+        {
+          "client_request_id": "draft-a",
+          "expense_id": "exp_0001",
+          "created_at": "2026-04-30T12:00:00Z"
+        },
+        {
+          "client_request_id": "draft-b",
+          "expense_id": "exp_0002",
+          "created_at": "2026-04-30T12:00:00Z"
+        },
+        {
+          "client_request_id": "draft-a",
+          "expense_id": "exp_0001",
+          "created_at": "2026-04-30T12:00:00Z"
+        }
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "sync_expense_outbox",
+      "starterPath": "problems/ramp-travel-api-expense-outbox-sync/solutions/python/starter.py",
+      "referencePath": "problems/ramp-travel-api-expense-outbox-sync/solutions/python/reference.py"
+    }
+  }
+}

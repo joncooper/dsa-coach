@@ -1,0 +1,238 @@
+{
+  "id": "ramp-travel-api-receipt-matching",
+  "kind": "problem",
+  "title": "Travel API Receipt Matching",
+  "difficulty": "medium",
+  "concepts": [
+    "hash joins",
+    "messy data",
+    "one-to-one matching"
+  ],
+  "timeboxMinutes": 30,
+  "prompt": "Accounting needs to match uploaded receipts to card transactions.\n\nWrite `match_receipts_to_transactions(base_url, token)`. Fetch all transactions and all receipts, then return a mapping from transaction id to receipt id.\n\nA receipt can match a transaction when:\n\n- same `employee_id`\n- same non-null `amount_cents`\n\nReturn contract:\n\n- Return `dict[str, str]`, shaped like `{\"txn_001\": \"rcp_001\"}`.\n- Keys are transaction ids. Values are receipt ids.\n- Skip receipts whose `amount_cents` is `None`.\n- If multiple transactions have the same match key, assign receipts to unmatched transactions in transaction API order.\n- If extra receipts remain after all matching transactions are assigned, ignore the extras.\n- If there are no matches, return `{}`.\n\nEndpoint details:\n\n- `GET /v1/transactions` and `GET /v1/receipts` are both paginated and require auth.\n- Both use `{\"data\": [...], \"next_cursor\": \"...\" | None}`.\n\nThe test harness passes `token` into your function. Do not define or hardcode it; use the `token` parameter when building the `Authorization` header.\n\nInvariants and corner cases:\n\n- Fetch every page from both endpoints.\n- Do not match null receipt amounts.\n- Do not match only on amount; employee id must also match.\n- Do not assign the same transaction twice.\n- A hash map keyed by `(employee_id, amount_cents)` is the natural shape.\n\nShared fake API note: this uses the in-process `requests` mock described in the Ramp Travel module guide; there is no real network.\n\nValidation focus: complete pagination on both endpoints, null handling, duplicate amounts, same-employee matching, and deterministic one-to-one assignment.",
+  "signature": {
+    "name": "matchReceiptsToTransactions",
+    "inputs": [
+      {
+        "name": "base_url",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "token",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "object"
+    }
+  },
+  "tests": [
+    {
+      "name": "visible: null and duplicate receipt amounts",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "pageCaps": {
+          "transactions": 2,
+          "receipts": 2
+        },
+        "transactions": [
+          {
+            "id": "txn_r1",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 10000,
+            "category": "travel",
+            "timestamp": "2026-04-01T12:00:00Z"
+          },
+          {
+            "id": "txn_r2",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 10000,
+            "category": "travel",
+            "timestamp": "2026-04-02T12:00:00Z"
+          },
+          {
+            "id": "txn_r3",
+            "employee_id": "emp_002",
+            "card_id": "card_002",
+            "merchant": "merchant",
+            "amount_cents": 25000,
+            "category": "travel",
+            "timestamp": "2026-04-03T12:00:00Z"
+          }
+        ],
+        "receipts": [
+          {
+            "id": "rcp_null",
+            "employee_id": "emp_001",
+            "amount_cents": null,
+            "merchant": "merchant",
+            "captured_at": null
+          },
+          {
+            "id": "rcp_001",
+            "employee_id": "emp_001",
+            "amount_cents": 10000,
+            "merchant": "merchant",
+            "captured_at": "2026-04-01T13:00:00Z"
+          },
+          {
+            "id": "rcp_002",
+            "employee_id": "emp_001",
+            "amount_cents": 10000,
+            "merchant": "merchant",
+            "captured_at": "2026-04-01T13:00:00Z"
+          },
+          {
+            "id": "rcp_003",
+            "employee_id": "emp_002",
+            "amount_cents": 99999,
+            "merchant": "merchant",
+            "captured_at": "2026-04-01T13:00:00Z"
+          },
+          {
+            "id": "rcp_004",
+            "employee_id": "emp_002",
+            "amount_cents": 25000,
+            "merchant": "merchant",
+            "captured_at": "2026-04-01T13:00:00Z"
+          }
+        ]
+      },
+      "expected": {
+        "txn_r1": "rcp_001",
+        "txn_r2": "rcp_002",
+        "txn_r3": "rcp_004"
+      },
+      "visibility": "visible"
+    },
+    {
+      "name": "hidden: extra matching receipt is ignored after transactions are assigned",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz"
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "pageCaps": {
+          "transactions": 2,
+          "receipts": 2
+        },
+        "transactions": [
+          {
+            "id": "txn_r1",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 10000,
+            "category": "travel",
+            "timestamp": "2026-04-01T12:00:00Z"
+          },
+          {
+            "id": "txn_r2",
+            "employee_id": "emp_001",
+            "card_id": "card_001",
+            "merchant": "merchant",
+            "amount_cents": 10000,
+            "category": "travel",
+            "timestamp": "2026-04-02T12:00:00Z"
+          },
+          {
+            "id": "txn_r3",
+            "employee_id": "emp_002",
+            "card_id": "card_002",
+            "merchant": "merchant",
+            "amount_cents": 25000,
+            "category": "travel",
+            "timestamp": "2026-04-03T12:00:00Z"
+          },
+          {
+            "id": "txn_r4",
+            "employee_id": "emp_003",
+            "card_id": "card_003",
+            "merchant": "merchant",
+            "amount_cents": 7000,
+            "category": "travel",
+            "timestamp": "2026-04-04T12:00:00Z"
+          }
+        ],
+        "receipts": [
+          {
+            "id": "rcp_null",
+            "employee_id": "emp_001",
+            "amount_cents": null,
+            "merchant": "merchant",
+            "captured_at": null
+          },
+          {
+            "id": "rcp_001",
+            "employee_id": "emp_001",
+            "amount_cents": 10000,
+            "merchant": "merchant",
+            "captured_at": "2026-04-01T13:00:00Z"
+          },
+          {
+            "id": "rcp_002",
+            "employee_id": "emp_001",
+            "amount_cents": 10000,
+            "merchant": "merchant",
+            "captured_at": "2026-04-01T13:00:00Z"
+          },
+          {
+            "id": "rcp_003",
+            "employee_id": "emp_002",
+            "amount_cents": 99999,
+            "merchant": "merchant",
+            "captured_at": "2026-04-01T13:00:00Z"
+          },
+          {
+            "id": "rcp_004",
+            "employee_id": "emp_002",
+            "amount_cents": 25000,
+            "merchant": "merchant",
+            "captured_at": "2026-04-01T13:00:00Z"
+          },
+          {
+            "id": "rcp_005",
+            "employee_id": "emp_003",
+            "amount_cents": 7000,
+            "merchant": "merchant",
+            "captured_at": "2026-04-01T13:00:00Z"
+          },
+          {
+            "id": "rcp_extra",
+            "employee_id": "emp_003",
+            "amount_cents": 7000,
+            "merchant": "merchant",
+            "captured_at": "2026-04-01T13:00:00Z"
+          }
+        ]
+      },
+      "expected": {
+        "txn_r1": "rcp_001",
+        "txn_r2": "rcp_002",
+        "txn_r3": "rcp_004",
+        "txn_r4": "rcp_005"
+      },
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "match_receipts_to_transactions",
+      "starterPath": "problems/ramp-travel-api-receipt-matching/solutions/python/starter.py",
+      "referencePath": "problems/ramp-travel-api-receipt-matching/solutions/python/reference.py"
+    }
+  }
+}

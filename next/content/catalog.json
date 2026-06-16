@@ -57,6 +57,10 @@
         {
           "kind": "module",
           "id": "interview-tools"
+        },
+        {
+          "kind": "module",
+          "id": "ramp-travel-api"
         }
       ]
     },
@@ -117,7 +121,8 @@
     "modules/binary-search.json",
     "modules/backtracking.json",
     "modules/dynamic-programming.json",
-    "modules/interview-tools.json"
+    "modules/interview-tools.json",
+    "modules/ramp-travel-api.json"
   ],
   "problemSets": [
     "problem-sets/interview-prep.json",
@@ -354,6 +359,7 @@
     "problems/ramp-recent-spend-totals/problem.json",
     "problems/ramp-recent-active-users/problem.json",
     "problems/ramp-task-manager/problem.json",
+    "problems/ramp-hotel-reservation-system/problem.json",
     "problems/tek-rate-limiter/problem.json",
     "problems/tek-bank-transactions/problem.json",
     "problems/tek-sessionize-events/problem.json",
@@ -398,7 +404,20 @@
     "problems/asm-filesystem/problem.json",
     "problems/asm-banking/problem.json",
     "problems/asm-in-memory-db/problem.json",
-    "problems/asm-working-hours/problem.json"
+    "problems/asm-working-hours/problem.json",
+    "problems/ramp-travel-api-pagination-basics/problem.json",
+    "problems/ramp-travel-api-auth-filter/problem.json",
+    "problems/ramp-travel-api-rate-limit-backoff/problem.json",
+    "problems/ramp-travel-api-flaky-transactions/problem.json",
+    "problems/ramp-travel-api-debug-broken-fetch/problem.json",
+    "problems/ramp-travel-api-top-spenders/problem.json",
+    "problems/ramp-travel-api-async-trip-enrichment/problem.json",
+    "problems/ramp-travel-api-async-receipt-ocr/problem.json",
+    "problems/ramp-travel-api-async-employee-spend/problem.json",
+    "problems/ramp-travel-api-expense-outbox-sync/problem.json",
+    "problems/ramp-travel-api-receipt-matching/problem.json",
+    "problems/ramp-travel-api-date-window-matching/problem.json",
+    "problems/ramp-travel-api-weekly-spend/problem.json"
   ],
   "scenarios": [
     "scenarios/ramp-ledger-reconciliation/scenario.json",

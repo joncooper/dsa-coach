@@ -1,0 +1,196 @@
+{
+  "id": "ramp-travel-api-async-employee-spend",
+  "kind": "problem",
+  "title": "Travel API Async Employee Spend",
+  "difficulty": "medium",
+  "concepts": [
+    "asyncio",
+    "bounded fan-out",
+    "aggregation"
+  ],
+  "timeboxMinutes": 35,
+  "prompt": "Finance gives you a list of employee ids and asks for each employee's total trip spend.\n\nThere is an async endpoint for one employee at a time. You should fetch several employees concurrently, but not all at once. Then aggregate each employee's trips into a compact result row.\n\nWrite `async def employee_trip_totals(base_url, token, employee_ids, max_concurrency)`.\n\nFake async API:\n\n```python\nimport travel_api\n\ntrips = await travel_api.list_employee_trips(base_url, token, employee_id)\n```\n\n`list_employee_trips` returns a list of trip dicts for that employee. Each trip has `total_cost_cents`.\n\nReturn contract:\n\n- Return `list[dict]`.\n- Return one row per input employee id, in the same order as `employee_ids`.\n- Each row should have exactly this shape:\n\n```python\n{\"employee_id\": \"emp_001\", \"total_cents\": 125000, \"trip_count\": 2}\n```\n\n- Include employees with no trips as `{\"employee_id\": employee_id, \"total_cents\": 0, \"trip_count\": 0}`.\n- If an employee id appears more than once in the input, return a row for each occurrence.\n- Respect `max_concurrency`; at most that many employee trip-list calls should be in flight at once.\n- Return `[]` for an empty input list.\n\nDo not fetch the employee list. The caller already decided which employee ids matter. Do not sort by spend; preserve input order.\n\nValidation focus: bounded async fan-out, aggregation, preserving input order, duplicate employee ids, and zero-trip employees.",
+  "signature": {
+    "name": "employeeTripTotals",
+    "inputs": [
+      {
+        "name": "base_url",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "token",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "employee_ids",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      {
+        "name": "max_concurrency",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "visible: aggregates employees in input order",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz",
+        [
+          "emp_002",
+          "emp_001",
+          "emp_empty"
+        ],
+        2
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "maxConcurrentTripLists": 2,
+        "employeeTripYields": {
+          "emp_001": 3,
+          "emp_002": 1,
+          "emp_empty": 2
+        },
+        "trips": [
+          {
+            "id": "trip_1",
+            "employee_id": "emp_001",
+            "total_cost_cents": 100000
+          },
+          {
+            "id": "trip_2",
+            "employee_id": "emp_001",
+            "total_cost_cents": 25000
+          },
+          {
+            "id": "trip_3",
+            "employee_id": "emp_002",
+            "total_cost_cents": 80000
+          }
+        ]
+      },
+      "expected": [
+        {
+          "employee_id": "emp_002",
+          "total_cents": 80000,
+          "trip_count": 1
+        },
+        {
+          "employee_id": "emp_001",
+          "total_cents": 125000,
+          "trip_count": 2
+        },
+        {
+          "employee_id": "emp_empty",
+          "total_cents": 0,
+          "trip_count": 0
+        }
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "visible: empty employees",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz",
+        [],
+        2
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "maxConcurrentTripLists": 2,
+        "trips": []
+      },
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "hidden: respects cap and duplicate employee ids",
+      "args": [
+        "mock://ramp",
+        "interview_token_789",
+        [
+          "e1",
+          "e2",
+          "e1",
+          "e3"
+        ],
+        2
+      ],
+      "fixture": {
+        "token": "interview_token_789",
+        "maxConcurrentTripLists": 2,
+        "employeeTripYields": {
+          "e1": 4,
+          "e2": 3,
+          "e3": 1
+        },
+        "trips": [
+          {
+            "id": "t1",
+            "employee_id": "e1",
+            "total_cost_cents": 50
+          },
+          {
+            "id": "t2",
+            "employee_id": "e1",
+            "total_cost_cents": 70
+          },
+          {
+            "id": "t3",
+            "employee_id": "e2",
+            "total_cost_cents": 200
+          }
+        ]
+      },
+      "expected": [
+        {
+          "employee_id": "e1",
+          "total_cents": 120,
+          "trip_count": 2
+        },
+        {
+          "employee_id": "e2",
+          "total_cents": 200,
+          "trip_count": 1
+        },
+        {
+          "employee_id": "e1",
+          "total_cents": 120,
+          "trip_count": 2
+        },
+        {
+          "employee_id": "e3",
+          "total_cents": 0,
+          "trip_count": 0
+        }
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "employee_trip_totals",
+      "starterPath": "problems/ramp-travel-api-async-employee-spend/solutions/python/starter.py",
+      "referencePath": "problems/ramp-travel-api-async-employee-spend/solutions/python/reference.py"
+    }
+  }
+}

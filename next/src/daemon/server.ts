@@ -1,5 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, stat, writeFile } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
 import type { ContentGraph, RunRequest, ScratchpadRequest } from "../core/types.js";
 import { validateContentFiles, validateContentGraph } from "../core/validation.js";
@@ -12,6 +12,7 @@ import { codexStatus } from "../ai/codexProvider.js";
 import { loadContentGraph } from "../content/loadContentGraph.js";
 import { readProblemSource, type SourceKind } from "./source.js";
 import { ScenarioRunner } from "../scenarios/scenarioRunner.js";
+import type { CoachEvalSuiteReport } from "../coach/evalTypes.js";
 
 export type BuildMode = "development" | "release";
 
@@ -228,6 +229,9 @@ async function handleRequest(
   }
   if (req.method === "GET" && url.pathname === "/coach/status") {
     return json(res, 200, await coachStatus());
+  }
+  if (req.method === "GET" && url.pathname === "/coach/evals") {
+    return json(res, 200, { reports: await readCoachEvalReports(options) });
   }
   if (req.method === "GET" && url.pathname === "/codex/status") {
     return json(res, 200, await codexStatus());
@@ -457,6 +461,32 @@ async function writeStoredJson(options: RunnerDaemonOptions, fileName: string, v
   const temp = `${target}.${process.pid}.${Date.now()}.tmp`;
   await writeFile(temp, `${JSON.stringify(value, null, 2)}\n`, "utf8");
   await rename(temp, target);
+}
+
+async function readCoachEvalReports(options: RunnerDaemonOptions): Promise<CoachEvalSuiteReport[]> {
+  const root = resolveUserDataPath(options, "coach-evals");
+  let names: string[];
+  try {
+    names = await readdir(root);
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") return [];
+    throw error;
+  }
+  const reports = await Promise.all(names
+    .filter((name) => name.endsWith(".json"))
+    .map(async (name) => {
+      try {
+        const value = JSON.parse(await readFile(resolve(root, name), "utf8")) as CoachEvalSuiteReport;
+        if (value?.schemaVersion !== 1 || !value.generatedAt || !Array.isArray(value.cases)) return null;
+        return value;
+      } catch {
+        return null;
+      }
+    }));
+  return reports
+    .filter((report): report is CoachEvalSuiteReport => Boolean(report))
+    .sort((a, b) => b.generatedAt.localeCompare(a.generatedAt))
+    .slice(0, 50);
 }
 
 function resolveUserDataPath(options: RunnerDaemonOptions, fileName: string): string {

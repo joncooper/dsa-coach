@@ -1,0 +1,248 @@
+{
+  "id": "ramp-travel-api-async-receipt-ocr",
+  "kind": "problem",
+  "title": "Travel API Async Receipt OCR",
+  "difficulty": "medium",
+  "concepts": [
+    "asyncio",
+    "bounded concurrency",
+    "per-item errors"
+  ],
+  "timeboxMinutes": 35,
+  "prompt": "You are adding a batch helper for receipt OCR.\n\nThe OCR service is async and can process several receipts at once, but it has a concurrency limit. If you fire off too many calls at the same time, the service rejects some of them. Your job is to process the whole batch, preserve input order, and turn per-receipt failures into result rows instead of crashing the entire batch.\n\nWrite `async def batch_ocr_receipts(base_url, token, receipt_ids, max_concurrency)`.\n\nFake async API:\n\n```python\nimport travel_api\n\nocr = await travel_api.ocr_receipt(base_url, token, receipt_id)\n```\n\nOn success, `ocr_receipt` returns a dict like:\n\n```python\n{\"receipt_id\": \"rcp_001\", \"text\": \"SFO TAXI\", \"amount_cents\": 2100}\n```\n\nOn service-level failures, it raises a subclass of `travel_api.TravelApiError`, such as `travel_api.NotFoundError`, `travel_api.OcrError`, or `travel_api.RateLimitError`.\n\nReturn contract:\n\n- Return `list[dict]`.\n- Return one row per input receipt id, in the same order as `receipt_ids`.\n- On success, return:\n\n```python\n{\"receipt_id\": \"rcp_001\", \"status\": \"ok\", \"text\": \"SFO TAXI\", \"amount_cents\": 2100}\n```\n\n- On a `travel_api.TravelApiError`, return:\n\n```python\n{\"receipt_id\": \"rcp_bad\", \"status\": \"error\", \"error\": \"unreadable_image\"}\n```\n\n- Respect `max_concurrency`. If it is `2`, at most two OCR calls should be in flight at once.\n- Return `[]` for an empty input list.\n\nDo not use real sleeps. The fake async API yields control internally so `asyncio` scheduling behavior can be tested without waiting.\n\nValidation focus: `asyncio.Semaphore`, preserving input order, catching per-item API failures, avoiding unbounded `gather`, and not letting one bad receipt fail the whole batch.",
+  "signature": {
+    "name": "batchOcrReceipts",
+    "inputs": [
+      {
+        "name": "base_url",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "token",
+        "type": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "receipt_ids",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      {
+        "name": "max_concurrency",
+        "type": {
+          "type": "number"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "visible: successes and one OCR failure",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz",
+        [
+          "rcp_001",
+          "rcp_bad",
+          "rcp_002"
+        ],
+        2
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "maxConcurrentOcr": 2,
+        "ocrYields": {
+          "rcp_001": 2,
+          "rcp_bad": 1,
+          "rcp_002": 3
+        },
+        "receiptOcr": {
+          "rcp_001": {
+            "text": "SFO TAXI",
+            "amount_cents": 2100
+          },
+          "rcp_bad": {
+            "error": "unreadable_image"
+          },
+          "rcp_002": {
+            "text": "HOTEL",
+            "amount_cents": 18400
+          }
+        }
+      },
+      "expected": [
+        {
+          "receipt_id": "rcp_001",
+          "status": "ok",
+          "text": "SFO TAXI",
+          "amount_cents": 2100
+        },
+        {
+          "receipt_id": "rcp_bad",
+          "status": "error",
+          "error": "unreadable_image"
+        },
+        {
+          "receipt_id": "rcp_002",
+          "status": "ok",
+          "text": "HOTEL",
+          "amount_cents": 18400
+        }
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "visible: empty batch",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz",
+        [],
+        3
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "maxConcurrentOcr": 3,
+        "receiptOcr": {}
+      },
+      "expected": [],
+      "visibility": "visible"
+    },
+    {
+      "name": "hidden: enforces concurrency cap and preserves order",
+      "args": [
+        "mock://ramp",
+        "interview_token_456",
+        [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ],
+        2
+      ],
+      "fixture": {
+        "token": "interview_token_456",
+        "maxConcurrentOcr": 2,
+        "ocrYields": {
+          "a": 5,
+          "b": 4,
+          "c": 3,
+          "d": 2,
+          "e": 1
+        },
+        "receiptOcr": {
+          "a": {
+            "text": "A",
+            "amount_cents": 100
+          },
+          "b": {
+            "text": "B",
+            "amount_cents": 200
+          },
+          "c": {
+            "text": "C",
+            "amount_cents": 300
+          },
+          "d": {
+            "text": "D",
+            "amount_cents": 400
+          },
+          "e": {
+            "text": "E",
+            "amount_cents": 500
+          }
+        }
+      },
+      "expected": [
+        {
+          "receipt_id": "a",
+          "status": "ok",
+          "text": "A",
+          "amount_cents": 100
+        },
+        {
+          "receipt_id": "b",
+          "status": "ok",
+          "text": "B",
+          "amount_cents": 200
+        },
+        {
+          "receipt_id": "c",
+          "status": "ok",
+          "text": "C",
+          "amount_cents": 300
+        },
+        {
+          "receipt_id": "d",
+          "status": "ok",
+          "text": "D",
+          "amount_cents": 400
+        },
+        {
+          "receipt_id": "e",
+          "status": "ok",
+          "text": "E",
+          "amount_cents": 500
+        }
+      ],
+      "visibility": "hidden"
+    },
+    {
+      "name": "hidden: missing receipt becomes an error row",
+      "args": [
+        "mock://ramp",
+        "ramp_test_secret_xyz",
+        [
+          "known",
+          "missing"
+        ],
+        1
+      ],
+      "fixture": {
+        "token": "ramp_test_secret_xyz",
+        "maxConcurrentOcr": 1,
+        "receiptOcr": {
+          "known": {
+            "text": "KNOWN",
+            "amount_cents": 999
+          }
+        }
+      },
+      "expected": [
+        {
+          "receipt_id": "known",
+          "status": "ok",
+          "text": "KNOWN",
+          "amount_cents": 999
+        },
+        {
+          "receipt_id": "missing",
+          "status": "error",
+          "error": "receipt_not_found:missing"
+        }
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "batch_ocr_receipts",
+      "starterPath": "problems/ramp-travel-api-async-receipt-ocr/solutions/python/starter.py",
+      "referencePath": "problems/ramp-travel-api-async-receipt-ocr/solutions/python/reference.py"
+    }
+  }
+}

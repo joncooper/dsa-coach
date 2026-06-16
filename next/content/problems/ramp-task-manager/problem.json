@@ -325,7 +325,7 @@
     {
       "id": "level-3-assignments",
       "title": "Level 3: Users and Assignments",
-      "prompt": "Suppose an interviewer asks you to build the first slice of a tiny in-memory task-management backend. The system receives a list of operations, and for each operation you return the result as a string.\n\nWrite `taskManager(operations)`. Every operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add users, assignments, completion, and overdue state to the same function. For now, keep the implementation small, but structure it as a clean dispatcher so the next levels have somewhere obvious to go.\n\n**Level 1 operations**\n\n- [\"ADD\", timestamp, name, priority]: create a task and return its new id.\n- [\"GET\", timestamp, task_id]: return `\"name|priority\"` for an existing task, or `\"\"` if the task does not exist.\n\nTasks have an id, name, priority, and creation order. Task ids are assigned as `task_1`, `task_2`, and so on. Numeric fields such as timestamps and priorities are provided as strings.\n\nAt this level, timestamps are included to match the later API shape, but they do not affect behavior yet.\n\n**Level 2 operations**\n\nAdd task updates and search. The Level 1 operations must keep working.\n\n- [\"UPDATE\", timestamp, task_id, new_name, new_priority]: update an existing task. Return `\"true\"` if it existed, otherwise `\"false\"`.\n- [\"SEARCH\", timestamp, text, limit]: return up to `limit` task ids whose current names contain `text`. Sort by priority descending, then creation order ascending.\n\nFor operations that return a list of ids, join ids with commas. If the list is empty, return `\"\"`. A limit of `0` returns `\"\"`.\n\n**Level 3 operations**\n\nAdd users and active assignments. The Level 1 and Level 2 operations must keep working.\n\nUsers have a quota: the maximum number of active assignments they can have at one time.\n\n- [\"ADD_USER\", timestamp, user_id, quota]: add a user. Return `\"false\"` if the user already exists; otherwise return `\"true\"`.\n- [\"ASSIGN\", timestamp, task_id, user_id, finish_time]: assign a task to a user from `timestamp` until absolute time `finish_time`. Return `\"false\"` if the task or user does not exist, if `finish_time <= timestamp`, or if the user is already at their active-assignment quota. Otherwise return `\"true\"`.\n- [\"USER_TASKS\", timestamp, user_id]: return that user's active unfinished task ids at `timestamp`, sorted by task priority descending, then creation order ascending.\n\nAn assignment is active when `start <= timestamp < finish_time`. At this level, assignments become inactive automatically when their finish time passes.",
+      "prompt": "Suppose an interviewer asks you to build the first slice of a tiny in-memory task-management backend. The system receives a list of operations, and for each operation you return the result as a string.\n\nWrite `taskManager(operations)`. Every operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add users, assignments, completion, and overdue state to the same function. For now, keep the implementation small, but structure it as a clean dispatcher so the next levels have somewhere obvious to go.\n\n**Level 1 operations**\n\n- [\"ADD\", timestamp, name, priority]: create a task and return its new id.\n- [\"GET\", timestamp, task_id]: return `\"name|priority\"` for an existing task, or `\"\"` if the task does not exist.\n\nTasks have an id, name, priority, and creation order. Task ids are assigned as `task_1`, `task_2`, and so on. Numeric fields such as timestamps and priorities are provided as strings.\n\nAt this level, timestamps are included to match the later API shape, but they do not affect behavior yet.\n\n**Level 2 operations**\n\nAdd task updates and search. The Level 1 operations must keep working.\n\n- [\"UPDATE\", timestamp, task_id, new_name, new_priority]: update an existing task. Return `\"true\"` if it existed, otherwise `\"false\"`.\n- [\"SEARCH\", timestamp, text, limit]: return up to `limit` task ids whose current names contain `text`. Sort by priority descending, then creation order ascending.\n\nFor operations that return a list of ids, join ids with commas. If the list is empty, return `\"\"`. A limit of `0` returns `\"\"`.\n\n**Level 3 operations**\n\nAdd users and active assignments. The Level 1 and Level 2 operations must keep working.\n\nUsers have a quota: the maximum number of active assignments they can have at one time.\n\n- [\"ADD_USER\", timestamp, user_id, quota]: add a user. Return `\"false\"` if the user already exists; otherwise return `\"true\"`.\n- [\"ASSIGN\", timestamp, task_id, user_id, due_at]: assign a task to a user from `timestamp` until absolute due time `due_at`. Return `\"false\"` if the task or user does not exist, if `due_at <= timestamp`, or if the user is already at their active-assignment quota. Otherwise return `\"true\"`.\n- [\"USER_TASKS\", timestamp, user_id]: return that user's active unfinished task ids at `timestamp`, sorted by task priority descending, then creation order ascending.\n\nAn assignment is active when `assigned_at <= timestamp < due_at`. At this level, assignments become inactive automatically when their due time passes.\n\nWhen checking quota or listing active tasks, consider only assignments for the specified user.",
       "tests": [
         {
           "name": "add and get",
@@ -769,13 +769,79 @@
             ]
           ],
           "visibility": "hidden"
+        },
+        {
+          "name": "user tasks are scoped to requested user",
+          "visibility": "hidden",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "u1 task",
+                "5"
+              ],
+              [
+                "ADD",
+                "2",
+                "u2 task",
+                "9"
+              ],
+              [
+                "ADD_USER",
+                "3",
+                "u1",
+                "2"
+              ],
+              [
+                "ADD_USER",
+                "4",
+                "u2",
+                "2"
+              ],
+              [
+                "ASSIGN",
+                "5",
+                "task_1",
+                "u1",
+                "20"
+              ],
+              [
+                "ASSIGN",
+                "6",
+                "task_2",
+                "u2",
+                "20"
+              ],
+              [
+                "USER_TASKS",
+                "7",
+                "u1"
+              ],
+              [
+                "USER_TASKS",
+                "7",
+                "u2"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "true",
+            "true",
+            "task_1",
+            "task_2"
+          ]
         }
       ]
     },
     {
       "id": "level-4-completion-overdue",
       "title": "Level 4: Completion and Overdue",
-      "prompt": "Suppose an interviewer asks you to build the first slice of a tiny in-memory task-management backend. The system receives a list of operations, and for each operation you return the result as a string.\n\nWrite `taskManager(operations)`. Every operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add users, assignments, completion, and overdue state to the same function. For now, keep the implementation small, but structure it as a clean dispatcher so the next levels have somewhere obvious to go.\n\n**Level 1 operations**\n\n- [\"ADD\", timestamp, name, priority]: create a task and return its new id.\n- [\"GET\", timestamp, task_id]: return `\"name|priority\"` for an existing task, or `\"\"` if the task does not exist.\n\nTasks have an id, name, priority, and creation order. Task ids are assigned as `task_1`, `task_2`, and so on. Numeric fields such as timestamps and priorities are provided as strings.\n\nAt this level, timestamps are included to match the later API shape, but they do not affect behavior yet.\n\n**Level 2 operations**\n\nAdd task updates and search. The Level 1 operations must keep working.\n\n- [\"UPDATE\", timestamp, task_id, new_name, new_priority]: update an existing task. Return `\"true\"` if it existed, otherwise `\"false\"`.\n- [\"SEARCH\", timestamp, text, limit]: return up to `limit` task ids whose current names contain `text`. Sort by priority descending, then creation order ascending.\n\nFor operations that return a list of ids, join ids with commas. If the list is empty, return `\"\"`. A limit of `0` returns `\"\"`.\n\n**Level 3 operations**\n\nAdd users and active assignments. The Level 1 and Level 2 operations must keep working.\n\nUsers have a quota: the maximum number of active assignments they can have at one time.\n\n- [\"ADD_USER\", timestamp, user_id, quota]: add a user. Return `\"false\"` if the user already exists; otherwise return `\"true\"`.\n- [\"ASSIGN\", timestamp, task_id, user_id, finish_time]: assign a task to a user from `timestamp` until absolute time `finish_time`. Return `\"false\"` if the task or user does not exist, if `finish_time <= timestamp`, or if the user is already at their active-assignment quota. Otherwise return `\"true\"`.\n- [\"USER_TASKS\", timestamp, user_id]: return that user's active unfinished task ids at `timestamp`, sorted by task priority descending, then creation order ascending.\n\nAn assignment is active when `start <= timestamp < finish_time`. At this level, assignments become inactive automatically when their finish time passes.\n\n**Level 4 operations**\n\nAdd completion and overdue reporting. All earlier levels must keep working.\n\n- [\"COMPLETE\", timestamp, task_id, user_id]: complete that user's active unfinished assignment for the task. Return `\"true\"` if one exists, otherwise `\"false\"`.\n- [\"OVERDUE\", timestamp, user_id]: return that user's unfinished task ids whose finish time is `<= timestamp`, in assignment order.\n\nCompleted assignments are not active and are not overdue. Finished but uncompleted assignments are not active, but they are overdue once `finish_time <= timestamp`.",
+      "prompt": "Suppose an interviewer asks you to build the first slice of a tiny in-memory task-management backend. The system receives a list of operations, and for each operation you return the result as a string.\n\nWrite `taskManager(operations)`. Every operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add users, assignments, completion, and overdue state to the same function. For now, keep the implementation small, but structure it as a clean dispatcher so the next levels have somewhere obvious to go.\n\n**Level 1 operations**\n\n- [\"ADD\", timestamp, name, priority]: create a task and return its new id.\n- [\"GET\", timestamp, task_id]: return `\"name|priority\"` for an existing task, or `\"\"` if the task does not exist.\n\nTasks have an id, name, priority, and creation order. Task ids are assigned as `task_1`, `task_2`, and so on. Numeric fields such as timestamps and priorities are provided as strings.\n\nAt this level, timestamps are included to match the later API shape, but they do not affect behavior yet.\n\n**Level 2 operations**\n\nAdd task updates and search. The Level 1 operations must keep working.\n\n- [\"UPDATE\", timestamp, task_id, new_name, new_priority]: update an existing task. Return `\"true\"` if it existed, otherwise `\"false\"`.\n- [\"SEARCH\", timestamp, text, limit]: return up to `limit` task ids whose current names contain `text`. Sort by priority descending, then creation order ascending.\n\nFor operations that return a list of ids, join ids with commas. If the list is empty, return `\"\"`. A limit of `0` returns `\"\"`.\n\n**Level 3 operations**\n\nAdd users and active assignments. The Level 1 and Level 2 operations must keep working.\n\nUsers have a quota: the maximum number of active assignments they can have at one time.\n\n- [\"ADD_USER\", timestamp, user_id, quota]: add a user. Return `\"false\"` if the user already exists; otherwise return `\"true\"`.\n- [\"ASSIGN\", timestamp, task_id, user_id, due_at]: assign a task to a user from `timestamp` until absolute due time `due_at`. Return `\"false\"` if the task or user does not exist, if `due_at <= timestamp`, or if the user is already at their active-assignment quota. Otherwise return `\"true\"`.\n- [\"USER_TASKS\", timestamp, user_id]: return that user's active unfinished task ids at `timestamp`, sorted by task priority descending, then creation order ascending.\n\nAn assignment is active when `assigned_at <= timestamp < due_at`. At this level, assignments become inactive automatically when their due time passes.\n\nWhen checking quota or listing active tasks, consider only assignments for the specified user.\n\n**Level 4 operations**\n\nAdd completion and overdue reporting. All earlier levels must keep working.\n\n- [\"COMPLETE\", timestamp, task_id, user_id]: complete that user's active unfinished assignment for the task. Return `\"true\"` if one exists, otherwise `\"false\"`.\n- [\"OVERDUE\", timestamp, user_id]: return that user's unfinished task ids whose due time is `<= timestamp`, in assignment order.\n\nCompleted assignments are not active and are not overdue. Past-due but uncompleted assignments are not active, but they are overdue once `due_at <= timestamp`.\n\nCompletion and overdue reporting are scoped to the requested user and task: do not complete or report another user's assignment.",
       "tests": [
         {
           "name": "add and get",
@@ -1401,6 +1467,211 @@
             "task_1"
           ],
           "visibility": "hidden"
+        },
+        {
+          "name": "user tasks are scoped to requested user",
+          "visibility": "hidden",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "u1 task",
+                "5"
+              ],
+              [
+                "ADD",
+                "2",
+                "u2 task",
+                "9"
+              ],
+              [
+                "ADD_USER",
+                "3",
+                "u1",
+                "2"
+              ],
+              [
+                "ADD_USER",
+                "4",
+                "u2",
+                "2"
+              ],
+              [
+                "ASSIGN",
+                "5",
+                "task_1",
+                "u1",
+                "20"
+              ],
+              [
+                "ASSIGN",
+                "6",
+                "task_2",
+                "u2",
+                "20"
+              ],
+              [
+                "USER_TASKS",
+                "7",
+                "u1"
+              ],
+              [
+                "USER_TASKS",
+                "7",
+                "u2"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "true",
+            "true",
+            "task_1",
+            "task_2"
+          ]
+        },
+        {
+          "name": "complete requires matching user and task",
+          "visibility": "hidden",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "u1 task",
+                "5"
+              ],
+              [
+                "ADD",
+                "2",
+                "u2 task",
+                "9"
+              ],
+              [
+                "ADD_USER",
+                "3",
+                "u1",
+                "2"
+              ],
+              [
+                "ADD_USER",
+                "4",
+                "u2",
+                "2"
+              ],
+              [
+                "ASSIGN",
+                "5",
+                "task_1",
+                "u1",
+                "20"
+              ],
+              [
+                "ASSIGN",
+                "6",
+                "task_2",
+                "u2",
+                "20"
+              ],
+              [
+                "COMPLETE",
+                "7",
+                "task_2",
+                "u1"
+              ],
+              [
+                "USER_TASKS",
+                "8",
+                "u1"
+              ],
+              [
+                "USER_TASKS",
+                "8",
+                "u2"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "true",
+            "true",
+            "false",
+            "task_1",
+            "task_2"
+          ]
+        },
+        {
+          "name": "overdue is scoped to requested user",
+          "visibility": "hidden",
+          "args": [
+            [
+              [
+                "ADD",
+                "1",
+                "u1 overdue",
+                "5"
+              ],
+              [
+                "ADD",
+                "2",
+                "u2 overdue",
+                "9"
+              ],
+              [
+                "ADD_USER",
+                "3",
+                "u1",
+                "2"
+              ],
+              [
+                "ADD_USER",
+                "4",
+                "u2",
+                "2"
+              ],
+              [
+                "ASSIGN",
+                "5",
+                "task_1",
+                "u1",
+                "10"
+              ],
+              [
+                "ASSIGN",
+                "6",
+                "task_2",
+                "u2",
+                "11"
+              ],
+              [
+                "OVERDUE",
+                "12",
+                "u1"
+              ],
+              [
+                "OVERDUE",
+                "12",
+                "u2"
+              ]
+            ]
+          ],
+          "expected": [
+            "task_1",
+            "task_2",
+            "true",
+            "true",
+            "true",
+            "true",
+            "task_1",
+            "task_2"
+          ]
         }
       ]
     }

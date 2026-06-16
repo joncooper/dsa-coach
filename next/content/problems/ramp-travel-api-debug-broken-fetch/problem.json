@@ -1,0 +1,213 @@
+{
+  "id": "ramp-travel-api-debug-broken-fetch",
+  "kind": "problem",
+  "title": "Debug Broken Booking Fetch",
+  "difficulty": "easy",
+  "concepts": [
+    "debugging",
+    "cursor pagination",
+    "API contracts"
+  ],
+  "timeboxMinutes": 15,
+  "prompt": "A teammate wrote `fetch_all_bookings`, and it only returns the first page. Your job is to debug it.\n\nThe public function signature stays `fetch_all_bookings(base_url)`. Return every booking dict from every page, exactly like the first pagination problem.\n\nThe API contract is:\n\n```python\n{\"data\": [booking_dict, ...], \"next_cursor\": \"...\" | None}\n```\n\nReturn contract:\n\n- Return `list[dict]`.\n- Preserve API order.\n- Return booking dicts unchanged.\n- Return `[]` if the API is empty.\n\nWhat to look for:\n\n- Page-one-only bugs usually mean the code reads the wrong cursor field.\n- The response key is `next_cursor`, not `cursor`.\n- Pass the cursor back in the next request's `params`.\n\nShared fake API note: this uses the in-process `requests` mock described in the Ramp Travel module guide; there is no real network.\n\nValidation focus: fixing the cursor field, fetching multiple pages, no duplicate first page, and preserving order.",
+  "signature": {
+    "name": "fetchAllBookings",
+    "inputs": [
+      {
+        "name": "base_url",
+        "type": {
+          "type": "string"
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "any"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "visible: catches first-page-only bug",
+      "args": [
+        "mock://ramp"
+      ],
+      "fixture": {
+        "pageCaps": {
+          "bookings": 2
+        },
+        "bookings": [
+          {
+            "id": "bkg_001",
+            "trip_id": "trip_001",
+            "employee_id": "emp_001",
+            "kind": "flight",
+            "cost_cents": 12000,
+            "booked_at": "2026-04-01T09:00:00Z"
+          },
+          {
+            "id": "bkg_002",
+            "trip_id": "trip_001",
+            "employee_id": "emp_001",
+            "kind": "hotel",
+            "cost_cents": 33000,
+            "booked_at": "2026-04-01T09:00:00Z"
+          },
+          {
+            "id": "bkg_003",
+            "trip_id": "trip_002",
+            "employee_id": "emp_002",
+            "kind": "flight",
+            "cost_cents": 22000,
+            "booked_at": "2026-04-02T09:00:00Z"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "id": "bkg_001",
+          "trip_id": "trip_001",
+          "employee_id": "emp_001",
+          "kind": "flight",
+          "cost_cents": 12000,
+          "booked_at": "2026-04-01T09:00:00Z"
+        },
+        {
+          "id": "bkg_002",
+          "trip_id": "trip_001",
+          "employee_id": "emp_001",
+          "kind": "hotel",
+          "cost_cents": 33000,
+          "booked_at": "2026-04-01T09:00:00Z"
+        },
+        {
+          "id": "bkg_003",
+          "trip_id": "trip_002",
+          "employee_id": "emp_002",
+          "kind": "flight",
+          "cost_cents": 22000,
+          "booked_at": "2026-04-02T09:00:00Z"
+        }
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "hidden: empty API",
+      "args": [
+        "mock://ramp"
+      ],
+      "fixture": {
+        "pageCaps": {
+          "bookings": 2
+        },
+        "bookings": []
+      },
+      "expected": [],
+      "visibility": "hidden"
+    },
+    {
+      "name": "hidden: five bookings over three pages",
+      "args": [
+        "mock://ramp"
+      ],
+      "fixture": {
+        "pageCaps": {
+          "bookings": 2
+        },
+        "bookings": [
+          {
+            "id": "bkg_001",
+            "trip_id": "trip_001",
+            "employee_id": "emp_001",
+            "kind": "flight",
+            "cost_cents": 12000,
+            "booked_at": "2026-04-01T09:00:00Z"
+          },
+          {
+            "id": "bkg_002",
+            "trip_id": "trip_001",
+            "employee_id": "emp_001",
+            "kind": "hotel",
+            "cost_cents": 33000,
+            "booked_at": "2026-04-01T09:00:00Z"
+          },
+          {
+            "id": "bkg_003",
+            "trip_id": "trip_002",
+            "employee_id": "emp_002",
+            "kind": "flight",
+            "cost_cents": 22000,
+            "booked_at": "2026-04-02T09:00:00Z"
+          },
+          {
+            "id": "bkg_004",
+            "trip_id": "trip_003",
+            "employee_id": "emp_003",
+            "kind": "hotel",
+            "cost_cents": 41000,
+            "booked_at": "2026-04-03T09:00:00Z"
+          },
+          {
+            "id": "bkg_005",
+            "trip_id": "trip_004",
+            "employee_id": "emp_002",
+            "kind": "flight",
+            "cost_cents": 18000,
+            "booked_at": "2026-04-04T09:00:00Z"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "id": "bkg_001",
+          "trip_id": "trip_001",
+          "employee_id": "emp_001",
+          "kind": "flight",
+          "cost_cents": 12000,
+          "booked_at": "2026-04-01T09:00:00Z"
+        },
+        {
+          "id": "bkg_002",
+          "trip_id": "trip_001",
+          "employee_id": "emp_001",
+          "kind": "hotel",
+          "cost_cents": 33000,
+          "booked_at": "2026-04-01T09:00:00Z"
+        },
+        {
+          "id": "bkg_003",
+          "trip_id": "trip_002",
+          "employee_id": "emp_002",
+          "kind": "flight",
+          "cost_cents": 22000,
+          "booked_at": "2026-04-02T09:00:00Z"
+        },
+        {
+          "id": "bkg_004",
+          "trip_id": "trip_003",
+          "employee_id": "emp_003",
+          "kind": "hotel",
+          "cost_cents": 41000,
+          "booked_at": "2026-04-03T09:00:00Z"
+        },
+        {
+          "id": "bkg_005",
+          "trip_id": "trip_004",
+          "employee_id": "emp_002",
+          "kind": "flight",
+          "cost_cents": 18000,
+          "booked_at": "2026-04-04T09:00:00Z"
+        }
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "fetch_all_bookings",
+      "starterPath": "problems/ramp-travel-api-debug-broken-fetch/solutions/python/starter.py",
+      "referencePath": "problems/ramp-travel-api-debug-broken-fetch/solutions/python/reference.py"
+    }
+  }
+}
