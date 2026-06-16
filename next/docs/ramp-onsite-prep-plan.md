@@ -44,6 +44,20 @@ Morgan's prep call said:
   you surface the right customer problem, not only whether you execute the
   stated request.
 
+Additional prep notes from Jun 16:
+
+- Fritz's prep strategy: keep STAR setup short; put weight on action/result.
+  Say the obvious engineering steps out loud because interviewers may read
+  silence as a gap.
+- Brian Kraus / Beacon call: Beacon is the strongest system deep-dive anchor.
+  The story is not "notebooks in the cloud"; it is a production deployment
+  through bank governance, security, data access, identity, logging, and vendor
+  constraints.
+- EDCI deck: useful secondary story for customer focus and regulatory workflow:
+  lifecycle/acquisition marketing, audience segmentation controls, event-list
+  MVP, CEI app, and measurable outcomes like 80% event-list cycle-time
+  reduction and 65% to 80% CEI touchpoint improvement target.
+
 ## Session-by-Session Plan
 
 ### 12:30 - Design & Architecture with Jay
@@ -59,21 +73,34 @@ Why this system:
 
 Opening structure:
 
-1. Situation: analytics/data workflow was fragmented and unreliable.
-2. Users: analysts, executives, analytics engineers, platform/security owners.
-3. System: containerized/dbt-style execution on Beacon, data warehouse,
-   libraries, testing harness, deployment and access controls.
-4. Constraints: bank security, vendor integration, auditability, team maturity,
-   executive pressure.
-5. Impact: speed, repeatability, reduced manual work, clearer ownership.
+1. Situation: a dozen analytics teams had fragmented desktop workflows, weak
+   reproducibility, and governed-data access problems.
+2. Users: 40-50 builders in notebooks, IDEs, dbt, scheduled Python jobs, and
+   Glint apps; hundreds of internal consumers up to C-suite/board.
+3. System: vendor appliance in bank-owned AWS VPC; ALB ingress; Ping/AD auth;
+   per-user IDE shells; WMP batch engines; Snowflake/S3 PrivateLink; SQL/Mongo
+   through Denodo where required.
+4. Constraints: president-mandated vendor and Thanksgiving deadline; bank
+   security, threat review, auditability, data governance, vendor AMI limits.
+5. Impact: first-of-its-kind production deploy in about one month; 40-step
+   threat review cleared; SSO, scheduled DB access, secure creds, Splunk, mail,
+   Snowflake/SQL/Denodo success criteria met.
 
 Deep dives to prepare:
 
-- Execution model: how jobs ran, how failures surfaced, and how users interacted.
-- Data quality: tests, lineage, validation, release confidence.
-- Security/permissions: access boundaries, vendor/platform risk, audit posture.
-- Team/process: turning an ad hoc group into a repeatable engineering function.
-- Hindsight: what you would simplify, automate, or make more self-service.
+- Execution model: Beacon Desktop -> IDE server -> isolated per-user shells;
+  WMP scheduler/engine pool for distributed batch jobs.
+- Data access: Denodo as broker for Mongo/most SQL; Snowflake/S3 via
+  PrivateLink and endpoint policies; some SQL approved direct.
+- Security/permissions: ALB cert termination, Ping -> AD group membership, JWT
+  handoff, RBAC, Vault, KMS-CMK, CloudTrail, Trend Micro, Splunk forwarders.
+- Governance: 40-step threat review; sign-offs from EA, Ops, InfoSec; success
+  criteria written before "done" could drift.
+- Tradeoffs: Denodo added latency but made production approvable; Aviatrix
+  avoided owning a proxy/IP-list farm; boot-time agent install was pragmatic but
+  less clean than golden images.
+- Hindsight: delete bespoke S3 endpoint Lambda with modern org-native controls;
+  move more governance glue to policy-as-code; pre-socialize reviews even more.
 
 Do not present slides. Use a small mental diagram only if the conversation needs
 orientation.
@@ -85,10 +112,20 @@ API/data-workflow round.
 
 Warm-up drills:
 
-- API Maze Crawler.
 - Hotel Reservation System.
+- API Maze Crawler.
 - Travel API Receipt Matching or Date Window Matching if you want one final API
   client pass, but do not over-index on more API clients tonight.
+
+First drill to do tonight: Hotel Reservation System, strict no-AI mode.
+
+Timebox:
+
+- 5 min: contract, output shape, half-open interval invariant.
+- 10 min: data model and indexes.
+- 30 min: implement add/book/cancel/get/available/guest lookup.
+- 10 min: edge tests and debugging.
+- 5 min: explain production improvements.
 
 Operating loop:
 
@@ -115,8 +152,8 @@ stateful system/data-model round.
 
 Best drills:
 
-- Progressive Task Manager APIs.
 - Hotel Reservation System.
+- Progressive Task Manager APIs.
 - A dependency graph problem: spreadsheet formulas, task dependencies, or URL
   graph traversal with visited state.
 
@@ -143,14 +180,23 @@ You are a senior engineer who finds ambiguous business-critical problems,
 builds the operating model, and uses AI aggressively while still owning the
 technical judgment.
 
+Two-sentence opener:
+
+"My arc is engineer -> quant/PM -> CTO/CISO -> enterprise platform leader. The
+through-line is that I build, I sit between technical and business, and I am
+happiest close to the product/customer edge solving real problems for real
+people."
+
 Stories to have ready:
 
-- Colossus rebuild: broken Python/Django trading system to reliable trading,
-  backtesting, data infra, and later Go engine.
+- Colchis rebuild: built trading, backtesting, analytics, ops, and infra stack
+  while the fund grew from $100M to $1.4B AUM.
 - First Republic analytics turnaround: inherited a failing team, rebuilt the
   function, deployed Beacon, improved executive analytics workflows.
 - AI tooling/prep system: built realistic interview/problem-generation harness,
   local models, eval loops, and Realtime/Codex-based simulation.
+- Dockett: fractional CTO building agent observability/control layer; use this
+  to show current AI/product edge work, not as the main career story.
 
 Signals Leo is likely testing:
 
@@ -174,6 +220,17 @@ You do not just build the requested thing. You identify the real customer or
 stakeholder problem, quantify the impact, and choose the right level of
 engineering investment.
 
+Calvin's Ramp/FDE model from the FDE event:
+
+- FDE mandate is to win enterprise; the team is allowed to be creative.
+- "Sword and shield": win hard enterprise deals while protecting the core
+  roadmap from bespoke derailment.
+- Kill the telephone game: put an engineer who knows the customer and codebase
+  directly in the conversation.
+- Meet finance users where they work; many do not code and live in Excel.
+- Ramp stretches FDEs thin, so the job is high-leverage portfolio judgment, not
+  becoming a dedicated consultant for one account.
+
 Stories to have ready:
 
 - First Republic stakeholder rescue: executive analytics or broken team
@@ -182,6 +239,8 @@ Stories to have ready:
   and user adoption.
 - Customer discovery / agent compliance work: moving from "seems useful" to
   real buyer pain, willingness to pay, and workflow evidence.
+- EDCI partnership: cross-functional marketing/data/compliance partnership with
+  concrete MVPs and regulatory constraints.
 
 Signals Calvin is likely testing:
 
@@ -200,11 +259,14 @@ Questions to ask Calvin:
 
 Priority order:
 
-1. Rehearse the Beacon design story for 45 minutes.
-2. Do one 55-minute no-AI coding drill.
-3. Do the Hotel Reservation System problem as the design-heavy coding drill.
-4. Write 5 bullets each for Leo and Calvin.
-5. Stop serious coding early enough to sleep.
+1. Do the Hotel Reservation System drill first, in no-AI interviewer mode.
+2. Review the failed/passed test output and write the missed invariant in plain
+   English.
+3. Rehearse the Beacon design story for 45 minutes.
+4. Write/rehearse 5 bullets each for Leo and Calvin.
+5. Optional only if energy is good: one graph/dependency drill, not another API
+   client.
+6. Stop serious coding early enough to sleep.
 
 ## Tomorrow Warm-Up
 
@@ -241,4 +303,3 @@ Use this before Jay:
 - What went wrong.
 - What you would change now.
 - Business impact.
-
