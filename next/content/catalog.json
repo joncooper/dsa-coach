@@ -364,6 +364,7 @@
     "problems/ramp-recent-spend-totals/problem.json",
     "problems/ramp-recent-active-users/problem.json",
     "problems/ramp-task-manager/problem.json",
+    "problems/ramp-spreadsheet-cells/problem.json",
     "problems/ramp-hotel-reservation-system/problem.json",
     "problems/tek-rate-limiter/problem.json",
     "problems/tek-bank-transactions/problem.json",

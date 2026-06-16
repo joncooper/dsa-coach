@@ -2,7 +2,7 @@
   "id": "ramp-prep",
   "kind": "problem-set",
   "title": "Ramp Prep",
-  "summary": "Practical Ramp-style drills focused on API traversal, temporal state, ledgers, sliding windows, and progressive in-memory systems.",
+  "summary": "Practical Ramp-style drills focused on API traversal, temporal state, ledgers, sliding windows, dependency graphs, and progressive in-memory systems.",
   "entries": [
     {
       "problem": "ramp-url-maze",
@@ -58,6 +58,11 @@
       "problem": "ramp-task-manager",
       "category": "progressive OOD",
       "note": "CRUD, priority sorting, quotas, assignments, overdue state"
+    },
+    {
+      "problem": "ramp-spreadsheet-cells",
+      "category": "dependency graph",
+      "note": "spreadsheet cells, formula parsing, lazy recalculation, cycle detection"
     },
     {
       "problem": "ramp-hotel-reservation-system",

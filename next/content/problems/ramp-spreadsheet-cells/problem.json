@@ -1,0 +1,739 @@
+{
+  "id": "ramp-spreadsheet-cells",
+  "kind": "problem",
+  "title": "Spreadsheet Cells With Dependencies",
+  "difficulty": "medium",
+  "timeboxMinutes": 60,
+  "concepts": [
+    "stateful design",
+    "parsing",
+    "graphs",
+    "cycle detection"
+  ],
+  "prompt": "Implement a tiny spreadsheet with cells named `A1` through `Z100`.\n\nWrite `spreadsheetCells(operations)`. Each operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add formulas, multi-term dependencies, updates, and cycle handling. For now, implement literal cells only.\n\n**Level 1 operations**\n\n- [\"SET\", cell, raw_value]: store `raw_value` in `cell` and return `\"\"`.\n- [\"GET\", cell]: return the current value of `cell` as a string.\n\nAt this level, `raw_value` is a literal such as `\"5\"` or `\"hello\"`. A cell that has never been set returns `\"0\"`.",
+  "signature": {
+    "name": "spreadsheetCells",
+    "inputs": [
+      {
+        "name": "operations",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "tests": [
+    {
+      "name": "set get and replace literal",
+      "args": [
+        [
+          [
+            "SET",
+            "A1",
+            "5"
+          ],
+          [
+            "GET",
+            "A1"
+          ],
+          [
+            "SET",
+            "A1",
+            "hello"
+          ],
+          [
+            "GET",
+            "A1"
+          ]
+        ]
+      ],
+      "expected": [
+        "",
+        "5",
+        "",
+        "hello"
+      ],
+      "visibility": "visible"
+    },
+    {
+      "name": "unset cell and spreadsheet bounds",
+      "args": [
+        [
+          [
+            "GET",
+            "B2"
+          ],
+          [
+            "SET",
+            "Z100",
+            "42"
+          ],
+          [
+            "GET",
+            "Z100"
+          ]
+        ]
+      ],
+      "expected": [
+        "0",
+        "",
+        "42"
+      ],
+      "visibility": "hidden"
+    }
+  ],
+  "languages": {
+    "python": {
+      "entrypoint": "spreadsheet_cells",
+      "starterPath": "problems/ramp-spreadsheet-cells/solutions/python/starter.py",
+      "referencePath": "problems/ramp-spreadsheet-cells/solutions/python/reference.py"
+    },
+    "typescript": {
+      "entrypoint": "spreadsheetCells",
+      "starterPath": "problems/ramp-spreadsheet-cells/solutions/typescript/starter.ts",
+      "referencePath": "problems/ramp-spreadsheet-cells/solutions/typescript/reference.ts"
+    },
+    "go": {
+      "entrypoint": "SpreadsheetCells",
+      "starterPath": "problems/ramp-spreadsheet-cells/solutions/go/starter.go",
+      "referencePath": "problems/ramp-spreadsheet-cells/solutions/go/reference.go"
+    },
+    "scala": {
+      "entrypoint": "spreadsheetCells",
+      "starterPath": "problems/ramp-spreadsheet-cells/solutions/scala/starter.scala",
+      "referencePath": "problems/ramp-spreadsheet-cells/solutions/scala/reference.scala"
+    }
+  },
+  "parts": [
+    {
+      "id": "level-2-one-plus-formulas",
+      "title": "Level 2: One-Plus Formulas",
+      "prompt": "Implement a tiny spreadsheet with cells named `A1` through `Z100`.\n\nWrite `spreadsheetCells(operations)`. Each operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add formulas, multi-term dependencies, updates, and cycle handling.\n\n**Level 1 operations**\n\n- [\"SET\", cell, raw_value]: store `raw_value` in `cell` and return `\"\"`.\n- [\"GET\", cell]: return the current value of `cell` as a string.\n\nAt this level, `raw_value` is a literal such as `\"5\"` or `\"hello\"`. A cell that has never been set returns `\"0\"`.\n\n**Level 2 formulas**\n\nAdd formulas with exactly one `+`, such as `\"=A1+B1\"` or `\"=A1+10\"`.\n\nFormula terms are either integer literals or cell references. The tests only reference cells that evaluate to integers. Formulas are evaluated against current cell contents, so updating `A1` must change a later `GET` for `C1` when `C1` is `\"=A1+B1\"`.",
+      "tests": [
+        {
+          "name": "set get and replace literal",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "5"
+              ],
+              [
+                "GET",
+                "A1"
+              ],
+              [
+                "SET",
+                "A1",
+                "hello"
+              ],
+              [
+                "GET",
+                "A1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "5",
+            "",
+            "hello"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "formula updates when dependency changes",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "5"
+              ],
+              [
+                "SET",
+                "B1",
+                "7"
+              ],
+              [
+                "SET",
+                "C1",
+                "=A1+B1"
+              ],
+              [
+                "GET",
+                "C1"
+              ],
+              [
+                "SET",
+                "A1",
+                "9"
+              ],
+              [
+                "GET",
+                "C1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "",
+            "12",
+            "",
+            "16"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "unset cell and spreadsheet bounds",
+          "args": [
+            [
+              [
+                "GET",
+                "B2"
+              ],
+              [
+                "SET",
+                "Z100",
+                "42"
+              ],
+              [
+                "GET",
+                "Z100"
+              ]
+            ]
+          ],
+          "expected": [
+            "0",
+            "",
+            "42"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "formula can add integer literal or unset cell",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "5"
+              ],
+              [
+                "SET",
+                "D1",
+                "=A1+10"
+              ],
+              [
+                "GET",
+                "D1"
+              ],
+              [
+                "SET",
+                "E1",
+                "=Z1+3"
+              ],
+              [
+                "GET",
+                "E1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "15",
+            "",
+            "3"
+          ],
+          "visibility": "hidden"
+        }
+      ]
+    },
+    {
+      "id": "level-3-multiple-terms",
+      "title": "Level 3: Multiple Terms",
+      "prompt": "Implement a tiny spreadsheet with cells named `A1` through `Z100`.\n\nWrite `spreadsheetCells(operations)`. Each operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add formulas, multi-term dependencies, updates, and cycle handling.\n\n**Level 1 operations**\n\n- [\"SET\", cell, raw_value]: store `raw_value` in `cell` and return `\"\"`.\n- [\"GET\", cell]: return the current value of `cell` as a string.\n\nA literal can be an integer string such as `\"5\"` or a plain string such as `\"hello\"`. A cell that has never been set returns `\"0\"`.\n\n**Level 2 formulas**\n\nSupport formulas with one `+`, such as `\"=A1+B1\"` or `\"=A1+10\"`.\n\n**Level 3 formulas**\n\nSupport formulas with any number of `+`-separated terms, such as `\"=A1+B1+C1+10\"`.\n\nFormula terms are either integer literals or cell references. The tests only reference cells that evaluate to integers. Formulas are evaluated against current cell contents, so dependency chains and updates should be reflected on every `GET`.",
+      "tests": [
+        {
+          "name": "formula updates when dependency changes",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "5"
+              ],
+              [
+                "SET",
+                "B1",
+                "7"
+              ],
+              [
+                "SET",
+                "C1",
+                "=A1+B1"
+              ],
+              [
+                "GET",
+                "C1"
+              ],
+              [
+                "SET",
+                "A1",
+                "9"
+              ],
+              [
+                "GET",
+                "C1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "",
+            "12",
+            "",
+            "16"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "many terms and later update",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "2"
+              ],
+              [
+                "SET",
+                "B1",
+                "3"
+              ],
+              [
+                "SET",
+                "C1",
+                "4"
+              ],
+              [
+                "SET",
+                "D1",
+                "=A1+B1+C1+10"
+              ],
+              [
+                "GET",
+                "D1"
+              ],
+              [
+                "SET",
+                "B1",
+                "8"
+              ],
+              [
+                "GET",
+                "D1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "",
+            "",
+            "19",
+            "",
+            "24"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "formula can add integer literal or unset cell",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "5"
+              ],
+              [
+                "SET",
+                "D1",
+                "=A1+10"
+              ],
+              [
+                "GET",
+                "D1"
+              ],
+              [
+                "SET",
+                "E1",
+                "=Z1+3"
+              ],
+              [
+                "GET",
+                "E1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "15",
+            "",
+            "3"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "dependency chain recalculates lazily",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "5"
+              ],
+              [
+                "SET",
+                "B1",
+                "=A1+2"
+              ],
+              [
+                "SET",
+                "C1",
+                "=B1+A1+3"
+              ],
+              [
+                "GET",
+                "C1"
+              ],
+              [
+                "SET",
+                "A1",
+                "10"
+              ],
+              [
+                "GET",
+                "C1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "",
+            "15",
+            "",
+            "25"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "replacing formula removes old dependency",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "1"
+              ],
+              [
+                "SET",
+                "B1",
+                "2"
+              ],
+              [
+                "SET",
+                "C1",
+                "=A1+B1"
+              ],
+              [
+                "GET",
+                "C1"
+              ],
+              [
+                "SET",
+                "C1",
+                "=B1+10"
+              ],
+              [
+                "SET",
+                "A1",
+                "100"
+              ],
+              [
+                "GET",
+                "C1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "",
+            "3",
+            "",
+            "",
+            "12"
+          ],
+          "visibility": "hidden"
+        }
+      ]
+    },
+    {
+      "id": "level-4-cycle-detection",
+      "title": "Level 4: Cycle Detection",
+      "prompt": "Implement a tiny spreadsheet with cells named `A1` through `Z100`.\n\nWrite `spreadsheetCells(operations)`. Each operation is a list of strings, and the result should contain one string per operation, in the same order.\n\nThis is a progressive problem. Later levels add formulas, multi-term dependencies, updates, and cycle handling.\n\n**Level 1 operations**\n\n- [\"SET\", cell, raw_value]: store `raw_value` in `cell` and return `\"\"`.\n- [\"GET\", cell]: return the current value of `cell` as a string.\n\nA literal can be an integer string such as `\"5\"` or a plain string such as `\"hello\"`. A cell that has never been set returns `\"0\"`.\n\n**Level 2 formulas**\n\nSupport formulas with one `+`, such as `\"=A1+B1\"` or `\"=A1+10\"`.\n\n**Level 3 formulas**\n\nSupport formulas with any number of `+`-separated terms, such as `\"=A1+B1+C1+10\"`.\n\nFormula terms are either integer literals or cell references. The tests only reference cells that evaluate to integers. Formulas are evaluated against current cell contents, so dependency chains and updates should be reflected on every `GET`.\n\n**Level 4 cycle handling**\n\nA formula is invalid if setting it would create a dependency cycle. When a `SET` would create a cycle, return `\"CYCLE\"` and leave that cell's previous contents unchanged. If the cell did not have a previous value, it remains unset and later `GET` returns `\"0\"`.",
+      "tests": [
+        {
+          "name": "many terms and later update",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "2"
+              ],
+              [
+                "SET",
+                "B1",
+                "3"
+              ],
+              [
+                "SET",
+                "C1",
+                "4"
+              ],
+              [
+                "SET",
+                "D1",
+                "=A1+B1+C1+10"
+              ],
+              [
+                "GET",
+                "D1"
+              ],
+              [
+                "SET",
+                "B1",
+                "8"
+              ],
+              [
+                "GET",
+                "D1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "",
+            "",
+            "19",
+            "",
+            "24"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "cycle set is rejected and old value survives",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "5"
+              ],
+              [
+                "SET",
+                "B1",
+                "=A1+1"
+              ],
+              [
+                "SET",
+                "A1",
+                "=B1+1"
+              ],
+              [
+                "GET",
+                "A1"
+              ],
+              [
+                "GET",
+                "B1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "CYCLE",
+            "5",
+            "6"
+          ],
+          "visibility": "visible"
+        },
+        {
+          "name": "dependency chain recalculates lazily",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "5"
+              ],
+              [
+                "SET",
+                "B1",
+                "=A1+2"
+              ],
+              [
+                "SET",
+                "C1",
+                "=B1+A1+3"
+              ],
+              [
+                "GET",
+                "C1"
+              ],
+              [
+                "SET",
+                "A1",
+                "10"
+              ],
+              [
+                "GET",
+                "C1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "",
+            "15",
+            "",
+            "25"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "self cycle on new cell remains unset",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "=A1+1"
+              ],
+              [
+                "GET",
+                "A1"
+              ]
+            ]
+          ],
+          "expected": [
+            "CYCLE",
+            "0"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "long cycle rejected without changing chain",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "1"
+              ],
+              [
+                "SET",
+                "B1",
+                "=A1+1"
+              ],
+              [
+                "SET",
+                "C1",
+                "=B1+1"
+              ],
+              [
+                "SET",
+                "A1",
+                "=C1+1"
+              ],
+              [
+                "GET",
+                "C1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "",
+            "CYCLE",
+            "3"
+          ],
+          "visibility": "hidden"
+        },
+        {
+          "name": "replacing dependency avoids stale cycle edge",
+          "args": [
+            [
+              [
+                "SET",
+                "A1",
+                "=B1+1"
+              ],
+              [
+                "SET",
+                "B1",
+                "=C1+1"
+              ],
+              [
+                "SET",
+                "A1",
+                "2"
+              ],
+              [
+                "SET",
+                "C1",
+                "=A1+3"
+              ],
+              [
+                "GET",
+                "B1"
+              ]
+            ]
+          ],
+          "expected": [
+            "",
+            "",
+            "",
+            "",
+            "6"
+          ],
+          "visibility": "hidden"
+        }
+      ]
+    }
+  ]
+}

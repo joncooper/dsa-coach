@@ -23,7 +23,7 @@ describe("content graph", () => {
       "interview-tools",
       "ramp-travel-api"
     ]);
-    expect(graph.problems).toHaveLength(280);
+    expect(graph.problems).toHaveLength(281);
     expect(graph.modules.find((module) => module.id === "foundations")?.sequence).toHaveLength(18);
     expect(graph.modules.find((module) => module.id === "arrays-strings")?.sequence).toHaveLength(18);
     expect(graph.modules.find((module) => module.id === "hashing")?.sequence).toHaveLength(18);
@@ -49,7 +49,7 @@ describe("content graph", () => {
       "lib-ordered-dict"
     ]);
     expect(graph.problemSets.find((set) => set.id === "interview-prep")?.entries).toHaveLength(18);
-    expect(graph.problemSets.find((set) => set.id === "ramp-prep")?.entries).toHaveLength(25);
+    expect(graph.problemSets.find((set) => set.id === "ramp-prep")?.entries).toHaveLength(26);
     expect(graph.problemSets.find((set) => set.id === "aoc-year-1")?.entries).toHaveLength(7);
     expect(graph.problemSets.find((set) => set.id === "aoc-year-2")?.entries).toHaveLength(7);
     expect(graph.problemSets.find((set) => set.id === "aoc-year-3")?.entries).toHaveLength(7);
@@ -58,6 +58,7 @@ describe("content graph", () => {
     expect(graph.problemSets.find((set) => set.id === "lib-ordered-dict")?.entries).toHaveLength(2);
     expect(graph.problems.map((problem) => problem.id)).toContain("tek-flood-fill");
     expect(graph.problems.map((problem) => problem.id)).toContain("ramp-url-maze");
+    expect(graph.problems.map((problem) => problem.id)).toContain("ramp-spreadsheet-cells");
     expect(graph.problems.map((problem) => problem.id)).toContain("lib-od-first-unique");
     expect(graph.problems.find((problem) => problem.id === "aoc-y1-d1-elevation-pairs")?.parts).toHaveLength(1);
     expect(graph.problems.find((problem) => problem.id === "asm-filesystem")?.parts).toHaveLength(3);
