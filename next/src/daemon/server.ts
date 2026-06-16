@@ -252,10 +252,25 @@ async function handleRequest(
     const runner = scenarioRunnerFor(content.current(), options);
     return json(res, 200, { attempt: await runner.readAttempt(requiredParam(url, "attemptId")) });
   }
+  if (req.method === "GET" && url.pathname === "/scenarios/files") {
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, { files: await runner.editableFiles(requiredParam(url, "attemptId")) });
+  }
   if (req.method === "POST" && url.pathname === "/scenarios/start") {
     const value = JSON.parse(await readBody(req)) as { scenarioId?: string };
     const runner = scenarioRunnerFor(content.current(), options);
     return json(res, 200, { attempt: await runner.start(requiredString(value.scenarioId, "scenarioId")) });
+  }
+  if (req.method === "POST" && url.pathname === "/scenarios/file") {
+    const value = JSON.parse(await readBody(req)) as { attemptId?: string; path?: string; content?: string };
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, {
+      attempt: await runner.saveEditableFile(
+        requiredString(value.attemptId, "attemptId"),
+        requiredString(value.path, "path"),
+        value.content ?? ""
+      )
+    });
   }
   if (req.method === "POST" && url.pathname === "/scenarios/run-visible") {
     const value = JSON.parse(await readBody(req)) as { attemptId?: string };

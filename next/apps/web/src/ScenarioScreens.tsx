@@ -1,6 +1,7 @@
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import type { ContentGraph, Scenario, ScenarioCheckpoint, ScenarioSet } from "../../../src/core/types";
 import { API_BASE } from "./apiBase";
+import { BasicCodeEditor } from "./CodeEditor";
 
 export interface ScenarioAttemptSummary {
   attemptId: string;
@@ -40,6 +41,11 @@ interface ScenarioCommandResult {
   ranAt: string;
 }
 
+interface ScenarioEditableFile {
+  path: string;
+  content: string;
+}
+
 interface ScenarioJudgeReport {
   overall: "strong_hire" | "hire" | "mixed" | "no_hire";
   summary: string;
@@ -61,6 +67,10 @@ interface CodexStatus {
   model?: string | null;
   reason?: string;
 }
+
+const DEFAULT_TEST_PANE_SHARE = 42;
+const MIN_TEST_PANE_SHARE = 18;
+const MAX_TEST_PANE_SHARE = 68;
 
 export function ScenarioSetScreen({
   graph,
@@ -96,8 +106,8 @@ export function ScenarioSetScreen({
           <h2>{isOnsiteSet ? "How to run a rehearsal" : "How to run a drill"}</h2>
           <p>
             {isOnsiteSet
-              ? "Start a scenario, work in the generated Python workspace, and treat the Codex panel like a sparse interviewer: clarifying questions, time checks, and a debrief after the session."
-              : "Start a scenario, open the generated Python workspace in your editor, and treat Codex like the interview AI tool: ask it to inspect, propose tests, review diffs, and pressure-test your plan while you stay in command."}
+              ? "Start a scenario, work in the in-app Python editor, run visible tests here, and treat the Codex panel like a sparse interviewer: clarifying questions, time checks, and a debrief after the session."
+              : "Start a scenario, work in the in-app Python editor, and treat Codex like the interview AI tool: ask it to inspect, propose tests, review diffs, and pressure-test your plan while you stay in command."}
           </p>
         </div>
         <div>
@@ -171,6 +181,24 @@ export function ScenarioWorkspaceScreen({
   const [sessionEnded, setSessionEnded] = useState(false);
   const [timerPaused, setTimerPaused] = useState(false);
   const [clockNow, setClockNow] = useState(() => Date.now());
+  const [editableFiles, setEditableFiles] = useState<ScenarioEditableFile[]>([]);
+  const [activeFilePath, setActiveFilePath] = useState("");
+  const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
+  const [testsCollapsed, setTestsCollapsed] = useState(false);
+  const [testPaneShare, setTestPaneShare] = useState(DEFAULT_TEST_PANE_SHARE);
+  const sessionPaneRef = useRef<HTMLElement | null>(null);
+  const resizingTestsRef = useRef(false);
+  const editableFilesRef = useRef<ScenarioEditableFile[]>([]);
+  const activeFilePathRef = useRef("");
+  const lastSavedFileContentsRef = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    editableFilesRef.current = editableFiles;
+  }, [editableFiles]);
+
+  useEffect(() => {
+    activeFilePathRef.current = activeFilePath;
+  }, [activeFilePath]);
 
   useEffect(() => {
     let alive = true;
@@ -198,6 +226,11 @@ export function ScenarioWorkspaceScreen({
     setAttempt(null);
     setDiff("");
     setCheckpointDrafts({});
+    setEditableFiles([]);
+    setActiveFilePath("");
+    setTestsCollapsed(false);
+    setTestPaneShare(DEFAULT_TEST_PANE_SHARE);
+    lastSavedFileContentsRef.current = {};
     setSessionEnded(false);
     setTimerPaused(false);
     setLeftTab("prompt");
@@ -212,6 +245,7 @@ export function ScenarioWorkspaceScreen({
         if (!alive) return;
         setAttempt(nextAttempt);
         setCheckpointDrafts(draftsFromAttempt(nextAttempt));
+        await loadEditableFiles(nextAttempt.attemptId, alive);
         await refreshDiff(nextAttempt.attemptId, alive);
       } catch (err) {
         if (alive) setError(errorMessage(err));
@@ -228,12 +262,33 @@ export function ScenarioWorkspaceScreen({
     return () => window.clearInterval(timer);
   }, [timerPaused]);
 
+  useEffect(() => {
+    if (!attempt || !activeFilePath) return undefined;
+    const file = editableFiles.find((candidate) => candidate.path === activeFilePath);
+    if (!file) return undefined;
+    if (lastSavedFileContentsRef.current[file.path] === file.content) {
+      setSaveState("saved");
+      return undefined;
+    }
+    setSaveState("saving");
+    const timer = window.setTimeout(() => {
+      void saveEditableFile(file.path, file.content).catch((err) => {
+        setSaveState("error");
+        setError(errorMessage(err));
+      });
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [activeFilePath, attempt, editableFiles]);
+
   async function startAttempt() {
     await withBusy("Starting scenario", async () => {
       const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary }>("/scenarios/start", { scenarioId: scenario.id });
       setAttempt(nextAttempt);
       setCheckpointDrafts({});
       setDiff("");
+      await loadEditableFiles(nextAttempt.attemptId);
+      setTestsCollapsed(false);
+      setTestPaneShare(DEFAULT_TEST_PANE_SHARE);
       setSessionEnded(false);
       setTimerPaused(false);
       setClockNow(Date.now());
@@ -244,6 +299,7 @@ export function ScenarioWorkspaceScreen({
   async function openAttempt(target: "cursor" | "vscode" | "finder") {
     if (!attempt) return;
     await withBusy(`Opening ${target}`, async () => {
+      await flushActiveFile();
       await postJson("/scenarios/open", { attemptId: attempt.attemptId, target });
     });
   }
@@ -251,6 +307,7 @@ export function ScenarioWorkspaceScreen({
   async function runVisible() {
     if (!attempt) return;
     await withBusy("Running visible tests", async () => {
+      await flushActiveFile();
       const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary; result: ScenarioCommandResult }>(
         "/scenarios/run-visible",
         { attemptId: attempt.attemptId }
@@ -264,6 +321,7 @@ export function ScenarioWorkspaceScreen({
   async function submitHidden() {
     if (!attempt) return;
     await withBusy("Submitting hidden tests", async () => {
+      await flushActiveFile();
       const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary; result: ScenarioCommandResult }>(
         "/scenarios/submit-hidden",
         { attemptId: attempt.attemptId }
@@ -290,6 +348,7 @@ export function ScenarioWorkspaceScreen({
   async function askCoach() {
     if (!attempt || !coachInput.trim()) return;
     await withBusy("Asking interviewer", async () => {
+      await flushActiveFile();
       const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary; response: string }>(
         "/scenarios/coach",
         { attemptId: attempt.attemptId, message: coachInput }
@@ -303,6 +362,7 @@ export function ScenarioWorkspaceScreen({
   async function judgeAttempt() {
     if (!attempt) return;
     await withBusy("Judging attempt", async () => {
+      await flushActiveFile();
       const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary; report: ScenarioJudgeReport }>(
         "/scenarios/judge",
         { attemptId: attempt.attemptId, finalExplanation }
@@ -316,6 +376,127 @@ export function ScenarioWorkspaceScreen({
     if (!attemptToRefresh) return;
     const { diff: nextDiff } = await getJson<{ diff: string }>(`/scenarios/diff?attemptId=${encodeURIComponent(attemptToRefresh)}`);
     if (alive) setDiff(nextDiff);
+  }
+
+  async function loadEditableFiles(attemptToLoad: string, alive = true) {
+    const { files } = await getJson<{ files: ScenarioEditableFile[] }>(`/scenarios/files?attemptId=${encodeURIComponent(attemptToLoad)}`);
+    if (!alive) return;
+    const saved: Record<string, string> = {};
+    for (const file of files) saved[file.path] = file.content;
+    lastSavedFileContentsRef.current = saved;
+    editableFilesRef.current = files;
+    setEditableFiles(files);
+    setActiveFilePath((current) => preferredScenarioFile(files, current));
+    setSaveState("saved");
+  }
+
+  async function saveEditableFile(path: string, content: string): Promise<ScenarioAttemptSummary | null> {
+    if (!attempt) return null;
+    setSaveState("saving");
+    const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary }>("/scenarios/file", {
+      attemptId: attempt.attemptId,
+      path,
+      content
+    });
+    lastSavedFileContentsRef.current = {
+      ...lastSavedFileContentsRef.current,
+      [path]: content
+    };
+    setAttempt(nextAttempt);
+    setSaveState("saved");
+    onAttemptsChanged();
+    return nextAttempt;
+  }
+
+  async function flushActiveFile() {
+    const path = activeFilePathRef.current;
+    if (!attempt || !path) return;
+    const file = editableFilesRef.current.find((candidate) => candidate.path === path);
+    if (!file || lastSavedFileContentsRef.current[path] === file.content) return;
+    await saveEditableFile(path, file.content);
+  }
+
+  async function selectEditableFile(path: string) {
+    await flushActiveFile();
+    setActiveFilePath(path);
+    const file = editableFilesRef.current.find((candidate) => candidate.path === path);
+    setSaveState(file && lastSavedFileContentsRef.current[path] !== file.content ? "saving" : "saved");
+  }
+
+  function updateActiveFile(content: string) {
+    const path = activeFilePathRef.current;
+    if (!path) return;
+    setEditableFiles((files) => files.map((file) => file.path === path ? { ...file, content } : file));
+  }
+
+  function runFromEditor(includeHidden: boolean) {
+    if (includeHidden && !debriefOpen) {
+      setError("Hidden tests unlock after you end the session.");
+      return;
+    }
+    void (includeHidden ? submitHidden() : runVisible());
+  }
+
+  function resizeTestsPane(clientY: number) {
+    const pane = sessionPaneRef.current;
+    if (!pane) return;
+    const rect = pane.getBoundingClientRect();
+    if (!rect.height) return;
+    const testsPixels = rect.bottom - clientY;
+    const nextShare = Math.round((testsPixels / rect.height) * 100);
+    setTestPaneShare(clampNumber(nextShare, MIN_TEST_PANE_SHARE, MAX_TEST_PANE_SHARE));
+  }
+
+  function beginTestsPaneResize(clientY: number, moveEventName: "mousemove" | "pointermove", upEventName: "mouseup" | "pointerup") {
+    if (!sessionPaneRef.current) return;
+    if (resizingTestsRef.current) return;
+    resizingTestsRef.current = true;
+    setTestsCollapsed(false);
+    document.body.classList.add("scenario-resizing-tests");
+    resizeTestsPane(clientY);
+
+    const handleMove = (moveEvent: globalThis.MouseEvent | globalThis.PointerEvent) => {
+      resizeTestsPane(moveEvent.clientY);
+    };
+    const handleUp = () => {
+      resizingTestsRef.current = false;
+      document.body.classList.remove("scenario-resizing-tests");
+      window.removeEventListener(moveEventName, handleMove as EventListener);
+      window.removeEventListener(upEventName, handleUp);
+    };
+    window.addEventListener(moveEventName, handleMove as EventListener);
+    window.addEventListener(upEventName, handleUp, { once: true });
+  }
+
+  function handleTestsResizePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    beginTestsPaneResize(event.clientY, "pointermove", "pointerup");
+  }
+
+  function handleTestsResizeMouseDown(event: ReactMouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    beginTestsPaneResize(event.clientY, "mousemove", "mouseup");
+  }
+
+  function handleTestsResizerKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setTestsCollapsed(false);
+      setTestPaneShare((share) => clampNumber(share + 5, MIN_TEST_PANE_SHARE, MAX_TEST_PANE_SHARE));
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setTestsCollapsed(false);
+      setTestPaneShare((share) => clampNumber(share - 5, MIN_TEST_PANE_SHARE, MAX_TEST_PANE_SHARE));
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      setTestsCollapsed(false);
+      setTestPaneShare(MAX_TEST_PANE_SHARE);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      setTestsCollapsed(false);
+      setTestPaneShare(MIN_TEST_PANE_SHARE);
+    }
   }
 
   async function withBusy(label: string, action: () => Promise<void>) {
@@ -333,6 +514,8 @@ export function ScenarioWorkspaceScreen({
   const latestVisible = attempt?.visibleRuns[0];
   const latestHidden = attempt?.hiddenRuns[0];
   const latestCoachTurns = attempt?.aiTurns.filter((turn) => turn.kind === "coach").slice(0, 3) ?? [];
+  const activeFile = editableFiles.find((file) => file.path === activeFilePath);
+  const activeFileLanguage = languageForScenarioFile(activeFilePath);
   const workspacePath = attempt?.workspacePath;
   const isOnsiteInterview = isOnsiteScenario(scenario, prompt);
   const debriefOpen = sessionEnded || Boolean(attempt?.judge);
@@ -358,6 +541,19 @@ export function ScenarioWorkspaceScreen({
   const debriefLockCopy = debriefOpen
     ? "Debrief is open below. Add a final explanation, run hidden tests, then generate feedback."
     : "Debrief unlocks when you end the session.";
+  const sessionPaneClassName = [
+    "scenario-main-pane",
+    "scenario-session-pane",
+    attempt ? "scenario-session-active" : "",
+    debriefOpen ? "scenario-session-debrief" : "",
+    testsCollapsed ? "scenario-tests-collapsed" : ""
+  ].filter(Boolean).join(" ");
+  const sessionPaneStyle = attempt && !debriefOpen && !testsCollapsed
+    ? ({
+        "--scenario-editor-share": `${100 - testPaneShare}fr`,
+        "--scenario-tests-share": `${testPaneShare}fr`
+      } as CSSProperties)
+    : undefined;
 
   return (
     <section className={`scenario-workspace ${isOnsiteInterview ? "scenario-onsite-workspace" : ""}`}>
@@ -394,8 +590,11 @@ export function ScenarioWorkspaceScreen({
             type="button"
             className="secondary-button compact-button scenario-danger-button"
             onClick={() => {
-              setSessionEnded(true);
-              setTimerPaused(true);
+              void (async () => {
+                await flushActiveFile();
+                setSessionEnded(true);
+                setTimerPaused(true);
+              })();
             }}
             disabled={!attempt || debriefOpen}
           >
@@ -479,15 +678,15 @@ export function ScenarioWorkspaceScreen({
           ) : null}
         </aside>
 
-        <main className="scenario-main-pane scenario-session-pane">
+        <main ref={sessionPaneRef} className={sessionPaneClassName} style={sessionPaneStyle}>
           {!attempt ? (
             <section className="scenario-start-card">
               <p className="eyebrow">{scenario.timeboxMinutes} minute simulation</p>
-              <h2>{isOnsiteInterview ? "Start mock interview" : "Start a fresh workspace"}</h2>
+              <h2>{isOnsiteInterview ? "Start in-app interview" : "Start in-app workspace"}</h2>
               <p>
                 {isOnsiteInterview
-                  ? "This creates a local Python repo with starter code and tests. Work from the prompt, talk through your approach, and keep Codex in interviewer mode."
-                  : "This creates a local Python repo with starter code and tests. Use the generated workspace like the live interview backend."}
+                  ? "This loads starter code and tests into the in-app Python editor. Work from the prompt, talk through your approach, and keep Codex in interviewer mode."
+                  : "This loads starter code and tests into the in-app Python editor, backed by the same local runner used by the live interview backend."}
               </p>
               <button type="button" className="primary-button" onClick={() => void startAttempt()} disabled={Boolean(busy)}>
                 Start session
@@ -495,37 +694,108 @@ export function ScenarioWorkspaceScreen({
             </section>
           ) : (
             <>
-              <section className="scenario-workbench">
+              <section className="scenario-workbench scenario-code-workbench">
                 <header>
                   <div>
-                    <p className="eyebrow">Workspace</p>
-                    <code>{workspacePath}</code>
+                    <p className="eyebrow">Editor</p>
+                    <code>{activeFilePath || workspacePath}</code>
                   </div>
                   <div className="scenario-action-row">
-                    <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("finder")}>Finder</button>
-                    <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("vscode")}>VS Code</button>
-                    <button type="button" className="primary-button compact-button" onClick={() => void openAttempt("cursor")}>Cursor</button>
+                    <span className={`scenario-save-state ${saveState}`}>{saveStateLabel(saveState)}</span>
                   </div>
                 </header>
-                <div className={`scenario-diff-editor ${diff ? "" : "empty"}`}>
-                  <div className="scenario-diff-editor-tab">current diff</div>
-                  {diff ? (
-                    <pre><code>{diff}</code></pre>
+
+                {editableFiles.length ? (
+                  <div className="scenario-file-tabs" role="tablist" aria-label="Scenario files">
+                    {editableFiles.map((file) => (
+                      <button
+                        key={file.path}
+                        type="button"
+                        className={file.path === activeFilePath ? "active" : ""}
+                        onClick={() => void selectEditableFile(file.path)}
+                      >
+                        {file.path}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className="scenario-file-editor">
+                  {activeFile ? (
+                    <BasicCodeEditor
+                      key={activeFile.path}
+                      value={activeFile.content}
+                      language={activeFileLanguage}
+                      ariaLabel={`${activeFile.path} editor`}
+                      onChange={updateActiveFile}
+                      onRun={runFromEditor}
+                    />
                   ) : (
                     <div className="scenario-empty-diff">
-                      <strong>No changes yet</strong>
-                      <p>Open the workspace, make a first small change, then run tests.</p>
+                      <strong>No editable files loaded</strong>
+                      <p>Start or resume a session to load the Python workspace.</p>
                     </div>
                   )}
                 </div>
+
+                <details className="scenario-diff-details">
+                  <summary>Workspace diff</summary>
+                  <div className={`scenario-diff-editor ${diff ? "" : "empty"}`}>
+                    <div className="scenario-diff-editor-tab">current diff</div>
+                    {diff ? (
+                      <pre><code>{diff}</code></pre>
+                    ) : (
+                      <div className="scenario-empty-diff">
+                        <strong>No saved changes yet</strong>
+                        <p>Edit in the app, then run tests to refresh the diff.</p>
+                      </div>
+                    )}
+                  </div>
+                </details>
+
+                <details className="scenario-diff-details scenario-local-workspace-details">
+                  <summary>Local folder</summary>
+                  <div className="scenario-local-workspace">
+                    <code>{workspacePath}</code>
+                    <div className="scenario-action-row">
+                      <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("finder")}>Finder</button>
+                      <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("vscode")}>VS Code</button>
+                      <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("cursor")}>Cursor</button>
+                    </div>
+                  </div>
+                </details>
               </section>
 
-              <section className="scenario-test-output">
-                <div className="section-heading">
-                  <h2>Test output</h2>
-                  <p>{latestVisible ? "Latest visible run." : "Run tests when you have a candidate implementation."}</p>
+              {!testsCollapsed && !debriefOpen ? (
+                <div
+                  className="scenario-tests-resizer"
+                  role="separator"
+                  aria-label="Resize tests pane"
+                  aria-orientation="horizontal"
+                  aria-valuemin={MIN_TEST_PANE_SHARE}
+                  aria-valuemax={MAX_TEST_PANE_SHARE}
+                  aria-valuenow={testPaneShare}
+                  aria-controls="scenario-tests-pane"
+                  tabIndex={0}
+                  onPointerDown={handleTestsResizePointerDown}
+                  onMouseDown={handleTestsResizeMouseDown}
+                  onKeyDown={handleTestsResizerKeyDown}
+                >
+                  <span />
                 </div>
-                <ScenarioResultCard label="Visible tests" result={latestVisible} />
+              ) : null}
+
+              <section className="scenario-test-output">
+                <ScenarioTestsPane
+                  editableFiles={editableFiles}
+                  result={latestVisible}
+                  busy={busy}
+                  canRun={Boolean(attempt)}
+                  collapsed={testsCollapsed}
+                  onCollapsedChange={setTestsCollapsed}
+                  onRun={() => void runVisible()}
+                  onOpenFile={(path) => void selectEditableFile(path)}
+                />
               </section>
 
               {debriefOpen ? (
@@ -668,6 +938,29 @@ function currentInterviewerQuestion(phase: string, latestTurn?: ScenarioAiTurn):
   return "Summarize the tradeoff you would call out before handing this in.";
 }
 
+function preferredScenarioFile(files: ScenarioEditableFile[], current: string): string {
+  if (current && files.some((file) => file.path === current)) return current;
+  return files.find((file) => file.path === "src/reservations.py")?.path
+    ?? files.find((file) => file.path.startsWith("src/") && file.path.endsWith(".py"))?.path
+    ?? files.find((file) => file.path.endsWith(".py"))?.path
+    ?? files[0]?.path
+    ?? "";
+}
+
+function languageForScenarioFile(path: string): string {
+  if (path.endsWith(".py")) return "python";
+  if (path.endsWith(".ts") || path.endsWith(".tsx")) return "typescript";
+  if (path.endsWith(".go")) return "go";
+  if (path.endsWith(".scala")) return "scala";
+  return "text";
+}
+
+function saveStateLabel(state: "saved" | "saving" | "error"): string {
+  if (state === "saving") return "Saving";
+  if (state === "error") return "Save failed";
+  return "Saved";
+}
+
 function formatClock(ms: number): string {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const hours = Math.floor(totalSeconds / 3600);
@@ -683,6 +976,178 @@ function formatTime(iso: string): string {
 
 function pad2(value: number): string {
   return value.toString().padStart(2, "0");
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+type ScenarioTestStatus = "passed" | "failed" | "idle";
+
+interface ScenarioVisibleTestCase {
+  name: string;
+  input: string;
+  expected: string;
+  status: ScenarioTestStatus;
+  failure?: string;
+}
+
+function ScenarioTestsPane({
+  editableFiles,
+  result,
+  busy,
+  canRun,
+  collapsed,
+  onCollapsedChange,
+  onRun,
+  onOpenFile
+}: {
+  editableFiles: ScenarioEditableFile[];
+  result?: ScenarioCommandResult;
+  busy: string;
+  canRun: boolean;
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
+  onRun: () => void;
+  onOpenFile: (path: string) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<"tests" | "custom">("tests");
+  const testFile = editableFiles.find((file) => file.path.startsWith("tests/") && file.path.endsWith(".py"));
+  const cases = useMemo(() => visibleTestCasesFromFile(testFile?.content ?? "", result), [testFile?.content, result]);
+  const passedCount = cases.filter((testCase) => testCase.status === "passed").length;
+  const firstFailedIndex = cases.findIndex((testCase) => testCase.status === "failed");
+  const ran = Boolean(result);
+  const statusLabel = result ? `${result.status} / ${result.durationMs} ms` : "not run";
+  const countLabel = ran ? `${passedCount}/${cases.length || 1}` : `0/${cases.length || 1}`;
+
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        className={`scenario-tests-collapsed-bar ${result?.status ?? "idle"}`}
+        onClick={() => onCollapsedChange(false)}
+        aria-controls="scenario-tests-pane"
+        aria-expanded="false"
+      >
+        <span className="scenario-tests-collapsed-title">Tests</span>
+        <strong>{`${countLabel} · ${statusLabel}`}</strong>
+        <span className="scenario-tests-collapsed-action">Restore</span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="scenario-tests-pane" id="scenario-tests-pane">
+      <button
+        type="button"
+        className="scenario-tests-collapse-button"
+        onClick={() => onCollapsedChange(true)}
+        aria-label="Minimize tests pane"
+        aria-controls="scenario-tests-pane"
+        aria-expanded="true"
+        title="Minimize tests pane"
+      >
+        -
+      </button>
+      <header className="scenario-tests-tabs" role="tablist" aria-label="Scenario test panes">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "tests"}
+          className={activeTab === "tests" ? "active" : ""}
+          onClick={() => setActiveTab("tests")}
+        >
+          TESTS
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "custom"}
+          className={activeTab === "custom" ? "active" : ""}
+          onClick={() => setActiveTab("custom")}
+        >
+          CUSTOM TESTS
+        </button>
+        <div className="scenario-tests-run">
+          <span>{countLabel}</span>
+          <button
+            type="button"
+            className="primary-button compact-button"
+            onClick={() => {
+              setActiveTab("tests");
+              onRun();
+            }}
+            disabled={Boolean(busy) || !canRun}
+          >
+            Run Tests
+          </button>
+        </div>
+      </header>
+
+      {activeTab === "tests" ? (
+        <div className="scenario-tests-body">
+          <div className={`scenario-tests-summary ${result?.status ?? "idle"}`}>
+            <strong>{statusLabel}</strong>
+            <span>{result?.command ?? "python -m unittest discover -s tests -v"}</span>
+          </div>
+          {cases.length ? (
+            <div className="scenario-tests-case-list">
+              {cases.map((testCase, index) => (
+                <details
+                  key={testCase.name}
+                  className={`scenario-tests-case ${testCase.status}`}
+                  open={(testCase.status === "failed" && index === firstFailedIndex) || (!ran && index === 0)}
+                >
+                  <summary>
+                    <span className="scenario-tests-caret" aria-hidden="true" />
+                    <strong>{`Test ${index + 1}`}</strong>
+                    <span>{formatTestName(testCase.name)}</span>
+                    <small>{testStatusLabel(testCase.status, ran)}</small>
+                  </summary>
+                  <dl>
+                    <div>
+                      <dt>Input</dt>
+                      <dd><pre><code>{testCase.input || testCase.name}</code></pre></dd>
+                    </div>
+                    <div>
+                      <dt>Expected Output</dt>
+                      <dd><pre><code>{testCase.expected || "(see test assertion)"}</code></pre></dd>
+                    </div>
+                    {testCase.failure ? (
+                      <div>
+                        <dt>Output</dt>
+                        <dd><pre><code>{testCase.failure}</code></pre></dd>
+                      </div>
+                    ) : null}
+                  </dl>
+                </details>
+              ))}
+            </div>
+          ) : (
+            <div className="scenario-tests-empty">
+              <strong>No visible tests loaded</strong>
+              <span>{testFile ? testFile.path : "tests/test_reservations.py"}</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="scenario-tests-body scenario-tests-custom">
+          <div>
+            <strong>{testFile?.path ?? "tests/test_reservations.py"}</strong>
+            <span>Custom rehearsal cases live in the editable unittest file.</span>
+          </div>
+          <button
+            type="button"
+            className="secondary-button compact-button"
+            onClick={() => testFile ? onOpenFile(testFile.path) : undefined}
+            disabled={!testFile}
+          >
+            Open Test File
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ScenarioResultCard({ label, result }: { label: string; result?: ScenarioCommandResult }) {
@@ -703,6 +1168,109 @@ function ScenarioResultCard({ label, result }: { label: string; result?: Scenari
       )}
     </article>
   );
+}
+
+function visibleTestCasesFromFile(content: string, result?: ScenarioCommandResult): ScenarioVisibleTestCase[] {
+  const output = [result?.stdout, result?.stderr].filter(Boolean).join("\n");
+  const statuses = parseUnittestStatuses(output);
+  const failures = parseUnittestFailures(output);
+  const cases: ScenarioVisibleTestCase[] = [];
+  const testPattern = /\n    def\s+(test_[A-Za-z0-9_]+)\(self\):([\s\S]*?)(?=\n    def\s+test_[A-Za-z0-9_]+\(self\):|\n\nif __name__|$)/g;
+  for (const match of content.matchAll(testPattern)) {
+    const name = match[1];
+    const body = match[2];
+    cases.push({
+      name,
+      input: extractCallArgument(body, "run_operations"),
+      expected: extractExpectedAssertion(body),
+      status: statuses.get(name) ?? (result?.status === "passed" ? "passed" : "idle"),
+      failure: failures.get(name)
+    });
+  }
+  return cases;
+}
+
+function parseUnittestStatuses(output: string): Map<string, ScenarioTestStatus> {
+  const statuses = new Map<string, ScenarioTestStatus>();
+  const pattern = /^(test_[A-Za-z0-9_]+)\s+\([^)]+\)\s+\.\.\.\s+([A-Z]+|ok)\s*$/gm;
+  for (const match of output.matchAll(pattern)) {
+    statuses.set(match[1], match[2] === "ok" ? "passed" : "failed");
+  }
+  return statuses;
+}
+
+function parseUnittestFailures(output: string): Map<string, string> {
+  const failures = new Map<string, string>();
+  const pattern = /={20,}\n(?:FAIL|ERROR):\s+(test_[A-Za-z0-9_]+)[^\n]*\n-{20,}\n([\s\S]*?)(?=\n={20,}|\n-{20,}\nRan\s+\d+\s+tests?|\nFAILED|\nOK|$)/g;
+  for (const match of output.matchAll(pattern)) {
+    failures.set(match[1], match[2].trim());
+  }
+  return failures;
+}
+
+function extractCallArgument(body: string, callName: string): string {
+  const marker = `${callName}(`;
+  const markerIndex = body.indexOf(marker);
+  if (markerIndex === -1) return "";
+  return scanExpression(body, markerIndex + marker.length, ")");
+}
+
+function extractExpectedAssertion(body: string): string {
+  const marker = "self.assertEqual(result,";
+  const markerIndex = body.indexOf(marker);
+  if (markerIndex === -1) return "";
+  return scanExpression(body, markerIndex + marker.length, ")");
+}
+
+function scanExpression(source: string, startIndex: number, stop: string): string {
+  let depth = 0;
+  let quote = "";
+  let escaped = false;
+  for (let index = startIndex; index < source.length; index += 1) {
+    const char = source[index];
+    if (quote) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === quote) {
+        quote = "";
+      }
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === "[" || char === "{" || char === "(") {
+      depth += 1;
+      continue;
+    }
+    if (char === "]" || char === "}" || char === ")") {
+      if (depth === 0 && char === stop) return normalizePythonSnippet(source.slice(startIndex, index));
+      depth = Math.max(0, depth - 1);
+    }
+  }
+  return normalizePythonSnippet(source.slice(startIndex));
+}
+
+function normalizePythonSnippet(value: string): string {
+  const lines = value.replace(/\r\n/g, "\n").split("\n");
+  const nonEmpty = lines.filter((line) => line.trim());
+  const indent = Math.min(...nonEmpty.map((line) => line.match(/^\s*/)?.[0].length ?? 0), Number.POSITIVE_INFINITY);
+  const normalizedIndent = Number.isFinite(indent) ? indent : 0;
+  return lines.map((line) => line.slice(normalizedIndent)).join("\n").trim();
+}
+
+function formatTestName(name: string): string {
+  return name.replace(/^test_/, "").replaceAll("_", " ");
+}
+
+function testStatusLabel(status: ScenarioTestStatus, ran: boolean): string {
+  if (!ran) return "not run";
+  if (status === "passed") return "passed";
+  if (status === "failed") return "failed";
+  return "not run";
 }
 
 function JudgeReport({ report }: { report: ScenarioJudgeReport }) {

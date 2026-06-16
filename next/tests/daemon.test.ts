@@ -77,6 +77,58 @@ describe("runner daemon API", () => {
     }
   });
 
+  test("serves and saves scenario editable files", async () => {
+    const userDataRoot = await mkdtemp(join(tmpdir(), "dsa-coach-next-scenarios-"));
+    const graph = await loadContentGraph();
+    const server = createRunnerDaemonServer({ graph, contentRoot: defaultContentRoot, userDataRoot });
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("missing test server address");
+    const base = `http://127.0.0.1:${address.port}`;
+
+    try {
+      const started = await fetch(`${base}/scenarios/start`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ scenarioId: "ramp-hotel-reservations" })
+      }).then((res) => res.json() as Promise<{ attempt: { attemptId: string } }>);
+      const attemptId = started.attempt.attemptId;
+
+      const listed = await fetch(`${base}/scenarios/files?attemptId=${encodeURIComponent(attemptId)}`)
+        .then((res) => res.json() as Promise<{ files: Array<{ path: string; content: string }> }>);
+      const source = listed.files.find((file) => file.path === "src/reservations.py");
+      expect(source?.content).toContain("class HotelReservationService");
+      expect(listed.files.map((file) => file.path)).toContain("tests/test_reservations.py");
+
+      const changed = `${source?.content ?? ""}\n# candidate note\n`;
+      const saved = await fetch(`${base}/scenarios/file`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ attemptId, path: "src/reservations.py", content: changed })
+      });
+      expect(saved.ok).toBe(true);
+
+      const reread = await fetch(`${base}/scenarios/files?attemptId=${encodeURIComponent(attemptId)}`)
+        .then((res) => res.json() as Promise<{ files: Array<{ path: string; content: string }> }>);
+      expect(reread.files.find((file) => file.path === "src/reservations.py")?.content).toContain("candidate note");
+
+      const diff = await fetch(`${base}/scenarios/diff?attemptId=${encodeURIComponent(attemptId)}`)
+        .then((res) => res.json() as Promise<{ diff: string }>);
+      expect(diff.diff).toContain("candidate note");
+
+      const rejected = await fetch(`${base}/scenarios/file`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ attemptId, path: "attempt.json", content: "{}" })
+      });
+      expect(rejected.ok).toBe(false);
+    } finally {
+      server.close();
+      await rm(userDataRoot, { recursive: true, force: true });
+    }
+  });
+
   test("persists user data and workspace state in the configured data root", async () => {
     const userDataRoot = await mkdtemp(join(tmpdir(), "dsa-coach-next-data-"));
     const graph = await loadContentGraph();

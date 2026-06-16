@@ -81,17 +81,23 @@ interface BasicCodeEditorProps {
   language: LanguageId;
   ariaLabel: string;
   onChange: (value: string) => void;
+  onRun?: (includeHidden: boolean) => void;
 }
 
-export function BasicCodeEditor({ value, language, ariaLabel, onChange }: BasicCodeEditorProps) {
+export function BasicCodeEditor({ value, language, ariaLabel, onChange, onRun }: BasicCodeEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
+  const onRunRef = useRef(onRun);
   const languageSlot = useMemo(() => new Compartment(), []);
 
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    onRunRef.current = onRun;
+  }, [onRun]);
 
   useEffect(() => {
     if (!hostRef.current) return;
@@ -101,6 +107,24 @@ export function BasicCodeEditor({ value, language, ariaLabel, onChange }: BasicC
         doc: value,
         extensions: [
           ...basicEditorExtensions,
+          Prec.highest(keymap.of([
+            {
+              key: "Mod-Enter",
+              run: () => {
+                if (!onRunRef.current) return false;
+                onRunRef.current(false);
+                return true;
+              }
+            },
+            {
+              key: "Shift-Mod-Enter",
+              run: () => {
+                if (!onRunRef.current) return false;
+                onRunRef.current(true);
+                return true;
+              }
+            }
+          ])),
           languageSlot.of(languageExtension(language)),
           EditorView.lineWrapping,
           EditorView.contentAttributes.of({ "aria-label": ariaLabel }),

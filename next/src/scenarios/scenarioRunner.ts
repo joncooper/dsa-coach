@@ -46,6 +46,11 @@ export interface ScenarioCommandResult {
   ranAt: string;
 }
 
+export interface ScenarioEditableFile {
+  path: string;
+  content: string;
+}
+
 export interface ScenarioJudgeReport {
   overall: "strong_hire" | "hire" | "mixed" | "no_hire";
   summary: string;
@@ -112,6 +117,29 @@ export class ScenarioRunner {
   async prompt(scenarioId: string): Promise<string> {
     const scenario = this.scenario(scenarioId);
     return readFile(this.contentPath(scenario.promptPath), "utf8");
+  }
+
+  async editableFiles(attemptId: string): Promise<ScenarioEditableFile[]> {
+    const attempt = await this.readAttempt(attemptId);
+    const scenario = this.scenario(attempt.scenarioId);
+    const files: ScenarioEditableFile[] = [];
+    for (const editablePath of scenario.editablePaths) {
+      const root = this.editablePath(attempt, scenario, editablePath);
+      await collectEditableFiles(root, editablePath, files);
+    }
+    return files.sort((left, right) => left.path.localeCompare(right.path));
+  }
+
+  async saveEditableFile(attemptId: string, filePath: string, content: string): Promise<ScenarioAttempt> {
+    const attempt = await this.readAttempt(attemptId);
+    const scenario = this.scenario(attempt.scenarioId);
+    const target = this.editablePath(attempt, scenario, filePath);
+    const parent = dirname(target);
+    await mkdir(parent, { recursive: true });
+    await writeFile(target, content, "utf8");
+    attempt.updatedAt = new Date().toISOString();
+    await this.writeAttempt(attempt);
+    return attempt;
   }
 
   async saveCheckpoint(attemptId: string, checkpointId: string, answer: string): Promise<ScenarioAttempt> {
@@ -332,6 +360,19 @@ export class ScenarioRunner {
     return target;
   }
 
+  private editablePath(attempt: ScenarioAttempt, scenario: Scenario, relativePath: string): string {
+    if (!relativePath.trim() || relativePath.startsWith("/") || relativePath.split(/[\\/]/).includes("..")) {
+      throw new Error(`Invalid scenario file path: ${relativePath}`);
+    }
+    const target = resolve(attempt.workspacePath, relativePath);
+    if (!isInside(attempt.workspacePath, target)) throw new Error(`Scenario file path escapes workspace: ${relativePath}`);
+    const editableRoots = scenario.editablePaths.map((editablePath) => resolve(attempt.workspacePath, editablePath));
+    if (!editableRoots.some((root) => isInside(root, target))) {
+      throw new Error(`Scenario file is not editable: ${relativePath}`);
+    }
+    return target;
+  }
+
   private attemptRoot(): string {
     return resolve(this.userDataRoot, "scenario-attempts");
   }
@@ -454,6 +495,29 @@ function fallbackJudge(summary: string): Omit<ScenarioJudgeReport, "raw" | "crea
     highestRiskWeakness: "Judge response could not be parsed as structured feedback.",
     nextDrill: "Run the attempt again after checking Codex availability."
   };
+}
+
+async function collectEditableFiles(root: string, relativeRoot: string, files: ScenarioEditableFile[]): Promise<void> {
+  const entries = await readdir(root, { withFileTypes: true }).catch(() => undefined);
+  if (!entries) return;
+  for (const entry of entries) {
+    if (entry.name === ".git" || entry.name === "__pycache__" || entry.name.startsWith(".")) continue;
+    const absolutePath = resolve(root, entry.name);
+    const relativePath = `${relativeRoot}/${entry.name}`;
+    if (entry.isDirectory()) {
+      await collectEditableFiles(absolutePath, relativePath, files);
+      continue;
+    }
+    if (!entry.isFile() || !isTextEditableFile(entry.name)) continue;
+    files.push({
+      path: relativePath,
+      content: await readFile(absolutePath, "utf8")
+    });
+  }
+}
+
+function isTextEditableFile(name: string): boolean {
+  return [".py", ".txt", ".md", ".json", ".toml", ".yaml", ".yml", ".ini", ".cfg"].some((suffix) => name.endsWith(suffix));
 }
 
 async function readdirSafe(path: string): Promise<string[]> {
