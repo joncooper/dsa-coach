@@ -1,0 +1,33 @@
+{
+  "id": "ramp-hotel-reservations",
+  "kind": "scenario",
+  "title": "Hotel Reservation Service",
+  "difficulty": "hard",
+  "concepts": ["stateful design", "intervals", "indexes", "deterministic assignment"],
+  "summary": "Extend a tiny in-memory hotel reservation service through rooms, bookings, cancellation, availability, and guest lookup.",
+  "promptPath": "scenarios/ramp-hotel-reservations/prompt.md",
+  "templatePath": "scenarios/ramp-hotel-reservations/template",
+  "hiddenTestsPath": "scenarios/ramp-hotel-reservations/hidden-tests",
+  "visibleTestCommand": {"command": "python", "args": ["-m", "unittest", "discover", "-s", "tests", "-v"], "timeoutMs": 30000},
+  "hiddenTestCommand": {"command": "python", "args": ["-m", "unittest", "discover", "-s", "tests", "-v"], "timeoutMs": 30000},
+  "editablePaths": ["src", "tests"],
+  "timeboxMinutes": 60,
+  "evidence": {"source": "synthetic", "observedAt": "2026-06-16", "confidence": "medium", "note": "Built from Ramp onsite prep guidance: practical backend workflow, ambiguity, state modeling, and system-design-flavored coding."},
+  "rubric": [
+    {"id": "framing", "label": "Problem framing", "weight": 12, "excellent": "States the half-open interval rule, invalid range behavior, and deterministic room-selection rule before coding."},
+    {"id": "model", "label": "Data model", "weight": 16, "excellent": "Chooses clear room, reservation, room-index, and guest-index state without overbuilding."},
+    {"id": "mvp", "label": "MVP sequencing", "weight": 12, "excellent": "Ships additive behavior incrementally while keeping existing operations working."},
+    {"id": "correctness", "label": "Correctness", "weight": 22, "excellent": "Handles overlaps, back-to-back stays, cancellation, active vs canceled reservations, and guest sorting."},
+    {"id": "testing", "label": "Testing and validation", "weight": 14, "excellent": "Adds or reasons through tests for invalid ranges, overlap boundaries, cancellation, and creation-order tie breaks."},
+    {"id": "debugging", "label": "Debugging and recovery", "weight": 10, "excellent": "Uses visible failures to isolate one invariant or state-update bug at a time."},
+    {"id": "communication", "label": "Communication", "weight": 14, "excellent": "Keeps the interviewer oriented around contract, invariants, edge cases, and tradeoffs."}
+  ],
+  "checkpoints": [
+    {"id": "read", "minute": 5, "title": "Read the code", "prompt": "What does the starter service already do, and what is intentionally missing?"},
+    {"id": "contract", "minute": 10, "title": "Restate contract", "prompt": "State the reservation interval rule, invalid date behavior, and room-selection tie break."},
+    {"id": "model", "minute": 18, "title": "Model choice", "prompt": "What state and indexes will you keep so booking, cancellation, availability, and guest lookup stay simple?"},
+    {"id": "mvp", "minute": 30, "title": "MVP checkpoint", "prompt": "What operation works end-to-end now, and what visible failure is next?"},
+    {"id": "risk", "minute": 45, "title": "Risk check", "prompt": "Which edge case is most likely still broken? How would you prove it?"},
+    {"id": "final", "minute": 60, "title": "Final explanation", "prompt": "Explain your invariants, complexity, test strategy, and what you would add in production."}
+  ]
+}

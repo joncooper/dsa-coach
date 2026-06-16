@@ -181,13 +181,16 @@ export class ScenarioRunner {
     const resultSummary = summarizeRuns(attempt);
     const response = await runCodexText({
       workingDirectory: attempt.workspacePath,
-      effort: "medium",
-      timeoutMs: 120000,
+      effort: "xhigh",
+      timeoutMs: 180000,
       prompt: [
-        "You are a Ramp AI backend interview coach inside DSA Coach.",
+        "You are a Ramp-style senior interview coach inside DSA Coach.",
         "Use the candidate's current workspace and the provided scenario context.",
-        "Do not rewrite the solution unless explicitly asked. Prefer guiding questions, edge cases, and review comments.",
-        "Focus on codebase comprehension, command of solution, MVP judgment, testing, and AI direction.",
+        "Default to interviewer-style coaching: one pointed question, one precise next step, or one small debugging observation.",
+        "Do not rewrite the solution unless explicitly asked. Prefer guiding questions, edge cases, invariant checks, and review comments.",
+        "If the scenario says it is a no-AI onsite rehearsal, behave as an observer/interviewer, not as an implementation copilot.",
+        "If the scenario says AI use is expected, evaluate whether the candidate remains in command while using AI.",
+        "Focus on codebase comprehension, command of solution, MVP judgment, testing, debugging, and communication.",
         "",
         `Scenario: ${scenario.title}`,
         prompt,

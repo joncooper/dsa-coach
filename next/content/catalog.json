@@ -79,6 +79,10 @@
         },
         {
           "kind": "scenario-set",
+          "id": "ramp-onsite-coding"
+        },
+        {
+          "kind": "scenario-set",
           "id": "ramp-ai-backend"
         },
         {
@@ -135,6 +139,7 @@
     "problem-sets/lib-ordered-dict.json"
   ],
   "scenarioSets": [
+    "scenario-sets/ramp-onsite-coding.json",
     "scenario-sets/ramp-ai-backend.json"
   ],
   "problems": [
@@ -420,6 +425,7 @@
     "problems/ramp-travel-api-weekly-spend/problem.json"
   ],
   "scenarios": [
+    "scenarios/ramp-hotel-reservations/scenario.json",
     "scenarios/ramp-ledger-reconciliation/scenario.json",
     "scenarios/ramp-transaction-sync/scenario.json",
     "scenarios/ramp-webhook-idempotency/scenario.json",

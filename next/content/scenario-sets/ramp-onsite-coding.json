@@ -1,0 +1,13 @@
+{
+  "id": "ramp-onsite-coding",
+  "kind": "scenario-set",
+  "title": "Ramp Onsite Coding Rehearsals",
+  "summary": "Codex-backed repo scenarios for the no-AI onsite coding rounds: realistic state modeling, incremental implementation, visible test feedback, and interviewer-style coaching without replacing your solution.",
+  "entries": [
+    {
+      "scenario": "ramp-hotel-reservations",
+      "category": "stateful design",
+      "note": "hotel rooms, half-open stays, cancellation, availability, guest indexes"
+    }
+  ]
+}
