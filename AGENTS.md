@@ -68,6 +68,7 @@ open -n "/Users/jdc/.codex/worktrees/5138/dsa-coach/next/dist/macos/DSA Coach Ne
 - Verification should confirm Python execution succeeds without requiring a system Python interpreter. Pyodide assets should be served from the app bundle/web build at `/pyodide/`.
 - Old scenario attempts may still display legacy command strings such as `python3 -m unittest` in saved run history. For Pyodide verification, run a fresh test from the current build and confirm the new run reports `Pyodide unittest`.
 - If Computer Use can observe the native app but direct click/type actions fail, recursive macOS Accessibility scripting via `System Events` is an acceptable fallback for native-app interaction. Keep the target app path explicit so stale app instances from other worktrees are not inspected by mistake.
+- When using Accessibility fallback, target the exact app process/bundle and prefer pressing named AX controls (for example titled buttons) over coordinate clicks. Raw coordinates are unreliable with overlapping Codex/native windows, and CodeMirror value-setting through AX may not update the real editor buffer.
 
 ## Commands And Caveats
 

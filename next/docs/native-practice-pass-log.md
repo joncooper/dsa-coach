@@ -10,7 +10,7 @@ Screenshots live in `next/docs/native-practice-pass-screenshots/`.
 | --- | --- | --- | --- | --- |
 | 1 | Ramp Onsite: Hotel Reservation Service | Visible-test debugging, coach loop, final Pyodide pass | [`pass-01-ramp-onsite-initial.png`](native-practice-pass-screenshots/pass-01-ramp-onsite-initial.png), [`pass-01-ramp-onsite-final.png`](native-practice-pass-screenshots/pass-01-ramp-onsite-final.png), [`pass-01-timer-reset-verification.png`](native-practice-pass-screenshots/pass-01-timer-reset-verification.png) | Completed: 5/5 visible tests passed |
 | 2 | Ramp AI Backend Drills: Transaction Sync Client | Scenario start, coach loop, Pyodide visible/hidden tests, debrief path | [`pass-02-sync-start.png`](native-practice-pass-screenshots/pass-02-sync-start.png), [`pass-02-sync-initial-failure.png`](native-practice-pass-screenshots/pass-02-sync-initial-failure.png), [`pass-02-sync-visible-pass.png`](native-practice-pass-screenshots/pass-02-sync-visible-pass.png), [`pass-02-sync-hidden-pass-judging-stuck.png`](native-practice-pass-screenshots/pass-02-sync-hidden-pass-judging-stuck.png), [`pass-02-sync-rebuilt-default-file.png`](native-practice-pass-screenshots/pass-02-sync-rebuilt-default-file.png) | Completed: 3/3 visible and 3/3 hidden tests passed |
-| 3 | Pending | Pending | Pending | Pending |
+| 3 | Ramp AI Backend Drills: Ledger Reconciliation | Coach pressure-test, stale-buffer recovery, Pyodide visible/hidden tests | [`pass-03-ledger-start.png`](native-practice-pass-screenshots/pass-03-ledger-start.png), [`pass-03-ledger-initial-test-run.png`](native-practice-pass-screenshots/pass-03-ledger-initial-test-run.png), [`pass-03-ledger-coach-response.png`](native-practice-pass-screenshots/pass-03-ledger-coach-response.png), [`pass-03-ledger-visible-rerun.png`](native-practice-pass-screenshots/pass-03-ledger-visible-rerun.png), [`pass-03-ledger-hidden-pass.png`](native-practice-pass-screenshots/pass-03-ledger-hidden-pass.png) | Completed: 3/3 visible and 3/3 hidden tests passed |
 | 4 | Pending | Pending | Pending | Pending |
 | 5 | Pending | Pending | Pending | Pending |
 | 6 | Pending | Pending | Pending | Pending |
@@ -68,3 +68,29 @@ UX notes:
 - Issue: when the editor is scrolled to the bottom, the accessibility value can appear visually empty at the top of the field even though line nodes still exist. This is probably a CodeMirror/accessibility artifact, but it makes state inspection noisier.
 
 App improvements from this pass: scenario file selection now prefers known main implementation files and non-`__init__.py` Python files before falling back to `__init__.py` or the first file. Judge generation now has a bounded timeout so the debrief can fall back instead of leaving the UI on `Judging attempt...` for minutes. The judge prompt now defines the 1-5 score scale and requires score consistency with the overall decision.
+
+## Pass 3: Ramp AI Backend Drills Ledger Reconciliation
+
+Scenario: resumed the Ledger Reconciliation drill in the native macOS app and worked through it with visible tests, coach pressure testing, hidden tests, and the debrief gate.
+
+Exercise path:
+
+- Reopened the scenario after the previous build. The screen correctly opened `src/reconciliation.py`, kept the timer paused at `0:00`, and showed the previous `Pyodide unittest` run state instead of a local Python command.
+- Ran visible tests from the native app. The starting implementation showed `1/3 failed / 867 ms`; exact external-id matching passed, but missing-external-id inference and ambiguity reporting failed.
+- Implemented a first candidate solution in the in-app editor: exact-id pass first, then amount/date/merchant-token inference, and ambiguity when a single internal row had multiple bank candidates.
+- Re-ran visible tests and got `3/3 passed / 839 ms` with `Pyodide unittest`.
+- Asked the coach to pressure-test the one-to-one and ambiguity logic before submit. The coach found a real gap: two internal rows can both have the same single bank candidate, and greedily consuming that bank row is input-order dependent.
+- The second edit attempt exposed a stale-buffer/tooling issue: macOS paste updated the editor once, then failed to replace the buffer on the next attempt. I recovered by saving the corrected graph-based version through the app scenario file API, refreshing the native webview, and reopening the scenario so the visible editor reloaded the saved file.
+- Re-ran visible tests in the native app after reopening. The result was `3/3 passed / 879 ms` with `Pyodide unittest`.
+- Ended the session, opened Debrief Studio, and ran hidden tests. Hidden submit passed `3/3 / 901 ms` with `Pyodide unittest`.
+
+UX notes:
+
+- Good: the coach identified a meaningful invariant not covered by the current tests: inferred matching should only auto-match clear degree-1-on-both-sides edges after exact-id matches are removed.
+- Good: native scenario buttons are exposed to the accessibility tree with useful titles, so AXPress can drive the app when coordinate clicking fails.
+- Good: ending the session cleanly revealed Debrief Studio and kept hidden tests gated until then.
+- Issue: Computer Use app-state and click calls timed out repeatedly during this pass. The native app stayed responsive, but the Computer Use bridge became unusable for direct inspection/clicking.
+- Issue: CodeMirror text entry through macOS AX is unreliable. Direct value-setting did not update the editor; paste-based input worked once and then left the visible buffer stale. This matters because stale buffers can overwrite daemon-saved files when tests flush the active editor.
+- Issue: coordinate-based macOS fallback is error-prone in a desktop with overlapping Codex and native-app windows. AXPress by titled control was much more reliable than raw mouse coordinates.
+
+App/content improvement from this pass: Ledger Reconciliation hidden tests now include the coach-discovered shared-single-candidate case so future solutions cannot greedily match one of two internal rows to the same sole bank candidate without reporting ambiguity.
