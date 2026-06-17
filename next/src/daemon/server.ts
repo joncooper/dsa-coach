@@ -418,7 +418,7 @@ async function handleRequest(
     const result = await content.current().lsp.definition(JSON.parse(body) as LspPositionRequest);
     return json(res, 200, result);
   }
-  if (req.method === "GET" && options.staticRoot && (await serveStatic(res, url, options))) {
+  if ((req.method === "GET" || req.method === "HEAD") && options.staticRoot && (await serveStatic(res, url, options, req.method))) {
     return;
   }
 
@@ -518,7 +518,7 @@ function resolveUserDataRoot(options: RunnerDaemonOptions): string {
   return resolve(options.userDataRoot ?? process.env.DSA_COACH_USER_DATA_DIR ?? ".user-data");
 }
 
-async function serveStatic(res: ServerResponse, url: URL, options: RunnerDaemonOptions): Promise<boolean> {
+async function serveStatic(res: ServerResponse, url: URL, options: RunnerDaemonOptions, method: "GET" | "HEAD"): Promise<boolean> {
   if (!options.staticRoot) return false;
   const root = resolve(options.staticRoot);
   const pathname = staticPathname(url.pathname);
@@ -532,7 +532,7 @@ async function serveStatic(res: ServerResponse, url: URL, options: RunnerDaemonO
     "content-type": contentType(file),
     "cache-control": staticCacheControl(options, file)
   });
-  res.end(await readFile(file));
+  res.end(method === "HEAD" ? undefined : await readFile(file));
   return true;
 }
 

@@ -42,6 +42,23 @@ class HiddenReconciliationTests(unittest.TestCase):
         self.assertEqual(report.matched, [("li_1", "ba_exact")])
         self.assertEqual(report.unmatched_external, ["ba_wrong"])
 
+    def test_shared_single_candidate_is_ambiguous_not_greedy(self):
+        report = reconcile(
+            [
+                InternalEntry("li_1", -1100, "2026-06-01", "Linear"),
+                InternalEntry("li_2", -1100, "2026-06-01", "Linear"),
+            ],
+            [BankEntry("ba_1", -1100, "2026-06-01", "Linear Inc")],
+        )
+
+        self.assertEqual(report.matched, [])
+        self.assertEqual(report.unmatched_internal, ["li_1", "li_2"])
+        self.assertEqual(report.unmatched_external, ["ba_1"])
+        self.assertEqual(
+            [(item["internal_id"], item["candidate_external_ids"]) for item in report.ambiguous],
+            [("li_1", ["ba_1"]), ("li_2", ["ba_1"])],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

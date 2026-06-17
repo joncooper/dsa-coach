@@ -41,6 +41,25 @@ class HiddenPaymentWebhookTests(unittest.TestCase):
         self.assertEqual(payment.status, "refunded")
         self.assertEqual(payment.refunded_cents, 300)
 
+    def test_equal_rank_terminal_event_does_not_replace_first_terminal(self):
+        store = PaymentStore()
+
+        handle_event(store, event("evt_1", "payment.refunded", amount=300))
+        handle_event(store, event("evt_2", "payment.failed", amount=300))
+
+        payment = store.payments["pay_1"]
+        self.assertEqual(payment.status, "refunded")
+        self.assertEqual(payment.refunded_cents, 300)
+
+    def test_event_id_is_global_not_per_payment(self):
+        store = PaymentStore()
+
+        handle_event(store, event("evt_1", "payment.created", payment_id="pay_1", amount=500))
+        result = handle_event(store, event("evt_1", "payment.created", payment_id="pay_2", amount=700))
+
+        self.assertIsNone(result)
+        self.assertEqual(set(store.payments), {"pay_1"})
+
 
 if __name__ == "__main__":
     unittest.main()

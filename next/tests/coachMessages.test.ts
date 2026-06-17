@@ -110,6 +110,64 @@ describe("coach prompt context", () => {
     expect(finalMessage).toContain("stderr:");
   });
 
+  test("debug mode tells the coach to trace aggregate state before blaming unrelated edge cases", () => {
+    const messages = buildCoachMessages(baseArgs({
+      mode: "debug",
+      problemTitle: "Progressive Banking Ledger - Level 2: Top spenders",
+      prompt: "Successful WITHDRAW and source-side TRANSFER operations both count toward outgoing volume.",
+      code: [
+        "def solution(queries):",
+        "    balances = {}",
+        "    spent = {}",
+        "    # TRANSFER updates balances but forgets spent[source]",
+        "    return []"
+      ].join("\n"),
+      question: "What invariant did I miss?",
+      result: {
+        status: "failed",
+        stdout: "",
+        stderr: "",
+        durationMs: 12,
+        tests: []
+      },
+      failedVisible: [
+        {
+          name: "l2-top1-simple",
+          passed: false,
+          visibility: "visible",
+          args: [[["TRANSFER", "4", "a", "b", "60"], ["TOP_SPENDERS", "5", "1"]]],
+          expected: ["true", "true", "100", "40", "a(60)"],
+          actual: ["true", "true", "100", "40", "a(0)"]
+        }
+      ]
+    }));
+
+    const systemMessage = messages.at(0)?.content ?? "";
+    const finalMessage = messages.at(-1)?.content ?? "";
+    expect(systemMessage).toContain("trace which prior successful operation should have updated the relevant state");
+    expect(systemMessage).toContain("Do not blame sorting, formatting, or unrelated edge cases");
+    expect(systemMessage).toContain("Never include fenced code blocks");
+    expect(finalMessage).toContain("l2-top1-simple");
+    expect(finalMessage).toContain("\"a(60)\"");
+    expect(finalMessage).toContain("\"a(0)\"");
+  });
+
+  test("review mode reminds the coach to preserve prompt qualifiers", () => {
+    const messages = buildCoachMessages(baseArgs({
+      mode: "review",
+      problemTitle: "Progressive Banking Ledger - Level 4: Merge accounts",
+      prompt: "Every pending scheduled payment owned by secondary is reassigned to primary.",
+      question: "Visible tests pass. What should I pressure test?"
+    }));
+
+    const systemMessage = messages.at(0)?.content ?? "";
+    expect(systemMessage).toContain("Preserve the prompt's qualifiers");
+    expect(systemMessage).toContain("Do not strengthen or broaden requirements");
+    expect(systemMessage).toContain("Do not suggest defensive work for invalid inputs");
+    expect(systemMessage).toContain("pending");
+    expect(systemMessage).toContain("cancelled");
+  });
+
   test("explain mode omits code for pure concept questions", () => {
     const messages = buildCoachMessages(baseArgs({
       mode: "explain",

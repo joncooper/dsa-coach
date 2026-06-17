@@ -78,6 +78,7 @@ interface CodexStatus {
 const DEFAULT_TEST_PANE_SHARE = 42;
 const MIN_TEST_PANE_SHARE = 18;
 const MAX_TEST_PANE_SHARE = 68;
+const STALE_ACTIVE_ATTEMPT_GRACE_MS = 10 * 60 * 1000;
 type ScenarioSupportTab = "interviewer" | "plan" | "scratchpad" | "notes";
 const scenarioSupportTabs: Array<{ id: ScenarioSupportTab; label: string }> = [
   { id: "interviewer", label: "Interviewer" },
@@ -202,6 +203,7 @@ export function ScenarioWorkspaceScreen({
   const [sessionEnded, setSessionEnded] = useState(false);
   const [timerPaused, setTimerPaused] = useState(false);
   const [timerVisible, setTimerVisible] = useState(true);
+  const [pacingVisible, setPacingVisible] = useState(false);
   const [timerBaseOverride, setTimerBaseOverride] = useState<number | null>(null);
   const [timerPausedAt, setTimerPausedAt] = useState<number | null>(null);
   const [clockNow, setClockNow] = useState(() => Date.now());
@@ -257,6 +259,7 @@ export function ScenarioWorkspaceScreen({
     setActiveFilePath("");
     setTestsCollapsed(false);
     setTestPaneShare(DEFAULT_TEST_PANE_SHARE);
+    setPacingVisible(false);
     lastSavedFileContentsRef.current = {};
     setSessionEnded(false);
     setTimerPaused(false);
@@ -274,7 +277,17 @@ export function ScenarioWorkspaceScreen({
         setAttempt(nextAttempt);
         setCheckpointDrafts(draftsFromAttempt(nextAttempt));
         setSessionEnded(Boolean(nextAttempt.endedAt));
-        setTimerPaused(Boolean(nextAttempt.endedAt));
+        const now = Date.now();
+        const staleResume = isStaleActiveScenarioAttempt(nextAttempt, scenario.timeboxMinutes, now);
+        if (staleResume) {
+          setTimerBaseOverride(now);
+          setTimerPausedAt(now);
+          setClockNow(now);
+          setTimerPaused(true);
+        } else {
+          setTimerPaused(Boolean(nextAttempt.endedAt));
+          setClockNow(now);
+        }
         await loadEditableFiles(nextAttempt.attemptId, alive);
         await refreshDiff(nextAttempt.attemptId, alive);
       } catch (err) {
@@ -284,7 +297,7 @@ export function ScenarioWorkspaceScreen({
     return () => {
       alive = false;
     };
-  }, [attemptId]);
+  }, [attemptId, scenario.timeboxMinutes]);
 
   useEffect(() => {
     if (timerPaused) return undefined;
@@ -319,6 +332,7 @@ export function ScenarioWorkspaceScreen({
       await loadEditableFiles(nextAttempt.attemptId);
       setTestsCollapsed(false);
       setTestPaneShare(DEFAULT_TEST_PANE_SHARE);
+      setPacingVisible(false);
       setSessionEnded(false);
       setTimerPaused(false);
       setTimerBaseOverride(null);
@@ -610,6 +624,8 @@ export function ScenarioWorkspaceScreen({
     : interviewerQuestion;
   const timeCheckCopy = debriefOpen
     ? "Session ended. Review the visible failures, run hidden tests if useful, then generate the debrief."
+    : timerPaused && attempt
+      ? `${Math.ceil(remainingMinutes)} minutes on the current pacing plan. Resume or restart the timer when you begin.`
     : attempt
       ? `${Math.ceil(remainingMinutes)} minutes remaining. ${phaseState.active.label} is the active pacing band.`
       : "Timer starts when the session starts.";
@@ -705,15 +721,6 @@ export function ScenarioWorkspaceScreen({
           </button>
         </div>
       </header>
-
-      <div className="scenario-phase-strip" aria-label="Interview pacing timeline">
-        {phaseState.phases.map((phase, index) => (
-          <div key={phase.label} className={`scenario-phase-step ${index < phaseState.activeIndex ? "done" : ""} ${index === phaseState.activeIndex ? "active" : ""}`}>
-            <span>{phase.label}</span>
-            <small>{phase.minutes} min</small>
-          </div>
-        ))}
-      </div>
 
       {error ? <p className="scenario-error" role="alert">{error}</p> : null}
       {busy ? <p className="scenario-busy">{busy}...</p> : null}
@@ -930,8 +937,28 @@ export function ScenarioWorkspaceScreen({
               </section>
 
               <section className="scenario-interviewer-card quiet">
-                <h3>Time check</h3>
+                <div className="scenario-time-check-heading">
+                  <h3>Time check</h3>
+                  <button
+                    type="button"
+                    className="secondary-button compact-button subtle-button scenario-pacing-toggle"
+                    onClick={() => setPacingVisible((visible) => !visible)}
+                    aria-expanded={pacingVisible}
+                  >
+                    {pacingVisible ? "Hide pacing" : "Show pacing"}
+                  </button>
+                </div>
                 <p>{timeCheckCopy}</p>
+                {pacingVisible ? (
+                  <ol className="scenario-pacing-list" aria-label="Interview pacing timeline">
+                    {phaseState.phases.map((phase, index) => (
+                      <li key={phase.label} className={index < phaseState.activeIndex ? "done" : index === phaseState.activeIndex ? "active" : ""}>
+                        <span>{phase.label}</span>
+                        <small>{phase.minutes} min</small>
+                      </li>
+                    ))}
+                  </ol>
+                ) : null}
               </section>
 
               <section className="scenario-interviewer-input">
@@ -1056,6 +1083,14 @@ function isOnsiteScenario(scenario: Scenario, prompt: string): boolean {
   return text.includes("onsite") || text.includes("no-ai") || text.includes("no ai");
 }
 
+function isStaleActiveScenarioAttempt(attempt: ScenarioAttemptSummary, timeboxMinutes: number, now: number): boolean {
+  if (attempt.endedAt) return false;
+  const startedAt = Date.parse(attempt.startedAt);
+  if (!Number.isFinite(startedAt)) return false;
+  const elapsedMs = now - startedAt;
+  return elapsedMs > timeboxMinutes * 60 * 1000 + STALE_ACTIVE_ATTEMPT_GRACE_MS;
+}
+
 function interviewPhaseState(timeboxMinutes: number, elapsedMinutes: number): { phases: InterviewPhase[]; active: InterviewPhase; activeIndex: number } {
   const weights = [
     ["Read", 0.14],
@@ -1090,9 +1125,13 @@ function currentInterviewerQuestion(phase: string, latestTurn?: ScenarioAiTurn):
 
 function preferredScenarioFile(files: ScenarioEditableFile[], current: string): string {
   if (current && files.some((file) => file.path === current)) return current;
+  const pyFile = (file: ScenarioEditableFile) => file.path.endsWith(".py");
+  const nonInitPyFile = (file: ScenarioEditableFile) => pyFile(file) && file.path.split("/").at(-1) !== "__init__.py";
   return files.find((file) => file.path === "src/reservations.py")?.path
-    ?? files.find((file) => file.path.startsWith("src/") && file.path.endsWith(".py"))?.path
-    ?? files.find((file) => file.path.endsWith(".py"))?.path
+    ?? files.find((file) => file.path === "src/sync.py")?.path
+    ?? files.find((file) => file.path.startsWith("src/") && nonInitPyFile(file))?.path
+    ?? files.find(nonInitPyFile)?.path
+    ?? files.find(pyFile)?.path
     ?? files[0]?.path
     ?? "";
 }

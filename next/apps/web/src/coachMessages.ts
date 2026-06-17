@@ -13,7 +13,7 @@ export interface CoachMessage {
 
 export type CoachMode = "hint" | "debug" | "explain" | "review";
 
-export const COACH_PROMPT_VERSION = "next-coach-v3-mode-contexts";
+export const COACH_PROMPT_VERSION = "next-coach-v7-review-scope";
 
 export interface CoachMessageArgs {
   turns: CoachTurn[];
@@ -67,10 +67,11 @@ Use the learner's current code and latest run result as the source of truth.
 - If a diagnostic includes a file, line, column, actual value, expected value, or traceback location, cite that concrete detail explicitly. Use the word "line" when a line number is available.
 - If a failed test has expected/actual values, open with an observation that quotes both values, for example: "Expected X, but actual was Y." Then interpret the bug.
 - If the actual value is null/undefined for a function problem, check for a missing return value or missing result collection before deeper algorithm changes. If that explains the failure, stop there unless the learner asks for a deeper algorithm review.
+- If earlier outputs in a failing operation-list test match but a later aggregate, report, ranking, or lookup output differs, trace which prior successful operation should have updated the relevant state. Do not blame sorting, formatting, or unrelated edge cases unless the mismatch is only ordering or formatting.
 - Identify the most likely local bug in their code before proposing any alternate approach.
 - Suggest the smallest practical fix or diagnostic check.
 - Keep the answer compact. Prefer under 120 words unless the learner asks for a deeper walkthrough.
-- Use prose by default. Do not include fenced code in Debug mode unless the learner explicitly asks for code with words like "show code" or "write the function". If a tiny fix helps, describe it inline, such as "guard the user lookup before reading the quota."
+- Debug answers are prose-only by default. Never include fenced code blocks, replacement snippets, or patch-style edits unless the learner explicitly asks for code with words like "show code", "write the function", or "give me the code". If a tiny fix helps, describe it inline, such as "guard the user lookup before reading the quota."
 - Do not provide sample functions, replacement blocks, or a reference-style algorithm unless the learner explicitly asks for the solution.`,
   explain: `${commonRules}
 
@@ -84,6 +85,8 @@ Clarify the concept, problem statement, API behavior, error message, or invarian
 MODE: REVIEW
 Review the current implementation like a careful teammate.
 - Name what is sound briefly, then focus on bugs, fragile assumptions, edge cases, and readability issues.
+- Preserve the prompt's qualifiers when naming risks. Do not strengthen or broaden requirements; words like pending, active, cancelled, inclusive, exclusive, before, and after matter.
+- Do not suggest defensive work for invalid inputs unless the prompt allows invalid inputs or the learner explicitly asks about robustness outside the stated contract.
 - If the learner asks whether code is ugly or how to make it cleaner, prioritize naming, tuple/list unpacking, small helper extraction, and explicit data shapes.
 - Prefer local edits, invariants, and tests over a wholesale rewrite.
 - Use prose bullets by default. Do not include fenced code in Review mode unless the learner explicitly asks for code.
