@@ -13,7 +13,7 @@ Screenshots live in `next/docs/native-practice-pass-screenshots/`.
 | 3 | Ramp AI Backend Drills: Ledger Reconciliation | Coach pressure-test, stale-buffer recovery, Pyodide visible/hidden tests | [`pass-03-ledger-start.png`](native-practice-pass-screenshots/pass-03-ledger-start.png), [`pass-03-ledger-initial-test-run.png`](native-practice-pass-screenshots/pass-03-ledger-initial-test-run.png), [`pass-03-ledger-coach-response.png`](native-practice-pass-screenshots/pass-03-ledger-coach-response.png), [`pass-03-ledger-visible-rerun.png`](native-practice-pass-screenshots/pass-03-ledger-visible-rerun.png), [`pass-03-ledger-hidden-pass.png`](native-practice-pass-screenshots/pass-03-ledger-hidden-pass.png) | Completed: 3/3 visible and 3/3 hidden tests passed |
 | 4 | Ramp AI Backend Drills: Receipt Matcher | Explicit-id conflicts, conservative inferred matching, coach loop, Pyodide visible/hidden tests | [`pass-04-receipt-start.png`](native-practice-pass-screenshots/pass-04-receipt-start.png), [`pass-04-receipt-initial-failure.png`](native-practice-pass-screenshots/pass-04-receipt-initial-failure.png), [`pass-04-receipt-visible-after-coach-fix.png`](native-practice-pass-screenshots/pass-04-receipt-visible-after-coach-fix.png), [`pass-04-receipt-hidden-pass.png`](native-practice-pass-screenshots/pass-04-receipt-hidden-pass.png) | Completed: 3/3 visible and 4/4 hidden tests passed |
 | 5 | Ramp AI Backend Drills: Webhook Idempotency | Global idempotency, terminal-state invariants, native wrapper/window resilience | [`pass-05-webhook-start.png`](native-practice-pass-screenshots/pass-05-webhook-start.png), [`pass-05-webhook-editor-start.png`](native-practice-pass-screenshots/pass-05-webhook-editor-start.png) | Completed: 3/3 visible and 5/5 hidden tests passed |
-| 6 | Pending | Pending | Pending | Pending |
+| 6 | Ramp Travel API: Rate Limit Backoff | Guided problem Pyodide harness, coach wording, native screenshot/tool bridge failure | Not captured: Computer Use timed out and macOS screen capture returned black frames | Completed: 1/1 visible and 3/3 visible+hidden tests passed |
 | 7 | Pending | Pending | Pending | Pending |
 | 8 | Pending | Pending | Pending | Pending |
 | 9 | Pending | Pending | Pending | Pending |
@@ -147,3 +147,27 @@ UX notes:
 - Fixed: static app files now support `HEAD` as well as `GET`, so asset diagnostics no longer report misleading 404s for files the WebView can load.
 
 App/content improvement from this pass: the macOS wrapper now disables stale AppKit restoration and explicitly resurfaces the main window on reopen; the daemon now supports static `HEAD` checks. Webhook Idempotency hidden tests now include equal-rank terminal preservation and global event-id idempotency.
+
+## Pass 6: Ramp Travel API Rate Limit Backoff
+
+Scenario: used the mature guided-problem workspace with the Ramp Travel API rate-limit/backoff problem. This pass intentionally switched away from the scenario UI after all current Ramp scenario drills had been covered, so the mature guided workspace could be compared against the newer scenario workspaces.
+
+Exercise path:
+
+- Selected `ramp-travel-api-rate-limit-backoff`, whose contract is to paginate `GET /v1/trips`, send bearer auth, respect `429 Retry-After`, and retry the same request without advancing the cursor or appending duplicate data.
+- Ran the starter implementation through the Pyodide problem harness. It failed the visible case with `NotImplementedError`, as expected.
+- Implemented a first candidate with auth and pagination but no 429 branch. The visible test failed with `RampTravelHTTPError: 429 response`, which made the missing retry contract obvious.
+- Asked the coach for direction from that failure. The coach correctly pushed toward respecting `Retry-After`, but the wording was a little muddy: it implied "simply retrying the same request" was the violation, when the real issue was not delaying and preserving the same cursor/request after the 429.
+- Implemented the full solution: loop over pages, pass `limit` and optional `cursor`, handle 429 before `raise_for_status`, sleep for the `Retry-After` value, and `continue` so the same request is retried.
+- Re-ran visible tests. Result: `1/1` visible passed.
+- Re-ran visible plus hidden tests. Result: `3/3` passed, including the later-page rate-limit case and the empty response case.
+
+UX notes:
+
+- Good: the guided problem harness gives crisp expected-vs-actual output for this API-style task, and the visible failure made the missing 429 branch clear without needing a large traceback.
+- Good: this older guided surface remains a useful baseline for the scenario UI. The workspace is calmer and less visually fragmented than the newer Ramp scenario screens.
+- Issue: Computer Use was still unusable for this exact native app bundle in this pass; `get_app_state` timed out after two minutes. This blocks the preferred human-like native interaction path until the plugin bridge is healthy.
+- Issue: macOS screen capture also failed as verification evidence in this session. The sandboxed capture could not create an image, and the escalated capture produced a black frame. I did not add a misleading screenshot to this log.
+- Issue: the temporary Node-based Pyodide runner looked for the `sortedcontainers` wheel in `next/node_modules/pyodide`, then tried the CDN and failed. The native packaged app serves the wheel from `dist/web/pyodide`, so this is a temp verification-tool limitation rather than the app execution path.
+
+App improvement from this pass: removed the full-width scenario pacing strip from the top of the interview workspace, moved pacing into an optional right-rail time-check control, and changed the scenario workspace sizing so prompt, editor/tests, and support panes fill the native window independently instead of depending on the old header-plus-strip height calculation.

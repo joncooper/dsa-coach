@@ -203,6 +203,7 @@ export function ScenarioWorkspaceScreen({
   const [sessionEnded, setSessionEnded] = useState(false);
   const [timerPaused, setTimerPaused] = useState(false);
   const [timerVisible, setTimerVisible] = useState(true);
+  const [pacingVisible, setPacingVisible] = useState(false);
   const [timerBaseOverride, setTimerBaseOverride] = useState<number | null>(null);
   const [timerPausedAt, setTimerPausedAt] = useState<number | null>(null);
   const [clockNow, setClockNow] = useState(() => Date.now());
@@ -258,6 +259,7 @@ export function ScenarioWorkspaceScreen({
     setActiveFilePath("");
     setTestsCollapsed(false);
     setTestPaneShare(DEFAULT_TEST_PANE_SHARE);
+    setPacingVisible(false);
     lastSavedFileContentsRef.current = {};
     setSessionEnded(false);
     setTimerPaused(false);
@@ -330,6 +332,7 @@ export function ScenarioWorkspaceScreen({
       await loadEditableFiles(nextAttempt.attemptId);
       setTestsCollapsed(false);
       setTestPaneShare(DEFAULT_TEST_PANE_SHARE);
+      setPacingVisible(false);
       setSessionEnded(false);
       setTimerPaused(false);
       setTimerBaseOverride(null);
@@ -719,15 +722,6 @@ export function ScenarioWorkspaceScreen({
         </div>
       </header>
 
-      <div className="scenario-phase-strip" aria-label="Interview pacing timeline">
-        {phaseState.phases.map((phase, index) => (
-          <div key={phase.label} className={`scenario-phase-step ${index < phaseState.activeIndex ? "done" : ""} ${index === phaseState.activeIndex ? "active" : ""}`}>
-            <span>{phase.label}</span>
-            <small>{phase.minutes} min</small>
-          </div>
-        ))}
-      </div>
-
       {error ? <p className="scenario-error" role="alert">{error}</p> : null}
       {busy ? <p className="scenario-busy">{busy}...</p> : null}
 
@@ -943,8 +937,28 @@ export function ScenarioWorkspaceScreen({
               </section>
 
               <section className="scenario-interviewer-card quiet">
-                <h3>Time check</h3>
+                <div className="scenario-time-check-heading">
+                  <h3>Time check</h3>
+                  <button
+                    type="button"
+                    className="secondary-button compact-button subtle-button scenario-pacing-toggle"
+                    onClick={() => setPacingVisible((visible) => !visible)}
+                    aria-expanded={pacingVisible}
+                  >
+                    {pacingVisible ? "Hide pacing" : "Show pacing"}
+                  </button>
+                </div>
                 <p>{timeCheckCopy}</p>
+                {pacingVisible ? (
+                  <ol className="scenario-pacing-list" aria-label="Interview pacing timeline">
+                    {phaseState.phases.map((phase, index) => (
+                      <li key={phase.label} className={index < phaseState.activeIndex ? "done" : index === phaseState.activeIndex ? "active" : ""}>
+                        <span>{phase.label}</span>
+                        <small>{phase.minutes} min</small>
+                      </li>
+                    ))}
+                  </ol>
+                ) : null}
               </section>
 
               <section className="scenario-interviewer-input">
