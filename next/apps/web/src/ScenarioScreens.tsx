@@ -78,6 +78,7 @@ interface CodexStatus {
 const DEFAULT_TEST_PANE_SHARE = 42;
 const MIN_TEST_PANE_SHARE = 18;
 const MAX_TEST_PANE_SHARE = 68;
+const STALE_ACTIVE_ATTEMPT_GRACE_MS = 10 * 60 * 1000;
 type ScenarioSupportTab = "interviewer" | "plan" | "scratchpad" | "notes";
 const scenarioSupportTabs: Array<{ id: ScenarioSupportTab; label: string }> = [
   { id: "interviewer", label: "Interviewer" },
@@ -274,7 +275,17 @@ export function ScenarioWorkspaceScreen({
         setAttempt(nextAttempt);
         setCheckpointDrafts(draftsFromAttempt(nextAttempt));
         setSessionEnded(Boolean(nextAttempt.endedAt));
-        setTimerPaused(Boolean(nextAttempt.endedAt));
+        const now = Date.now();
+        const staleResume = isStaleActiveScenarioAttempt(nextAttempt, scenario.timeboxMinutes, now);
+        if (staleResume) {
+          setTimerBaseOverride(now);
+          setTimerPausedAt(now);
+          setClockNow(now);
+          setTimerPaused(true);
+        } else {
+          setTimerPaused(Boolean(nextAttempt.endedAt));
+          setClockNow(now);
+        }
         await loadEditableFiles(nextAttempt.attemptId, alive);
         await refreshDiff(nextAttempt.attemptId, alive);
       } catch (err) {
@@ -284,7 +295,7 @@ export function ScenarioWorkspaceScreen({
     return () => {
       alive = false;
     };
-  }, [attemptId]);
+  }, [attemptId, scenario.timeboxMinutes]);
 
   useEffect(() => {
     if (timerPaused) return undefined;
@@ -610,6 +621,8 @@ export function ScenarioWorkspaceScreen({
     : interviewerQuestion;
   const timeCheckCopy = debriefOpen
     ? "Session ended. Review the visible failures, run hidden tests if useful, then generate the debrief."
+    : timerPaused && attempt
+      ? `${Math.ceil(remainingMinutes)} minutes on the current pacing plan. Resume or restart the timer when you begin.`
     : attempt
       ? `${Math.ceil(remainingMinutes)} minutes remaining. ${phaseState.active.label} is the active pacing band.`
       : "Timer starts when the session starts.";
@@ -1054,6 +1067,14 @@ interface InterviewPhase {
 function isOnsiteScenario(scenario: Scenario, prompt: string): boolean {
   const text = `${scenario.id} ${scenario.title} ${scenario.summary} ${scenario.evidence.note} ${prompt}`.toLowerCase();
   return text.includes("onsite") || text.includes("no-ai") || text.includes("no ai");
+}
+
+function isStaleActiveScenarioAttempt(attempt: ScenarioAttemptSummary, timeboxMinutes: number, now: number): boolean {
+  if (attempt.endedAt) return false;
+  const startedAt = Date.parse(attempt.startedAt);
+  if (!Number.isFinite(startedAt)) return false;
+  const elapsedMs = now - startedAt;
+  return elapsedMs > timeboxMinutes * 60 * 1000 + STALE_ACTIVE_ATTEMPT_GRACE_MS;
 }
 
 function interviewPhaseState(timeboxMinutes: number, elapsedMinutes: number): { phases: InterviewPhase[]; active: InterviewPhase; activeIndex: number } {
