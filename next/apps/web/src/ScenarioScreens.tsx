@@ -214,6 +214,7 @@ export function ScenarioWorkspaceScreen({
   const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
   const [testsCollapsed, setTestsCollapsed] = useState(false);
   const [testPaneShare, setTestPaneShare] = useState(DEFAULT_TEST_PANE_SHARE);
+  const [restartConfirming, setRestartConfirming] = useState(false);
   const sessionPaneRef = useRef<HTMLElement | null>(null);
   const resizingTestsRef = useRef(false);
   const editableFilesRef = useRef<ScenarioEditableFile[]>([]);
@@ -257,6 +258,7 @@ export function ScenarioWorkspaceScreen({
     setSupportTab("interviewer");
     setScenarioScratchpad("");
     setScenarioNotes("");
+    setRestartConfirming(false);
     setEditableFiles([]);
     setActiveFilePath("");
     setTestsCollapsed(false);
@@ -308,6 +310,12 @@ export function ScenarioWorkspaceScreen({
   }, [timerPaused]);
 
   useEffect(() => {
+    if (!restartConfirming) return undefined;
+    const timer = window.setTimeout(() => setRestartConfirming(false), 6000);
+    return () => window.clearTimeout(timer);
+  }, [restartConfirming]);
+
+  useEffect(() => {
     if (!attempt || !activeFilePath) return undefined;
     const file = editableFiles.find((candidate) => candidate.path === activeFilePath);
     if (!file) return undefined;
@@ -332,14 +340,11 @@ export function ScenarioWorkspaceScreen({
   }
 
   async function restartAttempt() {
-    if (!attempt) {
-      await startAttempt();
+    if (!attempt) return;
+    if (!restartConfirming) {
+      setRestartConfirming(true);
       return;
     }
-    const confirmed = window.confirm(
-      "Start over from the starter files? This creates a fresh attempt and clears the current editor, tests, transcript, plan, scratchpad, and notes from this screen. The previous attempt remains in history."
-    );
-    if (!confirmed) return;
     await withBusy("Starting over", async () => {
       await flushActiveFile();
       await startFreshAttempt();
@@ -356,6 +361,7 @@ export function ScenarioWorkspaceScreen({
     setSupportTab("interviewer");
     setScenarioScratchpad("");
     setScenarioNotes("");
+    setRestartConfirming(false);
     setTestsCollapsed(false);
     setTestPaneShare(DEFAULT_TEST_PANE_SHARE);
     setPacingVisible(false);
@@ -737,11 +743,12 @@ export function ScenarioWorkspaceScreen({
           </div>
           <button
             type="button"
-            className="secondary-button compact-button scenario-restart-button"
+            className={`secondary-button compact-button scenario-restart-button ${restartConfirming ? "confirming" : ""}`}
             onClick={() => void restartAttempt()}
             disabled={!attempt || Boolean(busy)}
+            title={restartConfirming ? "Click again to start a fresh attempt from starter files" : "Start a fresh attempt from starter files"}
           >
-            Start over
+            {restartConfirming ? "Confirm start over" : "Start over"}
           </button>
           <button type="button" className="primary-button compact-button" onClick={() => void runVisible()} disabled={Boolean(busy) || !attempt}>
             Run tests
