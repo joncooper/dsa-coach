@@ -1,6 +1,6 @@
 import { once } from "node:events";
 import { spawn } from "node:child_process";
-import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
@@ -87,6 +87,45 @@ describe("runner daemon API", () => {
       expect(pythonScratchpad.message).toContain("Pyodide");
     } finally {
       server.close();
+    }
+  });
+
+  test("serves static app files for GET and HEAD", async () => {
+    const tempRoot = await mkdtemp(join(tmpdir(), "dsa-coach-static-"));
+    const staticRoot = join(tempRoot, "web");
+    await mkdir(join(staticRoot, "assets"), { recursive: true });
+    await writeFile(join(staticRoot, "index.html"), "<main>DSA Coach</main>\n", "utf8");
+    await writeFile(join(staticRoot, "assets/app.js"), "console.log('ok');\n", "utf8");
+    const graph = await loadContentGraph();
+    const server = createRunnerDaemonServer({
+      graph,
+      contentRoot: defaultContentRoot,
+      staticRoot,
+      buildMode: "release"
+    });
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("missing test server address");
+    const base = `http://127.0.0.1:${address.port}`;
+
+    try {
+      const index = await fetch(`${base}/`);
+      expect(index.status).toBe(200);
+      expect(await index.text()).toContain("DSA Coach");
+
+      const asset = await fetch(`${base}/assets/app.js`);
+      expect(asset.status).toBe(200);
+      expect(await asset.text()).toContain("console.log");
+      expect(asset.headers.get("cache-control")).toContain("immutable");
+
+      const head = await fetch(`${base}/assets/app.js`, { method: "HEAD" });
+      expect(head.status).toBe(200);
+      expect(head.headers.get("cache-control")).toContain("immutable");
+      expect(await head.text()).toBe("");
+    } finally {
+      server.close();
+      await rm(tempRoot, { recursive: true, force: true });
     }
   });
 

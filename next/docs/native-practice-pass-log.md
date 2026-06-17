@@ -12,7 +12,7 @@ Screenshots live in `next/docs/native-practice-pass-screenshots/`.
 | 2 | Ramp AI Backend Drills: Transaction Sync Client | Scenario start, coach loop, Pyodide visible/hidden tests, debrief path | [`pass-02-sync-start.png`](native-practice-pass-screenshots/pass-02-sync-start.png), [`pass-02-sync-initial-failure.png`](native-practice-pass-screenshots/pass-02-sync-initial-failure.png), [`pass-02-sync-visible-pass.png`](native-practice-pass-screenshots/pass-02-sync-visible-pass.png), [`pass-02-sync-hidden-pass-judging-stuck.png`](native-practice-pass-screenshots/pass-02-sync-hidden-pass-judging-stuck.png), [`pass-02-sync-rebuilt-default-file.png`](native-practice-pass-screenshots/pass-02-sync-rebuilt-default-file.png) | Completed: 3/3 visible and 3/3 hidden tests passed |
 | 3 | Ramp AI Backend Drills: Ledger Reconciliation | Coach pressure-test, stale-buffer recovery, Pyodide visible/hidden tests | [`pass-03-ledger-start.png`](native-practice-pass-screenshots/pass-03-ledger-start.png), [`pass-03-ledger-initial-test-run.png`](native-practice-pass-screenshots/pass-03-ledger-initial-test-run.png), [`pass-03-ledger-coach-response.png`](native-practice-pass-screenshots/pass-03-ledger-coach-response.png), [`pass-03-ledger-visible-rerun.png`](native-practice-pass-screenshots/pass-03-ledger-visible-rerun.png), [`pass-03-ledger-hidden-pass.png`](native-practice-pass-screenshots/pass-03-ledger-hidden-pass.png) | Completed: 3/3 visible and 3/3 hidden tests passed |
 | 4 | Ramp AI Backend Drills: Receipt Matcher | Explicit-id conflicts, conservative inferred matching, coach loop, Pyodide visible/hidden tests | [`pass-04-receipt-start.png`](native-practice-pass-screenshots/pass-04-receipt-start.png), [`pass-04-receipt-initial-failure.png`](native-practice-pass-screenshots/pass-04-receipt-initial-failure.png), [`pass-04-receipt-visible-after-coach-fix.png`](native-practice-pass-screenshots/pass-04-receipt-visible-after-coach-fix.png), [`pass-04-receipt-hidden-pass.png`](native-practice-pass-screenshots/pass-04-receipt-hidden-pass.png) | Completed: 3/3 visible and 4/4 hidden tests passed |
-| 5 | Pending | Pending | Pending | Pending |
+| 5 | Ramp AI Backend Drills: Webhook Idempotency | Global idempotency, terminal-state invariants, native wrapper/window resilience | [`pass-05-webhook-start.png`](native-practice-pass-screenshots/pass-05-webhook-start.png), [`pass-05-webhook-editor-start.png`](native-practice-pass-screenshots/pass-05-webhook-editor-start.png) | Completed: 3/3 visible and 5/5 hidden tests passed |
 | 6 | Pending | Pending | Pending | Pending |
 | 7 | Pending | Pending | Pending | Pending |
 | 8 | Pending | Pending | Pending | Pending |
@@ -119,3 +119,31 @@ UX notes:
 - Issue: after reopening from an API save, stale visible results remain in the test pane until the next run. This is technically accurate history, but visually it can make it look like the reloaded editor still has failing code until the user notices the old timestamp/result.
 
 App/content improvement from this pass: Receipt Matcher hidden tests now include the duplicate-explicit-transaction-id conflict the coach found, ensuring future solutions cannot fall back from a consumed explicit transaction id to heuristic attachment elsewhere.
+
+## Pass 5: Ramp AI Backend Drills Webhook Idempotency
+
+Scenario: started the Webhook Idempotency drill in the native macOS app, then hit a native verification/tooling failure after repackaging while the app was running.
+
+Exercise path:
+
+- Started a fresh Webhook Idempotency session. The pre-session screen and scenario attempt were created correctly.
+- After packaging over the live app bundle, the native WebView became visually unavailable to this session: Computer Use timed out, `screencapture` returned black frames, and AX reported zero windows even though CoreGraphics saw an onscreen `DSA Coach Next` window.
+- Verified the new native daemon directly: `runtime.json` pointed at the current worktree bundle, and GET requests for `/`, `/assets/index-*.js`, `/assets/index-*.css`, and `/pyodide/pyodide.js` returned `200`.
+- Hardened the native wrapper against stale AppKit restoration state by disabling app/window restoration and always bringing the main window forward on reopen. Rebuilt and repackaged the app from `next/`.
+- Continued the scenario through the native daemon's attempt/files/run APIs with a temporary Pyodide runner that uses the same unittest harness as the web worker, avoiding local Python.
+- Ran the starter visible tests through Pyodide. Result: `1/3` visible passed; duplicate capture double-counted and stale `created` rewound a captured payment.
+- Implemented a deterministic rank-based state machine with known-event validation, duplicate event-id guards, stale/equal-rank suppression after prior events, and audit entries for applied/ignored events.
+- Re-ran visible tests. Result: `3/3` visible passed with `Pyodide unittest`.
+- Asked the coach to pressure-test the model. It identified a real issue: webhook event IDs are globally unique, so idempotency should not be scoped only to one payment.
+- Tightened the candidate with a global handled-event set on `PaymentStore`, while preserving per-payment handled IDs for explainability and existing assertions. Visible tests still passed.
+- Ended the session and ran the expanded hidden tests through Pyodide. Result: `5/5` hidden passed.
+
+UX notes:
+
+- Good: the daemon/app data model still worked under stress. Scenario attempts, file saves, coach turns, visible run history, hidden unlock, and hidden run records all persisted correctly.
+- Good: the coach again found a meaningful edge not covered by the original visible tests: global event ID idempotency.
+- Issue: packaging over a live `.app` bundle can leave the running native shell/WebView in a bad state. The workflow should stop stale app/daemon processes before repackaging, and the wrapper should be resilient when reopened.
+- Issue: Computer Use is currently not reliable for this app in this session. It timed out even for `list_apps`, while AX and CoreGraphics gave partial but conflicting visibility. This blocks truly human-like native verification until the tool bridge is healthy again.
+- Fixed: static app files now support `HEAD` as well as `GET`, so asset diagnostics no longer report misleading 404s for files the WebView can load.
+
+App/content improvement from this pass: the macOS wrapper now disables stale AppKit restoration and explicitly resurfaces the main window on reopen; the daemon now supports static `HEAD` checks. Webhook Idempotency hidden tests now include equal-rank terminal preservation and global event-id idempotency.

@@ -35,6 +35,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         true
     }
 
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        bringMainWindowForward()
+        return true
+    }
+
+    func applicationShouldRestoreApplicationState(_ app: NSApplication) -> Bool {
+        false
+    }
+
+    func applicationShouldSaveApplicationState(_ app: NSApplication) -> Bool {
+        false
+    }
+
+    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+        false
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         terminating = true
         stopHost()
@@ -126,7 +143,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.center()
         }
         window.title = "DSA Coach Next"
+        window.isRestorable = false
+        window.setAccessibilityTitle("DSA Coach Next")
         window.contentView = webView
+        bringMainWindowForward()
+    }
+
+    private func bringMainWindowForward() {
+        if window == nil {
+            createWindow()
+            return
+        }
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
+        }
+        if !window.isVisible {
+            window.orderFrontRegardless()
+        }
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
