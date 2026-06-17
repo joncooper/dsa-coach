@@ -1,151 +1,168 @@
 # DSA Coach Next
 
-This directory is a from-scratch architecture prototype for a local, offline-after-setup,
-multi-language version of DSA Coach.
+`next/` is the active native generation of DSA Coach. It combines a React UI, a local daemon, file-backed practice state, browser-worker Pyodide execution for Python, optional local Ollama coaching, and Codex SDK interviewer flows for repo-style scenarios.
 
-The existing app remains untouched. This prototype proves the new shape:
+The root `src/` app is the older browser/PWA generation. It is still useful reference code, but native practice surfaces should be developed and reviewed here.
 
-- content is a normalized graph loaded from small files;
-- modules, tracks, and problem sets reference canonical problems by ID;
-- languages are discovered from language packs instead of hardcoded in the UI;
-- execution flows through a normalized local-runner contract;
-- the TypeScript backend runs every executable reference solution against JSON tests;
-- the active content graph contains all 256 migrated legacy problems with Python,
-  TypeScript, Go, and Scala starter/reference files;
-- multi-part AOC problems and assessment levels are represented with part-specific
-  source files and runner support;
-- legacy backup import preserves progress, buffers, submissions, assessments, preferences, and coach logs.
+![Native dashboard](../ui-snapshots/native-dashboard.png)
 
-## Commands
+## Quick Start
+
+Prerequisites:
+
+- macOS
+- Bun 1.3.2 or newer
+- Xcode Command Line Tools or another Swift toolchain for macOS packaging
+- Go and Java for the full packaged runtime and non-Python toolchain support
+- Optional: Ollama for local guided coaching
+- Optional: Codex/OpenAI credentials for scenario interviewer and debrief features
+
+Build and verify:
 
 ```bash
-bun run test
+bun install
 bun run build
+bun test
 bun run verify:content
-bun run inventory:legacy
-bun run coverage:translations
-bun run setup:toolchains
-bun run setup:lsp
-bun run check:lsp
-bun run verify:lsp:fast
-bun run verify:lsp
-bun run verify:runner-backends
-bun run verify:sandbox
 ```
 
-`migrate:legacy-batch` regenerates the currently migrated content slice from
-the legacy course data:
+Run the development app in two terminals:
 
 ```bash
-bun run migrate:legacy-batch
-```
-
-To try the vertical slice locally, run these in two terminals:
-
-```bash
-cd next
 bun run daemon
 ```
 
 ```bash
-cd next
 bun run web:dev
 ```
 
-Then open the Vite URL, usually `http://127.0.0.1:5174`.
+Open the Vite URL printed by `web:dev`, usually `http://127.0.0.1:5174`.
 
-To build a double-clickable macOS app wrapper:
+Package and launch the native macOS app:
 
 ```bash
-cd next
 bun run package:mac
-open "dist/macos/DSA Coach Next.app"
+open -n "dist/macos/DSA Coach Next.app"
 ```
 
-The app starts a local production host on an OS-assigned localhost port, serves
-the built web UI and daemon API from that one process, and terminates the host
-when the app window closes. The package copies a runtime snapshot into the app
-bundle: built UI assets, content, source modules, `node_modules`, the Bun
-binary, and installed `.runner-cache` LSP/toolchain assets. User data is written
-outside the bundle at `~/Library/Application Support/DSA Coach Next/User Data`,
-and writable runner caches live beside it under `Cache/runner`.
+The packaged app starts a local production host on an OS-assigned localhost port, serves the built web UI and daemon API from one process, and shuts that host down when the app exits. Generated app bundles are not committed to the repository. Share `dist/macos/DSA Coach Next.app` or a zip of it as a release artifact when a prebuilt binary is needed.
 
-## Runner Backends
+## Current Product Surfaces
 
-The daemon currently has executable backends for:
+- Dashboard and global catalog navigation.
+- Guided problem workspaces with prompt, CodeMirror editor, scratchpad/notes, Pyodide visible and hidden tests, and optional coach panel.
+- CodeSignal ICF practice with progressive four-level assessments.
+- Ramp Onsite rehearsals with prompt, multi-file Python editor, resizable test dock, hidden-test/debrief flow, and Codex SDK interviewer support.
+- Ramp AI backend drills with repo-style Python scenarios and debrief scoring.
 
-- TypeScript through a transpile-and-run Node process backend;
-- Python through `python3` in an isolated temporary workdir;
-- Go through `go test -c` plus an isolated test-binary run;
-- Scala through a pinned local Scala 3 toolchain and direct JVM compiler/runtime
-  invocation.
+![Ramp onsite workspace](../ui-snapshots/ramp-hotel-workspace.png)
 
-Run the one-time setup step before using Scala on a fresh clone:
+![Scenario test diagnostics](../ui-snapshots/ramp-hotel-tests.png)
+
+## Python Runtime Policy
+
+Python practice execution is browser-worker/Pyodide, not local subprocess Python.
+
+This includes:
+
+- guided problem runs and submissions
+- scratchpads
+- CodeSignal assessment levels
+- Ramp Onsite visible tests
+- Ramp scenario hidden/debrief tests
+
+The daemon still owns content loading, persistence, scenario metadata, local AI calls, Codex integration, packaging host duties, and non-Python toolchain support. It should not be used as the Python runtime for candidate submissions.
+
+Pyodide is an explicit dependency of this package and is served by the web build at `/pyodide/`.
+
+## Optional AI Setup
+
+The guided-problem coach uses Ollama at `http://127.0.0.1:11434` and expects `gemma4:latest` by default:
 
 ```bash
-bun run setup:toolchains
+ollama pull gemma4:latest
+OLLAMA_ORIGINS="*" ollama serve
 ```
 
-After setup, the downloaded toolchain lives under `next/.runner-cache`, so the
-runner remains usable without network access. Process runs use macOS
-`sandbox-exec` when available: network is denied, writes are restricted to the
-run directory, and Go compile-cache writes are restricted to
-`next/.runner-cache`. Go compilation has to allow compiler/linker subprocesses;
-user code runs as the compiled test binary under the stricter runtime profile.
-The current macOS sandbox profile still permits broad file reads, so it is a
-local damage-containment layer rather than a complete confidentiality boundary.
+The scenario interviewer and debrief generator use `@openai/codex-sdk`, installed by `bun install`. Make sure Codex/OpenAI credentials are available in the environment that starts `bun run daemon`, `bun run desktop:host`, or the packaged app host.
 
-Run the LSP setup step once to install project-local language servers for editor
-autocomplete:
+Optional model override:
 
 ```bash
-bun run setup:lsp
+export DSA_COACH_CODEX_MODEL="your-codex-model"
 ```
 
-The setup command uses package-managed TypeScript and Python servers from
-`node_modules/.bin`, installs `gopls` into `next/.runner-cache/lsp/bin`, and
-installs Metals there through Coursier, and installs formatter tools (`ruff`
-and `scalafmt`) into the same local cache. `bun run check:lsp` reports what the
-daemon can currently resolve without installing anything. `bun run
-verify:lsp:fast` exercises the complete IDE feature path for TypeScript,
-Python, and Go; `bun run verify:lsp` also includes Scala/Metals, which can take
-substantially longer on a cold local cache.
+If Ollama or Codex is unavailable, the app should show status/setup guidance while leaving the editor and test harness usable.
 
-The explicit backend verifier runs every reference target for selected
-languages:
+## Scripts
 
 ```bash
-bun run scripts/verify-runner-backends.ts --languages=typescript,python,go,scala
+bun run build                 # Type-check and build the native web UI
+bun test                      # Bun test suite
+bun run verify:content        # Validate authored content graph
+bun run daemon                # Local development daemon API
+bun run web:dev               # Vite development UI
+bun run desktop:host          # Production host used by the macOS wrapper
+bun run package:mac           # Build the double-clickable macOS app bundle
+bun run package:mac:release   # Release packaging variant
+bun run setup:toolchains      # Install cached non-Python toolchains
+bun run setup:lsp             # Install language servers and formatters
+bun run check:lsp             # Report available language-server tooling
+bun run verify:lsp:fast       # Verify TypeScript, Python, and Go IDE features
+bun run verify:lsp            # Verify the full LSP matrix, including Scala
+bun run verify:runner-backends # Verify host runner backends
+bun run verify:sandbox        # Verify local sandbox behavior where available
 ```
 
-## Editor
-
-The web app uses CodeMirror 6 for the code editor, with line numbers, syntax
-highlighting, indentation, bracket matching, history, search, lint gutter,
-hover documentation, signature help, format, go-to-definition, document
-symbols, and problem navigation. Completion suggestions come from the
-daemon-backed Language Server Protocol sessions when a server is available, then
-fall back to active problem signatures, local symbols, and language-specific
-keywords and snippets when a server is unavailable or slow. Formatting uses the
-language server when supported and falls back to the language pack formatter
-binary.
-
-## Directory Shape
+## Architecture
 
 ```text
-content/              File-authored graph content and language solutions
-docs/                 Architecture and migration plan
-src/core/             Content, language, and result contracts
-src/content/          Content loader
-src/languages/        Language pack registry
-src/lsp/              Generic stdio LSP client and completion normalization
-src/runner/           Host-runner contracts for non-Python languages
-src/storage/          Typed user data records and legacy backup migration
-scripts/              Legacy inventory, coverage, and batch migration tooling
-src/cli/              Verification and local daemon entry points
-tests/                Bun tests for graph validation and runner behavior
+apps/web/              React UI, CodeMirror editor, Pyodide workers
+content/               Authored graph content, assessments, and scenarios
+src/content/           Content loading and graph validation
+src/daemon/            Local API for content, storage, coach, Codex, and host duties
+src/ai/                Codex SDK provider
+src/runner/            Host-runner scaffolding for non-Python languages
+src/scenarios/         Scenario workspace and debrief helpers
+src/storage/           User data records and backup migration
+scripts/               Packaging, setup, verification, migration, and reporting tools
+tests/                 Bun tests for content, daemon, runner, and scenario behavior
 ```
 
-This is not intended to replace the current app yet. It is the architectural
-base for a rewrite where the browser UI talks to a localhost runner daemon and
-the daemon runs language packs in sandboxed environments.
+High-level flow:
+
+```text
+React UI -> Pyodide worker -> Python run results
+React UI -> daemon API -> content, persistence, coach, Codex, package host
+React UI -> daemon API -> non-Python language packs when those surfaces need host tooling
+```
+
+## Useful Environment Variables
+
+```text
+VITE_DSA_DAEMON_URL              Override the daemon URL used by the web UI
+DSA_COACH_NEXT_PORT              Choose the local daemon/host port
+DSA_COACH_STATIC_ROOT            Static web build root for desktop host
+DSA_COACH_CONTENT_ROOT           Override content directory
+DSA_COACH_USER_DATA_DIR          Override native user-data location
+DSA_COACH_RUNTIME_STATUS_PATH    Write runtime status for host/wrapper coordination
+DSA_COACH_CACHE_ROOT             Override writable cache root
+DSA_COACH_CODEX_MODEL            Optional Codex SDK model override
+```
+
+## Data Locations
+
+The packaged app writes user data outside the bundle, normally at:
+
+```text
+~/Library/Application Support/DSA Coach Next/User Data
+```
+
+Writable runner caches live beside the user-data directory. The app bundle itself should remain disposable.
+
+## Notes For Maintainers
+
+- Do not reintroduce local Python subprocess execution for in-app Python practice.
+- Keep Ramp and CodeSignal coding surfaces visually aligned with the mature guided-problem workspace.
+- Hidden tests are a practice-quality tool, not a security boundary.
+- Old scenario attempts may contain legacy command labels. Fresh Python runs should report `Pyodide unittest`.

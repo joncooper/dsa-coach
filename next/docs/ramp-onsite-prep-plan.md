@@ -2,6 +2,10 @@
 
 Last updated: 2026-06-16.
 
+Status: historical personal prep note. Relative date language in this file
+refers to the June 17, 2026 onsite prep window; it is not current product setup
+documentation.
+
 This is the short working plan for the Ramp virtual onsite on Wednesday,
 June 17, 2026. Keep this file practical: schedule, expected signal, drills,
 and talking points.

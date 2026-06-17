@@ -2,6 +2,10 @@
 
 Last checked: 2026-06-01.
 
+Status: historical interview-prep research note. This file explains the source
+material behind the Ramp practice modes; use [`../README.md`](../README.md) for
+current app setup and architecture.
+
 This guide summarizes public 1Point3Acres / 一亩三分地 signals for Ramp SWE
 interviews after the CodeSignal stage. Many detailed posts are login- or
 points-gated, so this file intentionally separates visible public signals from
