@@ -78,6 +78,13 @@ interface CodexStatus {
 const DEFAULT_TEST_PANE_SHARE = 42;
 const MIN_TEST_PANE_SHARE = 18;
 const MAX_TEST_PANE_SHARE = 68;
+type ScenarioSupportTab = "interviewer" | "plan" | "scratchpad" | "notes";
+const scenarioSupportTabs: Array<{ id: ScenarioSupportTab; label: string }> = [
+  { id: "interviewer", label: "Interviewer" },
+  { id: "plan", label: "Plan" },
+  { id: "scratchpad", label: "Scratchpad" },
+  { id: "notes", label: "Notes" }
+];
 
 export function ScenarioSetScreen({
   graph,
@@ -188,10 +195,15 @@ export function ScenarioWorkspaceScreen({
   const [coachInput, setCoachInput] = useState("");
   const [finalExplanation, setFinalExplanation] = useState("");
   const [codexStatus, setCodexStatus] = useState<CodexStatus | null>(null);
-  const [leftTab, setLeftTab] = useState<"prompt" | "plan" | "scratchpad">("prompt");
+  const [supportTab, setSupportTab] = useState<ScenarioSupportTab>("interviewer");
   const [scenarioScratchpad, setScenarioScratchpad] = useState("");
+  const [scenarioNotes, setScenarioNotes] = useState("");
+  const [promptCollapsed, setPromptCollapsed] = useState(false);
   const [sessionEnded, setSessionEnded] = useState(false);
   const [timerPaused, setTimerPaused] = useState(false);
+  const [timerVisible, setTimerVisible] = useState(true);
+  const [timerBaseOverride, setTimerBaseOverride] = useState<number | null>(null);
+  const [timerPausedAt, setTimerPausedAt] = useState<number | null>(null);
   const [clockNow, setClockNow] = useState(() => Date.now());
   const [editableFiles, setEditableFiles] = useState<ScenarioEditableFile[]>([]);
   const [activeFilePath, setActiveFilePath] = useState("");
@@ -238,6 +250,9 @@ export function ScenarioWorkspaceScreen({
     setAttempt(null);
     setDiff("");
     setCheckpointDrafts({});
+    setSupportTab("interviewer");
+    setScenarioScratchpad("");
+    setScenarioNotes("");
     setEditableFiles([]);
     setActiveFilePath("");
     setTestsCollapsed(false);
@@ -245,7 +260,8 @@ export function ScenarioWorkspaceScreen({
     lastSavedFileContentsRef.current = {};
     setSessionEnded(false);
     setTimerPaused(false);
-    setLeftTab("prompt");
+    setTimerBaseOverride(null);
+    setTimerPausedAt(null);
     if (!attemptId) return () => {
       alive = false;
     };
@@ -258,7 +274,7 @@ export function ScenarioWorkspaceScreen({
         setAttempt(nextAttempt);
         setCheckpointDrafts(draftsFromAttempt(nextAttempt));
         setSessionEnded(Boolean(nextAttempt.endedAt));
-        if (nextAttempt.endedAt) setTimerPaused(true);
+        setTimerPaused(Boolean(nextAttempt.endedAt));
         await loadEditableFiles(nextAttempt.attemptId, alive);
         await refreshDiff(nextAttempt.attemptId, alive);
       } catch (err) {
@@ -305,9 +321,36 @@ export function ScenarioWorkspaceScreen({
       setTestPaneShare(DEFAULT_TEST_PANE_SHARE);
       setSessionEnded(false);
       setTimerPaused(false);
+      setTimerBaseOverride(null);
+      setTimerPausedAt(null);
       setClockNow(Date.now());
       onAttemptsChanged();
     });
+  }
+
+  function toggleTimerPaused() {
+    if (!attempt || debriefOpen) return;
+    const now = Date.now();
+    if (timerPaused) {
+      const naturalBase = Date.parse(attempt.startedAt);
+      setTimerBaseOverride((base) => timerPausedAt ? (base ?? naturalBase) + (now - timerPausedAt) : base);
+      setTimerPausedAt(null);
+      setClockNow(now);
+      setTimerPaused(false);
+      return;
+    }
+    setClockNow(now);
+    setTimerPausedAt(now);
+    setTimerPaused(true);
+  }
+
+  function restartTimer() {
+    if (!attempt || debriefOpen) return;
+    const now = Date.now();
+    setTimerBaseOverride(now);
+    setTimerPausedAt(null);
+    setClockNow(now);
+    setTimerPaused(false);
   }
 
   async function openAttempt(target: "cursor" | "vscode" | "finder") {
@@ -375,6 +418,8 @@ export function ScenarioWorkspaceScreen({
       setAttempt(nextAttempt);
       setSessionEnded(true);
       setTimerPaused(true);
+      setTimerPausedAt(null);
+      if (nextAttempt.endedAt) setClockNow(Date.parse(nextAttempt.endedAt));
       onAttemptsChanged();
     });
   }
@@ -553,7 +598,9 @@ export function ScenarioWorkspaceScreen({
   const workspacePath = attempt?.workspacePath;
   const isOnsiteInterview = isOnsiteScenario(scenario, prompt);
   const debriefOpen = sessionEnded || Boolean(attempt?.endedAt) || Boolean(attempt?.judge);
-  const elapsedMs = attempt ? Math.max(0, clockNow - Date.parse(attempt.startedAt)) : 0;
+  const timerBaseMs = attempt ? timerBaseOverride ?? Date.parse(attempt.startedAt) : 0;
+  const timerStopMs = attempt?.endedAt ? Date.parse(attempt.endedAt) : timerPausedAt ?? clockNow;
+  const elapsedMs = attempt ? Math.max(0, timerStopMs - timerBaseMs) : 0;
   const elapsedMinutes = elapsedMs / 60000;
   const remainingMinutes = Math.max(0, scenario.timeboxMinutes - elapsedMinutes);
   const phaseState = interviewPhaseState(scenario.timeboxMinutes, elapsedMinutes);
@@ -588,6 +635,11 @@ export function ScenarioWorkspaceScreen({
         "--scenario-tests-share": `${testPaneShare}fr`
       } as CSSProperties)
     : undefined;
+  const scenarioLayoutClassName = [
+    "scenario-layout",
+    "scenario-interview-layout",
+    promptCollapsed ? "scenario-prompt-collapsed" : ""
+  ].filter(Boolean).join(" ");
 
   return (
     <section className={`scenario-workspace ${isOnsiteInterview ? "scenario-onsite-workspace" : ""}`}>
@@ -606,18 +658,40 @@ export function ScenarioWorkspaceScreen({
           </div>
         </div>
         <div className="scenario-interview-actions">
-          <div className="scenario-timer" aria-label="Elapsed interview time">
-            <span>{attempt ? formatClock(elapsedMs) : "--:--"}</span>
-            <small>{debriefOpen ? "Ended" : timerPaused ? "Paused" : "Elapsed"}</small>
+          <div className={`scenario-timer-control ${timerVisible ? "" : "timer-hidden"}`} aria-label="Interview timer controls">
+            {timerVisible ? (
+              <div className="scenario-timer" aria-label="Elapsed interview time">
+                <span>{attempt ? formatClock(elapsedMs) : "--:--"}</span>
+                <small>{debriefOpen ? "Ended" : timerPaused ? "Paused" : "Elapsed"}</small>
+              </div>
+            ) : (
+              <span className="scenario-timer-hidden-label">Timer hidden</span>
+            )}
+            <button
+              type="button"
+              className="secondary-button compact-button subtle-button"
+              onClick={() => setTimerVisible((visible) => !visible)}
+              aria-pressed={!timerVisible}
+            >
+              {timerVisible ? "Hide" : "Show"}
+            </button>
+            <button
+              type="button"
+              className="secondary-button compact-button subtle-button"
+              onClick={toggleTimerPaused}
+              disabled={!attempt || debriefOpen}
+            >
+              {debriefOpen ? "Ended" : timerPaused ? "Resume" : "Pause"}
+            </button>
+            <button
+              type="button"
+              className="secondary-button compact-button subtle-button"
+              onClick={restartTimer}
+              disabled={!attempt || debriefOpen}
+            >
+              Restart
+            </button>
           </div>
-          <button
-            type="button"
-            className="secondary-button compact-button"
-            onClick={() => setTimerPaused((paused) => !paused)}
-            disabled={!attempt || debriefOpen}
-          >
-            {debriefOpen ? "Ended" : timerPaused ? "Resume" : "Pause"}
-          </button>
           <button type="button" className="primary-button compact-button" onClick={() => void runVisible()} disabled={Boolean(busy) || !attempt}>
             Run tests
           </button>
@@ -644,67 +718,36 @@ export function ScenarioWorkspaceScreen({
       {error ? <p className="scenario-error" role="alert">{error}</p> : null}
       {busy ? <p className="scenario-busy">{busy}...</p> : null}
 
-      <div className="scenario-layout scenario-interview-layout">
-        <aside className="scenario-prompt-pane scenario-live-left-pane">
-          <div className="scenario-pane-tabs" role="tablist" aria-label="Scenario workspace tabs">
-            {(["prompt", "plan", "scratchpad"] as const).map((tab) => (
-              <button key={tab} type="button" className={leftTab === tab ? "active" : ""} onClick={() => setLeftTab(tab)}>
-                {tab[0].toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {leftTab === "prompt" ? (
+      <div className={scenarioLayoutClassName}>
+        <aside className={`scenario-prompt-pane scenario-live-left-pane ${promptCollapsed ? "is-collapsed" : ""}`}>
+          {promptCollapsed ? (
+            <button
+              type="button"
+              className="scenario-prompt-restore-button"
+              onClick={() => setPromptCollapsed(false)}
+              aria-label="Show prompt"
+              title="Show prompt"
+            >
+              <PanelOpenIcon />
+              <span>Prompt</span>
+            </button>
+          ) : (
             <section className="prompt-primary scenario-tab-panel">
-              <div className="prompt-primary-heading">
+              <div className="prompt-primary-heading scenario-prompt-heading-row">
                 <h2>Prompt</h2>
+                <button
+                  type="button"
+                  className="dock-collapse-button scenario-prompt-collapse-button"
+                  onClick={() => setPromptCollapsed(true)}
+                  aria-label="Hide prompt"
+                  title="Hide prompt"
+                >
+                  <PanelCloseIcon />
+                </button>
               </div>
               {prompt ? <ScenarioMarkdown content={prompt} /> : <p className="muted">Loading prompt...</p>}
             </section>
-          ) : null}
-
-          {leftTab === "plan" ? (
-            <section className="scenario-tab-panel scenario-plan-panel">
-              <div className="section-heading">
-                <h2>Your plan</h2>
-                <p>Candidate-authored notes. The interviewer does not score this live.</p>
-              </div>
-              {scenario.checkpoints.map((checkpoint) => (
-                <article key={checkpoint.id} className="scenario-plan-note">
-                  <header>
-                    <span>{checkpoint.minute} min</span>
-                    <strong>{checkpoint.title}</strong>
-                  </header>
-                  <p>{checkpoint.prompt}</p>
-                  <textarea
-                    value={checkpointDrafts[checkpoint.id] ?? ""}
-                    onChange={(event) => setCheckpointDrafts((drafts) => ({ ...drafts, [checkpoint.id]: event.target.value }))}
-                    rows={3}
-                    disabled={!attempt}
-                  />
-                  <button type="button" className="secondary-button compact-button" onClick={() => void saveCheckpoint(checkpoint)} disabled={Boolean(busy) || !attempt}>
-                    Save note
-                  </button>
-                </article>
-              ))}
-            </section>
-          ) : null}
-
-          {leftTab === "scratchpad" ? (
-            <section className="scenario-tab-panel scenario-plan-panel">
-              <div className="section-heading">
-                <h2>Scratchpad</h2>
-                <p>Private notes for assumptions, examples, and questions you want to ask out loud.</p>
-              </div>
-              <textarea
-                className="scenario-freeform-notes"
-                value={scenarioScratchpad}
-                onChange={(event) => setScenarioScratchpad(event.target.value)}
-                rows={16}
-                placeholder="Examples, invariants, unresolved questions..."
-              />
-            </section>
-          ) : null}
+          )}
         </aside>
 
         <main ref={sessionPaneRef} className={sessionPaneClassName} style={sessionPaneStyle}>
@@ -767,33 +810,6 @@ export function ScenarioWorkspaceScreen({
                     </div>
                   )}
                 </div>
-
-                <details className="scenario-diff-details">
-                  <summary>Workspace diff</summary>
-                  <div className={`scenario-diff-editor ${diff ? "" : "empty"}`}>
-                    <div className="scenario-diff-editor-tab">current diff</div>
-                    {diff ? (
-                      <pre><code>{diff}</code></pre>
-                    ) : (
-                      <div className="scenario-empty-diff">
-                        <strong>No saved changes yet</strong>
-                        <p>Edit in the app, then run tests to refresh the diff.</p>
-                      </div>
-                    )}
-                  </div>
-                </details>
-
-                <details className="scenario-diff-details scenario-local-workspace-details">
-                  <summary>Local folder</summary>
-                  <div className="scenario-local-workspace">
-                    <code>{workspacePath}</code>
-                    <div className="scenario-action-row">
-                      <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("finder")}>Finder</button>
-                      <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("vscode")}>VS Code</button>
-                      <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("cursor")}>Cursor</button>
-                    </div>
-                  </div>
-                </details>
               </section>
 
               {!testsCollapsed && !debriefOpen ? (
@@ -872,51 +888,157 @@ export function ScenarioWorkspaceScreen({
             <span>{codexStatus?.available ? codexStatus.model ?? "ready" : "offline"}</span>
           </header>
 
-          <section className="scenario-transcript">
-            <h3>Live transcript</h3>
-            {latestCoachTurns.length ? (
-              latestCoachTurns.slice().reverse().map((turn) => (
-                <div key={turn.id} className="scenario-transcript-turn">
-                  <p><strong>You</strong> <span>{formatTime(turn.createdAt)}</span></p>
-                  <p>{turn.userMessage}</p>
-                  <p><strong>{isOnsiteInterview ? "Interviewer" : "Codex"}</strong></p>
-                  <ScenarioMarkdown content={turn.response} />
-                </div>
-              ))
-            ) : (
-              <div className="scenario-transcript-turn">
-                <p><strong>{isOnsiteInterview ? "Interviewer" : "Codex"}</strong></p>
-                <p>{isOnsiteInterview ? "Start by restating the contract and calling out the first ambiguity you would clarify." : "Ask for a review, test strategy, or scenario-specific pressure test when you are ready."}</p>
+          <div className="scenario-support-tabs" role="tablist" aria-label="Scenario support tools">
+            {scenarioSupportTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={supportTab === tab.id}
+                className={supportTab === tab.id ? "active" : ""}
+                onClick={() => setSupportTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {supportTab === "interviewer" ? (
+            <section className="scenario-support-panel">
+              <section className="scenario-transcript">
+                <h3>Live transcript</h3>
+                {latestCoachTurns.length ? (
+                  latestCoachTurns.slice().reverse().map((turn) => (
+                    <div key={turn.id} className="scenario-transcript-turn">
+                      <p><strong>You</strong> <span>{formatTime(turn.createdAt)}</span></p>
+                      <p>{turn.userMessage}</p>
+                      <p><strong>{isOnsiteInterview ? "Interviewer" : "Codex"}</strong></p>
+                      <ScenarioMarkdown content={turn.response} />
+                    </div>
+                  ))
+                ) : (
+                  <div className="scenario-transcript-turn">
+                    <p><strong>{isOnsiteInterview ? "Interviewer" : "Codex"}</strong></p>
+                    <p>{isOnsiteInterview ? "Start by restating the contract and calling out the first ambiguity you would clarify." : "Ask for a review, test strategy, or scenario-specific pressure test when you are ready."}</p>
+                  </div>
+                )}
+              </section>
+
+              <section className="scenario-interviewer-card">
+                <h3>Current question</h3>
+                <p>{rightRailQuestion}</p>
+              </section>
+
+              <section className="scenario-interviewer-card quiet">
+                <h3>Time check</h3>
+                <p>{timeCheckCopy}</p>
+              </section>
+
+              <section className="scenario-interviewer-input">
+                <label htmlFor="scenario-interviewer-message">{interviewerInputLabel}</label>
+                <textarea
+                  id="scenario-interviewer-message"
+                  value={coachInput}
+                  onChange={(event) => setCoachInput(event.target.value)}
+                  rows={4}
+                  placeholder={interviewerInputPlaceholder}
+                  disabled={!attempt || debriefOpen}
+                />
+                <button type="button" className="primary-button compact-button" onClick={() => void askCoach()} disabled={Boolean(busy) || !coachInput.trim() || !attempt || debriefOpen}>
+                  {debriefOpen ? "Closed" : "Send"}
+                </button>
+              </section>
+
+              <p className="scenario-debrief-lock">{debriefLockCopy}</p>
+            </section>
+          ) : null}
+
+          {supportTab === "plan" ? (
+            <section className="scenario-support-panel scenario-plan-panel">
+              <div className="section-heading">
+                <h2>Your plan</h2>
+                <p>Candidate-authored checkpoints for the rehearsal.</p>
               </div>
-            )}
-          </section>
+              {scenario.checkpoints.map((checkpoint) => (
+                <article key={checkpoint.id} className="scenario-plan-note">
+                  <header>
+                    <span>{checkpoint.minute} min</span>
+                    <strong>{checkpoint.title}</strong>
+                  </header>
+                  <p>{checkpoint.prompt}</p>
+                  <textarea
+                    value={checkpointDrafts[checkpoint.id] ?? ""}
+                    onChange={(event) => setCheckpointDrafts((drafts) => ({ ...drafts, [checkpoint.id]: event.target.value }))}
+                    rows={3}
+                    disabled={!attempt}
+                  />
+                  <button type="button" className="secondary-button compact-button" onClick={() => void saveCheckpoint(checkpoint)} disabled={Boolean(busy) || !attempt}>
+                    Save note
+                  </button>
+                </article>
+              ))}
+            </section>
+          ) : null}
 
-          <section className="scenario-interviewer-card">
-            <h3>Current question</h3>
-            <p>{rightRailQuestion}</p>
-          </section>
+          {supportTab === "scratchpad" ? (
+            <section className="scenario-support-panel scenario-plan-panel">
+              <div className="section-heading">
+                <h2>Scratchpad</h2>
+                <p>Assumptions, examples, and questions.</p>
+              </div>
+              <textarea
+                className="scenario-freeform-notes"
+                value={scenarioScratchpad}
+                onChange={(event) => setScenarioScratchpad(event.target.value)}
+                rows={16}
+                placeholder="Examples, invariants, unresolved questions..."
+              />
+            </section>
+          ) : null}
 
-          <section className="scenario-interviewer-card quiet">
-            <h3>Time check</h3>
-            <p>{timeCheckCopy}</p>
-          </section>
-
-          <section className="scenario-interviewer-input">
-            <label htmlFor="scenario-interviewer-message">{interviewerInputLabel}</label>
-            <textarea
-              id="scenario-interviewer-message"
-              value={coachInput}
-              onChange={(event) => setCoachInput(event.target.value)}
-              rows={4}
-              placeholder={interviewerInputPlaceholder}
-              disabled={!attempt || debriefOpen}
-            />
-            <button type="button" className="primary-button compact-button" onClick={() => void askCoach()} disabled={Boolean(busy) || !coachInput.trim() || !attempt || debriefOpen}>
-              {debriefOpen ? "Closed" : "Send"}
-            </button>
-          </section>
-
-          <p className="scenario-debrief-lock">{debriefLockCopy}</p>
+          {supportTab === "notes" ? (
+            <section className="scenario-support-panel scenario-plan-panel">
+              <div className="section-heading">
+                <h2>Notes</h2>
+                <p>Private working notes for the session.</p>
+              </div>
+              <textarea
+                className="scenario-freeform-notes"
+                value={scenarioNotes}
+                onChange={(event) => setScenarioNotes(event.target.value)}
+                rows={12}
+                placeholder="Clarifications, follow-ups, debrief thoughts..."
+              />
+              <details className="scenario-dev-tools">
+                <summary>Developer tools</summary>
+                <details className="scenario-diff-details">
+                  <summary>Workspace diff</summary>
+                  <div className={`scenario-diff-editor ${diff ? "" : "empty"}`}>
+                    <div className="scenario-diff-editor-tab">current diff</div>
+                    {diff ? (
+                      <pre><code>{diff}</code></pre>
+                    ) : (
+                      <div className="scenario-empty-diff">
+                        <strong>No saved changes yet</strong>
+                        <p>Edit in the app, then run tests to refresh the diff.</p>
+                      </div>
+                    )}
+                  </div>
+                </details>
+                <details className="scenario-diff-details scenario-local-workspace-details">
+                  <summary>Local folder</summary>
+                  <div className="scenario-local-workspace">
+                    <code>{workspacePath}</code>
+                    <div className="scenario-action-row">
+                      <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("finder")} disabled={!attempt}>Finder</button>
+                      <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("vscode")} disabled={!attempt}>VS Code</button>
+                      <button type="button" className="secondary-button compact-button" onClick={() => void openAttempt("cursor")} disabled={!attempt}>Cursor</button>
+                    </div>
+                  </div>
+                </details>
+              </details>
+            </section>
+          ) : null}
         </aside>
       </div>
     </section>
