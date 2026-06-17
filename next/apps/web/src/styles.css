@@ -1344,6 +1344,8 @@ body.scenario-resizing-tests {
 
 .scenario-transcript-turn .scenario-markdown code {
   white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .scenario-interviewer-card {

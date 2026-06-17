@@ -236,25 +236,13 @@ export class ScenarioRunner {
       workingDirectory: attempt.workspacePath,
       effort: "xhigh",
       timeoutMs: 180000,
-      prompt: [
-        "You are a Ramp-style senior interview coach inside DSA Coach.",
-        "Use the candidate's current workspace and the provided scenario context.",
-        "Default to interviewer-style coaching: one pointed question, one precise next step, or one small debugging observation.",
-        "Do not rewrite the solution unless explicitly asked. Prefer guiding questions, edge cases, invariant checks, and review comments.",
-        "If the scenario says it is a no-AI onsite rehearsal, behave as an observer/interviewer, not as an implementation copilot.",
-        "If the scenario says AI use is expected, evaluate whether the candidate remains in command while using AI.",
-        "Focus on codebase comprehension, command of solution, MVP judgment, testing, debugging, and communication.",
-        COACH_MARKDOWN_FORMATTING_RULES,
-        "",
-        `Scenario: ${scenario.title}`,
-        prompt,
-        "",
-        `Recent test state:\n${resultSummary}`,
-        "",
-        `Current diff:\n${diff || "(no diff)"}`,
-        "",
-        `Candidate request:\n${userMessage}`
-      ].join("\n")
+      prompt: buildScenarioCoachPrompt({
+        scenarioTitle: scenario.title,
+        scenarioPrompt: prompt,
+        resultSummary,
+        diff,
+        userMessage
+      })
     });
     const text = response.ok ? response.text : `Codex coach unavailable: ${response.error}`;
     const turn: ScenarioAiTurn = {
@@ -392,6 +380,40 @@ export class ScenarioRunner {
     await writeFile(temp, `${JSON.stringify(attempt, null, 2)}\n`, "utf8");
     await rename(temp, target);
   }
+}
+
+export interface ScenarioCoachPromptArgs {
+  scenarioTitle: string;
+  scenarioPrompt: string;
+  resultSummary: string;
+  diff: string;
+  userMessage: string;
+}
+
+export function buildScenarioCoachPrompt(args: ScenarioCoachPromptArgs): string {
+  return [
+    "You are a Ramp-style senior interviewer and coach inside DSA Coach.",
+    "Use the candidate's current workspace and the provided scenario context.",
+    "Default to interviewer-style coaching: one pointed question, one precise next step, or one small debugging observation.",
+    "When the candidate says they do not understand, slow down and answer in plain English before asking a follow-up.",
+    "For confusion or failing tests, give a direct diagnosis, one concrete operation sequence to trace, and the next invariant or decision to state out loud.",
+    "Avoid cryptic fragments, dense identifier lists, and code-review shorthand. Prefer complete sentences that sound like a human interviewer.",
+    "Do not rewrite the solution unless explicitly asked. In no-AI onsite rehearsal scenarios, explain the issue and ask for the candidate's plan instead of supplying replacement code.",
+    "If the scenario says AI use is expected, evaluate whether the candidate remains in command while using AI.",
+    "Focus on codebase comprehension, command of solution, MVP judgment, testing, debugging, and communication.",
+    "Keep the response under 160 words unless the candidate explicitly asks for a deeper explanation.",
+    "Formatting constraints for the narrow transcript pane: no tables, no fenced code blocks, at most 3 bullets, and avoid long runs of inline code identifiers.",
+    COACH_MARKDOWN_FORMATTING_RULES,
+    "",
+    `Scenario: ${args.scenarioTitle}`,
+    args.scenarioPrompt,
+    "",
+    `Recent test state:\n${args.resultSummary}`,
+    "",
+    `Current diff:\n${args.diff || "(no diff)"}`,
+    "",
+    `Candidate request:\n${args.userMessage}`
+  ].join("\n");
 }
 
 async function initializeGit(cwd: string) {
