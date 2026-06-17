@@ -669,6 +669,7 @@ export function ScenarioWorkspaceScreen({
     : isOnsiteInterview
       ? "Ask a clarification, or tell the interviewer what you are about to do."
       : "Ask for review, tests, or a subtle nudge.";
+  const canAskCoach = Boolean(attempt && !debriefOpen && !busy && coachInput.trim());
   const debriefLockCopy = debriefOpen
     ? "Debrief is open below. Add a final explanation, run hidden tests, then generate feedback."
     : "Debrief unlocks when you end the session.";
@@ -1010,11 +1011,16 @@ export function ScenarioWorkspaceScreen({
                   id="scenario-interviewer-message"
                   value={coachInput}
                   onChange={(event) => setCoachInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" || !(event.ctrlKey || event.metaKey)) return;
+                    event.preventDefault();
+                    if (canAskCoach) void askCoach();
+                  }}
                   rows={4}
                   placeholder={interviewerInputPlaceholder}
                   disabled={!attempt || debriefOpen}
                 />
-                <button type="button" className="primary-button compact-button" onClick={() => void askCoach()} disabled={Boolean(busy) || !coachInput.trim() || !attempt || debriefOpen}>
+                <button type="button" className="primary-button compact-button" onClick={() => void askCoach()} disabled={!canAskCoach}>
                   {debriefOpen ? "Closed" : "Send"}
                 </button>
               </section>
