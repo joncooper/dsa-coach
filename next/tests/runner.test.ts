@@ -56,6 +56,18 @@ describe("local runner", () => {
     expect(result.status).toBe("unsupported");
   });
 
+  test("does not execute Python through the host process runner", async () => {
+    const graph = await loadContentGraph();
+    const result = await new LocalRunner(graph).run({
+      language: "python",
+      problemId: "sum-positive-readings",
+      code: "def sum_positive_readings(readings):\n    return sum(readings)\n",
+      includeHidden: false
+    });
+    expect(result.status).toBe("unsupported");
+    expect(result.message).toContain("Pyodide");
+  });
+
   test("returns line-numbered TypeScript compile diagnostics", async () => {
     const graph = await loadContentGraph();
     const result = await new LocalRunner(graph).run({
@@ -99,13 +111,13 @@ describe("local runner", () => {
     expect(erroredTest?.diagnostics?.[0]?.line).toBeGreaterThan(0);
   });
 
-  test("runs non-TypeScript references when process runner verification is enabled", async () => {
+  test("runs non-TypeScript host-process references when process runner verification is enabled", async () => {
     if (process.env.DSA_COACH_TEST_PROCESS_RUNNERS !== "1") return;
     const graph = await loadContentGraph();
     const runner = new LocalRunner(graph);
     const problem = graph.problems.find((candidate) => candidate.id === "sum-positive-readings");
     if (!problem) throw new Error("missing sum-positive-readings");
-    for (const language of ["python", "go", "scala"] as const) {
+    for (const language of ["go", "scala"] as const) {
       const support = problem.languages[language];
       const code = await readFile(resolve(defaultContentRoot, support.referencePath), "utf8");
       const result = await runner.run({
@@ -114,31 +126,6 @@ describe("local runner", () => {
         code,
         includeHidden: true,
         timeoutMs: language === "scala" ? 30000 : 10000
-      });
-      expect(result.status).toBe("passed");
-    }
-  });
-
-  test("awaits async Python reference entrypoints when process runner verification is enabled", async () => {
-    if (process.env.DSA_COACH_TEST_PROCESS_RUNNERS !== "1") return;
-    const graph = await loadContentGraph();
-    const runner = new LocalRunner(graph);
-    const problemIds = [
-      "ramp-travel-api-async-trip-enrichment",
-      "ramp-travel-api-async-receipt-ocr",
-      "ramp-travel-api-async-employee-spend"
-    ];
-    for (const problemId of problemIds) {
-      const problem = graph.problems.find((candidate) => candidate.id === problemId);
-      if (!problem) throw new Error(`missing ${problemId}`);
-      const support = problem.languages.python;
-      const code = await readFile(resolve(defaultContentRoot, support.referencePath), "utf8");
-      const result = await runner.run({
-        language: "python",
-        problemId,
-        code,
-        includeHidden: true,
-        timeoutMs: 10000
       });
       expect(result.status).toBe("passed");
     }

@@ -23,6 +23,11 @@ const skipped: string[] = [];
 const failures: unknown[] = [];
 
 for (const language of requestedLanguages) {
+  if (language === "python") {
+    skipped.push(language);
+    console.log("skipping python: Python references run in the browser Pyodide worker, not LocalRunner");
+    continue;
+  }
   if (!available.get(language)) {
     skipped.push(language);
     console.log(`skipping ${language}: runner toolchain is not available`);
@@ -94,6 +99,6 @@ function runnerTargets(language: LanguageId): Target[] {
 
 function parseLanguages(): LanguageId[] {
   const arg = process.argv.find((value) => value.startsWith("--languages="));
-  if (!arg) return ["typescript", "python", "go", "scala"];
+  if (!arg) return ["typescript", "go", "scala"];
   return arg.slice("--languages=".length).split(",").map((value) => value.trim()).filter(Boolean);
 }

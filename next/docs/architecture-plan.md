@@ -18,14 +18,19 @@ tests are practice integrity, not a security boundary.
 DSA Coach Next is a local platform with two processes:
 
 - A static browser UI served from localhost.
-- A local runner daemon that owns compilation, execution, language tooling,
-  and sandboxing.
+- A local app daemon that owns content, persistence, language metadata, service
+  orchestration, and non-Python host-runner execution.
+- Browser-worker Pyodide execution for Python practice, including guided
+  problems, scratchpads, assessments, and scenario tests.
 
 The browser renders the course, editor, results, notes, progress, and coach
-surface. The daemon exposes content, language metadata, and run endpoints.
+surface. The daemon exposes content, language metadata, persistence, and
+non-Python run endpoints. Python candidate code runs in the browser worker and
+only persists results back through the daemon.
 
 ```text
-Browser UI -> localhost runner daemon -> language pack -> sandbox/toolchain
+Browser UI -> Pyodide worker -> Python results
+Browser UI -> localhost daemon -> non-Python language pack -> sandbox/toolchain
 ```
 
 ## Repository Shape

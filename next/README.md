@@ -139,7 +139,7 @@ src/core/             Content, language, and result contracts
 src/content/          Content loader
 src/languages/        Language pack registry
 src/lsp/              Generic stdio LSP client and completion normalization
-src/runner/           Local runner contracts and prototype backend
+src/runner/           Host-runner contracts for non-Python languages
 src/storage/          Typed user data records and legacy backup migration
 scripts/              Legacy inventory, coverage, and batch migration tooling
 src/cli/              Verification and local daemon entry points

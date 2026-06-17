@@ -70,8 +70,21 @@ describe("runner daemon API", () => {
           code: partSource.code,
           includeHidden: true
         })
-      }).then((res) => res.json() as Promise<{ status: string }>);
-      expect(partResult.status).toBe("passed");
+      }).then((res) => res.json() as Promise<{ status: string; message?: string }>);
+      expect(partResult.status).toBe("unsupported");
+      expect(partResult.message).toContain("Pyodide");
+
+      const pythonScratchpad = await fetch(`${base}/scratchpad`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          language: "python",
+          code: "print('scratch')",
+          timeoutMs: 1000
+        })
+      }).then((res) => res.json() as Promise<{ status: string; message?: string }>);
+      expect(pythonScratchpad.status).toBe("unsupported");
+      expect(pythonScratchpad.message).toContain("Pyodide");
     } finally {
       server.close();
     }

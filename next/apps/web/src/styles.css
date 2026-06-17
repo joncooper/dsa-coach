@@ -995,6 +995,18 @@ body.scenario-resizing-tests {
   overflow-wrap: anywhere;
 }
 
+.scenario-tests-details {
+  display: grid;
+  gap: 8px;
+}
+
+.scenario-tests-details summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .scenario-tests-empty,
 .scenario-tests-custom {
   min-height: 128px;

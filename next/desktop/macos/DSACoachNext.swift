@@ -27,7 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.setActivationPolicy(.regular)
         createApplicationMenu()
         createWindow()
-        showMessage(title: "Starting DSA Coach Next", body: "Starting the local runner and editor...")
+        showMessage(title: "Starting DSA Coach Next", body: "Starting the practice workspace...")
         startHost()
     }
 
@@ -385,7 +385,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         stopHost()
         if loadedHost {
             showMessage(
-                title: "Local runner stopped",
+                title: "DSA Coach service stopped",
                 body: "The local DSA Coach service exited. Close and reopen the app to start it again."
             )
             return
@@ -393,7 +393,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let details = stderrBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
         showMessage(
             title: "Could not start DSA Coach Next",
-            body: details.isEmpty ? "The local runner exited before it reported a startup URL." : details
+            body: details.isEmpty ? "The DSA Coach service exited before it reported a startup URL." : details
         )
     }
 
@@ -526,7 +526,6 @@ private func launchPath(appRoot: URL, existing: String?) -> String {
     var entries = [
         appRoot.appendingPathComponent("node_modules/.bin").path,
         appRoot.appendingPathComponent(".runner-cache/lsp/bin").path,
-        appRoot.appendingPathComponent(".runner-cache/toolchains/python/bin").path,
         appRoot.appendingPathComponent(".runner-cache/toolchains/go/bin").path,
         appRoot.appendingPathComponent(".runner-cache/toolchains/java/bin").path,
         "\(home)/.local/bin",

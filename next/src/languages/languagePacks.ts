@@ -1,6 +1,5 @@
 import type { LanguagePack } from "../core/types.js";
 import { goRuntimeAvailable } from "../runner/goRuntime.js";
-import { resolvePythonRuntime } from "../runner/pythonRuntime.js";
 import { SCALA_VERSION, scalaToolchainAvailable } from "../toolchains/localToolchains.js";
 
 export const languagePacks: LanguagePack[] = [
@@ -43,8 +42,8 @@ export const languagePacks: LanguagePack[] = [
     label: "Python",
     extensions: [".py"],
     runner: {
-      strategy: "container",
-      installedByDefault: false,
+      strategy: "browser-worker",
+      installedByDefault: true,
       offlineCapable: true,
       sandboxed: true
     },
@@ -147,7 +146,7 @@ export async function runtimeLanguagePacks(): Promise<LanguagePack[]> {
       ...pack,
       runner: {
         ...pack.runner,
-        strategy: "host-process",
+        strategy: pack.id === "python" ? "browser-worker" : "host-process",
         installedByDefault: await runtimeAvailable(pack.id)
       }
     }))
@@ -156,7 +155,7 @@ export async function runtimeLanguagePacks(): Promise<LanguagePack[]> {
 
 async function runtimeAvailable(languageId: string): Promise<boolean> {
   if (languageId === "typescript") return true;
-  if (languageId === "python") return Boolean((await resolvePythonRuntime()).runtime);
+  if (languageId === "python") return true;
   if (languageId === "go") return goRuntimeAvailable();
   if (languageId === "scala") return scalaToolchainAvailable();
   return false;

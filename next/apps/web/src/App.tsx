@@ -9,7 +9,9 @@ import type {
   ProblemPart,
   ProblemTest,
   RunDiagnostic,
-  RunResult
+  RunRequest,
+  RunResult,
+  ScratchpadRequest
 } from "../../../src/core/types";
 import { migrateLegacyBackup, type LegacyBackupPayload } from "../../../src/storage/legacyMigration";
 import type { NextUserData, NextWorkspaceState, WorkspaceEditorBuffer, WorkspaceSelection } from "../../../src/storage/userData";
@@ -17,6 +19,7 @@ import type { CoachEvalSuiteReport } from "../../../src/coach/evalTypes";
 import { API_BASE } from "./apiBase";
 import { BasicCodeEditor, CodeEditor } from "./CodeEditor";
 import { CoachPanel } from "./CoachPanel";
+import { runPythonProblem, runPythonScratchpad } from "./pyodideRunner";
 import { ScenarioSetScreen, ScenarioWorkspaceScreen, type ScenarioAttemptSummary } from "./ScenarioScreens";
 import { OpenNavigationButton, ShowSidebarButton } from "./SidebarControls";
 import {
@@ -943,19 +946,21 @@ export function App() {
     setActiveMobileTab("results");
     setLastRunIncludedHidden(includeHidden);
     try {
-      const nextResult = await postJson<RunResult>("/run", {
+      const nextResult = await runProblemRequest({
         language: selectedLanguage,
         problemId: selectedProblem.id,
         partId: selectedPartId || undefined,
         code,
         includeHidden,
         timeoutMs: 1000
-      }, { signal: controller.signal });
+      }, selectedProblem, controller.signal);
       setResult(nextResult);
-      setRecentRuns((current) => [{ result: nextResult, at: new Date().toISOString(), includeHidden }, ...current].slice(0, 8));
-      setActiveOutputPanel("results");
-      setActiveMobileTab("results");
-      await recordProblemRun(nextResult);
+      if (nextResult.status !== "stopped") {
+        setRecentRuns((current) => [{ result: nextResult, at: new Date().toISOString(), includeHidden }, ...current].slice(0, 8));
+        setActiveOutputPanel("results");
+        setActiveMobileTab("results");
+        await recordProblemRun(nextResult);
+      }
     } catch (error) {
       if (isAbortError(error)) {
         setResult(stoppedResult());
@@ -980,7 +985,7 @@ export function App() {
   }
 
   async function runScratchpad() {
-    if (!selectedProblemId || scratchpadBusy || !selectedPack?.runner.installedByDefault) return;
+    if (!selectedProblemId || scratchpadBusy || !canRunLanguage(selectedLanguage, selectedPack)) return;
     const controller = new AbortController();
     scratchpadAbortRef.current = controller;
     setScratchpadBusy(true);
@@ -988,11 +993,11 @@ export function App() {
     setActiveMobileTab("scratchpad");
     try {
       await saveScratchpad(selectedProblemId, selectedLanguage, scratchpadCode);
-      const nextResult = await postJson<RunResult>("/scratchpad", {
+      const nextResult = await runScratchpadRequest({
         language: selectedLanguage,
         code: scratchpadCode,
         timeoutMs: 3000
-      }, { signal: controller.signal });
+      }, controller.signal);
       setScratchpadResult(nextResult);
     } catch (error) {
       if (isAbortError(error)) {
@@ -1302,7 +1307,7 @@ export function App() {
   }
 
   if (loadState.status === "loading") {
-    return <div className="boot-screen">Connecting to local runner...</div>;
+    return <div className="boot-screen">Starting practice workspace...</div>;
   }
 
   if (loadState.status === "error") {
@@ -1927,13 +1932,13 @@ export function App() {
               </button>
             ) : null}
 
-            <section className={`workspace editor-pane ${!selectedPack?.runner.installedByDefault ? "has-notice" : ""} ${outputDockCollapsed ? "output-collapsed" : ""}`} ref={workspaceRef}>
+            <section className={`workspace editor-pane ${!canRunLanguage(selectedLanguage, selectedPack) ? "has-notice" : ""} ${outputDockCollapsed ? "output-collapsed" : ""}`} ref={workspaceRef}>
               <div className={`workspace-toolbar mobile-pane ${activeMobileTab === "code" || activeMobileTab === "results" ? "active" : ""}`}>
                 <div className="toolbar-status-group">
                   <span className={`run-status ${busy ? "loading" : result?.status ?? "idle"}`}>{runStatus}</span>
                   <small>
                     {activeProblemTimeMs ? `Active ${formatActiveTime(activeProblemTimeMs)} · ` : ""}
-                    {result?.durationMs ? `${result.durationMs} ms` : selectedPack ? `Local ${selectedPack.label}` : "Local runner"}
+                    {result?.durationMs ? `${result.durationMs} ms` : selectedPack ? `${selectedPack.label} runtime` : "Runner ready"}
                   </small>
                 </div>
                 <div className="toolbar-actions">
@@ -2003,7 +2008,7 @@ export function App() {
                     </button>
                   ) : (
                     <>
-                      <button className="primary-button run-button" type="button" aria-label="Run visible tests" onClick={() => void run(false)} disabled={!selectedPack?.runner.installedByDefault}>
+                      <button className="primary-button run-button" type="button" aria-label="Run visible tests" onClick={() => void run(false)} disabled={!canRunLanguage(selectedLanguage, selectedPack)}>
                         <PlayIcon />
                         <span className="button-copy">
                           <strong>Run</strong>
@@ -2011,7 +2016,7 @@ export function App() {
                         </span>
                         <kbd>⌘↵</kbd>
                       </button>
-                      <button className="primary-button submit-button" type="button" aria-label="Submit all tests" onClick={() => void run(true)} disabled={!selectedPack?.runner.installedByDefault}>
+                      <button className="primary-button submit-button" type="button" aria-label="Submit all tests" onClick={() => void run(true)} disabled={!canRunLanguage(selectedLanguage, selectedPack)}>
                         <CheckCircleIcon />
                         <span className="button-copy">
                           <strong>Submit</strong>
@@ -2024,9 +2029,9 @@ export function App() {
                 </div>
               </div>
 
-              {!selectedPack?.runner.installedByDefault ? (
+              {!canRunLanguage(selectedLanguage, selectedPack) ? (
                 <p className="notice">
-                  {selectedPack?.label ?? selectedLanguage} is represented in the content graph, but its local runner pack is not installed in this prototype.
+                  {selectedPack?.label ?? selectedLanguage} is represented in the content graph, but its runner pack is not installed in this prototype.
                 </p>
               ) : null}
 
@@ -3535,7 +3540,7 @@ function AssessmentFlowScreen({
   }
 
   async function runAssessment(includeHidden: boolean) {
-    if (!session || busy || isPaused || !pack?.runner.installedByDefault) return;
+    if (!session || busy || isPaused || !canRunLanguage(language, pack)) return;
     setBusy(true);
     setResult(null);
     setLastRunIncludedHidden(includeHidden);
@@ -3549,14 +3554,14 @@ function AssessmentFlowScreen({
     }, runStartedAt);
     try {
       const partId = assessmentPartId(problem, level);
-      const nextResult = await postJson<RunResult>("/run", {
+      const nextResult = await runProblemRequest({
         language,
         problemId: problem.id,
         partId,
         code,
         includeHidden,
         timeoutMs: 2500
-      });
+      }, problem);
       setResult(nextResult);
       await onRecordRun(problem.id, partId, language, code, nextResult);
       const nextSession = mergeAssessmentRun(session, problem, level, code, nextResult, includeHidden);
@@ -3925,7 +3930,7 @@ function AssessmentFlowScreen({
           <div className="workspace-toolbar">
             <div className="toolbar-status-group">
               <span className={`run-status ${busy ? "loading" : result?.status ?? "idle"}`}>{busy ? "Running" : result ? statusLabel(result.status) : "Ready"}</span>
-              <small>{result?.durationMs ? `${result.durationMs} ms` : pack ? `Local ${pack.label}` : "Local runner"}</small>
+              <small>{result?.durationMs ? `${result.durationMs} ms` : pack ? `${pack.label} runtime` : "Runner ready"}</small>
               <span className={`autosave-indicator ${saveState}`} title="Your work is saved automatically.">
                 <span className="autosave-dot" aria-hidden />
                 {saveState === "saving" ? "Saving..." : "Saved"}
@@ -3936,12 +3941,12 @@ function AssessmentFlowScreen({
                 <ResetIcon />
                 Reset starter
               </button>
-              <button className="primary-button run-button" type="button" disabled={busy || isPaused || !pack?.runner.installedByDefault} onClick={() => void runAssessment(false)}>
+              <button className="primary-button run-button" type="button" disabled={busy || isPaused || !canRunLanguage(language, pack)} onClick={() => void runAssessment(false)}>
                 <PlayIcon />
                 <span className="button-copy"><strong>Run</strong><small>visible tests</small></span>
                 <kbd>⌘↵</kbd>
               </button>
-              <button className="primary-button submit-button" type="button" disabled={busy || isPaused || !pack?.runner.installedByDefault} onClick={() => void runAssessment(true)}>
+              <button className="primary-button submit-button" type="button" disabled={busy || isPaused || !canRunLanguage(language, pack)} onClick={() => void runAssessment(true)}>
                 <CheckCircleIcon />
                 <span className="button-copy"><strong>Submit</strong><small>all tests</small></span>
                 <kbd>⇧⌘↵</kbd>
@@ -3998,7 +4003,7 @@ function AssessmentFlowScreen({
               {activePanel === "results" ? (
                 <section className="workspace-panel result-panel active">
                   <h2>Results</h2>
-                  {busy ? <p className="muted">Running locally...</p> : null}
+                  {busy ? <p className="muted">Running tests...</p> : null}
                   {!busy && !result ? <p className="muted">No run results yet.</p> : null}
                   {!busy && result ? (
                     <>
@@ -5340,11 +5345,11 @@ function LessonRunnableCode({ initialCode }: { initialCode: string }) {
     setRunning(true);
     setResult(null);
     try {
-      setResult(await postJson<RunResult>("/scratchpad", {
+      setResult(await runScratchpadRequest({
         language: "python",
         code,
         timeoutMs: 3000
-      }, { signal: controller.signal }));
+      }, controller.signal));
     } catch (error) {
       setResult(isAbortError(error) ? stoppedResult() : {
         status: "runtime-error",
@@ -6191,7 +6196,7 @@ function ResultsPanel({
     return (
       <section className="workspace-panel result-panel active">
         <h2>Results</h2>
-        <p className="muted">Running locally...</p>
+        <p className="muted">Running tests...</p>
       </section>
     );
   }
@@ -7486,6 +7491,24 @@ function problemIdsForScope(graph: ContentGraph, scope: SidebarScope): Set<strin
   }
   const set = graph.problemSets.find((candidate) => candidate.id === scope.id);
   return new Set(set?.entries.map((entry) => entry.problem) ?? []);
+}
+
+function canRunLanguage(language: LanguageId, pack: LanguagePack | undefined): boolean {
+  return language === "python" || Boolean(pack?.runner.installedByDefault);
+}
+
+function runProblemRequest(request: RunRequest, problem: Problem, signal?: AbortSignal): Promise<RunResult> {
+  if (request.language === "python") {
+    return runPythonProblem(problem, request.partId, request.code, request.includeHidden, signal);
+  }
+  return postJson<RunResult>("/run", request, { signal });
+}
+
+function runScratchpadRequest(request: ScratchpadRequest, signal?: AbortSignal): Promise<RunResult> {
+  if (request.language === "python") {
+    return runPythonScratchpad(request.code, signal, request.timeoutMs);
+  }
+  return postJson<RunResult>("/scratchpad", request, { signal });
 }
 
 async function getJson<T>(path: string): Promise<T> {

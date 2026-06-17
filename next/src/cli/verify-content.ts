@@ -13,6 +13,7 @@ const errors = [...graphResult.errors, ...fileResult.errors];
 const runner = new LocalRunner(graph);
 for (const problem of graph.problems) {
   for (const pack of installedLanguagePacks()) {
+    if (pack.runner.strategy === "browser-worker") continue;
     const support = problem.languages[pack.id];
     if (!support) continue;
     const code = await readFile(resolve(defaultContentRoot, support.referencePath), "utf8");
