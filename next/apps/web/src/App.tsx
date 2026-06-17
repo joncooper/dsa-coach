@@ -1594,6 +1594,7 @@ export function App() {
               const set = graph.scenarioSets.find((candidate) => candidate.entries.some((entry) => entry.scenario === selectedScenario.id));
               setCurrentView({ kind: "scenario-set", id: set?.id ?? "ramp-ai-backend" });
             }}
+            onAttemptStarted={(attemptId) => setCurrentView({ kind: "scenario", scenarioId: selectedScenario.id, attemptId })}
             onAttemptsChanged={() => void refreshScenarioAttempts()}
           />
         ) : null}

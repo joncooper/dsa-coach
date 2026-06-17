@@ -175,6 +175,20 @@ describe("runner daemon API", () => {
         body: JSON.stringify({ attemptId, path: "attempt.json", content: "{}" })
       });
       expect(rejected.ok).toBe(false);
+
+      const restarted = await fetch(`${base}/scenarios/start`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ scenarioId: "ramp-hotel-reservations" })
+      }).then((res) => res.json() as Promise<{ attempt: { attemptId: string; visibleRuns: unknown[]; hiddenRuns: unknown[]; aiTurns: unknown[] } }>);
+      expect(restarted.attempt.attemptId).not.toBe(attemptId);
+      expect(restarted.attempt.visibleRuns).toHaveLength(0);
+      expect(restarted.attempt.hiddenRuns).toHaveLength(0);
+      expect(restarted.attempt.aiTurns).toHaveLength(0);
+
+      const freshFiles = await fetch(`${base}/scenarios/files?attemptId=${encodeURIComponent(restarted.attempt.attemptId)}`)
+        .then((res) => res.json() as Promise<{ files: Array<{ path: string; content: string }> }>);
+      expect(freshFiles.files.find((file) => file.path === "src/reservations.py")?.content).not.toContain("candidate note");
     } finally {
       server.close();
       await rm(userDataRoot, { recursive: true, force: true });
