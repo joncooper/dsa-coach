@@ -29,6 +29,22 @@ class HiddenReceiptMatcherTests(unittest.TestCase):
             remaining.add(review_item["receipt_id"])
         self.assertEqual(remaining, {"rcpt_2"})
 
+    def test_duplicate_explicit_transaction_id_goes_to_review_not_fallback(self):
+        result = match_receipts(
+            [
+                Transaction("txn_1", 1000, "2026-06-01", "Uber", "cardholder_1"),
+                Transaction("txn_2", 1000, "2026-06-01", "Uber", "cardholder_1"),
+            ],
+            [
+                Receipt("rcpt_1", 1000, "2026-06-01", "Uber", "cardholder_1", "txn_1"),
+                Receipt("rcpt_2", 1000, "2026-06-01", "Uber", "cardholder_1", "txn_1"),
+            ],
+        )
+
+        self.assertEqual(result.attached, [("rcpt_1", "txn_1")])
+        self.assertEqual(result.review, [{"receipt_id": "rcpt_2", "candidate_transaction_ids": ["txn_1"]}])
+        self.assertEqual(result.unmatched, [])
+
     def test_two_day_window_and_simple_vendor_normalization(self):
         result = match_receipts(
             [Transaction("txn_1", 3499, "2026-06-03", "Whole Foods Market", "cardholder_1")],

@@ -11,7 +11,7 @@ Screenshots live in `next/docs/native-practice-pass-screenshots/`.
 | 1 | Ramp Onsite: Hotel Reservation Service | Visible-test debugging, coach loop, final Pyodide pass | [`pass-01-ramp-onsite-initial.png`](native-practice-pass-screenshots/pass-01-ramp-onsite-initial.png), [`pass-01-ramp-onsite-final.png`](native-practice-pass-screenshots/pass-01-ramp-onsite-final.png), [`pass-01-timer-reset-verification.png`](native-practice-pass-screenshots/pass-01-timer-reset-verification.png) | Completed: 5/5 visible tests passed |
 | 2 | Ramp AI Backend Drills: Transaction Sync Client | Scenario start, coach loop, Pyodide visible/hidden tests, debrief path | [`pass-02-sync-start.png`](native-practice-pass-screenshots/pass-02-sync-start.png), [`pass-02-sync-initial-failure.png`](native-practice-pass-screenshots/pass-02-sync-initial-failure.png), [`pass-02-sync-visible-pass.png`](native-practice-pass-screenshots/pass-02-sync-visible-pass.png), [`pass-02-sync-hidden-pass-judging-stuck.png`](native-practice-pass-screenshots/pass-02-sync-hidden-pass-judging-stuck.png), [`pass-02-sync-rebuilt-default-file.png`](native-practice-pass-screenshots/pass-02-sync-rebuilt-default-file.png) | Completed: 3/3 visible and 3/3 hidden tests passed |
 | 3 | Ramp AI Backend Drills: Ledger Reconciliation | Coach pressure-test, stale-buffer recovery, Pyodide visible/hidden tests | [`pass-03-ledger-start.png`](native-practice-pass-screenshots/pass-03-ledger-start.png), [`pass-03-ledger-initial-test-run.png`](native-practice-pass-screenshots/pass-03-ledger-initial-test-run.png), [`pass-03-ledger-coach-response.png`](native-practice-pass-screenshots/pass-03-ledger-coach-response.png), [`pass-03-ledger-visible-rerun.png`](native-practice-pass-screenshots/pass-03-ledger-visible-rerun.png), [`pass-03-ledger-hidden-pass.png`](native-practice-pass-screenshots/pass-03-ledger-hidden-pass.png) | Completed: 3/3 visible and 3/3 hidden tests passed |
-| 4 | Pending | Pending | Pending | Pending |
+| 4 | Ramp AI Backend Drills: Receipt Matcher | Explicit-id conflicts, conservative inferred matching, coach loop, Pyodide visible/hidden tests | [`pass-04-receipt-start.png`](native-practice-pass-screenshots/pass-04-receipt-start.png), [`pass-04-receipt-initial-failure.png`](native-practice-pass-screenshots/pass-04-receipt-initial-failure.png), [`pass-04-receipt-visible-after-coach-fix.png`](native-practice-pass-screenshots/pass-04-receipt-visible-after-coach-fix.png), [`pass-04-receipt-hidden-pass.png`](native-practice-pass-screenshots/pass-04-receipt-hidden-pass.png) | Completed: 3/3 visible and 4/4 hidden tests passed |
 | 5 | Pending | Pending | Pending | Pending |
 | 6 | Pending | Pending | Pending | Pending |
 | 7 | Pending | Pending | Pending | Pending |
@@ -94,3 +94,28 @@ UX notes:
 - Issue: coordinate-based macOS fallback is error-prone in a desktop with overlapping Codex and native-app windows. AXPress by titled control was much more reliable than raw mouse coordinates.
 
 App/content improvement from this pass: Ledger Reconciliation hidden tests now include the coach-discovered shared-single-candidate case so future solutions cannot greedily match one of two internal rows to the same sole bank candidate without reporting ambiguity.
+
+## Pass 4: Ramp AI Backend Drills Receipt Matcher
+
+Scenario: started the Receipt Matcher drill in the native macOS app and worked through the visible tests, coach pressure test, and hidden/debrief flow.
+
+Exercise path:
+
+- Started a fresh Receipt Matcher session from Ramp AI Backend Drills. The prompt and pre-session panel were clear, and the session loaded `src/receipts.py` with visible tests at `0/3 not run`.
+- Ran starter visible tests. The first run showed `1/3 failed / 849 ms` with `Pyodide unittest`; explicit transaction-id attachment passed, while inferred matching and ambiguity routing failed.
+- Implemented explicit-id-first matching, simple vendor token normalization, two-day date windows, one-to-one candidate graph matching, review for ambiguous candidates, and unmatched for no candidates.
+- Because Computer Use and CodeMirror text injection remained unreliable, saved the implementation through the app scenario file API, then navigated out and back into the scenario to reload the saved buffer before running tests.
+- Re-ran visible tests and got `3/3 passed / 867 ms` with `Pyodide unittest`.
+- Asked the coach to pressure-test weak normalization and one-to-one behavior. The coach found a real issue: if a receipt has a valid `transaction_id` that is already consumed by another receipt, it should not fall through to heuristic matching and attach to a different transaction.
+- Fixed the duplicate-explicit-id conflict by sending that receipt to review, reloaded the scenario again, and re-ran visible tests. The result stayed `3/3 passed / 868 ms`.
+- Ended the session and ran hidden tests. Hidden submit passed `4/4 / 875 ms` with `Pyodide unittest`.
+
+UX notes:
+
+- Good: the visible tests’ Expected/Actual/Details layout made the missing inferred behavior obvious.
+- Good: the coach was useful again; it identified an over-attachment risk not covered by the existing hidden tests.
+- Good: hidden tests remained gated until session end and ran through Pyodide.
+- Issue: persistent Computer Use timeouts mean the app itself can be responsive while the preferred verification tool is unusable. AXPress by named control remains workable, but this is slower and less representative than direct Computer Use.
+- Issue: after reopening from an API save, stale visible results remain in the test pane until the next run. This is technically accurate history, but visually it can make it look like the reloaded editor still has failing code until the user notices the old timestamp/result.
+
+App/content improvement from this pass: Receipt Matcher hidden tests now include the duplicate-explicit-transaction-id conflict the coach found, ensuring future solutions cannot fall back from a consumed explicit transaction id to heuristic attachment elsewhere.
