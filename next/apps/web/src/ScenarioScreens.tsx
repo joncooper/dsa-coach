@@ -177,6 +177,7 @@ export function ScenarioWorkspaceScreen({
   onShowSidebar,
   onOpenMobileNav,
   onBack,
+  onAttemptStarted,
   onAttemptsChanged
 }: {
   scenario: Scenario;
@@ -185,6 +186,7 @@ export function ScenarioWorkspaceScreen({
   onShowSidebar: () => void;
   onOpenMobileNav: () => void;
   onBack: () => void;
+  onAttemptStarted: (attemptId: string) => void;
   onAttemptsChanged: () => void;
 }) {
   const [prompt, setPrompt] = useState("");
@@ -325,21 +327,46 @@ export function ScenarioWorkspaceScreen({
 
   async function startAttempt() {
     await withBusy("Starting scenario", async () => {
-      const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary }>("/scenarios/start", { scenarioId: scenario.id });
-      setAttempt(nextAttempt);
-      setCheckpointDrafts({});
-      setDiff("");
-      await loadEditableFiles(nextAttempt.attemptId);
-      setTestsCollapsed(false);
-      setTestPaneShare(DEFAULT_TEST_PANE_SHARE);
-      setPacingVisible(false);
-      setSessionEnded(false);
-      setTimerPaused(false);
-      setTimerBaseOverride(null);
-      setTimerPausedAt(null);
-      setClockNow(Date.now());
-      onAttemptsChanged();
+      await startFreshAttempt();
     });
+  }
+
+  async function restartAttempt() {
+    if (!attempt) {
+      await startAttempt();
+      return;
+    }
+    const confirmed = window.confirm(
+      "Start over from the starter files? This creates a fresh attempt and clears the current editor, tests, transcript, plan, scratchpad, and notes from this screen. The previous attempt remains in history."
+    );
+    if (!confirmed) return;
+    await withBusy("Starting over", async () => {
+      await flushActiveFile();
+      await startFreshAttempt();
+    });
+  }
+
+  async function startFreshAttempt() {
+    const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary }>("/scenarios/start", { scenarioId: scenario.id });
+    setAttempt(nextAttempt);
+    setCheckpointDrafts({});
+    setDiff("");
+    setCoachInput("");
+    setFinalExplanation("");
+    setSupportTab("interviewer");
+    setScenarioScratchpad("");
+    setScenarioNotes("");
+    setTestsCollapsed(false);
+    setTestPaneShare(DEFAULT_TEST_PANE_SHARE);
+    setPacingVisible(false);
+    setSessionEnded(false);
+    setTimerPaused(false);
+    setTimerBaseOverride(null);
+    setTimerPausedAt(null);
+    setClockNow(Date.now());
+    await loadEditableFiles(nextAttempt.attemptId);
+    onAttemptStarted(nextAttempt.attemptId);
+    onAttemptsChanged();
   }
 
   function toggleTimerPaused() {
@@ -705,9 +732,17 @@ export function ScenarioWorkspaceScreen({
               onClick={restartTimer}
               disabled={!attempt || debriefOpen}
             >
-              Restart
+              Reset timer
             </button>
           </div>
+          <button
+            type="button"
+            className="secondary-button compact-button scenario-restart-button"
+            onClick={() => void restartAttempt()}
+            disabled={!attempt || Boolean(busy)}
+          >
+            Start over
+          </button>
           <button type="button" className="primary-button compact-button" onClick={() => void runVisible()} disabled={Boolean(busy) || !attempt}>
             Run tests
           </button>

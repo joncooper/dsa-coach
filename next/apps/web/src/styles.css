@@ -224,6 +224,12 @@
   color: var(--red);
 }
 
+.scenario-restart-button {
+  border-color: rgba(33, 42, 45, 0.16);
+  background: rgba(255, 253, 248, 0.82);
+  color: var(--ink);
+}
+
 .scenario-layout {
   display: grid;
   grid-template-columns: minmax(360px, 32vw) minmax(0, 1fr);
