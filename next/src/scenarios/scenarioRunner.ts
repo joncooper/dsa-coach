@@ -6,6 +6,8 @@ import { runCodexText } from "../ai/codexProvider.js";
 import { runSandboxedProcess } from "../runner/processSandbox.js";
 import { COACH_MARKDOWN_FORMATTING_RULES } from "../../../shared/coachFormatting.js";
 
+const JUDGE_TIMEOUT_MS = 45_000;
+
 export interface ScenarioAttempt {
   attemptId: string;
   scenarioId: string;
@@ -278,10 +280,11 @@ export class ScenarioRunner {
       workingDirectory: attempt.workspacePath,
       outputSchema: schema,
       effort: "high",
-      timeoutMs: 180000,
+      timeoutMs: JUDGE_TIMEOUT_MS,
       prompt: [
         "You are judging a Ramp-style AI backend live coding attempt.",
         "Score observable evidence only. Be direct, specific, and interview-calibrated.",
+        "Rubric scores are 1-5: 1 means weak or missing evidence, 3 means acceptable but mixed, and 5 means excellent. Keep numeric scores consistent with the overall decision.",
         "The candidate is expected to use AI, but must remain in command of the solution.",
         "",
         `Scenario: ${scenario.title}`,

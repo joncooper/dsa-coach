@@ -9,7 +9,7 @@ Screenshots live in `next/docs/native-practice-pass-screenshots/`.
 | Pass | Surface | Focus | Screenshot | Result |
 | --- | --- | --- | --- | --- |
 | 1 | Ramp Onsite: Hotel Reservation Service | Visible-test debugging, coach loop, final Pyodide pass | [`pass-01-ramp-onsite-initial.png`](native-practice-pass-screenshots/pass-01-ramp-onsite-initial.png), [`pass-01-ramp-onsite-final.png`](native-practice-pass-screenshots/pass-01-ramp-onsite-final.png), [`pass-01-timer-reset-verification.png`](native-practice-pass-screenshots/pass-01-timer-reset-verification.png) | Completed: 5/5 visible tests passed |
-| 2 | Pending | Pending | Pending | Pending |
+| 2 | Ramp AI Backend Drills: Transaction Sync Client | Scenario start, coach loop, Pyodide visible/hidden tests, debrief path | [`pass-02-sync-start.png`](native-practice-pass-screenshots/pass-02-sync-start.png), [`pass-02-sync-initial-failure.png`](native-practice-pass-screenshots/pass-02-sync-initial-failure.png), [`pass-02-sync-visible-pass.png`](native-practice-pass-screenshots/pass-02-sync-visible-pass.png), [`pass-02-sync-hidden-pass-judging-stuck.png`](native-practice-pass-screenshots/pass-02-sync-hidden-pass-judging-stuck.png), [`pass-02-sync-rebuilt-default-file.png`](native-practice-pass-screenshots/pass-02-sync-rebuilt-default-file.png) | Completed: 3/3 visible and 3/3 hidden tests passed |
 | 3 | Pending | Pending | Pending | Pending |
 | 4 | Pending | Pending | Pending | Pending |
 | 5 | Pending | Pending | Pending | Pending |
@@ -41,3 +41,30 @@ UX notes:
 - Issue: the support-pane transcript is useful, but long coach responses become cramped in the narrow right rail. Worth watching in later passes before changing it.
 
 App improvement from this pass: stale active scenario attempts now reopen as `0:00 Paused` with “Resume” and “Restart” controls, and the time-check copy says to resume or restart when beginning. Verified in the rebuilt native app after packaging; see `pass-01-timer-reset-verification.png`.
+
+## Pass 2: Ramp AI Backend Drills Transaction Sync Client
+
+Scenario: started the Transaction Sync Client drill in the native macOS app and worked through it as a candidate using the in-app editor, coach, visible tests, hidden tests, and debrief studio.
+
+Exercise path:
+
+- Started the scenario from the Ramp AI Backend Drills set. The pre-session screen was usable, but the center area felt sparse before pressing “Start session.”
+- The scenario initially opened on `src/__init__.py`, which is a poor default for a coding drill because the actual implementation is `src/sync.py`.
+- Switched to `src/sync.py` and ran visible tests. The first run showed `1/3 failed / 5602 ms` with `Pyodide unittest`: single-page import passed; pagination and duplicate-id upsert failed.
+- Asked the coach what to clarify before coding. The coach correctly focused on the meaning of `inserted`, the final stored rows, the cursor invariant, and the fact that the current result still looked like a one-page implementation.
+- Opened `tests/test_sync.py` in the app to inspect assertions. The expected contract was clear: walk all pages, count newly stored unique ids, update duplicates in place, and leave `store.cursor` as the next page to fetch.
+- Implemented a cursor loop and retry helper in the in-app editor. Chose `max_retries=2` to mean two retries after the first attempt.
+- Re-ran visible tests and got `3/3 passed / 915 ms` with `Pyodide unittest`.
+- Ended the session, added the final explanation, and ran hidden tests. Hidden submit passed `3/3` with `Pyodide unittest`, covering retryable errors, non-retryable errors, and resume-from-existing-cursor behavior.
+
+UX notes:
+
+- Good: current-buffer execution worked. The edited in-app `src/sync.py` buffer drove both visible and hidden Pyodide runs.
+- Good: the coach response was appropriately interviewer-like and identified the real blocker instead of writing the code.
+- Good: the debrief studio stayed gated until the session ended, and hidden tests were available only after ending.
+- Issue: the default active file should never be a blank `src/__init__.py` when a meaningful `src/*.py` implementation file exists.
+- Issue: after clicking “Generate debrief,” the screen stayed on `Judging attempt...` with disabled controls long enough to feel stuck, though it eventually returned a report. That needs either a shorter timeout/fallback or a visible retry/cancel affordance.
+- Issue: the generated report said `HIRE` while every rubric row displayed `1 /5`. The numeric scale needs to be explicit in the judge prompt so scores align with the overall recommendation.
+- Issue: when the editor is scrolled to the bottom, the accessibility value can appear visually empty at the top of the field even though line nodes still exist. This is probably a CodeMirror/accessibility artifact, but it makes state inspection noisier.
+
+App improvements from this pass: scenario file selection now prefers known main implementation files and non-`__init__.py` Python files before falling back to `__init__.py` or the first file. Judge generation now has a bounded timeout so the debrief can fall back instead of leaving the UI on `Judging attempt...` for minutes. The judge prompt now defines the 1-5 score scale and requires score consistency with the overall decision.

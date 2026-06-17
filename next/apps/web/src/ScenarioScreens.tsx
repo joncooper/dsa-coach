@@ -1111,9 +1111,13 @@ function currentInterviewerQuestion(phase: string, latestTurn?: ScenarioAiTurn):
 
 function preferredScenarioFile(files: ScenarioEditableFile[], current: string): string {
   if (current && files.some((file) => file.path === current)) return current;
+  const pyFile = (file: ScenarioEditableFile) => file.path.endsWith(".py");
+  const nonInitPyFile = (file: ScenarioEditableFile) => pyFile(file) && file.path.split("/").at(-1) !== "__init__.py";
   return files.find((file) => file.path === "src/reservations.py")?.path
-    ?? files.find((file) => file.path.startsWith("src/") && file.path.endsWith(".py"))?.path
-    ?? files.find((file) => file.path.endsWith(".py"))?.path
+    ?? files.find((file) => file.path === "src/sync.py")?.path
+    ?? files.find((file) => file.path.startsWith("src/") && nonInitPyFile(file))?.path
+    ?? files.find(nonInitPyFile)?.path
+    ?? files.find(pyFile)?.path
     ?? files[0]?.path
     ?? "";
 }
