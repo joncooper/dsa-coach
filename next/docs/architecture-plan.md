@@ -1,5 +1,8 @@
 # DSA Coach Next Architecture Plan
 
+Status: architectural planning/reference. For current setup, packaging, runtime
+policy, and reviewer instructions, start with [`../README.md`](../README.md).
+
 ## Goals
 
 The rewrite should support this deployment model:
