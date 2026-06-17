@@ -3036,7 +3036,7 @@ function CollectionScreen({
           </div>
 
           {hasSetFilters ? (
-            <>
+            <div className="set-problem-browser">
               <div className="set-filter-bar" role="tablist" aria-label="Filter by category">
                 <button
                   type="button"
@@ -3060,21 +3060,23 @@ function CollectionScreen({
                   </button>
                 ))}
               </div>
-              {visibleGroups.map((group) => {
-                const groupDone = completedCount(userData, group.problems.map((problem) => problem.id));
-                return (
-                  <div className="set-group stack" key={group.id}>
-                    <div className="set-group-heading">
-                      <h3>{group.label}</h3>
-                      <p>{group.blurb ? `${group.blurb} · ${groupDone}/${group.problems.length}` : `${groupDone}/${group.problems.length}`}</p>
+              <div className="set-group-list">
+                {visibleGroups.map((group) => {
+                  const groupDone = completedCount(userData, group.problems.map((problem) => problem.id));
+                  return (
+                    <div className="set-group stack" key={group.id}>
+                      <div className="set-group-heading">
+                        <h3>{group.label}</h3>
+                        <p>{group.blurb ? `${group.blurb} · ${groupDone}/${group.problems.length}` : `${groupDone}/${group.problems.length}`}</p>
+                      </div>
+                      {group.problems.map((problem) => (
+                        <ProblemRow key={problem.id} problem={problem} done={isProblemComplete(userData, problem.id)} onOpen={() => onOpenProblem(problem.id)} />
+                      ))}
                     </div>
-                    {group.problems.map((problem) => (
-                      <ProblemRow key={problem.id} problem={problem} done={isProblemComplete(userData, problem.id)} onOpen={() => onOpenProblem(problem.id)} />
-                    ))}
-                  </div>
-                );
-              })}
-            </>
+                  );
+                })}
+              </div>
+            </div>
           ) : groups.length > 1 ? (
             visibleGroups.map((group) => (
               <div className="set-group stack" key={group.id}>
