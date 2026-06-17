@@ -16,7 +16,7 @@ Screenshots live in `next/docs/native-practice-pass-screenshots/`.
 | 6 | Ramp Travel API: Rate Limit Backoff | Guided problem Pyodide harness, coach wording, native screenshot/tool bridge failure | Not captured: Computer Use timed out and macOS screen capture returned black frames | Completed: 1/1 visible and 3/3 visible+hidden tests passed |
 | 7 | Progressive Banking Ledger: Level 2 Top Spenders | Multi-level CodeSignal-style workspace, aggregate-state debugging, coach prompt regression | Not captured: Computer Use and macOS screenshot capture remained unavailable | Completed: 4/4 visible and 9/9 visible+hidden tests passed |
 | 8 | Progressive Banking Ledger: Level 3 Scheduled Payments | Scheduled event timing, cancellation, coach debug check | Not captured: native screenshot/Computer Use still unavailable | Completed: 4/4 visible and 9/9 visible+hidden tests passed |
-| 9 | Pending | Pending | Pending | Pending |
+| 9 | Progressive Banking Ledger: Level 4 Merge Accounts | Visible-pass hidden-state gap, review-mode pressure testing, qualifier precision | Not captured: native screenshot/Computer Use still unavailable | Completed: 4/4 visible and 8/8 visible+hidden tests passed |
 | 10 | Pending | Pending | Pending | Pending |
 
 ## Pass 1: Ramp Onsite Hotel Reservation Service
@@ -227,3 +227,31 @@ UX notes:
 - Issue: native visual verification remains blocked in this session despite successful package/runtime checks. Computer Use continues to time out against the exact app bundle.
 
 App improvement from this pass: no product code change. This pass validated the pass 7 coach prompt tightening against a second stateful operation-list debugging case.
+
+## Pass 9: Progressive Banking Ledger Level 4 Merge Accounts
+
+Scenario: continued the CodeSignal-style banking problem into Level 4, which adds account consolidation across balances, outgoing volume, account removal, and pending scheduled-payment ownership.
+
+Exercise path:
+
+- Selected `asm-banking`, part `l4-merge-accounts`.
+- Implemented a first candidate that merged balances, removed the secondary account, and preserved Level 1-3 behavior, but intentionally missed two Level 4 side effects: adding `spent[secondary]` into `spent[primary]` and reassigning pending payments owned by `secondary`.
+- Ran visible tests through the Pyodide problem harness. Result: `4/4` visible passed. The visible set covered simple balance merge, secondary removal, missing primary, and self-merge.
+- Ran hidden tests for evaluation. Result: `6/8` passed; hidden caught the intended gaps. `l4-preserves-top-spenders` expected `a(70)` but got `a(30)`, and `l4-inherits-pending-payments` expected final balance `130` but got `150`.
+- Asked review-mode coach, through the app `/coach/chat` endpoint and real prompt builder: "Visible tests pass. What should I pressure test before I submit hidden tests?"
+- Coach correctly identified both risks: outgoing-volume aggregation and pending scheduled-payment reassignment.
+- The first review response slightly over-broadened the pending-payment requirement by saying reassignment applied regardless of payment status. Tightened review-mode prompt instructions to preserve qualifiers from the prompt and avoid strengthening requirements.
+- Re-ran the coach request. The response kept the qualifier precise: pending payments owned by `secondary` should be reassigned to `primary`.
+- Fixed the candidate by adding `spent[secondary]` into `spent[primary]` and reassigning pending secondary payments to the primary account before deleting secondary state.
+- Re-ran visible tests. Result: `4/4` visible passed.
+- Re-ran visible plus hidden tests. Result: `8/8` passed.
+
+UX notes:
+
+- Good: this is the kind of hidden-test gap the coach should catch: visible tests passed, but merge had untested state beyond balances.
+- Good: review mode was useful for pressure testing before hidden submit.
+- Good: the Level 4 hidden tests cover realistic state carryover: top spenders and inherited pending payments.
+- Issue: review-mode coach was directionally right but initially overgeneralized the prompt. For interview practice, preserving qualifiers like "pending" is important because over-broad fixes can create new bugs.
+- Issue: native visual verification remains blocked in this session; Computer Use still times out against the exact app bundle.
+
+App improvement from this pass: Coach prompt version is now `next-coach-v6-review-qualifiers`. Review mode now explicitly tells the coach to preserve prompt qualifiers such as pending, active, cancelled, inclusive/exclusive, before, and after, and not to broaden requirements while naming risks.

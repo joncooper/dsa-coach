@@ -152,6 +152,21 @@ describe("coach prompt context", () => {
     expect(finalMessage).toContain("\"a(0)\"");
   });
 
+  test("review mode reminds the coach to preserve prompt qualifiers", () => {
+    const messages = buildCoachMessages(baseArgs({
+      mode: "review",
+      problemTitle: "Progressive Banking Ledger - Level 4: Merge accounts",
+      prompt: "Every pending scheduled payment owned by secondary is reassigned to primary.",
+      question: "Visible tests pass. What should I pressure test?"
+    }));
+
+    const systemMessage = messages.at(0)?.content ?? "";
+    expect(systemMessage).toContain("Preserve the prompt's qualifiers");
+    expect(systemMessage).toContain("Do not strengthen or broaden requirements");
+    expect(systemMessage).toContain("pending");
+    expect(systemMessage).toContain("cancelled");
+  });
+
   test("explain mode omits code for pure concept questions", () => {
     const messages = buildCoachMessages(baseArgs({
       mode: "explain",
