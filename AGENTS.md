@@ -11,6 +11,7 @@
 - Python practice execution in the app should be browser-worker/Pyodide, not local subprocess Python. This includes guided problems, assessments, scratchpads, Ramp onsite/scenario visible tests, and hidden/debrief test flows.
 - Do not route Python candidate code through `python3`, `python -m unittest`, `next/src/runner/processBackends.ts`, `next/src/runner/localRunner.ts`, `next/src/runner/scratchpadRunner.ts`, daemon `/run`, daemon `/scratchpad`, or daemon `/scenarios/run-visible` / `/scenarios/submit-hidden` for in-app practice behavior.
 - Treat local-process runner files, daemon endpoints, scenario command fields, and runner backend tests as non-Python host-runner scaffolding unless the user explicitly asks to audit or remove them. New or fixed Python app behavior should use Pyodide worker APIs and served `/pyodide/` assets.
+- `next/package.json` must explicitly own the `pyodide` dependency used by the native web app. Do not rely on the root app dependency to make Pyodide available to `next/` builds or packaged macOS bundles.
 - The native daemon may still own content loading, user-data persistence, scenario workspace files, Codex/interviewer calls, packaging host duties, and other non-execution services. It should not be the Python runtime for candidate submissions.
 - Local Python may be used only as an external developer convenience when explicitly requested or when running repository maintenance commands outside the app; it must not be presented as the app's execution path.
 
@@ -65,6 +66,8 @@ open -n "/Users/jdc/.codex/worktrees/5138/dsa-coach/next/dist/macos/DSA Coach Ne
 - In-app verification for the Ramp scenario should confirm the scenario index copy, editable file tabs, editor save state, visible test output, and that running tests uses the current editor buffer.
 - Ramp scenario verification should also cover syntax-error/current-buffer behavior: introduce an invalid Python edit, run visible tests, and confirm the test pane shows the run-level traceback/error rather than stale results or only "not run" rows.
 - Verification should confirm Python execution succeeds without requiring a system Python interpreter. Pyodide assets should be served from the app bundle/web build at `/pyodide/`.
+- Old scenario attempts may still display legacy command strings such as `python3 -m unittest` in saved run history. For Pyodide verification, run a fresh test from the current build and confirm the new run reports `Pyodide unittest`.
+- If Computer Use can observe the native app but direct click/type actions fail, recursive macOS Accessibility scripting via `System Events` is an acceptable fallback for native-app interaction. Keep the target app path explicit so stale app instances from other worktrees are not inspected by mistake.
 
 ## Commands And Caveats
 

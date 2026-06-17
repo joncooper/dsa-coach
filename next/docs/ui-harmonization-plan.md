@@ -28,26 +28,26 @@ Ramp Onsite, Ramp AI Backend, and CodeSignal-style assessment modes should reuse
 
 ## Implementation Plan
 
-1. Stabilize scenario test reporting.
-   - Show run-level Python errors when Pyodide cannot compile or start tests.
-   - Parse actual values from common `assertEqual` failures when available.
-   - Keep full traceback/details available but secondary.
+1. Stabilize scenario test reporting. Done for Ramp Onsite.
+   - Run-level Python errors are shown when Pyodide cannot compile or start tests.
+   - Common `assertEqual` failures foreground Input / Expected / Actual.
+   - Full traceback/details remain available but secondary.
 
-2. Rework Ramp/interview workspace structure.
-   - Left pane: prompt only, independently scrollable.
-   - Center: multi-file editor plus tests/results dock.
-   - Right pane: tabs for Interviewer, Plan, Scratchpad, Notes.
-   - Remove default Workspace Diff and Local Folder rows from the main visible surface.
+2. Rework Ramp/interview workspace structure. Done for the active Ramp workspace.
+   - Left pane is prompt-only and can be collapsed/restored.
+   - Center pane is the multi-file editor plus resizable/collapsible tests/results dock.
+   - Right pane has tabs for Interviewer, Plan, Scratchpad, and Notes.
+   - Workspace Diff and Local Folder are under Notes -> Developer tools, not in the default visible surface.
 
-3. Harmonize test/output docks.
-   - Share visual treatment between standard problem output and scenario tests.
-   - Keep passed cases collapsed and failed cases expanded.
-   - Ensure test panes resize/collapse/restore consistently.
+3. Harmonize test/output docks. Mostly done for Ramp Onsite.
+   - Passed cases collapse by default and failed cases open.
+   - The test pane can be resized, minimized, and restored.
+   - Remaining follow-up: consider extracting shared output-dock primitives once another scenario needs the same behavior.
 
-4. Calm header metadata and timers.
-   - Replace prominent metadata pills with quiet metadata.
-   - Move timer controls into an unobtrusive status/control area.
-   - Support hiding timer display without losing pause/restart capability.
+4. Calm header metadata and timers. Done for the active Ramp workspace.
+   - Timer is a quiet control group.
+   - Timer display can be hidden, paused/resumed, and restarted.
+   - Pacing strip is visually de-emphasized.
 
 5. Verify in the native macOS app.
    - Build and package from `next/`.
