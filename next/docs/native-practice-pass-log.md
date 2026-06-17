@@ -15,7 +15,7 @@ Screenshots live in `next/docs/native-practice-pass-screenshots/`.
 | 5 | Ramp AI Backend Drills: Webhook Idempotency | Global idempotency, terminal-state invariants, native wrapper/window resilience | [`pass-05-webhook-start.png`](native-practice-pass-screenshots/pass-05-webhook-start.png), [`pass-05-webhook-editor-start.png`](native-practice-pass-screenshots/pass-05-webhook-editor-start.png) | Completed: 3/3 visible and 5/5 hidden tests passed |
 | 6 | Ramp Travel API: Rate Limit Backoff | Guided problem Pyodide harness, coach wording, native screenshot/tool bridge failure | Not captured: Computer Use timed out and macOS screen capture returned black frames | Completed: 1/1 visible and 3/3 visible+hidden tests passed |
 | 7 | Progressive Banking Ledger: Level 2 Top Spenders | Multi-level CodeSignal-style workspace, aggregate-state debugging, coach prompt regression | Not captured: Computer Use and macOS screenshot capture remained unavailable | Completed: 4/4 visible and 9/9 visible+hidden tests passed |
-| 8 | Pending | Pending | Pending | Pending |
+| 8 | Progressive Banking Ledger: Level 3 Scheduled Payments | Scheduled event timing, cancellation, coach debug check | Not captured: native screenshot/Computer Use still unavailable | Completed: 4/4 visible and 9/9 visible+hidden tests passed |
 | 9 | Pending | Pending | Pending | Pending |
 | 10 | Pending | Pending | Pending | Pending |
 
@@ -202,3 +202,28 @@ UX notes:
 - Issue: native visual verification remains blocked in this session. Computer Use timed out, AX reported zero windows, CoreGraphics saw the app window, and both full-screen and window-specific `screencapture` attempts failed or returned unusable images.
 
 App improvement from this pass: Debug coach prompt version is now `next-coach-v5-debug-prose`. It explicitly asks the coach to trace aggregate/report mismatches back to the prior state-updating operation and to stay prose-only unless the learner asks for code.
+
+## Pass 8: Progressive Banking Ledger Level 3 Scheduled Payments
+
+Scenario: continued the CodeSignal-style banking problem into Level 3, which adds scheduled payments that fire before each query, cancellation, execution ordering, and outgoing-volume effects.
+
+Exercise path:
+
+- Selected `asm-banking`, part `l3-scheduled-payments`.
+- Implemented a realistic first candidate with Level 1 and Level 2 behavior plus scheduled payment storage, cancellation, chronological firing, and fired-payment outgoing volume, but intentionally fired due payments after the current query instead of before it.
+- Ran visible tests through the Pyodide problem harness. Result: `2/4` visible passed. The failures were useful: `l3-schedule-fires-before-later-query` expected `75` but got `105`, and `l3-cancel-after-exec-fails` expected `70` but got `100`.
+- Asked the coach through the app `/coach/chat` endpoint and the real prompt builder: "Why is the scheduled payment test returning 105 instead of 75?"
+- Coach response was correct and compact. It identified that `fire_due(timestamp)` was being called after query processing, while the prompt requires due payments to fire at the start of every query. It stayed prose-only and did not include a fenced code block.
+- Fixed the candidate by calling `fire_due(timestamp)` immediately after reading the current timestamp and before dispatching the operation.
+- Re-ran visible tests. Result: `4/4` visible passed.
+- Re-ran visible plus hidden tests. Result: `9/9` passed, including chronological multiple fires, insufficient-funds silent cancellation, wrong-account cancellation, top-spenders after fired payment, and delay-zero behavior.
+
+UX notes:
+
+- Good: the visible tests caught the key temporal invariant directly. Expected `75` vs actual `105` made the "fire before current query" requirement obvious.
+- Good: the debug prompt improvements from pass 7 held up on a different operation-list state-machine failure.
+- Good: Level 3's visible/hidden split feels appropriate: visible catches the main timing rule, hidden covers ordering and interactions.
+- Issue: the temporary Node Pyodide runner still emits the local `sortedcontainers` preload warning. The packaged app path remains correct because `/pyodide/pyodide.js` and rebuilt assets are served from the native app bundle.
+- Issue: native visual verification remains blocked in this session despite successful package/runtime checks. Computer Use continues to time out against the exact app bundle.
+
+App improvement from this pass: no product code change. This pass validated the pass 7 coach prompt tightening against a second stateful operation-list debugging case.
