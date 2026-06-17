@@ -1311,7 +1311,7 @@ body.scenario-resizing-tests {
   color: var(--ink);
 }
 
-.scenario-transcript-turn p span {
+.scenario-transcript-time {
   float: right;
   color: var(--muted);
   font-size: 0.72rem;
@@ -1321,11 +1321,29 @@ body.scenario-resizing-tests {
   color: var(--muted);
   font-size: 0.84rem;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .scenario-transcript-turn .scenario-markdown p,
 .scenario-transcript-turn .scenario-markdown ul {
-  margin-bottom: 8px;
+  margin: 0 0 8px;
+}
+
+.scenario-transcript-turn .scenario-markdown p:last-child,
+.scenario-transcript-turn .scenario-markdown ul:last-child {
+  margin-bottom: 0;
+}
+
+.scenario-transcript-turn .scenario-markdown ul {
+  padding-left: 18px;
+}
+
+.scenario-transcript-turn .scenario-markdown li {
+  margin: 0 0 4px;
+}
+
+.scenario-transcript-turn .scenario-markdown code {
+  white-space: normal;
 }
 
 .scenario-interviewer-card {
