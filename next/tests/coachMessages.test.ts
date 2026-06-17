@@ -163,6 +163,7 @@ describe("coach prompt context", () => {
     const systemMessage = messages.at(0)?.content ?? "";
     expect(systemMessage).toContain("Preserve the prompt's qualifiers");
     expect(systemMessage).toContain("Do not strengthen or broaden requirements");
+    expect(systemMessage).toContain("Do not suggest defensive work for invalid inputs");
     expect(systemMessage).toContain("pending");
     expect(systemMessage).toContain("cancelled");
   });

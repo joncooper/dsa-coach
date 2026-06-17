@@ -17,7 +17,7 @@ Screenshots live in `next/docs/native-practice-pass-screenshots/`.
 | 7 | Progressive Banking Ledger: Level 2 Top Spenders | Multi-level CodeSignal-style workspace, aggregate-state debugging, coach prompt regression | Not captured: Computer Use and macOS screenshot capture remained unavailable | Completed: 4/4 visible and 9/9 visible+hidden tests passed |
 | 8 | Progressive Banking Ledger: Level 3 Scheduled Payments | Scheduled event timing, cancellation, coach debug check | Not captured: native screenshot/Computer Use still unavailable | Completed: 4/4 visible and 9/9 visible+hidden tests passed |
 | 9 | Progressive Banking Ledger: Level 4 Merge Accounts | Visible-pass hidden-state gap, review-mode pressure testing, qualifier precision | Not captured: native screenshot/Computer Use still unavailable | Completed: 4/4 visible and 8/8 visible+hidden tests passed |
-| 10 | Pending | Pending | Pending | Pending |
+| 10 | Progressive Filesystem: Level 2 Search | Search ordering, review-mode pressure testing, valid-input scope | Not captured: native screenshot/Computer Use still unavailable | Completed: 4/4 visible and 9/9 visible+hidden tests passed |
 
 ## Pass 1: Ramp Onsite Hotel Reservation Service
 
@@ -255,3 +255,30 @@ UX notes:
 - Issue: native visual verification remains blocked in this session; Computer Use still times out against the exact app bundle.
 
 App improvement from this pass: Coach prompt version is now `next-coach-v6-review-qualifiers`. Review mode now explicitly tells the coach to preserve prompt qualifiers such as pending, active, cancelled, inclusive/exclusive, before, and after, and not to broaden requirements while naming risks.
+
+## Pass 10: Progressive Filesystem Level 2 Search
+
+Scenario: switched from banking to another CodeSignal-style progressive system problem, `asm-filesystem`, focusing on Level 2 prefix/suffix search.
+
+Exercise path:
+
+- Selected `asm-filesystem`, part `l2-search`.
+- Implemented Level 1 operations plus prefix/suffix search, but intentionally sorted search results only by size descending and omitted the required filename-ascending tie-breaker.
+- Ran visible tests through the Pyodide problem harness. Result: `4/4` visible passed. The visible tests covered size-descending order, no match, suffix match, and exact prefix/name match.
+- Ran hidden tests for evaluation. Result: `6/9` passed; hidden caught the intended tie-ordering gap. Same-size files came back in insertion order, not name order.
+- Asked review-mode coach, through the app `/coach/chat` endpoint and real prompt builder: "Visible tests pass. What should I pressure test before hidden tests?"
+- Coach correctly identified the missing secondary sort key and suggested same-size files as the pressure test. It also initially suggested an irrelevant `None` robustness check despite the valid-input contract.
+- Tightened review-mode prompt instructions to avoid defensive invalid-input work unless the prompt or learner asks for it.
+- Re-ran the coach request. The answer stayed focused on valid tie ordering, empty prefix/suffix, and no-match cases.
+- Fixed the candidate by sorting search matches with `(-size, name)`.
+- Re-ran visible tests. Result: `4/4` visible passed.
+- Re-ran visible plus hidden tests. Result: `9/9` passed.
+
+UX notes:
+
+- Good: review mode again helped with a visible-pass hidden-risk situation.
+- Good: the visible/hidden split is sensible: visible verifies the main query shape; hidden tests the more subtle tie and copied-file ordering behavior.
+- Issue: the coach can drift into generic robustness advice unless the prompt explicitly tells it to stay within the stated input contract.
+- Issue: Computer Use remains unavailable against the native app in this session, so the final passes still rely on packaged-daemon, Pyodide, test-suite, and CoreGraphics-style native checks rather than direct Computer Use screenshots/clicks.
+
+App improvement from this pass: Coach prompt version is now `next-coach-v7-review-scope`. Review mode now tells the coach not to suggest defensive work for invalid inputs unless the prompt allows those inputs or the learner explicitly asks about out-of-contract robustness.
