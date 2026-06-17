@@ -853,6 +853,9 @@
 
 .scenario-test-output {
   display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   border: 0;
   padding: 0;
   background: transparent;
@@ -878,6 +881,8 @@ body.scenario-resizing-tests {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -912,6 +917,9 @@ body.scenario-resizing-tests {
 }
 
 .scenario-tests-tabs > button[role="tab"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-height: 40px;
   border: 0;
   border-right: 1px solid var(--line);
@@ -969,6 +977,8 @@ body.scenario-resizing-tests {
 }
 
 .scenario-tests-collapsed-bar.failed,
+.scenario-tests-collapsed-bar.compile-error,
+.scenario-tests-collapsed-bar.runtime-error,
 .scenario-tests-collapsed-bar.timeout {
   border-color: rgba(180, 35, 24, 0.3);
 }
@@ -1035,9 +1045,85 @@ body.scenario-resizing-tests {
 }
 
 .scenario-tests-summary.failed,
+.scenario-tests-summary.compile-error,
+.scenario-tests-summary.runtime-error,
 .scenario-tests-summary.timeout {
   border-color: rgba(180, 35, 24, 0.28);
   background: rgba(180, 35, 24, 0.08);
+}
+
+.scenario-tests-error-callout {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(180, 35, 24, 0.24);
+  border-radius: 6px;
+  padding: 10px;
+  background: #fff0ed;
+}
+
+.scenario-tests-error-callout > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scenario-tests-error-callout strong {
+  color: var(--red);
+  font-size: 0.86rem;
+}
+
+.scenario-tests-error-callout span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.scenario-errors-body {
+  align-content: start;
+}
+
+.scenario-per-test-errors,
+.scenario-diagnostic-list {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.scenario-error-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid rgba(180, 35, 24, 0.22);
+  border-left: 4px solid var(--red);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff0ed;
+}
+
+.scenario-error-card > strong {
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.scenario-error-card > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.scenario-errors-body .error-output {
+  max-height: min(360px, 45vh);
+  margin: 0;
+  overflow: auto;
+  border: 1px solid rgba(180, 35, 24, 0.18);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 0.8rem;
+}
+
+.scenario-raw-error-output {
+  margin-top: 0;
 }
 
 .scenario-tests-case-list {
@@ -7471,6 +7557,11 @@ select {
 
   .scenario-tests-resizer {
     display: none;
+  }
+
+  .scenario-test-output {
+    height: auto;
+    overflow: visible;
   }
 
   .scenario-tests-pane {

@@ -27,7 +27,7 @@ import {
   syntaxHighlighting
 } from "@codemirror/language";
 import { type Diagnostic as CodeMirrorDiagnostic, linter } from "@codemirror/lint";
-import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
+import { highlightSelectionMatches, openSearchPanel, searchKeymap } from "@codemirror/search";
 import { Compartment, EditorState, Prec, RangeSetBuilder, Transaction, type Extension } from "@codemirror/state";
 import {
   Decoration,
@@ -550,6 +550,12 @@ function leadingWhitespaceLength(text: string): number {
   return match ? match[0].length : 0;
 }
 
+const editorSearchKeymap = [
+  { key: "Ctrl-f", run: openSearchPanel },
+  { key: "Mod-f", run: openSearchPanel },
+  ...searchKeymap
+];
+
 const editorBaseExtensions: Extension[] = [
   lineNumbers(),
   foldGutter(),
@@ -576,7 +582,7 @@ const editorBaseExtensions: Extension[] = [
     { key: "Tab", run: nextSnippetField },
     { key: "Shift-Tab", run: prevSnippetField },
     indentWithTab,
-    ...searchKeymap,
+    ...editorSearchKeymap,
     ...closeBracketsKeymap,
     ...defaultKeymap,
     ...historyKeymap
@@ -593,9 +599,11 @@ const basicEditorExtensions: Extension[] = [
   bracketMatching(),
   closeBrackets(),
   syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+  highlightSelectionMatches(),
   indentGuidePlugin,
   keymap.of([
     indentWithTab,
+    ...editorSearchKeymap,
     ...closeBracketsKeymap,
     ...defaultKeymap,
     ...historyKeymap

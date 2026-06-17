@@ -1,5 +1,6 @@
 import { type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import type { ContentGraph, RunResult, Scenario, ScenarioCheckpoint, ScenarioSet, TestResult, TestVisibility } from "../../../src/core/types";
+import type { ContentGraph, RunDiagnostic, RunResult, Scenario, ScenarioCheckpoint, ScenarioSet, TestResult, TestVisibility } from "../../../src/core/types";
+import { diagnosticsFromErrorText } from "../../../src/runner/errorDiagnostics";
 import { API_BASE } from "./apiBase";
 import { BasicCodeEditor } from "./CodeEditor";
 import { runScenarioPythonTests } from "./pyodideRunner";
@@ -1214,6 +1215,7 @@ function clampNumber(value: number, min: number, max: number): number {
 }
 
 type ScenarioTestStatus = "passed" | "failed" | "idle";
+type ScenarioTestTab = "tests" | "errors" | "custom";
 
 interface ScenarioVisibleTestCase {
   name: string;
@@ -1222,6 +1224,20 @@ interface ScenarioVisibleTestCase {
   actual?: string;
   status: ScenarioTestStatus;
   details?: string;
+}
+
+interface ScenarioExecutionError {
+  name: string;
+  visibility: TestVisibility;
+  error: string;
+  diagnostics: RunDiagnostic[];
+}
+
+interface ScenarioErrorReport {
+  hasErrors: boolean;
+  diagnostics: RunDiagnostic[];
+  testErrors: ScenarioExecutionError[];
+  rawText: string;
 }
 
 function ScenarioTestsPane({
@@ -1243,15 +1259,22 @@ function ScenarioTestsPane({
   onRun: () => void;
   onOpenFile: (path: string) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<"tests" | "custom">("tests");
+  const [activeTab, setActiveTab] = useState<ScenarioTestTab>("tests");
+  const autoSelectedRunRef = useRef<string | undefined>(undefined);
   const testFile = editableFiles.find((file) => file.path.startsWith("tests/") && file.path.endsWith(".py"));
   const cases = useMemo(() => visibleTestCasesFromFile(testFile?.content ?? "", result), [testFile?.content, result]);
+  const errorReport = useMemo(() => scenarioErrorReport(result, editableFiles, cases), [editableFiles, cases, result]);
   const passedCount = cases.filter((testCase) => testCase.status === "passed").length;
   const firstFailedIndex = cases.findIndex((testCase) => testCase.status === "failed");
   const ran = Boolean(result);
-  const runFailure = runLevelFailureFromResult(result, cases);
   const statusLabel = result ? `${result.status} / ${result.durationMs} ms` : "not run";
   const countLabel = ran ? `${passedCount}/${cases.length || 1}` : `0/${cases.length || 1}`;
+
+  useEffect(() => {
+    if (!result || autoSelectedRunRef.current === result.runId) return;
+    autoSelectedRunRef.current = result.runId;
+    setActiveTab(errorReport.hasErrors ? "errors" : "tests");
+  }, [errorReport.hasErrors, result]);
 
   if (collapsed) {
     return (
@@ -1282,6 +1305,16 @@ function ScenarioTestsPane({
           onClick={() => setActiveTab("tests")}
         >
           TESTS
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "errors"}
+          className={activeTab === "errors" ? "active" : ""}
+          onClick={() => setActiveTab("errors")}
+        >
+          ERRORS
+          {errorReport.hasErrors ? <span className="tab-dot error" /> : null}
         </button>
         <button
           type="button"
@@ -1325,21 +1358,16 @@ function ScenarioTestsPane({
             <strong>{statusLabel}</strong>
             <span>{result?.command ?? "Pyodide unittest"}</span>
           </div>
-          {runFailure ? (
-            <details className="scenario-tests-case failed" open>
-              <summary>
-                <span className="scenario-tests-caret" aria-hidden="true" />
-                <strong>Run error</strong>
-                <span>Tests could not be imported or started</span>
-                <small>FAILED</small>
-              </summary>
-              <dl>
-                <div>
-                  <dt>Error</dt>
-                  <dd><pre><code>{runFailure}</code></pre></dd>
-                </div>
-              </dl>
-            </details>
+          {errorReport.hasErrors ? (
+            <div className="scenario-tests-error-callout">
+              <div>
+                <strong>Runtime or import error</strong>
+                <span>Traceback details are separated from assertion failures.</span>
+              </div>
+              <button type="button" className="secondary-button compact-button" onClick={() => setActiveTab("errors")}>
+                View Errors
+              </button>
+            </div>
           ) : null}
           {cases.length ? (
             <div className="scenario-tests-case-list">
@@ -1392,7 +1420,13 @@ function ScenarioTestsPane({
             </div>
           )}
         </div>
-      ) : (
+      ) : null}
+
+      {activeTab === "errors" ? (
+        <ScenarioErrorsPanel report={errorReport} result={result} />
+      ) : null}
+
+      {activeTab === "custom" ? (
         <div className="scenario-tests-body scenario-tests-custom">
           <div>
             <strong>{testFile?.path ?? "tests/test_reservations.py"}</strong>
@@ -1407,9 +1441,96 @@ function ScenarioTestsPane({
             Open Test File
           </button>
         </div>
-      )}
+      ) : null}
     </div>
   );
+}
+
+function ScenarioErrorsPanel({ report, result }: { report: ScenarioErrorReport; result?: ScenarioRunRecord }) {
+  return (
+    <div className="scenario-tests-body scenario-errors-body">
+      <div className={`scenario-tests-summary ${result?.status ?? "idle"}`}>
+        <strong>{result ? `${result.status} / ${result.durationMs} ms` : "not run"}</strong>
+        <span>{result?.command ?? "Pyodide unittest"}</span>
+      </div>
+
+      {!report.hasErrors ? (
+        <div className="scenario-tests-empty">
+          <strong>No runtime, syntax, or import errors.</strong>
+          <span>Assertion mismatches stay in the Tests tab with expected and actual output.</span>
+        </div>
+      ) : null}
+
+      {report.diagnostics.length ? <ScenarioDiagnosticList diagnostics={report.diagnostics} /> : null}
+
+      {report.testErrors.length ? (
+        <div className="scenario-per-test-errors">
+          {report.testErrors.map((test) => (
+            <article key={test.name} className="scenario-error-card">
+              <strong>{test.name}</strong>
+              <span>{test.visibility} test raised an exception</span>
+              {test.diagnostics.length ? <ScenarioDiagnosticList diagnostics={test.diagnostics} compact /> : null}
+              {!test.diagnostics.length ? <pre className="error-output stack-trace">{trimScenarioErrorText(test.error)}</pre> : null}
+            </article>
+          ))}
+        </div>
+      ) : null}
+
+      {report.rawText ? (
+        <details className="raw-error-output scenario-raw-error-output" open={!report.diagnostics.length && !report.testErrors.some((test) => test.diagnostics.length)}>
+          <summary>Raw traceback</summary>
+          <pre className="error-output stack-trace">{report.rawText}</pre>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
+function ScenarioDiagnosticList({ diagnostics, compact = false }: { diagnostics: RunDiagnostic[]; compact?: boolean }) {
+  return (
+    <div className={`diagnostic-list scenario-diagnostic-list${compact ? " compact" : ""}`}>
+      {diagnostics.map((diagnostic, index) => (
+        <article className={`diagnostic-card severity-${diagnostic.severity}`} key={`${diagnostic.file ?? "diagnostic"}:${diagnostic.line ?? index}:${diagnostic.message}`}>
+          <div className="diagnostic-header">
+            <strong>{diagnostic.message}</strong>
+            <span>{scenarioDiagnosticLocation(diagnostic)}</span>
+          </div>
+          {diagnostic.snippet?.length ? (
+            <details className="diagnostic-snippet-details" open>
+              <summary>Source excerpt</summary>
+              <ScenarioDiagnosticSnippet diagnostic={diagnostic} />
+            </details>
+          ) : null}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function ScenarioDiagnosticSnippet({ diagnostic }: { diagnostic: RunDiagnostic }) {
+  return (
+    <pre className="diagnostic-snippet">
+      {diagnostic.snippet?.map((line) => (
+        <span className="diagnostic-snippet-row" key={line.line}>
+          <span className="diagnostic-line-number">{line.line}</span>
+          <span className="diagnostic-line-text">{line.text || " "}</span>
+          {line.markerStart ? (
+            <span className="diagnostic-marker">
+              {" ".repeat(Math.max(0, line.markerStart - 1))}
+              {"^".repeat(Math.max(1, line.markerLength ?? 1))}
+            </span>
+          ) : null}
+        </span>
+      ))}
+    </pre>
+  );
+}
+
+function scenarioDiagnosticLocation(diagnostic: RunDiagnostic): string {
+  const source = diagnostic.source ? `${diagnostic.source} · ` : "";
+  const file = diagnostic.file ?? "source";
+  if (!diagnostic.line) return `${source}${file}`;
+  return `${source}${file}:${diagnostic.line}${diagnostic.column ? `:${diagnostic.column}` : ""}${diagnostic.code ? ` · ${diagnostic.code}` : ""}`;
 }
 
 function ScenarioResultCard({ label, result }: { label: string; result?: ScenarioRunRecord }) {
@@ -1486,6 +1607,89 @@ function runLevelFailureFromResult(result: ScenarioRunRecord | undefined, cases:
     .map((test) => test.error)
     .filter(Boolean);
   return [result.message, ...runLevelErrors, result.stderr, result.stdout].filter(Boolean).join("\n").trim();
+}
+
+function scenarioErrorReport(result: ScenarioRunRecord | undefined, files: ScenarioEditableFile[], cases: ScenarioVisibleTestCase[]): ScenarioErrorReport {
+  if (!result) return { hasErrors: false, diagnostics: [], testErrors: [], rawText: "" };
+  const runFailure = runLevelFailureFromResult(result, cases);
+  const testErrors = result.tests
+    .filter((test) => test.error && isScenarioExecutionError(test.error))
+    .map((test) => ({
+      name: test.name,
+      visibility: test.visibility,
+      error: test.error ?? "",
+      diagnostics: uniqueScenarioDiagnostics([
+        ...(test.diagnostics ?? []),
+        ...scenarioDiagnosticsFromText(test.error, files)
+      ])
+    }));
+  const runDiagnostics = uniqueScenarioDiagnostics([
+    ...(result.diagnostics ?? []),
+    ...scenarioDiagnosticsFromText(runFailure || result.message, files)
+  ]);
+  const rawBlocks = uniqueScenarioErrorBlocks(
+    runFailure,
+    result.status === "compile-error" || result.status === "runtime-error" || result.status === "timeout" ? result.message : undefined,
+    ...testErrors.map((test) => test.error)
+  );
+  return {
+    hasErrors: Boolean(runFailure || runDiagnostics.length || testErrors.length || rawBlocks.length),
+    diagnostics: runDiagnostics,
+    testErrors,
+    rawText: rawBlocks.join("\n\n")
+  };
+}
+
+function scenarioDiagnosticsFromText(text: string | undefined, files: ScenarioEditableFile[]): RunDiagnostic[] {
+  if (!text?.trim()) return [];
+  const diagnostics: RunDiagnostic[] = [];
+  for (const file of files) {
+    if (!file.path.endsWith(".py")) continue;
+    const fileDiagnostics = diagnosticsFromErrorText(text, {
+      language: "python",
+      sourceFile: file.path,
+      source: file.content
+    }).filter((diagnostic) => Boolean(diagnostic.line || diagnostic.column));
+    diagnostics.push(...fileDiagnostics);
+  }
+  return uniqueScenarioDiagnostics(diagnostics);
+}
+
+function isScenarioExecutionError(error: string): boolean {
+  const text = error.replace(/\r\n/g, "\n");
+  if (!text.trim()) return false;
+  if (text.includes("Failed to import test module") || text.includes("unittest.loader._FailedTest")) return true;
+  if (/\b(SyntaxError|ImportError|ModuleNotFoundError|NameError|TypeError|ValueError|KeyError|AttributeError|IndexError|RuntimeError|RecursionError)\b/.test(text)) return true;
+  if (/\bAssertionError\b/.test(text)) return false;
+  return text.includes("Traceback (most recent call last)");
+}
+
+function uniqueScenarioDiagnostics(diagnostics: RunDiagnostic[]): RunDiagnostic[] {
+  const seen = new Set<string>();
+  const unique: RunDiagnostic[] = [];
+  for (const diagnostic of diagnostics) {
+    const key = `${diagnostic.file ?? ""}:${diagnostic.line ?? ""}:${diagnostic.column ?? ""}:${diagnostic.message}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(diagnostic);
+  }
+  return unique;
+}
+
+function uniqueScenarioErrorBlocks(...values: Array<string | undefined>): string[] {
+  const seen = new Set<string>();
+  const blocks: string[] = [];
+  for (const value of values) {
+    const trimmed = trimScenarioErrorText(value);
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    blocks.push(trimmed);
+  }
+  return blocks;
+}
+
+function trimScenarioErrorText(value: string | undefined): string {
+  return (value ?? "").replace(/\s+$/g, "");
 }
 
 function normalizeScenarioTestName(name: string): string {
