@@ -8,7 +8,7 @@ The original browser/PWA app still lives at the repository root and remains usef
 
 ## What To Review
 
-- **Guided practice:** 280 authored problems across modules, problem sets, and interview tracks.
+- **Guided practice:** 281 authored problems across modules, problem sets, and interview tracks.
 - **In-app Python execution:** Python code runs in a browser worker through Pyodide, including guided problems, CodeSignal-style assessments, scratchpads, visible tests, hidden tests, and Ramp scenario tests.
 - **Native practice workflows:** the macOS app packages the web UI and local daemon into a double-clickable app bundle.
 - **Ramp Onsite rehearsals:** multi-file Python workspaces with a first-class prompt pane, editor tabs, visible tests, hidden/debrief flow, and a sparse Codex SDK interviewer.
@@ -61,6 +61,17 @@ bun run web:dev
 ```
 
 Open the Vite URL printed by the second command, usually `http://127.0.0.1:5174`.
+
+## Cloudflare Demo
+
+The `next/` app can also be built as a password-protected Cloudflare Pages demo:
+
+```bash
+cd next
+bun run build:cloud
+```
+
+Cloud mode serves the `next` React UI from static assets, runs Python through Pyodide in the browser, stores practice state in that browser, and proxies coach/interviewer model calls through Cloudflare Functions to OpenRouter. See [next/docs/cloudflare-deploy.md](next/docs/cloudflare-deploy.md) for required secrets and deployment steps.
 
 ## Optional AI Setup
 

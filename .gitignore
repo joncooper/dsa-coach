@@ -19,4 +19,6 @@ next/home/
 next/.runner-cache/
 next/.scala-build/
 next/.user-data/
+next/.dev.vars
+next/.wrangler/
 next/runtime.json

@@ -16,7 +16,7 @@ import type {
 import { migrateLegacyBackup, type LegacyBackupPayload } from "../../../src/storage/legacyMigration";
 import type { NextUserData, NextWorkspaceState, WorkspaceEditorBuffer, WorkspaceSelection } from "../../../src/storage/userData";
 import type { CoachEvalSuiteReport } from "../../../src/coach/evalTypes";
-import { API_BASE } from "./apiBase";
+import { API_BASE, IS_CLOUD_DEMO } from "./apiBase";
 import { BasicCodeEditor, CodeEditor } from "./CodeEditor";
 import { CoachPanel } from "./CoachPanel";
 import { runPythonProblem, runPythonScratchpad } from "./pyodideRunner";
@@ -45,7 +45,7 @@ const editorFontSizePreferenceKey = "workspace:editorFontSize";
 
 interface ContentStatus {
   ok: true;
-  mode: "development" | "release";
+  mode: "development" | "release" | "cloud-demo";
   contentRoot: string;
   reloadAvailable: boolean;
   loadedAt: string;
@@ -292,7 +292,7 @@ export function App() {
           workspaceStateRef.current = nextWorkspaceState;
           setWorkspaceState(nextWorkspaceState);
         }
-        setStorageStatus("Saving in the app data folder.");
+        setStorageStatus(IS_CLOUD_DEMO ? "Saving in this browser." : "Saving in the app data folder.");
         if (initialSelection) {
           setSelectedProblemId(initialSelection.problemId);
           setSelectedPartId(initialSelection.partId ?? "");
@@ -1147,7 +1147,7 @@ export function App() {
   async function persistUserData(value: NextUserData, label = "User data saved") {
     try {
       await postJson("/user-data", value);
-      setStorageStatus(`${label} in the app data folder.`);
+      setStorageStatus(IS_CLOUD_DEMO ? `${label} in this browser.` : `${label} in the app data folder.`);
     } catch (error) {
       setStorageStatus(`${label} failed: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -1269,7 +1269,7 @@ export function App() {
   async function persistWorkspaceState(value: NextWorkspaceState) {
     try {
       await postJson("/workspace-state", value);
-      setStorageStatus("Workspace saved in the app data folder.");
+      setStorageStatus(IS_CLOUD_DEMO ? "Workspace saved in this browser." : "Workspace saved in the app data folder.");
     } catch (error) {
       setStorageStatus(`Workspace save failed: ${error instanceof Error ? error.message : String(error)}`);
     }

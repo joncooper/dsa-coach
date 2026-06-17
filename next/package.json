@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json && vite build --config apps/web/vite.config.ts",
+    "build:cloud": "VITE_DSA_CLOUD_DEMO=1 bun run build && bun run scripts/build-cloud-assets.ts --out dist/web/cloud-data",
     "test": "bun test",
     "verify:content": "bun run src/cli/verify-content.ts",
     "inventory:legacy": "bun run scripts/legacy-inventory.ts",
@@ -23,7 +24,9 @@
     "reload:content": "bun run scripts/reload-content.ts",
     "coach:eval": "bun run scripts/coach-eval.ts",
     "web:dev": "vite --host 127.0.0.1 --config apps/web/vite.config.ts",
-    "web:preview": "vite preview --host 127.0.0.1 --config apps/web/vite.config.ts"
+    "web:preview": "vite preview --host 127.0.0.1 --config apps/web/vite.config.ts",
+    "cloud:preview": "bun run build:cloud && bunx wrangler pages dev dist/web --compatibility-date=2026-06-17",
+    "cloud:deploy": "bun run build:cloud && bunx wrangler pages deploy dist/web"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.2",

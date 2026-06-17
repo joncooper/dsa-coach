@@ -47,6 +47,16 @@ open -n "dist/macos/DSA Coach Next.app"
 
 The packaged app starts a local production host on an OS-assigned localhost port, serves the built web UI and daemon API from one process, and shuts that host down when the app exits. Generated app bundles are not committed to the repository. Share `dist/macos/DSA Coach Next.app` or a zip of it as a release artifact when a prebuilt binary is needed.
 
+## Cloudflare Demo Build
+
+For a browser-hosted demo:
+
+```bash
+bun run build:cloud
+```
+
+This writes the Vite app and generated static content/source/scenario assets to `dist/web`. Cloud mode keeps user progress in browser storage, runs Python through Pyodide, disables host LSP and non-Python runners, and proxies coach/interviewer calls through Cloudflare Functions to OpenRouter. Deployment details are in [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
+
 ## Current Product Surfaces
 
 - Dashboard and global catalog navigation.
@@ -98,6 +108,7 @@ If Ollama or Codex is unavailable, the app should show status/setup guidance whi
 
 ```bash
 bun run build                 # Type-check and build the native web UI
+bun run build:cloud           # Build the Cloudflare Pages demo bundle
 bun test                      # Bun test suite
 bun run verify:content        # Validate authored content graph
 bun run daemon                # Local development daemon API
@@ -105,6 +116,8 @@ bun run web:dev               # Vite development UI
 bun run desktop:host          # Production host used by the macOS wrapper
 bun run package:mac           # Build the double-clickable macOS app bundle
 bun run package:mac:release   # Release packaging variant
+bun run cloud:preview         # Build and run Cloudflare Pages locally through Wrangler
+bun run cloud:deploy          # Build and deploy dist/web through Wrangler
 bun run setup:toolchains      # Install cached non-Python toolchains
 bun run setup:lsp             # Install language servers and formatters
 bun run check:lsp             # Report available language-server tooling
