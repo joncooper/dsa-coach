@@ -14,7 +14,7 @@ Screenshots live in `next/docs/native-practice-pass-screenshots/`.
 | 4 | Ramp AI Backend Drills: Receipt Matcher | Explicit-id conflicts, conservative inferred matching, coach loop, Pyodide visible/hidden tests | [`pass-04-receipt-start.png`](native-practice-pass-screenshots/pass-04-receipt-start.png), [`pass-04-receipt-initial-failure.png`](native-practice-pass-screenshots/pass-04-receipt-initial-failure.png), [`pass-04-receipt-visible-after-coach-fix.png`](native-practice-pass-screenshots/pass-04-receipt-visible-after-coach-fix.png), [`pass-04-receipt-hidden-pass.png`](native-practice-pass-screenshots/pass-04-receipt-hidden-pass.png) | Completed: 3/3 visible and 4/4 hidden tests passed |
 | 5 | Ramp AI Backend Drills: Webhook Idempotency | Global idempotency, terminal-state invariants, native wrapper/window resilience | [`pass-05-webhook-start.png`](native-practice-pass-screenshots/pass-05-webhook-start.png), [`pass-05-webhook-editor-start.png`](native-practice-pass-screenshots/pass-05-webhook-editor-start.png) | Completed: 3/3 visible and 5/5 hidden tests passed |
 | 6 | Ramp Travel API: Rate Limit Backoff | Guided problem Pyodide harness, coach wording, native screenshot/tool bridge failure | Not captured: Computer Use timed out and macOS screen capture returned black frames | Completed: 1/1 visible and 3/3 visible+hidden tests passed |
-| 7 | Pending | Pending | Pending | Pending |
+| 7 | Progressive Banking Ledger: Level 2 Top Spenders | Multi-level CodeSignal-style workspace, aggregate-state debugging, coach prompt regression | Not captured: Computer Use and macOS screenshot capture remained unavailable | Completed: 4/4 visible and 9/9 visible+hidden tests passed |
 | 8 | Pending | Pending | Pending | Pending |
 | 9 | Pending | Pending | Pending | Pending |
 | 10 | Pending | Pending | Pending | Pending |
@@ -171,3 +171,34 @@ UX notes:
 - Issue: the temporary Node-based Pyodide runner looked for the `sortedcontainers` wheel in `next/node_modules/pyodide`, then tried the CDN and failed. The native packaged app serves the wheel from `dist/web/pyodide`, so this is a temp verification-tool limitation rather than the app execution path.
 
 App improvement from this pass: removed the full-width scenario pacing strip from the top of the interview workspace, moved pacing into an optional right-rail time-check control, and changed the scenario workspace sizing so prompt, editor/tests, and support panes fill the native window independently instead of depending on the old header-plus-strip height calculation.
+
+## Pass 7: Progressive Banking Ledger Level 2 Top Spenders
+
+Scenario: used the mature CodeSignal-style multi-level banking problem, focusing on Level 2. This exercises the older guided workspace pattern with a stateful operation-list contract and a level progression closer to CodeSignal's ICF style.
+
+Exercise path:
+
+- Selected `asm-banking`, part `l2-top-spenders`. The level extends account creation, deposits, withdrawals, and transfers with outgoing-volume tracking and a `TOP_SPENDERS` ranking query.
+- Ran the Level 2 starter through the Pyodide problem harness. Result: all visible tests failed because the starter returns empty strings.
+- Implemented a first candidate with Level 1 behavior, withdrawal spending, and top-spender sorting, but intentionally forgot that successful transfers count as outgoing volume for the source account.
+- Ran visible tests. Result: `3/4` visible passed. The failing case was crisp: expected `a(60)`, actual `a(0)` after a successful `TRANSFER`.
+- Asked the coach, through the app's `/coach/chat` endpoint and the real `buildCoachMessages` prompt builder, "I'm failing l2-top1-simple. What invariant did I miss?"
+- The first coach response was wrong: it quoted the mismatch, but blamed zero-spender sorting instead of tracing the successful transfer that should have updated outgoing volume.
+- Tightened Debug mode prompt instructions to trace prior successful operations for aggregate/report mismatches before blaming unrelated sorting, formatting, or edge cases.
+- Re-ran the same coach request. It correctly identified the missing `TRANSFER` source-side outgoing update, but included a fenced code block even though the question asked for the invariant, not code.
+- Tightened Debug mode again to make prose-only answers the default and explicitly forbid fenced code blocks unless the learner asks for code.
+- Re-ran the coach request. The answer was now correct and prose-only: successful withdrawals and source-side transfers both update outgoing volume.
+- Fixed the candidate by adding transfer amounts to `spent[source]` only on successful transfers.
+- Re-ran visible tests. Result: `4/4` visible passed.
+- Re-ran visible plus hidden tests. Result: `9/9` passed, including multiple withdrawals, transfer outgoing, `n = 0`, no accounts, and failed-transfer-does-not-count cases.
+
+UX notes:
+
+- Good: the mature multi-level workspace remains the best baseline for CodeSignal-like practice. The visible expected/actual output made the missing aggregate update obvious.
+- Good: the coach prompt path is easy to exercise through the app daemon; no local Python was involved in candidate execution.
+- Issue: the coach initially overfit to an unrelated sorting edge case. For operation-list problems, debug mode needs to trace the operation that should have updated the state behind a later aggregate.
+- Issue: even after the diagnosis was fixed, the coach produced a code block when the user asked for an invariant. Debug mode needs stronger prose-only instruction.
+- Issue: the temporary Node Pyodide runner still emits the `sortedcontainers` preload warning because it does not use the packaged `/pyodide/` asset directory. The app's packaged runtime path serves those assets locally.
+- Issue: native visual verification remains blocked in this session. Computer Use timed out, AX reported zero windows, CoreGraphics saw the app window, and both full-screen and window-specific `screencapture` attempts failed or returned unusable images.
+
+App improvement from this pass: Debug coach prompt version is now `next-coach-v5-debug-prose`. It explicitly asks the coach to trace aggregate/report mismatches back to the prior state-updating operation and to stay prose-only unless the learner asks for code.
