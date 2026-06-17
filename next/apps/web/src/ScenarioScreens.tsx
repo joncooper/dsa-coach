@@ -959,7 +959,7 @@ export function ScenarioWorkspaceScreen({
                 {latestCoachTurns.length ? (
                   latestCoachTurns.slice().reverse().map((turn) => (
                     <div key={turn.id} className="scenario-transcript-turn">
-                      <p><strong>You</strong> <span>{formatTime(turn.createdAt)}</span></p>
+                      <p><strong>You</strong> <span className="scenario-transcript-time">{formatTime(turn.createdAt)}</span></p>
                       <p>{turn.userMessage}</p>
                       <p><strong>{isOnsiteInterview ? "Interviewer" : "Codex"}</strong></p>
                       <ScenarioMarkdown content={turn.response} />
