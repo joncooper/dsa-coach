@@ -7,11 +7,19 @@ import { resolveScalaToolchain } from "../toolchains/localToolchains.js";
 import { diagnosticsFromErrorText, formatDiagnosticsForStderr, locationDiagnostic, type DiagnosticContext } from "./errorDiagnostics.js";
 import { resolveGoRuntime } from "./goRuntime.js";
 import { commandOutput, runSandboxedProcess, withSandboxWorkdir } from "./processSandbox.js";
-import { resolvePythonRuntime } from "./pythonRuntime.js";
 
 export class ScratchpadRunner {
   async run(request: ScratchpadRequest): Promise<RunResult> {
-    if (request.language === "python") return runPythonScratchpad(request);
+    if (request.language === "python") {
+      return {
+        status: "unsupported",
+        stdout: "",
+        stderr: "",
+        durationMs: 0,
+        tests: [],
+        message: "Python scratchpads run in the browser Pyodide worker; daemon /scratchpad does not execute Python."
+      };
+    }
     if (request.language === "typescript") return runTypeScriptScratchpad(request);
     if (request.language === "go") return runGoScratchpad(request);
     if (request.language === "scala") return runScalaScratchpad(request);
@@ -24,31 +32,6 @@ export class ScratchpadRunner {
       message: `Scratchpad is not configured for ${request.language}`
     };
   }
-}
-
-async function runPythonScratchpad(request: ScratchpadRequest): Promise<RunResult> {
-  const started = performance.now();
-  const python = await resolvePythonRuntime();
-  if (!python.runtime) return unsupported(started, python.message ?? "Python 3.10 or newer is not installed");
-  const pythonRuntime = python.runtime;
-
-  return withSandboxWorkdir("dsa-scratch-python-", async (workdir) => {
-    await writeFile(join(workdir, "scratchpad.py"), request.code, "utf8");
-    const result = await runSandboxedProcess({
-      command: pythonRuntime.command,
-      args: ["scratchpad.py"],
-      cwd: workdir,
-      timeoutMs: request.timeoutMs ?? 2500,
-      processExecPaths: pythonRuntime.processExecPaths,
-      allowProcessFork: pythonRuntime.allowProcessFork,
-      sandbox: true
-    });
-    return processToRunResult(started, result, "Python scratchpad failed", {
-      language: "Python",
-      sourceFile: "scratchpad.py",
-      source: request.code
-    });
-  });
 }
 
 async function runTypeScriptScratchpad(request: ScratchpadRequest): Promise<RunResult> {

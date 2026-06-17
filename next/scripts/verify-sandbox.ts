@@ -14,7 +14,7 @@ if (!(await sandboxAvailable())) {
 }
 
 const packs = await runtimeLanguagePacks();
-const available = new Map(packs.map((pack) => [pack.id, pack.runner.installedByDefault]));
+const available = new Map(packs.map((pack) => [pack.id, pack.runner.strategy !== "browser-worker" && pack.runner.installedByDefault]));
 const runner = new LocalRunner(graph);
 const checks = [
   ...languageChecks("typescript", available.get("typescript"), typescriptChecks()),

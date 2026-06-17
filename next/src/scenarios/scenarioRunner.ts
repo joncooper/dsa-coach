@@ -1,11 +1,9 @@
-import { cp, mkdir, mkdtemp, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve, sep } from "node:path";
+import { cp, mkdir, readFile, readdir, rename, stat, writeFile } from "node:fs/promises";
+import { dirname, join, resolve, sep } from "node:path";
 import { randomUUID } from "node:crypto";
-import type { ContentGraph, Scenario, ScenarioCheckpoint } from "../core/types.js";
+import type { ContentGraph, RunResult, Scenario, ScenarioCheckpoint, TestVisibility } from "../core/types.js";
 import { runCodexText } from "../ai/codexProvider.js";
-import { resolvePythonRuntime } from "../runner/pythonRuntime.js";
-import { runSandboxedProcess, type SandboxProcessResult } from "../runner/processSandbox.js";
+import { runSandboxedProcess } from "../runner/processSandbox.js";
 import { COACH_MARKDOWN_FORMATTING_RULES } from "../../../shared/coachFormatting.js";
 
 export interface ScenarioAttempt {
@@ -15,10 +13,11 @@ export interface ScenarioAttempt {
   workspacePath: string;
   startedAt: string;
   updatedAt: string;
+  endedAt?: string;
   checkpoints: ScenarioCheckpointResponse[];
   aiTurns: ScenarioAiTurn[];
-  visibleRuns: ScenarioCommandResult[];
-  hiddenRuns: ScenarioCommandResult[];
+  visibleRuns: ScenarioRunRecord[];
+  hiddenRuns: ScenarioRunRecord[];
   judge?: ScenarioJudgeReport;
 }
 
@@ -46,6 +45,14 @@ export interface ScenarioCommandResult {
   ranAt: string;
 }
 
+export interface ScenarioRunRecord extends RunResult {
+  runId: string;
+  visibility: TestVisibility;
+  command: string;
+  exitCode: number | null;
+  ranAt: string;
+}
+
 export interface ScenarioEditableFile {
   path: string;
   content: string;
@@ -65,6 +72,12 @@ export interface ScenarioJudgeReport {
   nextDrill: string;
   raw: unknown;
   createdAt: string;
+}
+
+export interface ScenarioHiddenTestFile {
+  path: string;
+  content: string;
+  visibility: "hidden";
 }
 
 export class ScenarioRunner {
@@ -109,7 +122,7 @@ export class ScenarioRunner {
   }
 
   async readAttempt(attemptId: string): Promise<ScenarioAttempt> {
-    const attempt = JSON.parse(await readFile(this.attemptPath(attemptId), "utf8")) as ScenarioAttempt;
+    const attempt = normalizeAttempt(JSON.parse(await readFile(this.attemptPath(attemptId), "utf8")) as ScenarioAttempt);
     if (!this.isAttemptWorkspace(attempt.workspacePath)) throw new Error("Attempt workspace path is outside scenario attempts root");
     return attempt;
   }
@@ -158,35 +171,44 @@ export class ScenarioRunner {
     return attempt;
   }
 
-  async runVisible(attemptId: string): Promise<{ attempt: ScenarioAttempt; result: ScenarioCommandResult }> {
+  async endSession(attemptId: string): Promise<ScenarioAttempt> {
     const attempt = await this.readAttempt(attemptId);
-    const scenario = this.scenario(attempt.scenarioId);
-    const result = await this.runCommand(scenario, scenario.visibleTestCommand, attempt.workspacePath);
-    attempt.visibleRuns = [result, ...attempt.visibleRuns].slice(0, 20);
-    attempt.updatedAt = result.ranAt;
+    if (!attempt.endedAt) attempt.endedAt = new Date().toISOString();
+    attempt.updatedAt = attempt.endedAt;
     await this.writeAttempt(attempt);
-    return { attempt, result };
+    return attempt;
   }
 
-  async submitHidden(attemptId: string): Promise<{ attempt: ScenarioAttempt; result: ScenarioCommandResult }> {
+  async hiddenTestFiles(attemptId: string): Promise<{ files: ScenarioHiddenTestFile[] }> {
     const attempt = await this.readAttempt(attemptId);
+    if (!attempt.endedAt) throw new Error("Hidden tests unlock after ending the session.");
     const scenario = this.scenario(attempt.scenarioId);
-    const temp = await mkdtemp(join(tmpdir(), "dsa-scenario-submit-"));
-    try {
-      const workspace = join(temp, "workspace");
-      await cp(attempt.workspacePath, workspace, {
-        recursive: true,
-        filter: (source) => !source.split(sep).includes(".git")
-      });
-      await cp(this.contentPath(scenario.hiddenTestsPath), join(workspace, "tests"), { recursive: true, force: true });
-      const result = await this.runCommand(scenario, scenario.hiddenTestCommand, workspace);
-      attempt.hiddenRuns = [result, ...attempt.hiddenRuns].slice(0, 20);
-      attempt.updatedAt = result.ranAt;
-      await this.writeAttempt(attempt);
-      return { attempt, result };
-    } finally {
-      await rm(temp, { recursive: true, force: true });
+    const root = this.contentPath(scenario.hiddenTestsPath);
+    const files: ScenarioHiddenTestFile[] = [];
+    await collectHiddenTestFiles(root, "tests", files);
+    return { files };
+  }
+
+  async recordRun(attemptId: string, visibility: TestVisibility, result: RunResult): Promise<{ attempt: ScenarioAttempt; run: ScenarioRunRecord }> {
+    const attempt = await this.readAttempt(attemptId);
+    if (visibility === "hidden" && !attempt.endedAt) throw new Error("Hidden tests unlock after ending the session.");
+    const ranAt = new Date().toISOString();
+    const run: ScenarioRunRecord = {
+      ...result,
+      runId: randomUUID(),
+      visibility,
+      command: "Pyodide unittest",
+      exitCode: result.status === "passed" ? 0 : 1,
+      ranAt
+    };
+    if (visibility === "hidden") {
+      attempt.hiddenRuns = [run, ...attempt.hiddenRuns].slice(0, 20);
+    } else {
+      attempt.visibleRuns = [run, ...attempt.visibleRuns].slice(0, 20);
     }
+    attempt.updatedAt = ranAt;
+    await this.writeAttempt(attempt);
+    return { attempt, run };
   }
 
   async diff(attemptId: string): Promise<string> {
@@ -322,32 +344,6 @@ export class ScenarioRunner {
     return { ok: true, command };
   }
 
-  private async runCommand(scenario: Scenario, command: Scenario["visibleTestCommand"], cwd: string): Promise<ScenarioCommandResult> {
-    const started = performance.now();
-    const resolved = await resolveCommand(command);
-    const processResult: SandboxProcessResult = await runSandboxedProcess({
-      command: resolved.command,
-      args: resolved.args,
-      cwd,
-      timeoutMs: command.timeoutMs ?? 30000,
-      processExecPaths: resolved.processExecPaths,
-      allowProcessFork: resolved.allowProcessFork,
-      allowAnyProcessExec: resolved.allowAnyProcessExec,
-      maxOutputBytes: 1024 * 1024,
-      sandbox: true
-    });
-    const durationMs = Math.round(performance.now() - started);
-    return {
-      status: processResult.timedOut ? "timeout" : processResult.exitCode === 0 ? "passed" : "failed",
-      command: [basename(resolved.command), ...resolved.args].join(" "),
-      exitCode: processResult.exitCode,
-      stdout: processResult.stdout,
-      stderr: processResult.stderr,
-      durationMs,
-      ranAt: new Date().toISOString()
-    };
-  }
-
   private scenario(scenarioId: string): Scenario {
     const scenario = this.graph.scenarios.find((candidate) => candidate.id === scenarioId);
     if (!scenario) throw new Error(`Unknown scenario ${scenarioId}`);
@@ -393,25 +389,6 @@ export class ScenarioRunner {
     await writeFile(temp, `${JSON.stringify(attempt, null, 2)}\n`, "utf8");
     await rename(temp, target);
   }
-}
-
-async function resolveCommand(command: Scenario["visibleTestCommand"]): Promise<{
-  command: string;
-  args: string[];
-  processExecPaths?: string[];
-  allowProcessFork?: boolean;
-  allowAnyProcessExec?: boolean;
-}> {
-  if (command.command !== "python") return { command: command.command, args: command.args };
-  const python = await resolvePythonRuntime();
-  if (!python.runtime) throw new Error(python.message ?? "Python runtime unavailable");
-  return {
-    command: python.runtime.command,
-    args: command.args,
-    processExecPaths: python.runtime.processExecPaths,
-    allowProcessFork: python.runtime.allowProcessFork,
-    allowAnyProcessExec: true
-  };
 }
 
 async function initializeGit(cwd: string) {
@@ -514,6 +491,54 @@ async function collectEditableFiles(root: string, relativeRoot: string, files: S
       content: await readFile(absolutePath, "utf8")
     });
   }
+}
+
+async function collectHiddenTestFiles(root: string, relativeRoot: string, files: ScenarioHiddenTestFile[]): Promise<void> {
+  const entries = await readdir(root, { withFileTypes: true }).catch(() => undefined);
+  if (!entries) return;
+  for (const entry of entries) {
+    if (entry.name === "__pycache__" || entry.name.startsWith(".")) continue;
+    const absolutePath = resolve(root, entry.name);
+    const relativePath = `${relativeRoot}/${entry.name}`;
+    if (entry.isDirectory()) {
+      await collectHiddenTestFiles(absolutePath, relativePath, files);
+      continue;
+    }
+    if (!entry.isFile() || !entry.name.endsWith(".py")) continue;
+    files.push({
+      path: relativePath,
+      content: await readFile(absolutePath, "utf8"),
+      visibility: "hidden"
+    });
+  }
+}
+
+function normalizeAttempt(attempt: ScenarioAttempt): ScenarioAttempt {
+  return {
+    ...attempt,
+    visibleRuns: (attempt.visibleRuns ?? []).map((run) => normalizeRunRecord(run, "visible")),
+    hiddenRuns: (attempt.hiddenRuns ?? []).map((run) => normalizeRunRecord(run, "hidden"))
+  };
+}
+
+function normalizeRunRecord(run: ScenarioRunRecord | ScenarioCommandResult, visibility: TestVisibility): ScenarioRunRecord {
+  if ("tests" in run && "runId" in run) return run;
+  return legacyCommandResultToRunRecord(run as ScenarioCommandResult, visibility);
+}
+
+function legacyCommandResultToRunRecord(result: ScenarioCommandResult, visibility: TestVisibility): ScenarioRunRecord {
+  return {
+    runId: `legacy-${visibility}-${result.ranAt}`,
+    visibility,
+    command: result.command,
+    exitCode: result.exitCode,
+    ranAt: result.ranAt,
+    status: result.status,
+    stdout: result.stdout,
+    stderr: result.stderr,
+    durationMs: result.durationMs,
+    tests: []
+  };
 }
 
 function isTextEditableFile(name: string): boolean {

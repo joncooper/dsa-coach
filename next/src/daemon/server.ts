@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { mkdir, readFile, readdir, rename, stat, writeFile } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
-import type { ContentGraph, RunRequest, ScratchpadRequest } from "../core/types.js";
+import type { ContentGraph, RunRequest, RunResult, ScratchpadRequest, TestVisibility } from "../core/types.js";
 import { validateContentFiles, validateContentGraph } from "../core/validation.js";
 import { languagePacks, runtimeLanguagePacks } from "../languages/languagePacks.js";
 import { LspManager } from "../lsp/manager.js";
@@ -272,15 +272,31 @@ async function handleRequest(
       )
     });
   }
-  if (req.method === "POST" && url.pathname === "/scenarios/run-visible") {
+  if (req.method === "POST" && url.pathname === "/scenarios/end-session") {
     const value = JSON.parse(await readBody(req)) as { attemptId?: string };
     const runner = scenarioRunnerFor(content.current(), options);
-    return json(res, 200, await runner.runVisible(requiredString(value.attemptId, "attemptId")));
+    return json(res, 200, { attempt: await runner.endSession(requiredString(value.attemptId, "attemptId")) });
+  }
+  if (req.method === "GET" && url.pathname === "/scenarios/hidden-tests") {
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, await runner.hiddenTestFiles(requiredParam(url, "attemptId")));
+  }
+  if (req.method === "POST" && url.pathname === "/scenarios/runs") {
+    const value = JSON.parse(await readBody(req)) as { attemptId?: string; visibility?: TestVisibility; result?: RunResult };
+    const visibility = value.visibility === "hidden" ? "hidden" : "visible";
+    if (!value.result) throw new Error("Missing field result");
+    const runner = scenarioRunnerFor(content.current(), options);
+    return json(res, 200, await runner.recordRun(requiredString(value.attemptId, "attemptId"), visibility, value.result));
+  }
+  if (req.method === "POST" && url.pathname === "/scenarios/run-visible") {
+    return json(res, 410, {
+      error: "Scenario tests run in the browser Pyodide worker. Use /scenarios/runs to persist browser-run results."
+    });
   }
   if (req.method === "POST" && url.pathname === "/scenarios/submit-hidden") {
-    const value = JSON.parse(await readBody(req)) as { attemptId?: string };
-    const runner = scenarioRunnerFor(content.current(), options);
-    return json(res, 200, await runner.submitHidden(requiredString(value.attemptId, "attemptId")));
+    return json(res, 410, {
+      error: "Hidden scenario tests run in the browser Pyodide worker after /scenarios/end-session unlocks them."
+    });
   }
   if (req.method === "GET" && url.pathname === "/scenarios/diff") {
     const runner = scenarioRunnerFor(content.current(), options);
@@ -427,22 +443,12 @@ function scenarioRunnerFor(state: ContentRuntimeState, options: RunnerDaemonOpti
 function publicContentGraph(graph: ContentGraph): ContentGraph {
   return {
     ...graph,
-    problems: graph.problems.map((problem) => ({
-      ...problem,
-      tests: stripTestFixtures(problem.tests),
-      parts: problem.parts?.map((part) => ({
-        ...part,
-        tests: stripTestFixtures(part.tests)
-      }))
+    scenarios: graph.scenarios.map((scenario) => ({
+      ...scenario,
+      hiddenTestsPath: "",
+      hiddenTestCommand: { command: "", args: [] }
     }))
   };
-}
-
-function stripTestFixtures<T extends { fixture?: unknown }>(tests: T[]): T[] {
-  return tests.map((test) => {
-    const { fixture: _fixture, ...publicTest } = test;
-    return publicTest as T;
-  });
 }
 
 function sourceKind(value: string): SourceKind {
@@ -590,6 +596,8 @@ function contentType(file: string): string {
       return "image/jpeg";
     case ".webp":
       return "image/webp";
+    case ".wasm":
+      return "application/wasm";
     default:
       return "application/octet-stream";
   }

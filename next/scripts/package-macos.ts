@@ -108,17 +108,8 @@ function copyBundledBun() {
 function copyVendoredRuntimes() {
   const toolchains = resolve(runtimeRoot, ".runner-cache/toolchains");
   mkdirSync(toolchains, { recursive: true });
-  copyPythonRuntime(resolve(toolchains, "python"));
   copyGoRuntime(resolve(toolchains, "go"));
   copyJavaRuntime(resolve(toolchains, "java"));
-}
-
-function copyPythonRuntime(destination: string) {
-  const python = findPythonRuntime();
-  if (!python) {
-    throw new Error("Cannot package macOS app: no Python 3.10+ runtime found to vendor");
-  }
-  copyRuntimeDirectory(python.root, destination, `Python ${python.version}`);
 }
 
 function copyGoRuntime(destination: string) {
@@ -150,40 +141,6 @@ function copyRuntimeDirectory(source: string, destination: string, label: string
     filter: (path) => !path.includes("/.DS_Store")
   });
   console.log(`Vendored ${label} runtime from ${source}`);
-}
-
-function findPythonRuntime(): { root: string; version: string } | undefined {
-  const candidates = [
-    process.env.DSA_COACH_PYTHON,
-    `${process.env.HOME ?? ""}/.local/bin/python3`,
-    "/opt/homebrew/bin/python3",
-    "/usr/local/bin/python3",
-    "python3"
-  ].filter((value): value is string => Boolean(value));
-  for (const candidate of candidates) {
-    const probe = spawnSync(candidate, ["-c", [
-      "import json, os, sys",
-      "print(json.dumps({",
-      "  'realExecutable': os.path.realpath(sys.executable),",
-      "  'version': [sys.version_info.major, sys.version_info.minor, sys.version_info.micro]",
-      "}))"
-    ].join("\n")], { encoding: "utf8" });
-    if (probe.status !== 0) continue;
-    try {
-      const payload = JSON.parse(probe.stdout.trim().split(/\n/).at(-1) ?? "{}");
-      const version = payload.version as [number, number, number] | undefined;
-      const realExecutable = payload.realExecutable as string | undefined;
-      if (!version || !realExecutable) continue;
-      if (version[0] < 3 || (version[0] === 3 && version[1] < 10)) continue;
-      return {
-        root: dirname(dirname(realExecutable)),
-        version: version.join(".")
-      };
-    } catch {
-      continue;
-    }
-  }
-  return undefined;
 }
 
 function createAppIcon() {

@@ -1,7 +1,8 @@
 import { type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import type { ContentGraph, Scenario, ScenarioCheckpoint, ScenarioSet } from "../../../src/core/types";
+import type { ContentGraph, RunResult, Scenario, ScenarioCheckpoint, ScenarioSet, TestResult, TestVisibility } from "../../../src/core/types";
 import { API_BASE } from "./apiBase";
 import { BasicCodeEditor } from "./CodeEditor";
+import { runScenarioPythonTests } from "./pyodideRunner";
 import { OpenNavigationButton, PanelCloseIcon, PanelOpenIcon, ShowSidebarButton } from "./SidebarControls";
 
 export interface ScenarioAttemptSummary {
@@ -11,10 +12,11 @@ export interface ScenarioAttemptSummary {
   workspacePath: string;
   startedAt: string;
   updatedAt: string;
+  endedAt?: string;
   checkpoints: ScenarioCheckpointResponse[];
   aiTurns: ScenarioAiTurn[];
-  visibleRuns: ScenarioCommandResult[];
-  hiddenRuns: ScenarioCommandResult[];
+  visibleRuns: ScenarioRunRecord[];
+  hiddenRuns: ScenarioRunRecord[];
   judge?: ScenarioJudgeReport;
 }
 
@@ -32,14 +34,18 @@ interface ScenarioAiTurn {
   createdAt: string;
 }
 
-interface ScenarioCommandResult {
-  status: "passed" | "failed" | "timeout";
+interface ScenarioRunRecord extends RunResult {
+  runId: string;
+  visibility: TestVisibility;
   command: string;
   exitCode: number | null;
-  stdout: string;
-  stderr: string;
-  durationMs: number;
   ranAt: string;
+}
+
+interface ScenarioHiddenTestFile {
+  path: string;
+  content: string;
+  visibility: "hidden";
 }
 
 interface ScenarioEditableFile {
@@ -251,6 +257,8 @@ export function ScenarioWorkspaceScreen({
         if (!alive) return;
         setAttempt(nextAttempt);
         setCheckpointDrafts(draftsFromAttempt(nextAttempt));
+        setSessionEnded(Boolean(nextAttempt.endedAt));
+        if (nextAttempt.endedAt) setTimerPaused(true);
         await loadEditableFiles(nextAttempt.attemptId, alive);
         await refreshDiff(nextAttempt.attemptId, alive);
       } catch (err) {
@@ -314,9 +322,10 @@ export function ScenarioWorkspaceScreen({
     if (!attempt) return;
     await withBusy("Running visible tests", async () => {
       await flushActiveFile();
-      const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary; result: ScenarioCommandResult }>(
-        "/scenarios/run-visible",
-        { attemptId: attempt.attemptId }
+      const result = await runScenarioPythonTests(editableFilesRef.current, "visible");
+      const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary; run: ScenarioRunRecord }>(
+        "/scenarios/runs",
+        { attemptId: attempt.attemptId, visibility: "visible", result }
       );
       setAttempt(nextAttempt);
       await refreshDiff(nextAttempt.attemptId);
@@ -328,9 +337,14 @@ export function ScenarioWorkspaceScreen({
     if (!attempt) return;
     await withBusy("Submitting hidden tests", async () => {
       await flushActiveFile();
-      const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary; result: ScenarioCommandResult }>(
-        "/scenarios/submit-hidden",
-        { attemptId: attempt.attemptId }
+      const { files: hiddenFiles } = await getJson<{ files: ScenarioHiddenTestFile[] }>(
+        `/scenarios/hidden-tests?attemptId=${encodeURIComponent(attempt.attemptId)}`
+      );
+      const sourceFiles = editableFilesRef.current.filter((file) => !file.path.startsWith("tests/"));
+      const result = await runScenarioPythonTests([...sourceFiles, ...hiddenFiles], "hidden");
+      const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary; run: ScenarioRunRecord }>(
+        "/scenarios/runs",
+        { attemptId: attempt.attemptId, visibility: "hidden", result }
       );
       setAttempt(nextAttempt);
       await refreshDiff(nextAttempt.attemptId);
@@ -347,6 +361,20 @@ export function ScenarioWorkspaceScreen({
         answer: checkpointDrafts[checkpoint.id] ?? ""
       });
       setAttempt(nextAttempt);
+      onAttemptsChanged();
+    });
+  }
+
+  async function endSession() {
+    if (!attempt) return;
+    await withBusy("Ending session", async () => {
+      await flushActiveFile();
+      const { attempt: nextAttempt } = await postJson<{ attempt: ScenarioAttemptSummary }>("/scenarios/end-session", {
+        attemptId: attempt.attemptId
+      });
+      setAttempt(nextAttempt);
+      setSessionEnded(true);
+      setTimerPaused(true);
       onAttemptsChanged();
     });
   }
@@ -524,7 +552,7 @@ export function ScenarioWorkspaceScreen({
   const activeFileLanguage = languageForScenarioFile(activeFilePath);
   const workspacePath = attempt?.workspacePath;
   const isOnsiteInterview = isOnsiteScenario(scenario, prompt);
-  const debriefOpen = sessionEnded || Boolean(attempt?.judge);
+  const debriefOpen = sessionEnded || Boolean(attempt?.endedAt) || Boolean(attempt?.judge);
   const elapsedMs = attempt ? Math.max(0, clockNow - Date.parse(attempt.startedAt)) : 0;
   const elapsedMinutes = elapsedMs / 60000;
   const remainingMinutes = Math.max(0, scenario.timeboxMinutes - elapsedMinutes);
@@ -596,13 +624,7 @@ export function ScenarioWorkspaceScreen({
           <button
             type="button"
             className="secondary-button compact-button scenario-danger-button"
-            onClick={() => {
-              void (async () => {
-                await flushActiveFile();
-                setSessionEnded(true);
-                setTimerPaused(true);
-              })();
-            }}
+            onClick={() => void endSession()}
             disabled={!attempt || debriefOpen}
           >
             End session
@@ -693,7 +715,7 @@ export function ScenarioWorkspaceScreen({
               <p>
                 {isOnsiteInterview
                   ? "This loads starter code and tests into the in-app Python editor. Work from the prompt, talk through your approach, and keep Codex in interviewer mode."
-                  : "This loads starter code and tests into the in-app Python editor, backed by the same local runner used by the live interview backend."}
+                  : "This loads starter code and tests into the in-app Python editor, with tests running in the same in-app Python runtime as the practice workspace."}
               </p>
               <button type="button" className="primary-button" onClick={() => void startAttempt()} disabled={Boolean(busy)}>
                 Start session
@@ -994,8 +1016,9 @@ interface ScenarioVisibleTestCase {
   name: string;
   input: string;
   expected: string;
+  actual?: string;
   status: ScenarioTestStatus;
-  failure?: string;
+  details?: string;
 }
 
 function ScenarioTestsPane({
@@ -1009,7 +1032,7 @@ function ScenarioTestsPane({
   onOpenFile
 }: {
   editableFiles: ScenarioEditableFile[];
-  result?: ScenarioCommandResult;
+  result?: ScenarioRunRecord;
   busy: string;
   canRun: boolean;
   collapsed: boolean;
@@ -1023,6 +1046,7 @@ function ScenarioTestsPane({
   const passedCount = cases.filter((testCase) => testCase.status === "passed").length;
   const firstFailedIndex = cases.findIndex((testCase) => testCase.status === "failed");
   const ran = Boolean(result);
+  const runFailure = runLevelFailureFromResult(result, cases);
   const statusLabel = result ? `${result.status} / ${result.durationMs} ms` : "not run";
   const countLabel = ran ? `${passedCount}/${cases.length || 1}` : `0/${cases.length || 1}`;
 
@@ -1096,8 +1120,24 @@ function ScenarioTestsPane({
         <div className="scenario-tests-body">
           <div className={`scenario-tests-summary ${result?.status ?? "idle"}`}>
             <strong>{statusLabel}</strong>
-            <span>{result?.command ?? "python -m unittest discover -s tests -v"}</span>
+            <span>{result?.command ?? "Pyodide unittest"}</span>
           </div>
+          {runFailure ? (
+            <details className="scenario-tests-case failed" open>
+              <summary>
+                <span className="scenario-tests-caret" aria-hidden="true" />
+                <strong>Run error</strong>
+                <span>Tests could not be imported or started</span>
+                <small>FAILED</small>
+              </summary>
+              <dl>
+                <div>
+                  <dt>Error</dt>
+                  <dd><pre><code>{runFailure}</code></pre></dd>
+                </div>
+              </dl>
+            </details>
+          ) : null}
           {cases.length ? (
             <div className="scenario-tests-case-list">
               {cases.map((testCase, index) => (
@@ -1121,10 +1161,21 @@ function ScenarioTestsPane({
                       <dt>Expected Output</dt>
                       <dd><pre><code>{testCase.expected || "(see test assertion)"}</code></pre></dd>
                     </div>
-                    {testCase.failure ? (
+                    {testCase.status === "failed" || testCase.actual ? (
                       <div>
-                        <dt>Output</dt>
-                        <dd><pre><code>{testCase.failure}</code></pre></dd>
+                        <dt>Actual Output</dt>
+                        <dd><pre><code>{testCase.actual || "(see details)"}</code></pre></dd>
+                      </div>
+                    ) : null}
+                    {testCase.details ? (
+                      <div>
+                        <dt>Details</dt>
+                        <dd>
+                          <details className="scenario-tests-details">
+                            <summary>Traceback and assertion detail</summary>
+                            <pre><code>{testCase.details}</code></pre>
+                          </details>
+                        </dd>
                       </div>
                     ) : null}
                   </dl>
@@ -1158,7 +1209,7 @@ function ScenarioTestsPane({
   );
 }
 
-function ScenarioResultCard({ label, result }: { label: string; result?: ScenarioCommandResult }) {
+function ScenarioResultCard({ label, result }: { label: string; result?: ScenarioRunRecord }) {
   return (
     <article className={`scenario-result-card ${result?.status ?? "idle"}`}>
       <header>
@@ -1178,24 +1229,83 @@ function ScenarioResultCard({ label, result }: { label: string; result?: Scenari
   );
 }
 
-function visibleTestCasesFromFile(content: string, result?: ScenarioCommandResult): ScenarioVisibleTestCase[] {
+function visibleTestCasesFromFile(content: string, result?: ScenarioRunRecord): ScenarioVisibleTestCase[] {
   const output = [result?.stdout, result?.stderr].filter(Boolean).join("\n");
   const statuses = parseUnittestStatuses(output);
   const failures = parseUnittestFailures(output);
   const cases: ScenarioVisibleTestCase[] = [];
+  const parsedNames = new Set<string>();
+  const structured = new Map<string, TestResult>();
+  for (const test of result?.tests ?? []) {
+    structured.set(test.name, test);
+    structured.set(normalizeScenarioTestName(test.name), test);
+  }
   const testPattern = /\n    def\s+(test_[A-Za-z0-9_]+)\(self\):([\s\S]*?)(?=\n    def\s+test_[A-Za-z0-9_]+\(self\):|\n\nif __name__|$)/g;
   for (const match of content.matchAll(testPattern)) {
     const name = match[1];
+    parsedNames.add(name);
     const body = match[2];
+    const structuredResult = structured.get(name) ?? structured.get(normalizeScenarioTestName(name));
+    const failure = failures.get(name) ?? structuredResult?.error;
     cases.push({
       name,
       input: extractCallArgument(body, "run_operations"),
-      expected: extractExpectedAssertion(body),
-      status: statuses.get(name) ?? (result?.status === "passed" ? "passed" : "idle"),
-      failure: failures.get(name)
+      expected: structuredResult?.expected !== undefined && structuredResult.expected !== null
+        ? formatScenarioValue(structuredResult.expected)
+        : extractExpectedAssertion(body),
+      status: structuredResult ? (structuredResult.passed ? "passed" : "failed") : statuses.get(name) ?? (result?.status === "passed" ? "passed" : "idle"),
+      actual: structuredResult && "actual" in structuredResult ? formatScenarioValue(structuredResult.actual) : extractActualFromFailure(failure),
+      details: failure
+    });
+  }
+  for (const test of result?.tests ?? []) {
+    const normalizedName = normalizeScenarioTestName(test.name);
+    if (cases.some((testCase) => testCase.name === test.name || testCase.name === normalizedName)) continue;
+    if (isRunLevelScenarioFailure(test, parsedNames)) continue;
+    cases.push({
+      name: test.name,
+      input: formatScenarioValue(test.args),
+      expected: formatScenarioValue(test.expected),
+      status: test.passed ? "passed" : "failed",
+      actual: "actual" in test ? formatScenarioValue(test.actual) : "",
+      details: test.error
     });
   }
   return cases;
+}
+
+function runLevelFailureFromResult(result: ScenarioRunRecord | undefined, cases: ScenarioVisibleTestCase[]): string {
+  if (!result || result.status === "passed") return "";
+  if (cases.some((testCase) => testCase.status === "failed")) return "";
+  const parsedNames = new Set(cases.map((testCase) => testCase.name));
+  const runLevelErrors = result.tests
+    .filter((test) => isRunLevelScenarioFailure(test, parsedNames))
+    .map((test) => test.error)
+    .filter(Boolean);
+  return [result.message, ...runLevelErrors, result.stderr, result.stdout].filter(Boolean).join("\n").trim();
+}
+
+function normalizeScenarioTestName(name: string): string {
+  const withoutParens = name.split(" ")[0] ?? name;
+  return withoutParens.split(".").filter(Boolean).at(-1) ?? withoutParens;
+}
+
+function isRunLevelScenarioFailure(test: TestResult, parsedNames: Set<string>): boolean {
+  const normalizedName = normalizeScenarioTestName(test.name);
+  if (parsedNames.has(normalizedName)) return false;
+  if (!test.error) return false;
+  return (
+    test.error.includes("Failed to import test module") ||
+    test.error.includes("unittest.loader._FailedTest") ||
+    test.error.includes("SyntaxError") ||
+    test.error.includes("ImportError")
+  );
+}
+
+function formatScenarioValue(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === undefined) return "";
+  return JSON.stringify(value, null, 2);
 }
 
 function parseUnittestStatuses(output: string): Map<string, ScenarioTestStatus> {
@@ -1214,6 +1324,18 @@ function parseUnittestFailures(output: string): Map<string, string> {
     failures.set(match[1], match[2].trim());
   }
   return failures;
+}
+
+function extractActualFromFailure(failure: string | undefined): string {
+  if (!failure) return "";
+  const assertionLine = failure.split("\n").find((line) => line.startsWith("AssertionError:"));
+  if (!assertionLine) return "";
+  const payload = assertionLine.replace(/^AssertionError:\s*/, "");
+  const compareText = payload.includes(": ") ? payload.slice(payload.indexOf(": ") + 2) : payload;
+  const marker = " != ";
+  const markerIndex = compareText.indexOf(marker);
+  if (markerIndex === -1) return "";
+  return compareText.slice(0, markerIndex).trim();
 }
 
 function extractCallArgument(body: string, callName: string): string {
