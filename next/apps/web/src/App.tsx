@@ -2260,17 +2260,19 @@ function SettingsDialog({
           />
         ) : (
           <div className="settings-dialog-grid">
-            <section className="settings-section settings-card" aria-label="Language">
-              <h2>Language</h2>
-              <p className="muted">Default language for problem workspaces and scratchpads.</p>
-              <select value={selectedLanguage} onChange={(event) => onLanguageChange(event.target.value as LanguageId)}>
-                {supportedLanguages.map((language) => (
-                  <option key={language.id} value={language.id}>
-                    {language.label}{language.runner.installedByDefault ? "" : " (not installed)"}
-                  </option>
-                ))}
-              </select>
-            </section>
+            {!IS_CLOUD_DEMO && supportedLanguages.length > 1 ? (
+              <section className="settings-section settings-card" aria-label="Language">
+                <h2>Language</h2>
+                <p className="muted">Default language for problem workspaces and scratchpads.</p>
+                <select value={selectedLanguage} onChange={(event) => onLanguageChange(event.target.value as LanguageId)}>
+                  {supportedLanguages.map((language) => (
+                    <option key={language.id} value={language.id}>
+                      {language.label}{language.runner.installedByDefault ? "" : " (not installed)"}
+                    </option>
+                  ))}
+                </select>
+              </section>
+            ) : null}
 
             <section className="settings-section settings-card" aria-label="Data">
               <h2>Data</h2>
@@ -2904,11 +2906,15 @@ function CollectionScreen({
   const hasSetFilters = collection.kind === "problem-set" && !isAssessmentSet && groups.length > 1;
   const visibleGroups = hasSetFilters && activeSetCategory !== "all" ? groups.filter((group) => group.id === activeSetCategory) : groups;
   const sideBody = collection.id === "interview-prep"
-    ? "These prompts mirror the generalist coding-interview style: each is solvable cleanly in 30–45 minutes in Python (or any language) and rewards decomposition, careful state handling, explicit edge cases, and a fully-tested implementation — not clever tricks. Treat each problem like a small system: name the state, validate inputs at the boundary, and pick the simplest data structure that fits. Several problems extend into a Part 2 that builds on your Part 1 solution."
+    ? IS_CLOUD_DEMO
+      ? "These prompts mirror the generalist coding-interview style: each is solvable cleanly in 30–45 minutes in Python and rewards decomposition, careful state handling, explicit edge cases, and a fully-tested implementation — not clever tricks. Treat each problem like a small system: name the state, validate inputs at the boundary, and pick the simplest data structure that fits. Several problems extend into a Part 2 that builds on your Part 1 solution."
+      : "These prompts mirror the generalist coding-interview style: each is solvable cleanly in 30–45 minutes in Python (or any language) and rewards decomposition, careful state handling, explicit edge cases, and a fully-tested implementation — not clever tricks. Treat each problem like a small system: name the state, validate inputs at the boundary, and pick the simplest data structure that fits. Several problems extend into a Part 2 that builds on your Part 1 solution."
     : collection.sideBody;
   const sideFooter = collection.id === "interview-prep"
     ? "Each problem keeps a separate workspace, notes, and history just like the modules. Run visible tests as you iterate, then submit hidden tests to verify the edge cases."
-    : "Each problem keeps a separate workspace, notes, run history, and language-specific starter code.";
+    : IS_CLOUD_DEMO
+      ? "Each problem keeps a separate browser workspace, notes, run history, and Python starter code."
+      : "Each problem keeps a separate workspace, notes, run history, and language-specific starter code.";
   const guideAside = (
     <aside className="bonus-panel set-aside">
       <h2><SparkleIcon />{collection.sideTitle}</h2>

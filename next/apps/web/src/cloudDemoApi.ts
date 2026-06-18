@@ -76,6 +76,7 @@ type CloudResponse = Response | undefined;
 const USER_DATA_KEY = "dsa-coach-cloud:user-data";
 const WORKSPACE_STATE_KEY = "dsa-coach-cloud:workspace-state";
 const SCENARIO_ATTEMPTS_KEY = "dsa-coach-cloud:scenario-attempts";
+const CLOUD_LANGUAGE_ID = "python";
 
 let installed = false;
 
@@ -140,7 +141,7 @@ async function handleCloudRequest(
 ): Promise<CloudResponse> {
   if (method === "GET" && url.pathname === "/health") return json({ ok: true, mode: "cloud-demo" });
   if (method === "GET" && url.pathname === "/catalog") return json(await cloudAsset<ContentGraph>("catalog.json"));
-  if (method === "GET" && url.pathname === "/languages") return json(await cloudAsset<LanguagePack[]>("languages.json"));
+  if (method === "GET" && url.pathname === "/languages") return json(cloudLanguages(await cloudAsset<LanguagePack[]>("languages.json")));
   if (method === "GET" && url.pathname === "/content/status") return json(contentStatus(await cloudAsset<ContentGraph>("catalog.json")));
   if (method === "POST" && url.pathname === "/content/reload") return json({ ...contentStatus(await cloudAsset<ContentGraph>("catalog.json")), ok: false, errors: ["Content reload is unavailable in Cloudflare demo mode."] }, 403);
   if (method === "GET" && url.pathname === "/coach/evals") return json({ reports: [] });
@@ -153,11 +154,27 @@ async function handleCloudRequest(
   if (method === "GET" && url.pathname === "/workspace-state") return json({ workspaceState: readStoredJson(WORKSPACE_STATE_KEY) });
   if ((method === "POST" || method === "PUT") && url.pathname === "/workspace-state") return storeJson(WORKSPACE_STATE_KEY, "workspaceState", body);
   if (method === "GET" && url.pathname === "/source") return sourceResponse(url, cloudAsset);
-  if (method === "POST" && url.pathname === "/run") return json(unsupportedRun("Cloud demo mode runs Python in the browser. Non-Python host runners are unavailable."));
-  if (method === "POST" && url.pathname === "/scratchpad") return json(unsupportedRun("Cloud demo mode runs Python scratchpads in the browser. Non-Python scratchpads are unavailable."));
+  if (method === "POST" && url.pathname === "/run") return json(unsupportedRun("Cloud demo mode runs Python in the browser through Pyodide."));
+  if (method === "POST" && url.pathname === "/scratchpad") return json(unsupportedRun("Cloud demo mode runs Python scratchpads in the browser through Pyodide."));
   if (url.pathname.startsWith("/lsp/")) return lspResponse(url.pathname, body);
   if (url.pathname.startsWith("/scenarios/")) return scenarioResponse(url, method, body, cloudAsset, nativeFetch);
   return undefined;
+}
+
+function cloudLanguages(packs: LanguagePack[]): LanguagePack[] {
+  return packs.filter((pack) => pack.id === CLOUD_LANGUAGE_ID).map((pack) => {
+    const { formatter, lsp, ...publicPack } = pack;
+    void formatter;
+    void lsp;
+    return {
+      ...publicPack,
+      runner: {
+        ...pack.runner,
+        strategy: "browser-worker",
+        installedByDefault: true
+      }
+    };
+  });
 }
 
 function contentStatus(graph: ContentGraph) {
@@ -184,6 +201,9 @@ async function sourceResponse(url: URL, cloudAsset: <T>(name: string) => Promise
   const partId = url.searchParams.get("partId") || "";
   const language = requiredParam(url, "language");
   const kind = requiredParam(url, "kind");
+  if (language !== CLOUD_LANGUAGE_ID) {
+    return json({ error: "Cloud demo mode only serves Python source." }, 404);
+  }
   const sources = await cloudAsset<Record<string, string>>("sources.json");
   const key = [problemId, partId, language, kind].join("::");
   const code = sources[key];

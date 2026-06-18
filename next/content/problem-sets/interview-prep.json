@@ -2,7 +2,7 @@
   "id": "interview-prep",
   "kind": "problem-set",
   "title": "Practical Interview Problems",
-  "summary": "Practical, language-agnostic programming problems sized to a generalist coding interview that screens for clear thinking and structure rather than algorithm trivia.",
+  "summary": "Practical Python programming problems sized to a generalist coding interview that screens for clear thinking and structure rather than algorithm trivia.",
   "entries": [
     {
       "problem": "tek-trade-pnl",

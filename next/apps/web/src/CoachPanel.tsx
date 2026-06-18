@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { LanguageId, Problem, ProblemPart, RunResult } from "../../../src/core/types";
 import type { UserCoachLogRecord } from "../../../src/storage/userData";
 import { MarkdownView } from "../../../../src/components/MarkdownView";
-import { API_BASE } from "./apiBase";
+import { API_BASE, IS_CLOUD_DEMO } from "./apiBase";
 import { buildCoachMessages, COACH_PROMPT_VERSION } from "./coachMessages";
 import type { CoachMessage, CoachMode } from "./coachMessages";
 
@@ -46,9 +46,9 @@ interface CoachConversation {
 
 const coachModes: Array<{ id: CoachMode; label: string; description: string }> = [
   { id: "hint", label: "Hint", description: "Small nudge, no code" },
-  { id: "debug", label: "Debug", description: "Use failing tests and current code" },
-  { id: "explain", label: "Explain", description: "Clarify the concept or spec" },
-  { id: "review", label: "Review", description: "Review approach, bugs, and tradeoffs" }
+  { id: "debug", label: "Debug", description: "Tests plus current code" },
+  { id: "explain", label: "Explain", description: "Concept or spec clarity" },
+  { id: "review", label: "Review", description: "Approach and tradeoffs" }
 ];
 
 function newConversationId(): string {
@@ -248,12 +248,8 @@ export function CoachPanel({ problem, part, language, code, result, coachLogs, v
       <div className="coach-scroll" ref={scrollRef}>
         {status && !status.available ? (
           <div className="coach-offline">
-            <p>
-              {status.reason === "model-missing"
-                ? "Ollama is running, but the coach model is not installed."
-                : "The coach uses a local Ollama model, and it is not reachable."}
-            </p>
-            <pre><code>{status.reason === "model-missing" ? "ollama pull gemma4:latest" : "OLLAMA_ORIGINS=\"*\" ollama serve"}</code></pre>
+            <p>{coachOfflineMessage(status.reason)}</p>
+            <pre><code>{coachOfflineAction(status.reason)}</code></pre>
             <button type="button" className="secondary-button compact-button" onClick={() => void refreshStatus()}>
               Retry
             </button>
@@ -327,6 +323,26 @@ function emptyCoachMessage(mode: CoachMode): string {
   if (mode === "explain") return "Explain mode is on. Ask about the problem statement, an invariant, an API detail, or why an approach works.";
   if (mode === "review") return "Review mode is on. Ask for a read on your implementation, edge cases, or style without getting a rewrite.";
   return "Hint mode is on. Ask for a nudge and I will keep it small unless you explicitly ask for the solution.";
+}
+
+function coachOfflineMessage(reason?: string): string {
+  if (IS_CLOUD_DEMO) {
+    return reason === "model-missing"
+      ? "The cloud coach endpoint is configured, but no OpenRouter model is selected."
+      : "The cloud coach endpoint is not reachable from this page.";
+  }
+  return reason === "model-missing"
+    ? "Ollama is running, but the coach model is not installed."
+    : "The coach uses a local Ollama model, and it is not reachable.";
+}
+
+function coachOfflineAction(reason?: string): string {
+  if (IS_CLOUD_DEMO) {
+    return reason === "model-missing"
+      ? "Set OPENROUTER_MODEL in Cloudflare Pages"
+      : "Check Pages Functions and OPENROUTER_API_KEY";
+  }
+  return reason === "model-missing" ? "ollama pull gemma4:latest" : "OLLAMA_ORIGINS=\"*\" ollama serve";
 }
 
 function coachPlaceholder(mode: CoachMode): string {

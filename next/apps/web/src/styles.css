@@ -6287,51 +6287,70 @@ select {
 
 .coach-mode-strip {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 5px;
+  gap: 3px;
   border-bottom: 1px solid var(--line);
-  padding: 8px 10px;
-  background: var(--paper-soft);
+  padding: 8px;
+  background:
+    linear-gradient(180deg, rgba(243, 239, 228, 0.86), rgba(243, 239, 228, 0.58));
 }
 
 .coach-mode-button {
+  position: relative;
   display: grid;
-  gap: 1px;
+  grid-template-columns: minmax(58px, 0.34fr) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px;
   min-width: 0;
-  min-height: 44px;
+  min-height: 34px;
   border: 1px solid transparent;
-  border-radius: 7px;
-  padding: 5px 6px;
+  border-radius: 6px;
+  padding: 7px 9px 7px 16px;
   background: transparent;
   color: var(--muted);
   text-align: left;
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease, box-shadow 140ms ease;
 }
 
 .coach-mode-button span {
+  position: relative;
   color: inherit;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 850;
+  line-height: 1.1;
 }
 
 .coach-mode-button small {
   overflow: hidden;
   color: inherit;
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-weight: 650;
-  line-height: 1.15;
+  line-height: 1.25;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .coach-mode-button:hover {
-  border-color: rgba(9, 107, 114, 0.22);
-  background: var(--row-bg);
+  border-color: rgba(9, 107, 114, 0.2);
+  background: rgba(255, 253, 248, 0.76);
   color: var(--ink);
 }
 
 .coach-mode-button.active {
-  border-color: rgba(9, 107, 114, 0.35);
+  border-color: rgba(9, 107, 114, 0.34);
   background: var(--row-bg);
   color: var(--teal);
+  box-shadow: 0 1px 5px rgba(29, 37, 40, 0.08);
+}
+
+.coach-mode-button.active::before {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 5px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--teal);
+  content: "";
 }
 
 .coach-scroll {
@@ -6588,6 +6607,8 @@ select {
 .coach-offline pre {
   margin: 0;
   font-size: 0.8rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .coach-input {

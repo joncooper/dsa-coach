@@ -55,7 +55,7 @@ For a browser-hosted demo:
 bun run build:cloud
 ```
 
-This writes the Vite app and generated static content/source/scenario assets to `dist/web`. Cloud mode keeps user progress in browser storage, runs Python through Pyodide, disables host LSP and non-Python runners, and proxies coach/interviewer calls through Cloudflare Functions to OpenRouter. Deployment details are in [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
+This writes the Vite app and generated static content/source/scenario assets to `dist/web`. Cloud mode keeps user progress in browser storage, exposes Python-only problem workspaces, runs Python through Pyodide, disables host LSP and local runners, and proxies coach/interviewer calls through Cloudflare Functions to OpenRouter. Deployment details are in [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
 
 ## Current Product Surfaces
 

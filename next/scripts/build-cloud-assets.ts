@@ -6,6 +6,8 @@ import { languagePacks } from "../src/languages/languagePacks.js";
 import { defaultContentRoot, loadContentGraph } from "../src/content/loadContentGraph.js";
 import { readProblemSource, type SourceKind } from "../src/daemon/source.js";
 
+const CLOUD_LANGUAGE_ID = "python";
+
 interface ScenarioEditableFile {
   path: string;
   content: string;
@@ -45,8 +47,24 @@ async function writeJson(name: string, value: unknown) {
 }
 
 function publicContentGraph(graph: ContentGraph): ContentGraph {
+  const problems = graph.problems.map(cloudProblem).filter((problem): problem is ContentGraph["problems"][number] => Boolean(problem));
+  const problemIds = new Set(problems.map((problem) => problem.id));
   return {
     ...graph,
+    modules: graph.modules.map((module) => ({
+      ...module,
+      sequence: module.sequence.filter((entry) => entry.kind !== "problem" || problemIds.has(entry.id)),
+      bonus: module.bonus?.filter((id) => problemIds.has(id)),
+      sections: module.sections?.map((section) => ({
+        ...section,
+        problems: section.problems.filter((id) => problemIds.has(id))
+      })).filter((section) => section.problems.length > 0)
+    })),
+    problemSets: graph.problemSets.map((set) => ({
+      ...set,
+      entries: set.entries.filter((entry) => problemIds.has(entry.problem))
+    })),
+    problems,
     scenarios: graph.scenarios.map((scenario) => ({
       ...scenario,
       hiddenTestsPath: "",
@@ -55,26 +73,49 @@ function publicContentGraph(graph: ContentGraph): ContentGraph {
   };
 }
 
+function cloudProblem(problem: ContentGraph["problems"][number]): ContentGraph["problems"][number] | undefined {
+  const python = problem.languages[CLOUD_LANGUAGE_ID];
+  if (!python) return undefined;
+  return {
+    ...problem,
+    languages: { [CLOUD_LANGUAGE_ID]: python },
+    parts: problem.parts?.map((part) => {
+      if (!part.languages) return part;
+      const partPython = part.languages[CLOUD_LANGUAGE_ID];
+      return partPython
+        ? { ...part, languages: { [CLOUD_LANGUAGE_ID]: partPython } }
+        : undefined;
+    }).filter((part): part is NonNullable<typeof problem.parts>[number] => Boolean(part))
+  };
+}
+
 function cloudLanguagePacks(packs: LanguagePack[]): LanguagePack[] {
-  return packs.map((pack) => ({
-    ...pack,
-    runner: {
-      ...pack.runner,
-      strategy: pack.id === "python" ? "browser-worker" : "host-process",
-      installedByDefault: pack.id === "python"
-    }
-  }));
+  return packs.filter((pack) => pack.id === CLOUD_LANGUAGE_ID).map((pack) => {
+    const { formatter, lsp, ...publicPack } = pack;
+    void formatter;
+    void lsp;
+    return {
+      ...publicPack,
+      runner: {
+        ...pack.runner,
+        strategy: "browser-worker",
+        installedByDefault: true
+      }
+    };
+  });
 }
 
 async function sourceMap(graph: ContentGraph): Promise<Record<string, string>> {
   const sources: Record<string, string> = {};
   for (const problem of graph.problems) {
-    for (const [language, support] of Object.entries(problem.languages)) {
-      await addSources(sources, problem.id, undefined, language, support, problem.signature);
+    const support = problem.languages[CLOUD_LANGUAGE_ID];
+    if (support) {
+      await addSources(sources, problem.id, undefined, CLOUD_LANGUAGE_ID, support, problem.signature);
     }
     for (const part of problem.parts ?? []) {
-      for (const [language, support] of Object.entries(part.languages ?? problem.languages)) {
-        await addSources(sources, problem.id, part.id, language, support, part.signature ?? problem.signature);
+      const partSupport = (part.languages ?? problem.languages)[CLOUD_LANGUAGE_ID];
+      if (partSupport) {
+        await addSources(sources, problem.id, part.id, CLOUD_LANGUAGE_ID, partSupport, part.signature ?? problem.signature);
       }
     }
   }

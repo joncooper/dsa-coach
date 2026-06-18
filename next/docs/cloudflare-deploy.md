@@ -5,7 +5,7 @@ This is a browser-hosted demo mode for the `next` UI. It is not the macOS app bu
 ## What Works
 
 - The `next` React UI runs from Cloudflare Pages static assets.
-- Content, source files, scenario templates, and hidden scenario tests are generated into `dist/web/cloud-data`.
+- Python-only content/source assets, scenario templates, and hidden scenario tests are generated into `dist/web/cloud-data`.
 - Python runs in the browser through Pyodide.
 - User data, workspace state, and scenario attempts persist in browser `localStorage`.
 - Guided coach and scenario interviewer/debrief requests go through Cloudflare Functions to OpenRouter.
@@ -14,7 +14,7 @@ This is a browser-hosted demo mode for the `next` UI. It is not the macOS app bu
 ## Intentional Limits
 
 - No local daemon, native wrapper, local folder opening, VS Code/Cursor opening, or file-system-backed workspaces.
-- No host-process TypeScript/Go/Scala runners.
+- No TypeScript, Go, or Scala problem runners or language selectors in the browser demo.
 - No hosted database in this first pass; state is per browser.
 - No Ollama in cloud mode. OpenRouter is the cloud AI path.
 - Hidden tests are practice gating, not a security boundary. An authenticated user could inspect static assets.
@@ -109,4 +109,3 @@ bunx wrangler pages secret put OPENROUTER_MODEL --project-name dsa-coach-next
 - The exact OpenRouter model slug for the Gemma model you want to use.
 - The demo password or a SHA-256 hash of it.
 - Whether you want a custom domain or the default `*.pages.dev` URL.
-
