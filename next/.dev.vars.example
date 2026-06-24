@@ -1,5 +1,5 @@
 DEMO_PASSWORD=change-me
 SESSION_SECRET=replace-with-a-long-random-string
-OPENROUTER_API_KEY=sk-or-v1-your-key
-OPENROUTER_MODEL=replace-with-openrouter-model-slug
+OPENROUTER_API_KEY=replace-with-openrouter-api-key
+OPENROUTER_MODEL=google/gemma-4-31b-it
 OPENROUTER_APP_TITLE=DSA Coach

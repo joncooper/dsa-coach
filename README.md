@@ -71,7 +71,7 @@ cd next
 bun run build:cloud
 ```
 
-Cloud mode serves the `next` React UI from static assets, runs Python through Pyodide in the browser, stores practice state in that browser, and proxies coach/interviewer model calls through Cloudflare Functions to OpenRouter. See [next/docs/cloudflare-deploy.md](next/docs/cloudflare-deploy.md) for required secrets and deployment steps.
+Cloud mode serves the `next` React UI from static assets, runs Python through Pyodide in the browser, stores practice state in that browser, and proxies coach/interviewer model calls through Cloudflare Functions to OpenRouter. For this demo, set `OPENROUTER_MODEL=google/gemma-4-31b-it` to use Gemma 4 through OpenRouter; keep `OPENROUTER_API_KEY`, the demo password, and the session secret only in Cloudflare Pages secrets or local `.dev.vars`. See [next/docs/cloudflare-deploy.md](next/docs/cloudflare-deploy.md) for required secrets and deployment steps.
 
 ## Optional AI Setup
 
