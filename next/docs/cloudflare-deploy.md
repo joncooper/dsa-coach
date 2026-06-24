@@ -89,7 +89,7 @@ DEMO_PASSWORD_SHA256 SHA-256 hex digest of the shared demo password.
 Optional:
 
 ```text
-OPENROUTER_HTTP_REFERER   Public demo URL for OpenRouter attribution.
+OPENROUTER_HTTP_REFERER   Optional OpenRouter attribution referer. Set privately in Cloudflare if needed.
 OPENROUTER_APP_TITLE      App title for OpenRouter attribution, for example DSA Coach.
 ```
 
@@ -98,6 +98,8 @@ OPENROUTER_APP_TITLE      App title for OpenRouter attribution, for example DSA 
 Cloud mode intentionally does not call local Ollama. Set `OPENROUTER_MODEL=google/gemma-4-31b-it` to use Google Gemma 4 31B through OpenRouter for the hosted coach, interviewer, and debrief calls. If cost or quota pressure matters, OpenRouter also lists `google/gemma-4-26b-a4b-it` and `:free` variants; change only the secret value, not client-side code.
 
 `OPENROUTER_API_KEY` must remain a Cloudflare Pages secret or a local `.dev.vars` value. Do not add it to `VITE_` variables, `wrangler.toml`, README examples, screenshots, or committed logs.
+
+Keep the deployed Pages URL and any custom-domain URL out of committed docs, screenshots, logs, and examples. Store those privately in Cloudflare project settings or deployment notes outside the repository.
 
 ## Secret Commands
 
@@ -114,4 +116,4 @@ bunx wrangler pages secret put OPENROUTER_MODEL --project-name dsa-coach-next
 - The Cloudflare Pages project name you want, unless `dsa-coach-next` is fine.
 - Whether to keep `google/gemma-4-31b-it` or switch to another OpenRouter Gemma 4 variant.
 - The demo password or a SHA-256 hash of it.
-- Whether you want a custom domain or the default `*.pages.dev` URL.
+- Whether you want a custom domain configured privately in Cloudflare.
